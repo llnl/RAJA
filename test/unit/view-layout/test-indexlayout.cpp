@@ -345,17 +345,3 @@ TEST(IndexLayout, MultiView1DLayout)
 
 }
 
-TEST(IndexLayout, SubView)
-{
-
-long a[] = {1,2,3,4,5};
-
-RAJA::View<long, RAJA::Layout<1>> view(&a[0], RAJA::Layout<1>(5));
-
-auto sv = SubView(view, Range{1,3});
-
-long idx = 2;
-std::cout << sv(idx) << std::endl;
-
-}
-
