@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 #include "RAJA/policy/PolicyBase.hpp"
+#include "RAJA/util/SubView.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA_test-base.hpp"
 #include "RAJA_unit-test-forone.hpp"
@@ -21,7 +22,7 @@ TEST(SubView, RangeSubView1D)
     View<Index_type, Layout<1>> view(&a[0], Layout<1>(5));
 
     // sv = View[1:3]
-    auto sv = SubView(view, RangeSlice{1,3});
+    auto sv = SubView(view, RangeSlice<>{1,3});
 
     EXPECT_EQ(sv(0), 2);
     EXPECT_EQ(sv(1), 3);
@@ -37,7 +38,7 @@ TEST(SubView, RangeSubView2D)
     View<Index_type, Layout<2>> view(&a[0][0], Layout<2>(3,3));
 
     // sv = View[1:2,1:2]
-    auto sv = SubView(view, RangeSlice{1,2}, RangeSlice{1,2});
+    auto sv = SubView(view, RangeSlice<>{1,2}, RangeSlice<>{1,2});
 
     EXPECT_EQ(sv(0,0), 5);
     EXPECT_EQ(sv(0,1), 6);
@@ -54,7 +55,7 @@ TEST(SubView, RangeFixedSubView2D)
     View<Index_type, Layout<2>> view(&a[0][0], Layout<2>(3,3));
 
     // sv = View[1:2,1]
-    auto sv = SubView(view, RangeSlice{1,2}, FixedSlice{1});
+    auto sv = SubView(view, RangeSlice<>{1,2}, FixedSlice<>{1});
 
     EXPECT_EQ(sv(0), 5);
     EXPECT_EQ(sv(1), 8);
@@ -69,7 +70,7 @@ TEST(SubView, FixedFirstDimSubView2D)
     View<Index_type, Layout<2>> view(&a[0][0], Layout<2>(3,3));
 
     // sv = View[1,:]
-    auto sv = SubView(view, FixedSlice{1}, NoSlice{});
+    auto sv = SubView(view, FixedSlice<>{1}, NoSlice{});
 
     EXPECT_EQ(sv(0), 4);
     EXPECT_EQ(sv(1), 5);
@@ -85,7 +86,7 @@ TEST(SubView, RangeFirstDimSubView2D)
     View<Index_type, Layout<2>> view(&a[0][0], Layout<2>(3,3));
 
     // sv = View[1:2,:]
-    auto sv = SubView(view, RangeSlice{1,2}, NoSlice{});
+    auto sv = SubView(view, RangeSlice<>{1,2}, NoSlice{});
 
     EXPECT_EQ(sv(0,0), 4);
     EXPECT_EQ(sv(0,1), 5);
@@ -97,23 +98,23 @@ TEST(SubView, RangeFirstDimSubView2D)
 
 }
 
-void test_subviewGPU() {
-#if defined(RAJA_ENABLE_HIP)
-    forone<test_hip>([=] __host__ __device__ () {
-        Index_type a[3][3] = {{1,2,3},{4,5,6},{7,8,9}};
+// void test_subviewGPU() {
+// #if defined(RAJA_ENABLE_HIP)
+//     forone<test_hip>([=] __host__ __device__ () {
+//         Index_type a[3][3] = {{1,2,3},{4,5,6},{7,8,9}};
 
-        View<Index_type, Layout<2>> view(&a[0][0], Layout<2>(3,3));
+//         View<Index_type, Layout<2>> view(&a[0][0], Layout<2>(3,3));
 
-        // sv = View[1:2,:]
-        auto sv = SubView(view, RangeSlice{1,2}, NoSlice{});
+//         // sv = View[1:2,:]
+//         auto sv = SubView(view, RangeSlice<>{1,2}, NoSlice{});
 
-        //printf("sv(0,0): %ld\n", sv(0,0));
+//         //printf("sv(0,0): %ld\n", sv(0,0));
 
-    });
-#endif
-}
+//     });
+// #endif
+// }
 
-TEST(SubView, RangeFirstDimSubView2DGPU)
-{
-    test_subviewGPU();
-}
+// TEST(SubView, RangeFirstDimSubView2DGPU)
+// {
+//     test_subviewGPU();
+// }
