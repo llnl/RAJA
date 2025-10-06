@@ -53,45 +53,79 @@ dane-up-check:
   variables:
     CI_MACHINE: "dane"
   extends: [.machine-check]
+  rules:
+    # Runs except if we explicitly deactivate dane by variable.
+    - if: '$ON_DANE == "OFF"'
+      when: never
+    - when: on_success
 
 dane-build-and-test:
   variables:
     CI_MACHINE: "dane"
   needs: [dane-up-check, generate-job-lists]
   extends: [.build-and-test]
+  rules:
+    # Runs except if we explicitly deactivate dane by variable.
+    - if: '$ON_DANE == "OFF"'
+      when: never
+    - when: on_success
 
 # CORONA
 corona-up-check:
   variables:
     CI_MACHINE: "corona"
   extends: [.machine-check]
+  rules:
+    - if: '$ON_CORONA == "OFF"'
+      when: never
+    - when: on_success
 
 corona-build-and-test:
   variables:
     CI_MACHINE: "corona"
   needs: [corona-up-check, generate-job-lists]
   extends: [.build-and-test]
+  rules:
+    - if: '$ON_CORONA == "OFF"'
+      when: never
+    - when: on_success
 
 # TIOGA
 tioga-up-check:
   variables:
     CI_MACHINE: "tioga"
   extends: [.machine-check]
+  rules:
+    - if: '$ON_TIOGA == "OFF"'
+      when: never
+    - when: on_success
 
 tioga-build-and-test:
   variables:
     CI_MACHINE: "tioga"
   needs: [tioga-up-check, generate-job-lists]
   extends: [.build-and-test]
+  rules:
+    - if: '$ON_TIOGA == "OFF"'
+      when: never
+    - when: on_success
 
 # TUOLUMNE
 tuolumne-up-check:
   variables:
     CI_MACHINE: "tuolumne"
   extends: [.machine-check]
+  rules:
+    - if: '$ON_TUOLUMNE == "OFF"'
+      when: never
+    - when: on_success
 
 tuolumne-build-and-test:
   variables:
     CI_MACHINE: "tuolumne"
   needs: [tuolumne-up-check, generate-job-lists]
   extends: [.build-and-test]
+  rules:
+    - if: '$ON_TUOLUMNE == "OFF"'
+      when: never
+    - when: on_success

@@ -39,10 +39,10 @@ cce_19_0_0:
 
 rocmcc_6_4_1_hip_desul_atomics:
   variables:
-    SPEC: "~shared +rocm ~openmp +desul +tests amdgpu_target=gfx942 %rocmcc@=6.4.1 ^hip@6.4.1"
+    SPEC: "~shared +rocm ~openmp +desul +tests amdgpu_target=gfx942 %llvm-amdgpu@=6.4.1 ^hip@6.4.1"
   extends: .job_on_tuolumne
 
 rocmcc_6_4_1_hip_openmp:
   variables:
-    SPEC: "~shared +rocm +openmp +omptask +tests amdgpu_target=gfx942 %rocmcc@=6.4.1 ^hip@6.4.1"
+    SPEC: "~shared +rocm +openmp +omptask +tests amdgpu_target=gfx942 %llvm-amdgpu@=6.4.1 ^hip@6.4.1"
   extends: .job_on_tuolumne
