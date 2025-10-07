@@ -44,11 +44,14 @@ struct LaunchExecute<RAJA::omp_launch_t>
     using EXEC_POL = RAJA::omp_launch_t;
     EXEC_POL pol {};
     using BodyType = decltype(thread_privatize(body));
-    using FunctionType =
-        std::function<void(ReduceParams&, BodyType&, LaunchContext&)>;
-    auto parallel_section = [&](ReduceParams& f_params, FunctionType func) {
+
+    auto parallel_section = [&](ReduceParams& f_params, auto func) {
       LaunchContext ctx;
       auto loop_body = thread_privatize(body);
+      static_assert(std::is_invocable<decltype(func), ReduceParams&, BodyType&,
+                                      LaunchContext&>::value,
+                    "Internal RAJA error: Check the parallel kernel passed to "
+                    "OpenMP Parallel section in openmp/launch.hpp");
 
       ctx.shared_mem_ptr = (char*)malloc(launch_params.shared_mem_size);
 
