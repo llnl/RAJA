@@ -31,11 +31,10 @@ rocmcc_5_7_1_hip_desul_atomics:
     SPEC: " ~shared +rocm ~openmp +tests +desul amdgpu_target=gfx906 %llvm-amdgpu@=5.7.1 ^hip@5.7.1"
   extends: .job_on_corona
 
-clang_20_0_0_sycl_gcc_10_3_1_rocmcc_6_0_2_hip:
+clang_19_0_0_sycl_gcc_10_3_1_rocmcc_6_3_1_hip:
   variables:
-    SPEC: " ~shared +sycl ~openmp +tests cxxflags==\"-w -fsycl -fsycl-unnamed-lambda -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=gfx906\" %sycl-clang-20-gcc-10"
-    MODULE_LIST: "rocm/6.0.2"
-    SYCL_PATH: "/usr/WS2/raja-dev/clang_sycl_730cd3a5275f_hip_gcc10.3.1_rocm6.0.2/"
+    SPEC: " ~shared +sycl ~openmp +tests cxxflags==\"-w -fsycl -fsycl-unnamed-lambda -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=gfx906\" %sycl-clang-19-gcc-10"
+    MODULE_LIST: "rocm/6.3.1"
+    SYCL_PATH: "/usr/workspace/raja-dev/clang_sycl_e42590ef4b94_hip_gcc10.3.1_rocm6.3.1/"
     LD_LIBRARY_PATH: "${SYCL_PATH}/lib:${SYCL_PATH}/lib64:${LD_LIBRARY_PATH}"
   extends: .job_on_corona
-
