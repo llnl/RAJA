@@ -76,7 +76,7 @@ RUN cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENM
 
 ## Test run failure in RAJA launch tests with new reducer interface.
 ## Need to figure out best way to handle that.
-FROM ghcr.io/llnl/radiuss:intel-2024.2-ubuntu-24.04 AS intel2024_2
+FROM ghcr.io/llnl/radiuss:intel-2024.0-ubuntu-20.04 AS intel2024_0
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -91,7 +91,7 @@ RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 > /dev/null && \
 
 ## Test run failure in RAJA launch tests with new reducer interface.
 ## Need to figure out best way to handle that.
-FROM ghcr.io/llnl/radiuss:intel-2024.2-ubuntu-24.04 AS intel2024_2_debug
+FROM ghcr.io/llnl/radiuss:intel-2024.0-ubuntu-20.04 AS intel2024_0_debug
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -110,7 +110,7 @@ COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
 RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 > /dev/null && \
     cmake -DCMAKE_CXX_COMPILER=dpcpp -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=Off -DRAJA_ENABLE_SYCL=On -DRAJA_ENABLE_DESUL_ATOMICS=On -DBLT_CXX_STD=c++17 .. && \
-    make -j 6 &&\
+    make -j 16 &&\
     make clean"
 
 FROM ghcr.io/llnl/radiuss:hip-6.4.3-ubuntu-24.04 AS rocm6_4_3_desul
