@@ -17,23 +17,23 @@ Continuous Integration (CI) Testing
                  viewed by clicking the appropriate link in the **checks** 
                  section of a GitHub pull request.
 
-The RAJA project uses three CI tools to run tests:
+The RAJA project uses two CI tools to run tests:
 
-  * **Azure Pipelines** and **GitHub Actions** runs builds and tests for Linux,
-    Windows, and MacOS environments using compilers in container images 
-    maintained in the `RADIUSS Docker Project <https://github.com/LLNL/radiuss-docker>`_.
-    While we do some GPU builds on Azure and GitHub Actions for CUDA, HIP, and
-    SYCL, RAJA tests are only run for CPU-only builds. The current set of 
-    builds run on Azure and GitHub Actions can be seen by looking at the 
-    ``RAJA/azure-pipelines.yml`` and ``RAJA/.github/workflows/build.yml`` files,
-    respectively. The ``RAJA/Dockerfile`` file contains the CMake options used
-    to generate the build environment for each of the builds.
+  * **GitHub Actions** runs builds and tests for Linux, Windows, and MacOS 
+    environments using compilers in container images maintained in the 
+    `RADIUSS Docker Project <https://github.com/LLNL/radiuss-docker>`_.
+    While we do some GPU builds on GitHub Actions for CUDA, HIP, and SYCL, 
+    RAJA tests are only run for CPU-only builds. The current set of builds 
+    run on GitHub Actions can be seen by looking at the 
+    ``RAJA/.github/workflows/build.yml`` file. The ``RAJA/Dockerfile`` file 
+    contains the CMake options used to generate the build environment for 
+    each of the builds.
 
   * **GitLab** instance in the Collaboration Zone (CZ) of the Livermore 
     Computing (LC) Center runs builds and tests on LC platforms using
     software stacks (compilers, etc.) important to many RAJA user applications.
-    GitLab build configurations are more complex than Azure; they will be 
-    described in detail in :ref:`gitlab_ci-label`. 
+    GitLab build configurations are more complex than GitHub Actions; they 
+    will be described in detail in :ref:`gitlab_ci-label`. 
 
 These tools integrate with the RAJA GitHub project and automatically run RAJA 
 builds and tests when a PR is created and when changes are pushed to a PR 
@@ -303,79 +303,22 @@ Also, recall that to generate a host-config file, Spack uses packages and
 specs in the `RADIUSS Spack Configs project <https://github.com/LLNL/radiuss-spack-configs>`_ (a RAJA submodule), 
 plus RAJA-specific specs defined in files in the `RAJA/.gitlab/jobs <https://github.com/LLNL/RAJA/tree/develop/.gitlab/jobs>`_ directory, as described earlier.
 
-.. _azure_ci-label:
+.. _github_actions_ci-label:
 
-======================================
-Azure Pipelines and GitHub Actions CI
-======================================
+==================
+GitHub Actions CI
+==================
 
-We use Azure Pipelines and GitHub Actions to run builds and tests for Linux, 
-Windows, and MacOS environments. We use these tools to run Linux builds and
-tests for various less-common configurations, such as compiler versions that are
-not available on LC systems. While we do builds for CUDA, HIP, and SYCL RAJA 
-GPU back-ends in the Azure and GitHub Actions Linux environments, RAJA tests 
-are only run for CPU-only pipelines.
+We use GitHub Actions to run builds and tests for Linux, Windows, and MacOS 
+environments. We use this tool to run Linux builds and tests for various 
+less-common configurations, such as compiler versions that are not available 
+on LC systems. While we do builds for CUDA, HIP, and SYCL RAJA GPU back-ends 
+in the GitHub Actions Linux environment, RAJA tests are only run for CPU-only 
+pipelines.
 
-.. note:: Azure Pipelines and GitHub Actions CI test jobs are run on every
-   RAJA pull request, regardless of whether it was made from a branch in the
-   RAJA project repo or from a fork of the repo.
-
-Azure Pipelines Testing Workflow
---------------------------------
-
-The jobs run in the Azure Pipelines testing workflow for RAJA are specified in
-the `RAJA/azure-pipelines.yml <https://github.com/LLNL/RAJA/blob/develop/azure-pipelines.yml>`_ file. This file defines the job steps, commands,
-compilers, etc. for each OS environment in the associated ``- job:`` section.
-A summary of the configurations we build are:
-
-  * **Windows.** The ``- job: Windows`` Windows section contains information
-    for the Windows test builds. For example, we build and test RAJA as
-    a static and/or shared library. This is indicated in the Windows 
-    ``strategy`` section::
-
-      strategy:
-        matrix:
-          shared:
-            ...
-          static:
-            ...
-
-    We use the Windows/compiler image provided by the Azure application 
-    indicated the ``pool`` section; for example::
-
-      pool:
-        vmImage: 'windows-2019'
-
-    **MacOS.** The ``- job: Mac`` section contains information for Mac test 
-    builds. For example, we build RAJA using the MacOS/compiler 
-    image provided by the Azure application indicated in the ``pool`` section; 
-    for example::
-
-      pool:
-        vmImage: 'macOS-latest' 
-
-    **Linux.** The ``- job: Docker`` section contains information for Linux
-    test builds. We build and test RAJA using Docker container images generated 
-    with recent versions of various compilers. The RAJA project shares these 
-    images with other open-source LLNL RADIUSS projects and they are maintained
-    in the `RADIUSS Docker <https://github.com/LLNL/radiuss-docker>`_ 
-    project on GitHub. The builds we do at any point in time are located in 
-    the ``strategy`` block::
-
-      strategy:
-        matrix: 
-          gcc11:
-            docker_target: ...
-          ...
-          clang14:
-            docker_target: ...
-          ...
-
-    The Linux OS image used is indicated in the ``pool`` section; 
-    for example::
-
-      pool:
-        vmImage: 'ubuntu-latest'
+.. note:: GitHub Actions CI test jobs are run on every RAJA pull request, 
+   regardless of whether it was made from a branch in the RAJA project repo 
+   or from a fork of the repo.
 
 GitHub Actions Testing Workflow
 --------------------------------
