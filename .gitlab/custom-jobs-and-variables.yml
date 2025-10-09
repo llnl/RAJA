@@ -30,7 +30,7 @@ variables:
 # Project specific variants for matrix
   PROJECT_MATRIX_VARIANTS: "~shared +cuda cuda_arch=75 +tests"
 # Project specific deps for matrix
-  PROJECT_MATRIX_DEPS: "^cmake@3.25"
+  PROJECT_MATRIX_DEPS:
 
 # Corona
 # Arguments for top level allocation
