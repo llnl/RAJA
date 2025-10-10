@@ -3,7 +3,7 @@
 
 #include <type_traits>
 
-#include "RAJA/util/TypeTraits.hpp"
+#include "RAJA/pattern/detail/TypeTraits.hpp"
 #include "RAJA/pattern/params/params_base.hpp"
 #include "RAJA/util/SoAPtr.hpp"
 

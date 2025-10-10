@@ -2,7 +2,7 @@
 #define FORALL_PARAM_HPP
 
 
-#include "RAJA/util/TypeTraits.hpp"
+#include "RAJA/pattern/detail/TypeTraits.hpp"
 #include "RAJA/pattern/params/reducer.hpp"
 #include "RAJA/util/CombiningAdapter.hpp"
 #include "camp/camp.hpp"
