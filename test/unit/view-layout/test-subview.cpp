@@ -98,6 +98,8 @@ TEST(SubView, RangeFirstDimSubView2D)
 
 }
 
+// To Do tests: subview of subview, "sliding winow" modify slice entries, GPU tests.
+
 // void test_subviewGPU() {
 // #if defined(RAJA_ENABLE_HIP)
 //     forone<test_hip>([=] __host__ __device__ () {
