@@ -580,11 +580,7 @@ forall_impl(resources::Cuda cuda_res,
     launch_info.res      = cuda_res;
 
     {
-      if constexpr (!is_forallparampack_empty)
-      {
-        RAJA::expt::ParamMultiplexer::parampack_init(pol, f_params,
-                                                     launch_info);
-      }
+      RAJA::expt::ParamMultiplexer::parampack_init(pol, f_params, launch_info);
 
       //
       // Privatize the loop_body, using make_launch_body to setup reductions
@@ -601,11 +597,8 @@ forall_impl(resources::Cuda cuda_res,
       RAJA::cuda::launch(func, dims.blocks, dims.threads, args, shmem, cuda_res,
                          Async);
 
-      if constexpr (!is_forallparampack_empty)
-      {
-        RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params,
-                                                        launch_info);
-      }
+      RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params,
+                                                      launch_info);
     }
 
     RAJA_FT_END;

@@ -2,6 +2,7 @@
 #define FORALL_PARAM_HPP
 
 
+#include "RAJA/util/TypeTraits.hpp"
 #include "RAJA/pattern/params/reducer.hpp"
 #include "RAJA/util/CombiningAdapter.hpp"
 #include "camp/camp.hpp"
@@ -23,7 +24,7 @@ namespace detail
 template<typename... Params>
 RAJA_HOST_DEVICE constexpr auto filter_reducers(camp::tuple<Params...>& params)
 {
-  return camp::get_refs_to_elements_by_type_trait<is_instance_of_reducer>(
+  return camp::get_refs_to_elements_by_type_trait<is_instance_of_Reducer>(
       params);
 }
 
@@ -80,7 +81,7 @@ RAJA_HOST_DEVICE void combine_params_helper(const camp::idx_seq<Seq...>&,
 
 template<typename EXEC_POL, typename T>
 camp::concepts::enable_if<
-    concepts::negate<is_instance_of_reducer<camp::decay<T>>>,
+    concepts::negate<is_instance_of_Reducer<camp::decay<T>>>,
     concepts::negate<std::is_same<T, RAJA::detail::Name>>>
 param_combine(EXEC_POL const&, T&, const T&)
 {}
@@ -237,36 +238,6 @@ public:
   ForallParamPack(camp::tuple<Ts...>&& t) : param_tup(std::move(t)) {};
 
 };  // struct ForallParamPack
-
-//===========================================================================
-//
-//
-// Type trailts for SFINAE work.
-//
-//
-namespace type_traits
-{
-template<typename T>
-struct is_ForallParamPack : std::false_type
-{};
-
-template<typename... Args>
-struct is_ForallParamPack<ForallParamPack<Args...>> : std::true_type
-{};
-
-template<typename T>
-struct is_ForallParamPack_empty : std::true_type
-{};
-
-template<typename First, typename... Rest>
-struct is_ForallParamPack_empty<ForallParamPack<First, Rest...>>
-    : std::false_type
-{};
-
-template<>
-struct is_ForallParamPack_empty<ForallParamPack<>> : std::true_type
-{};
-}  // namespace type_traits
 
 //===========================================================================
 //
