@@ -18,6 +18,7 @@
 #ifndef RAJA_SUBVIEW_HPP
 #define RAJA_SUBVIEW_HPP
 
+#include "RAJA/util/for_each.hpp"
 #include "RAJA/util/types.hpp"
 #include "camp/number.hpp"
 #include "camp/tuple.hpp"
@@ -27,6 +28,11 @@ namespace RAJA
 {
 
 // Slice descriptors
+
+// template<typename SliceType>
+// RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(IndexType& idx) const {
+//     return start + idx;
+// }
 
 template<typename IndexType = Index_type>
 struct RangeSlice {
@@ -78,24 +84,13 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr auto array_to_tuple(const camp::array<T, 
 template <typename ViewType, typename IndexType = Index_type, typename... Slices>
 class SubView {
     ViewType view_;
-    camp::tuple<Slices...> slices_;
+    camp::tuple<const Slices...> slices_;
     std::array<IndexType, sizeof...(Slices)> map_;
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr void make_subview_index_map() {
         size_t sub_idx = 0;
         size_t i = 0;
         ((map_[i++] = (Slices::reduces_dimension ? -1 : sub_idx++)), ...);
-    }
-
-    template<IndexType I>
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto map_subview_idx_to_parent(IndexType* idxs) const {
-        return camp::get<I>(slices_).map_index(idxs[map_[I]]);
-    }
-
-    template <IndexType... Is>
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto map_indices(IndexType* idxs, camp::idx_seq<Is...>) const {
-        // For each slice, map subview index to parent index
-        return camp::array{(map_subview_idx_to_parent<Is>(idxs))...};
     }
 
 public:
@@ -108,8 +103,15 @@ public:
         constexpr size_t nidx = count_nonfixed_dims<Slices...>();
         static_assert(sizeof...(idxs) == nidx, "Wrong number of indices for subview");
 
-        camp::array<RAJA::Index_type, nidx> arr{idxs...};
-        auto parent_indices = map_indices(arr.data(), camp::make_idx_seq_t<sizeof...(Slices)>());
+        camp::array<Index_type, nidx> arr{idxs...};
+        camp::array<Index_type, sizeof...(Slices)> parent_indices;
+
+        for_each_index<sizeof...(Slices)>( 
+            [&](auto I) { 
+                constexpr auto Ival = I.value;
+                auto slice = camp::get<Ival>(slices_);
+                parent_indices[Ival] = slice.map_index(arr[map_[Ival]]); 
+            });
 
         return camp::apply(view_, array_to_tuple(parent_indices));
     }

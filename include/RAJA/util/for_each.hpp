@@ -26,6 +26,9 @@
 #include <type_traits>
 
 #include "camp/list.hpp"
+#include "camp/concepts.hpp"
+#include "camp/number.hpp"
+#include "camp/tuple.hpp"
 
 #include "RAJA/pattern/detail/algorithm.hpp"
 
@@ -37,6 +40,20 @@ namespace RAJA
 
 namespace detail
 {
+
+// compile time expansion applying func to each of the indices
+RAJA_SUPPRESS_HD_WARN
+template<typename UnaryFunc, typename IndexType, IndexType... Is>
+RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_index(camp::idx_seq<Is...>,
+                                                      UnaryFunc func)
+{
+  // braced init lists are evaluated in order
+  // create integral_constant type to allow UnaryFunc arguments to be used in compile-time context
+  int seq_unused_array[] = {0, (func(std::integral_constant<std::size_t, Is>{}), 0)...};
+  RAJA_UNUSED_VAR(seq_unused_array);
+
+  return func;
+}
 
 // runtime loop applying func to each element in the range in order
 RAJA_SUPPRESS_HD_WARN
@@ -82,6 +99,14 @@ for_each_tuple(Tuple&& t, UnaryFunc func, camp::idx_seq<Is...>)
 
 }  // namespace detail
 
+RAJA_SUPPRESS_HD_WARN
+template<size_t N, typename UnaryFunc>
+RAJA_HOST_DEVICE RAJA_INLINE
+UnaryFunc for_each_index(UnaryFunc func)
+{
+  return detail::for_each_index(camp::make_idx_seq_t<N>(), std::move(func));
+}
+
 /*!
   \brief Apply func to all the elements in the given range in order
   using a sequential for loop in O(N) operations and O(1) extra memory
@@ -89,8 +114,8 @@ for_each_tuple(Tuple&& t, UnaryFunc func, camp::idx_seq<Is...>)
 */
 RAJA_SUPPRESS_HD_WARN
 template<typename Container, typename UnaryFunc>
-constexpr RAJA_HOST_DEVICE RAJA_INLINE
-    concepts::enable_if_t<UnaryFunc, type_traits::is_range<Container>>
+RAJA_HOST_DEVICE RAJA_INLINE
+    camp::concepts::enable_if_t<UnaryFunc, camp::type_traits::is_range<Container>>
     for_each(Container&& c, UnaryFunc func)
 {
   using std::begin;
