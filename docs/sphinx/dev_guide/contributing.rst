@@ -71,10 +71,10 @@ of the contributor. The process involves four main steps:
   #. A RAJA contributor makes a PR on the RAJA GitHub project to merge a
      branch on which she has developed a contribution into another RAJA branch,
      typically, the develop branch.
-  #. When a PR is created, GitHub triggers Azure and GitHub Actions CI test
-     checks and GitLab CI checks if the branch is part of the RAJA GitHub repo. 
-     Running and pass/fail status for all checks is reported back to the 
-     corresponding GitHub pull request where it can be viewed and monitored.
+  #. When a PR is created, GitHub triggers GitHub Actions CI test checks and 
+     GitLab CI checks if the branch is part of the RAJA GitHub repo. Running 
+     and pass/fail status for all checks is reported back to the corresponding 
+     GitHub pull request where it can be viewed and monitored.
   #. Meanwhile, RAJA team members and other contributors review the PR, 
      suggesting changes and/or approving when they think it is ready to merge.
   #. When all checks pass and the PR is approved, the PR may be merged.

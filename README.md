@@ -9,7 +9,6 @@
 
 # <img src="/share/raja/logo/RAJA_LOGO_Color.png?raw=true" width="128" valign="middle" alt="RAJA"/>
 
-[![Azure Pipeline Build Status](https://dev.azure.com/LLNL-RAJA/RAJA/_apis/build/status/LLNL.RAJA?branchName=develop)](https://dev.azure.com/LLNL-RAJA/RAJA/_build/latest?definitionId=1&branchName=develop)
 [![Documentation Status](https://readthedocs.org/projects/raja/badge/?version=develop)](https://raja.readthedocs.io/en/develop/?badge=develop)
 [![Coverage](https://img.shields.io/codecov/c/github/LLNL/RAJA/develop.svg)](https://codecov.io/gh/LLNL/RAJA)
 [![Join the chat at https://gitter.im/llnl/raja](https://badges.gitter.im/llnl/raja.svg)](https://gitter.im/llnl/raja?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
