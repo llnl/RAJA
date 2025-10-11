@@ -81,7 +81,7 @@ class SubView;
 template <typename ViewType, typename IndexType, typename... Slices>
 class SubView<ViewType, camp::list<Slices...>, IndexType> {
     ViewType view_;
-    camp::tuple<const Slices...> slices_;
+    camp::tuple<Slices...> slices_;
     std::array<IndexType, sizeof...(Slices)> map_;
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subview_index_map() {
@@ -100,6 +100,24 @@ public:
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr SubView(ViewType view, Slices... slices)
         : view_(view), slices_(slices...), map_(make_subview_index_map()) { }
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr void set_slices(Slices... slices) {
+        slices_ = camp::tuple<Slices...>(slices...);
+    }
+
+    template<IndexType Index, typename Slice>
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr void set_slice(Slice slice) {
+        camp::get<Index>(slices_) = slice;
+    }
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_slices() {
+        return slices_;
+    }
+
+    template<IndexType Index>
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_slice() {
+        return camp::get<Index>(slices_);
+    }
 
     template <typename... Idxs>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType operator()(Idxs... idxs) const {
