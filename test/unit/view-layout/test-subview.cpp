@@ -96,6 +96,16 @@ TEST(SubView, RangeFirstDimSubView2D)
     EXPECT_EQ(sv(1,1), 8);
     EXPECT_EQ(sv(1,2), 9);
 
+    sv.set_slice<0>(RangeSlice<>{0,1});
+
+    EXPECT_EQ(sv(0,0), 1);
+    EXPECT_EQ(sv(0,1), 2);
+    EXPECT_EQ(sv(0,2), 3);
+
+    EXPECT_EQ(sv(1,0), 4);
+    EXPECT_EQ(sv(1,1), 5);
+    EXPECT_EQ(sv(1,2), 6);
+
 }
 
 // To Do tests: subview of subview, "sliding winow" modify slice entries, GPU tests.
