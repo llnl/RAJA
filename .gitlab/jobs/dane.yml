@@ -20,7 +20,7 @@
 # Identical to shared job, but use OpenMP tasks and no vectorization
 clang_14_0_6:
   variables:
-    SPEC: " ~shared +openmp +omptask ~vectorization +tests %clang@=14.0.6 ${PROJECT_POODLE_DEPS}"
+    SPEC: " ~shared +openmp +omptask ~vectorization +tests %llvm@=14.0.6 ${PROJECT_POODLE_DEPS}"
   extends: .job_on_dane
 
 # Identical to shared job, but use OpenMP tasks and no vectorization
@@ -45,7 +45,7 @@ oneapi_2023_2_1:
 
 clang_14_0_6_openmp_off:
   variables:
-    SPEC: " ~shared ~openmp +tests %clang@=14.0.6"
+    SPEC: " ~shared ~openmp +tests %llvm@=14.0.6"
   extends: .job_on_dane
 
 gcc_10_3_1_openmp_default:
@@ -54,7 +54,7 @@ gcc_10_3_1_openmp_default:
   extends: .job_on_dane
 
 # OTHERS
-clang_14_0_6_gcc_10_3_1_desul_atomics:
+clang_14_0_6_gcc_11_2_1_desul_atomics:
   variables:
-    SPEC: " ~shared +openmp +tests +desul %clang@=14.0.6.gcc.10.3.1"
+    SPEC: " ~shared +openmp +tests +desul %clang-14-gcc-11"
   extends: .job_on_dane

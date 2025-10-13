@@ -20,6 +20,20 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
+Version 2025.09.1 -- Release date 2025-10-01
+============================================
+
+This release contains a bugfix and a submodule update
+
+Notable changes include:
+  * CAMP submodule was updated to point at the patch release v2025.09.2
+  * A build conflict with Caliper and ROCTX/NVTX has been fixed
+  * BlueOS cmake scripts have been removed
+  * toss3/clangcuda_6_0_0_nvcc_8_0.cmake has been removed
+  * C++17 features have been used to simplify RAJA internals 
+  * Missing use of const has been corrected in the CompareFirst struct methods
+
+
 Version 2025.09.0 -- Release date 2025-09-12
 ============================================
 

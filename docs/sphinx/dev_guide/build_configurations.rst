@@ -233,13 +233,13 @@ Reproducing Docker Builds Locally
 ==================================
 
 RAJA uses Docker container images that it shares with other LLNL GitHub projects
-for Azure and GitHub Actions CI testing (see :ref:`azure_ci-label` for more 
-information). We use Azure Pipelines and GitHub Actions for Linux, Windows,
-and MacOS builds for build environments and compiler versions that
-are not available on LLNL LC machines. 
+for GitHub Actions CI testing (see :ref:`github_actions_ci-label` for more 
+information). We use GitHub Actions for Linux, Windows, and MacOS builds for 
+build environments and compiler versions that are not available on LLNL LC 
+machines. 
 
-You can reproduce Azure and GitHub Actions builds locally for testing using
-the following steps if you have access to Docker.
+You can reproduce GitHub Actions builds locally for testing using the 
+following steps if you have access to Docker.
 
   #. Run the command to build a local Docker image::
 

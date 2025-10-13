@@ -44,7 +44,7 @@ variables:
 
 # Tuolumne
 # Arguments for top level allocation
-  TUOLUMNE_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=60m --nodes=1 -o per-resource.count=2"
+  TUOLUMNE_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=90m --nodes=1 -o per-resource.count=2"
 # Arguments for job level allocation
   TUOLUMNE_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
 # Project specific variants for corona
