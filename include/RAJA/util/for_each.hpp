@@ -73,8 +73,13 @@ constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each(Iter begin,
 // compile time expansion applying func to a each type in the list in order
 RAJA_SUPPRESS_HD_WARN
 template<typename UnaryFunc, typename... Ts>
+<<<<<<< HEAD
 constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc
 for_each_type(camp::list<Ts...> const&, UnaryFunc func)
+=======
+constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_type(camp::list<Ts...> const&,
+                                                               UnaryFunc func)
+>>>>>>> 6aa5662fd (made simplifications to map and parent_indices)
 {
   // braced init lists are evaluated in order
   int seq_unused_array[] = {0, (func(Ts {}), 0)...};
@@ -147,8 +152,13 @@ constexpr RAJA_HOST_DEVICE RAJA_INLINE
 */
 RAJA_SUPPRESS_HD_WARN
 template<typename UnaryFunc, typename... Ts>
+<<<<<<< HEAD
 constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc
 for_each_type(camp::list<Ts...> const& c, UnaryFunc func)
+=======
+constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_type(camp::list<Ts...> const& c,
+                                                               UnaryFunc func)
+>>>>>>> 6aa5662fd (made simplifications to map and parent_indices)
 {
   return detail::for_each_type(c, std::move(func));
 }
@@ -159,8 +169,12 @@ for_each_type(camp::list<Ts...> const& c, UnaryFunc func)
 */
 RAJA_SUPPRESS_HD_WARN
 template<typename Tuple, typename UnaryFunc>
+<<<<<<< HEAD
 constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_tuple(Tuple&& t,
                                                                 UnaryFunc func)
+=======
+constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_tuple(Tuple&& t, UnaryFunc func)
+>>>>>>> 6aa5662fd (made simplifications to map and parent_indices)
 {
   return detail::for_each_tuple(
       std::forward<Tuple>(t), std::move(func),
