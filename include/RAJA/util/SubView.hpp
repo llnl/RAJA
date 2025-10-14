@@ -21,34 +21,55 @@
 #include "RAJA/util/for_each.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
+#include "camp/helpers.hpp"
+#include "camp/number/number.hpp"
 #include "camp/tuple.hpp"
 #include "camp/array.hpp"
+#include "camp/type_traits/is_same.hpp"
 
 namespace RAJA
 {
 
-// Slice descriptors
 
 template<typename IndexType = Index_type>
 struct RangeSlice {
-    IndexType start, end; 
+    IndexType start_, end_; 
 
     static constexpr bool reduces_dimension = false;
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(const IndexType& idx) const {
-        return start + idx;
+        return start_ + idx;
+    }
+
+    template<IndexType DIM, typename LayoutType>
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const {
+        return (end_ - start_ + 1);
+    }
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
+        return 0;
     }
 };
 
 template<typename IndexType = Index_type>
 struct FixedSlice { 
-    IndexType idx; 
+    IndexType idx_; 
 
     static constexpr bool reduces_dimension = true;
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(const IndexType&) const {
-        return idx;
+        return idx_;
     }
+
+    template<IndexType DIM, typename LayoutType>
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const {
+        return 1;
+    }
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
+        return 0;
+    }
+
 };
 
 template<typename IndexType = Index_type>
@@ -57,6 +78,35 @@ struct NoSlice {
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(const IndexType& idx) const {
         return idx;
+    }
+
+    template<IndexType DIM, typename LayoutType>
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType& layout) const {
+        return layout.template get_dim_size<DIM>();
+    }
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
+        return 0;
+    }
+};
+
+template<typename IndexType = Index_type>
+struct StridedSlice { 
+    IndexType start_, end_, stride_;
+
+    static constexpr bool reduces_dimension = false;
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(const IndexType& idx) const {
+        return idx;
+    }
+
+    template<IndexType DIM, typename LayoutType>
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const {
+        return (end_ - start_ + 1) / stride_;
+    }
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
+        return stride_;
     }
 };
 
@@ -101,6 +151,49 @@ public:
     template<IndexType Index>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_slice() {
         return camp::get<Index>(slices_);
+    }
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size() {
+
+        IndexType prod_dims = 1;
+        for_each_tuple_index( slices_,
+            [&](auto slice, auto index) {
+                const IndexType dim_size = slice.template size<index>(view_.get_layout());
+                prod_dims *= (dim_size == 0) ? 1 : dim_size;
+            });
+
+        return prod_dims;
+    }
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size_noproj() {
+
+        IndexType prod_dims = 1;
+        for_each_tuple_index( slices_,
+            [&](auto slice, auto index) {
+                prod_dims *= slice.template size<index>(view_.get_layout());
+            });
+
+        return prod_dims;
+    }
+
+    template<IndexType DIM> 
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_size() {
+        return camp::get<DIM>(slices_).template size<DIM>(view_.get_layout());
+    }
+
+    template<IndexType DIM> 
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_stride() {
+        return camp::get<DIM>(slices_).template stride<DIM>();
+    }
+
+    template<IndexType DIM> 
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_layout() {
+        return view_.get_layout();
+    }
+
+    template<IndexType DIM> 
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_data() {
+        return view_.get_data();
     }
 
     template <typename... Idxs>
