@@ -19,8 +19,8 @@
 #define RAJA_SUBVIEW_HPP
 
 #include "RAJA/util/for_each.hpp"
+#include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
-#include "camp/number.hpp"
 #include "camp/tuple.hpp"
 #include "camp/array.hpp"
 
@@ -29,18 +29,13 @@ namespace RAJA
 
 // Slice descriptors
 
-// template<typename SliceType>
-// RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(IndexType& idx) const {
-//     return start + idx;
-// }
-
 template<typename IndexType = Index_type>
 struct RangeSlice {
     IndexType start, end; 
 
     static constexpr bool reduces_dimension = false;
 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(IndexType& idx) const {
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(const IndexType& idx) const {
         return start + idx;
     }
 };
@@ -51,7 +46,7 @@ struct FixedSlice {
 
     static constexpr bool reduces_dimension = true;
 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(IndexType&) const {
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(const IndexType&) const {
         return idx;
     }
 };
@@ -60,19 +55,18 @@ template<typename IndexType = Index_type>
 struct NoSlice { 
     static constexpr bool reduces_dimension = false;
 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(IndexType& idx) const {
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(const IndexType& idx) const {
         return idx;
     }
 };
 
-template <typename T, size_t N, RAJA::Index_type... Is>
-RAJA_INLINE RAJA_HOST_DEVICE constexpr auto array_to_tuple_impl(const camp::array<T, N>& arr, camp::idx_seq<Is...>) {
-    return camp::make_tuple(arr[Is]...);
-}
-
-template <typename T, size_t N>
-RAJA_INLINE RAJA_HOST_DEVICE constexpr auto array_to_tuple(const camp::array<T, N>& arr) {
-    return array_to_tuple_impl(arr, camp::make_idx_seq_t<N>{});
+template<typename IndexType, typename... Slices>
+RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subview_index_map() {
+    IndexType sub_idx = 0;
+    IndexType i = 0;
+    camp::array<IndexType, sizeof...(Slices)> map = {};
+    ((map[i++] = (Slices::reduces_dimension ? -1 : sub_idx++)), ...);
+    return map;
 }
 
 template <typename ViewType, typename SliceTypes, typename IndexType = Index_type>
@@ -82,24 +76,14 @@ template <typename ViewType, typename IndexType, typename... Slices>
 class SubView<ViewType, camp::list<Slices...>, IndexType> {
     ViewType view_;
     camp::tuple<Slices...> slices_;
-    std::array<IndexType, sizeof...(Slices)> map_;
-
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subview_index_map() {
-        size_t sub_idx = 0;
-        std::array<IndexType, sizeof...(Slices)> map;
-
-        for_each_tuple_index( slices_, 
-            [&](auto slice, auto index) { 
-                map[index] = decltype(slice)::reduces_dimension ? -1 : sub_idx++;
-            });
-
-        return map;
-    }
+    static inline constexpr size_t num_slices_ = sizeof...(Slices);
+    static inline constexpr IndexType num_sub_indices_ = ((Slices::reduces_dimension == false ? 1 : 0) + ...);
+    static inline constexpr camp::array<IndexType, num_slices_> map_ = make_subview_index_map<IndexType, Slices...>();
 
 public:
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr SubView(ViewType view, Slices... slices)
-        : view_(view), slices_(slices...), map_(make_subview_index_map()) { }
+        : view_(view), slices_(slices...) { }
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr void set_slices(Slices... slices) {
         slices_ = camp::tuple<Slices...>(slices...);
@@ -121,18 +105,24 @@ public:
 
     template <typename... Idxs>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType operator()(Idxs... idxs) const {
-        constexpr size_t nidx = ((Slices::reduces_dimension == false ? 1 : 0) + ...);
-        static_assert(sizeof...(idxs) == nidx, "Wrong number of indices for subview");
+        static_assert(sizeof...(idxs) == num_sub_indices_, "Wrong number of indices for subview");
 
-        camp::array<Index_type, nidx> arr{idxs...};
-        camp::array<Index_type, sizeof...(Slices)> parent_indices;
+        camp::array<IndexType, num_sub_indices_> arr{idxs...};
+        camp::array<IndexType, num_slices_> parent_indices;
 
         for_each_tuple_index( slices_,
-            [&](auto slice, auto index) { 
-                parent_indices[index] = slice.map_index(arr[map_[index]]); 
+            [&](auto slice, auto index) {
+                if (map_[index] >= 0) {
+                    parent_indices[index] = slice.map_index(arr[map_[index]]); 
+                } else {
+                    // map_index will not need index values for dimension-reducing slices
+                    // so we pass a "dummy" value.
+                    constexpr IndexType dummy_value = -1;
+                    parent_indices[index] = slice.map_index(dummy_value); 
+                }
             });
 
-        return camp::apply(view_, array_to_tuple(parent_indices));
+        return camp::apply(view_, parent_indices);
     }
 };
 

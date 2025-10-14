@@ -44,8 +44,8 @@ namespace detail
 // compile time expansion applying func to each of the indices
 RAJA_SUPPRESS_HD_WARN
 template<typename UnaryFunc, typename IndexType, IndexType... Is>
-RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_index(camp::idx_seq<Is...>,
-                                                      UnaryFunc func)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_index(camp::idx_seq<Is...>,
+                                                                UnaryFunc func)
 {
   // braced init lists are evaluated in order
   // create integral_constant type to allow UnaryFunc arguments to be used in compile-time context
@@ -86,8 +86,9 @@ for_each_type(camp::list<Ts...> const&, UnaryFunc func)
 // compile time expansion applying func to a each type in the tuple in order
 RAJA_SUPPRESS_HD_WARN
 template<typename Tuple, typename UnaryFunc, camp::idx_t... Is>
-constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc
-for_each_tuple(Tuple&& t, UnaryFunc func, camp::idx_seq<Is...>)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_tuple(Tuple&& t,
+                                                                UnaryFunc func,
+                                                                camp::idx_seq<Is...>)
 {
   using camp::get;
   // braced init lists are evaluated in order
@@ -100,13 +101,14 @@ for_each_tuple(Tuple&& t, UnaryFunc func, camp::idx_seq<Is...>)
 // compile time expansion applying func to a each type in the tuple in order
 RAJA_SUPPRESS_HD_WARN
 template<typename Tuple, typename BinaryFunc, camp::idx_t... Is>
-RAJA_HOST_DEVICE RAJA_INLINE BinaryFunc for_each_tuple_index(Tuple&& t,
-                                                             BinaryFunc func,
-                                                             camp::idx_seq<Is...>)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE BinaryFunc for_each_tuple_index(Tuple&& t,
+                                                                       BinaryFunc func,
+                                                                       camp::idx_seq<Is...>)
 {
   using camp::get;
   // braced init lists are evaluated in order
-  int seq_unused_array[] = {0, (func(get<Is>(std::forward<Tuple>(t)), Is), 0)...};
+  int seq_unused_array[] = {0, (func(get<Is>(std::forward<Tuple>(t)), 
+                                     std::integral_constant<std::size_t, Is>{}), 0)...};
   RAJA_UNUSED_VAR(seq_unused_array);
 
   return func;
@@ -116,7 +118,7 @@ RAJA_HOST_DEVICE RAJA_INLINE BinaryFunc for_each_tuple_index(Tuple&& t,
 
 RAJA_SUPPRESS_HD_WARN
 template<size_t N, typename UnaryFunc>
-RAJA_HOST_DEVICE RAJA_INLINE
+constexpr RAJA_HOST_DEVICE RAJA_INLINE
 UnaryFunc for_each_index(UnaryFunc func)
 {
   return detail::for_each_index(camp::make_idx_seq_t<N>(), std::move(func));
@@ -129,7 +131,7 @@ UnaryFunc for_each_index(UnaryFunc func)
 */
 RAJA_SUPPRESS_HD_WARN
 template<typename Container, typename UnaryFunc>
-RAJA_HOST_DEVICE RAJA_INLINE
+constexpr RAJA_HOST_DEVICE RAJA_INLINE
     camp::concepts::enable_if_t<UnaryFunc, camp::type_traits::is_range<Container>>
     for_each(Container&& c, UnaryFunc func)
 {
@@ -172,7 +174,7 @@ constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_tuple(Tuple&& t,
 */
 RAJA_SUPPRESS_HD_WARN
 template<typename Tuple, typename BinaryFunc>
-RAJA_HOST_DEVICE RAJA_INLINE BinaryFunc for_each_tuple_index(Tuple&& t, BinaryFunc func)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE BinaryFunc for_each_tuple_index(Tuple&& t, BinaryFunc func)
 {
   return detail::for_each_tuple_index(
       std::forward<Tuple>(t), std::move(func),
