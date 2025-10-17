@@ -33,7 +33,7 @@
 #include "RAJA/util/types.hpp"
 
 #include "RAJA/internal/fault_tolerance.hpp"
-#include "RAJA/pattern/kernel/type-traits.hpp"
+#include "RAJA/pattern/kernel/TypeTraits.hpp"
 
 #include "RAJA/index/IndexSet.hpp"
 #include "RAJA/index/ListSegment.hpp"

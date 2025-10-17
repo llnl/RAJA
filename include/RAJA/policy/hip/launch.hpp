@@ -28,22 +28,6 @@
 namespace RAJA
 {
 
-template<typename BODY>
-__global__ void launch_global_fcn(const BODY body_in)
-{
-  LaunchContext ctx;
-
-  using RAJA::internal::thread_privatize;
-  auto privatizer = thread_privatize(body_in);
-  auto& body      = privatizer.get_priv();
-
-  // Set pointer to shared memory
-  extern __shared__ char raja_shmem_ptr[];
-  ctx.shared_mem_ptr = raja_shmem_ptr;
-
-  body(ctx);
-}
-
 template<typename BODY, typename ReduceParams>
 __global__ void launch_new_reduce_global_fcn(const BODY body_in,
                                              ReduceParams reduce_params)
@@ -73,71 +57,7 @@ struct LaunchExecute<
   template<typename BODY_IN, typename ReduceParams>
   static concepts::enable_if_t<
       resources::EventProxy<resources::Resource>,
-      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>
-  exec(RAJA::resources::Resource res,
-       const LaunchParams& params,
-       BODY_IN&& body_in,
-       ReduceParams& RAJA_UNUSED_ARG(launch_reducers))
-  {
-    using BODY = camp::decay<BODY_IN>;
-
-    auto func = reinterpret_cast<const void*>(&launch_global_fcn<BODY>);
-
-    resources::Hip hip_res = res.get<RAJA::resources::Hip>();
-
-    //
-    // Compute the number of blocks and threads
-    //
-
-    hip_dim_t gridSize {static_cast<hip_dim_member_t>(params.teams.value[0]),
-                        static_cast<hip_dim_member_t>(params.teams.value[1]),
-                        static_cast<hip_dim_member_t>(params.teams.value[2])};
-
-    hip_dim_t blockSize {
-        static_cast<hip_dim_member_t>(params.threads.value[0]),
-        static_cast<hip_dim_member_t>(params.threads.value[1]),
-        static_cast<hip_dim_member_t>(params.threads.value[2])};
-
-    // Only launch kernel if we have something to iterate over
-    constexpr hip_dim_member_t zero = 0;
-    if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
-        blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
-    {
-
-      RAJA_FT_BEGIN;
-
-      {
-        size_t shared_mem_size = params.shared_mem_size;
-
-        //
-        // Privatize the loop_body, using make_launch_body to setup reductions
-        //
-        BODY body = RAJA::hip::make_launch_body(func, gridSize, blockSize,
-                                                shared_mem_size, hip_res,
-                                                std::forward<BODY_IN>(body_in));
-
-        //
-        // Launch the kernel
-        //
-        void* args[] = {(void*)&body};
-        RAJA::hip::launch(func, gridSize, blockSize, args, shared_mem_size,
-                          hip_res, async);
-      }
-
-      RAJA_FT_END;
-    }
-
-    return resources::EventProxy<resources::Resource>(res);
-  }
-
-  // Version with explicit reduction parameters..
-  template<typename BODY_IN, typename ReduceParams>
-  static concepts::enable_if_t<
-      resources::EventProxy<resources::Resource>,
-      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
-      concepts::negate<
-          RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>>
+      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>>
   exec(RAJA::resources::Resource res,
        const LaunchParams& launch_params,
        BODY_IN&& body_in,
@@ -212,23 +132,6 @@ struct LaunchExecute<
   }
 };
 
-template<typename BODY, int num_threads>
-__launch_bounds__(num_threads, 1) __global__
-    void launch_global_fcn_fixed(const BODY body_in)
-{
-  LaunchContext ctx;
-
-  using RAJA::internal::thread_privatize;
-  auto privatizer = thread_privatize(body_in);
-  auto& body      = privatizer.get_priv();
-
-  // Set pointer to shared memory
-  extern __shared__ char raja_shmem_ptr[];
-  ctx.shared_mem_ptr = raja_shmem_ptr;
-
-  body(ctx);
-}
-
 template<typename BODY, int num_threads, typename ReduceParams>
 __launch_bounds__(num_threads, 1) __global__
     void launch_new_reduce_global_fcn_fixed(const BODY body_in,
@@ -258,72 +161,7 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
   template<typename BODY_IN, typename ReduceParams>
   static concepts::enable_if_t<
       resources::EventProxy<resources::Resource>,
-      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>
-  exec(RAJA::resources::Resource res,
-       const LaunchParams& params,
-       BODY_IN&& body_in,
-       ReduceParams& RAJA_UNUSED_ARG(launch_reducers))
-  {
-    using BODY = camp::decay<BODY_IN>;
-
-    auto func =
-        reinterpret_cast<const void*>(&launch_global_fcn_fixed<BODY, nthreads>);
-
-    resources::Hip hip_res = res.get<RAJA::resources::Hip>();
-
-    //
-    // Compute the number of blocks and threads
-    //
-
-    hip_dim_t gridSize {static_cast<hip_dim_member_t>(params.teams.value[0]),
-                        static_cast<hip_dim_member_t>(params.teams.value[1]),
-                        static_cast<hip_dim_member_t>(params.teams.value[2])};
-
-    hip_dim_t blockSize {
-        static_cast<hip_dim_member_t>(params.threads.value[0]),
-        static_cast<hip_dim_member_t>(params.threads.value[1]),
-        static_cast<hip_dim_member_t>(params.threads.value[2])};
-
-    // Only launch kernel if we have something to iterate over
-    constexpr hip_dim_member_t zero = 0;
-    if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
-        blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
-    {
-
-      RAJA_FT_BEGIN;
-
-      {
-        size_t shared_mem_size = params.shared_mem_size;
-
-        //
-        // Privatize the loop_body, using make_launch_body to setup reductions
-        //
-        BODY body = RAJA::hip::make_launch_body(func, gridSize, blockSize,
-                                                shared_mem_size, hip_res,
-                                                std::forward<BODY_IN>(body_in));
-
-        //
-        // Launch the kernel
-        //
-        void* args[] = {(void*)&body};
-        RAJA::hip::launch(func, gridSize, blockSize, args, shared_mem_size,
-                          hip_res, async);
-      }
-
-      RAJA_FT_END;
-    }
-
-    return resources::EventProxy<resources::Resource>(res);
-  }
-
-  // Version with explicit reduction parameters..
-  template<typename BODY_IN, typename ReduceParams>
-  static concepts::enable_if_t<
-      resources::EventProxy<resources::Resource>,
-      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
-      concepts::negate<
-          RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>>
+      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>>
   exec(RAJA::resources::Resource res,
        const LaunchParams& launch_params,
        BODY_IN&& body_in,
