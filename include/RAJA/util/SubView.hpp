@@ -43,7 +43,27 @@ struct RangeSlice {
     }
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
-        return 0;
+        return 1;
+    }
+};
+
+template<typename IndexType = Index_type>
+struct RangeStartSlice {
+    IndexType start_; 
+
+    static constexpr bool reduces_dimension = false;
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(const IndexType& idx) const {
+        return start_ + idx;
+    }
+
+    template<IndexType DIM, typename LayoutType>
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType& layout) const {
+        return (layout.size() - start_);
+    }
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
+        return 1;
     }
 };
 
@@ -63,7 +83,7 @@ struct FixedSlice {
     }
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
-        return 0;
+        return 1;
     }
 
 };
@@ -82,7 +102,7 @@ struct NoSlice {
     }
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
-        return 0;
+        return 1;
     }
 };
 
@@ -98,7 +118,7 @@ struct StridedSlice {
 
     template<IndexType DIM, typename LayoutType>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const {
-        return (end_ - start_ + 1) / stride_;
+        return (end_ - start_) / stride_ + 1;
     }
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
@@ -107,7 +127,7 @@ struct StridedSlice {
 };
 
 template<typename IndexType, typename... Slices>
-RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subview_index_map() {
+RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_slice_to_parent_index_map() {
     IndexType sub_idx = 0;
     IndexType i = 0;
     camp::array<IndexType, sizeof...(Slices)> map = {};
@@ -115,84 +135,111 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subview_index_map() {
     return map;
 }
 
-template <typename ViewType, typename LayoutType, typename SliceTypes, typename IndexType = Index_type>
-class SubLayout;
+template<typename IndexType, size_t n_parent_dims, typename... Slices>
+RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_slice_index_map() {
+    IndexType sub_idx = 0;
+    IndexType i = 0;
+    camp::array<IndexType, n_parent_dims> map = {};
 
-template <typename ViewType, typename LayoutType, typename IndexType, typename... Slices>
-class SubLayout<ViewType, LayoutType, camp::list<Slices...>, IndexType> {
-    const LayoutType& layout_;
+    auto process_slice = [&](auto slice_type) constexpr {
+        if constexpr (!decltype(slice_type)::reduces_dimension) {
+            map[sub_idx++] = i++;
+        } else {
+            i++;
+        }
+    };
+
+    (process_slice(Slices{}), ...);
+
+    return map;
+}
+
+template <typename LayoutType, typename SliceTypes, typename IndexType = Index_type>
+struct SubLayout;
+
+template <typename LayoutType, typename IndexType, typename... Slices>
+struct SubLayout<LayoutType, camp::list<Slices...>, IndexType> {
+
+    using IndexLinear = IndexType;
+
+    const LayoutType& parent_layout_;
     camp::tuple<Slices...> slices_;
+
     static inline constexpr size_t num_slices_ = sizeof...(Slices);
-    static inline constexpr IndexType num_sub_indices_ = ((Slices::reduces_dimension == false ? 1 : 0) + ...);
-    static inline constexpr camp::array<IndexType, num_slices_> map_ = make_subview_index_map<IndexType, Slices...>();
 
-public:
+    static inline constexpr 
+    IndexType n_dims = ((Slices::reduces_dimension == false ? 1 : 0) + ...);
 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr SubLayout(const LayoutType& layout, Slices... slices)
-        : layout_(layout), slices_(slices...) { }
+    static inline constexpr 
+    camp::array<IndexType, num_slices_> slice_to_parent_map_ = 
+        make_slice_to_parent_index_map<IndexType, Slices...>();
 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr void set_slices(Slices... slices) {
-        slices_ = camp::tuple<Slices...>(slices...);
+    static inline constexpr 
+    camp::array<IndexType, n_dims> parent_to_slice_map_ = 
+        make_parent_to_slice_index_map<IndexType, n_dims, Slices...>();
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr SubLayout(const LayoutType& parent_layout, Slices... slices)
+        : parent_layout_(parent_layout), slices_(slices...) { }
+
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_parent_layout() const {
+        return parent_layout_;
     }
 
-    template<IndexType Index, typename Slice>
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr void set_slice(Slice slice) {
-        camp::get<Index>(slices_) = slice;
-    }
-
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_slices() {
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_slices() const {
         return slices_;
     }
 
     template<IndexType Index>
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_slice() {
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_slice() const {
         return camp::get<Index>(slices_);
     }
 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size() {
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size() const {
 
         IndexType prod_dims = 1;
         for_each_tuple_index( slices_,
             [&](auto slice, auto index) {
-                const IndexType dim_size = slice.template size<index>(layout_);
+                const IndexType dim_size = slice.template size<index>(parent_layout_);
                 prod_dims *= (dim_size == 0) ? 1 : dim_size;
             });
 
         return prod_dims;
     }
 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size_noproj() {
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size_noproj() const {
 
         IndexType prod_dims = 1;
         for_each_tuple_index( slices_,
             [&](auto slice, auto index) {
-                prod_dims *= slice.template size<index>(layout_);
+                prod_dims *= slice.template size<index>(parent_layout_);
             });
 
         return prod_dims;
     }
 
     template<IndexType DIM> 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_size() {
-        return camp::get<DIM>(slices_).template size<DIM>(layout_);
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_size() const {
+        constexpr auto SliceDim = parent_to_slice_map_[DIM];
+        return camp::get<SliceDim>(slices_).template size<DIM>(parent_layout_);
     }
 
     template<IndexType DIM> 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_stride() {
-        return camp::get<DIM>(slices_).template stride<DIM>();
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_stride() const {
+        constexpr auto SliceDim = parent_to_slice_map_[DIM];
+        return camp::get<SliceDim>(slices_).stride();
     }
 
     template <typename... Idxs>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr auto operator()(Idxs... idxs) const {
-        static_assert(sizeof...(idxs) == num_sub_indices_, "Wrong number of indices for subview");
+        static_assert(sizeof...(idxs) == n_dims, "Wrong number of indices for subview");
 
-        camp::array<IndexType, num_sub_indices_> arr{idxs...};
+        camp::array<IndexType, n_dims> arr{idxs...};
         camp::array<IndexType, num_slices_> parent_indices;
 
         for_each_tuple_index( slices_,
             [&](auto slice, auto index) {
-                if (map_[index] >= 0) {
-                    parent_indices[index] = slice.map_index(arr[map_[index]]); 
+                if (slice_to_parent_map_[index] >= 0) {
+                    parent_indices[index] = slice.map_index(arr[slice_to_parent_map_[index]]); 
                 } else {
                     // map_index will not need index values for dimension-reducing slices
                     // so we pass a "dummy" value.
@@ -201,43 +248,12 @@ public:
                 }
             });
 
-        return parent_indices;
+        return camp::apply(parent_layout_, parent_indices);
     }
 };
 
-template <typename ViewType, typename LayoutType, typename SliceTypes, typename IndexType = Index_type>
-class SubView;
-
-template <typename ViewType, typename LayoutType, typename IndexType, typename... Slices>
-class SubView<ViewType, LayoutType, camp::list<Slices...>, IndexType> {
-    ViewType view_;
-    SubLayout<ViewType, LayoutType, camp::list<Slices...>, IndexType> sublayout_;
-
-public:
-
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr SubView(ViewType view, Slices... slices)
-        : view_(view), sublayout_(view.get_layout(), slices...) { }
-
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_layout() {
-        return view_.get_layout();
-    }
- 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_sublayout() {
-        return sublayout_;
-    }
-
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_data() {
-        return view_.get_data();
-    }
-
-    template <typename... Idxs>
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType operator()(Idxs... idxs) const {
-        return camp::apply(view_, sublayout_(idxs...));
-    }
-};
-
-template <typename ViewType, typename... Slices>
-SubView(ViewType, Slices...) -> SubView<ViewType, typename ViewType::layout_type, camp::list<Slices...>>;
+template <typename LayoutType, typename... Slices>
+SubLayout(LayoutType, Slices...) -> SubLayout<LayoutType, camp::list<Slices...>>;
 
 }  // namespace RAJA
 
