@@ -257,24 +257,19 @@ then
         echo "[Error]: Failure(s) while running CTest" && exit 1
     fi
 
-    if grep -q -i "ENABLE_HIP.*ON" ${hostconfig_path}
+    if [[ ! -d ${install_dir} ]]
     then
-        echo "[Warning]: Not testing install with HIP"
-    else
-        if [[ ! -d ${install_dir} ]]
-        then
-            echo "[Error]: Install directory not found : ${install_dir}" && exit 1
-        fi
+        echo "[Error]: Install directory not found : ${install_dir}" && exit 1
+    fi
 
-        cd ${install_dir}/examples/RAJA/using-with-cmake
-        mkdir build && cd build
-        if ! $cmake_exe -C ../host-config.cmake ..; then
-            echo "[Error]: Running $cmake_exe for using-with-cmake test" && exit 1
-        fi
+    cd ${install_dir}/examples/RAJA/using-with-cmake
+    mkdir build && cd build
+    if ! $cmake_exe -C ../host-config.cmake ..; then
+        echo "[Error]: Running $cmake_exe for using-with-cmake test" && exit 1
+    fi
 
-        if ! make; then
-            echo "[Error]: Running make for using-with-cmake test" && exit 1
-        fi
+    if ! make; then
+        echo "[Error]: Running make for using-with-cmake test" && exit 1
     fi
 
     timed_message "RAJA tests completed"
