@@ -90,12 +90,12 @@ public:
 
   RAJA_HOST_DEVICE bool allocated() const { return mem != nullptr; }
 
-  RAJA_HOST_DEVICE value_type get(size_t i) const
+  constexpr RAJA_HOST_DEVICE value_type get(size_t i) const
   {
     return accessor::get(mem, i);
   }
 
-  RAJA_HOST_DEVICE void set(size_t i, value_type val)
+  constexpr RAJA_HOST_DEVICE void set(size_t i, value_type val)
   {
     accessor::set(mem, i, val);
   }
@@ -166,12 +166,12 @@ public:
 
   RAJA_HOST_DEVICE bool allocated() const { return mem != nullptr; }
 
-  RAJA_HOST_DEVICE value_type get(size_t i) const
+  constexpr RAJA_HOST_DEVICE value_type get(size_t i) const
   {
     return value_type(accessor::get(mem, i), accessor::get(mem_idx, i));
   }
 
-  RAJA_HOST_DEVICE void set(size_t i, value_type val)
+  constexpr RAJA_HOST_DEVICE void set(size_t i, value_type val)
   {
     accessor::set(mem, i, first_type(val));
     accessor::set(mem_idx, i, val.getLoc());
@@ -238,12 +238,12 @@ public:
 
   RAJA_HOST_DEVICE bool allocated() const { return mem != nullptr; }
 
-  RAJA_HOST_DEVICE value_type get(size_t i) const
+  constexpr RAJA_HOST_DEVICE value_type get(size_t i) const
   {
     return value_type(accessor::get(mem, i), accessor::get(mem_idx, i));
   }
 
-  RAJA_HOST_DEVICE void set(size_t i, value_type val)
+  constexpr RAJA_HOST_DEVICE void set(size_t i, value_type val)
   {
     accessor::set(mem, i, val.getVal());
     accessor::set(mem_idx, i, val.getLoc());
