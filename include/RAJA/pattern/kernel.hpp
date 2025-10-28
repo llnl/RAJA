@@ -204,6 +204,6 @@ kernel(SegmentTuple&& segments, Bodies&&... bodies)
 #include "RAJA/pattern/kernel/Region.hpp"
 #include "RAJA/pattern/kernel/Tile.hpp"
 #include "RAJA/pattern/kernel/TileTCount.hpp"
-#include "RAJA/pattern/kernel/type-traits.hpp"
+#include "RAJA/pattern/kernel/TypeTraits.hpp"
 
 #endif /* RAJA_pattern_kernel_HPP */

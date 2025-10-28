@@ -39,7 +39,7 @@ template<typename SegmentTuple,
          typename... Bodies>
 struct loop_data_has_reducers<
     LoopData<SegmentTuple, ParamTuple, Resource, Bodies...>>
-    : RAJA::expt::tuple_contains_reducers<ParamTuple>
+    : RAJA::expt::tuple_contains_Reducers<ParamTuple>
 {};
 
 template<typename T>
