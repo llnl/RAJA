@@ -62,7 +62,7 @@ variables:
 # We organize the build-and-test stage with sub-pipelines. Each sub-pipeline
 # corresponds to a test batch on a given machine.
 
-# High level stages
+# Main pipeline stages
 # IMPORTANT: You must define stages yourself to allow customization.
 # The following stages are REQUIRED by RADIUSS Shared CI components:
 stages:
