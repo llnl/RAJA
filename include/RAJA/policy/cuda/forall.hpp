@@ -390,23 +390,13 @@ __launch_bounds__(BlockSize, BlocksPerSM) __global__
   auto privatizer = thread_privatize(loop_body);
   auto& body      = privatizer.get_priv();
   auto ii         = IterationGetter::template index<IndexType>();
-  constexpr bool is_forall_parampack_empty =
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;
+
   if (ii < length)
   {
-    if constexpr (is_forall_parampack_empty)
-    {
-      body(idx[ii]);
-    }
-    else
-    {
-      RAJA::expt::invoke_body(f_params, body, idx[ii]);
-    }
+    RAJA::expt::invoke_body(f_params, body, idx[ii]);
   }
-  if constexpr (!is_forall_parampack_empty)
-  {
-    RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
-  }
+
+  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
 }
 
 ///
@@ -432,23 +422,13 @@ __global__ void forallp_cuda_kernel(
   auto privatizer = thread_privatize(loop_body);
   auto& body      = privatizer.get_priv();
   auto ii         = IterationGetter::template index<IndexType>();
-  constexpr bool is_forall_parampack_empty =
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;
+
   if (ii < length)
   {
-    if constexpr (is_forall_parampack_empty)
-    {
-      body(idx[ii]);
-    }
-    else
-    {
-      RAJA::expt::invoke_body(f_params, body, idx[ii]);
-    }
+    RAJA::expt::invoke_body(f_params, body, idx[ii]);
   }
-  if constexpr (!is_forall_parampack_empty)
-  {
-    RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
-  }
+
+  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
 }
 
 ///
@@ -476,24 +456,14 @@ __launch_bounds__(BlockSize, BlocksPerSM) __global__
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
   auto& body      = privatizer.get_priv();
-  constexpr bool is_forall_parampack_empty =
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;
+
   for (auto ii = IterationGetter::template index<IndexType>(); ii < length;
        ii += IterationGetter::template size<IndexType>())
   {
-    if constexpr (is_forall_parampack_empty)
-    {
-      body(idx[ii]);
-    }
-    else
-    {
-      RAJA::expt::invoke_body(f_params, body, idx[ii]);
-    }
+    RAJA::expt::invoke_body(f_params, body, idx[ii]);
   }
-  if constexpr (!is_forall_parampack_empty)
-  {
-    RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
-  }
+
+  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
 }
 
 ///
@@ -521,24 +491,14 @@ __global__ void forallp_cuda_kernel(
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
   auto& body      = privatizer.get_priv();
-  constexpr bool is_forall_parampack_empty =
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;
+
   for (auto ii = IterationGetter::template index<IndexType>(); ii < length;
        ii += IterationGetter::template size<IndexType>())
   {
-    if constexpr (is_forall_parampack_empty)
-    {
-      body(idx[ii]);
-    }
-    else
-    {
-      RAJA::expt::invoke_body(f_params, body, idx[ii]);
-    }
+    RAJA::expt::invoke_body(f_params, body, idx[ii]);
   }
-  if constexpr (!is_forall_parampack_empty)
-  {
-    RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
-  }
+
+  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
 }
 
 }  // namespace impl
@@ -620,11 +580,7 @@ forall_impl(resources::Cuda cuda_res,
     launch_info.res      = cuda_res;
 
     {
-      if constexpr (!is_forallparampack_empty)
-      {
-        RAJA::expt::ParamMultiplexer::parampack_init(pol, f_params,
-                                                     launch_info);
-      }
+      RAJA::expt::ParamMultiplexer::parampack_init(pol, f_params, launch_info);
 
       //
       // Privatize the loop_body, using make_launch_body to setup reductions
@@ -641,11 +597,8 @@ forall_impl(resources::Cuda cuda_res,
       RAJA::cuda::launch(func, dims.blocks, dims.threads, args, shmem, cuda_res,
                          Async);
 
-      if constexpr (!is_forallparampack_empty)
-      {
-        RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params,
-                                                        launch_info);
-      }
+      RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params,
+                                                      launch_info);
     }
 
     RAJA_FT_END;

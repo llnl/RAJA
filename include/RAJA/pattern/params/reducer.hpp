@@ -3,6 +3,7 @@
 
 #include <type_traits>
 
+#include "RAJA/pattern/detail/TypeTraits.hpp"
 #include "RAJA/pattern/params/params_base.hpp"
 #include "RAJA/util/SoAPtr.hpp"
 
@@ -247,24 +248,6 @@ auto constexpr ReduceLoc(T* target, IndexType* index)
       target, index);
 }
 
-template<typename T>
-struct is_instance_of_reducer : std::false_type
-{};
-
-template<typename Op, typename T, typename VOp>
-struct is_instance_of_reducer<detail::Reducer<Op, T, VOp>> : std::true_type
-{};
-
-template<typename T>
-struct tuple_contains_reducers : std::false_type
-{};
-
-template<typename... Params>
-struct tuple_contains_reducers<camp::tuple<Params...>>
-    : std::integral_constant<
-          bool,
-          camp::concepts::any_of<is_instance_of_reducer<Params>...>::value>
-{};
 
 }  // namespace expt
 

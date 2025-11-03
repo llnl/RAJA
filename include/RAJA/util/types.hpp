@@ -333,11 +333,11 @@ public:
   /// Ctors and assignment op.
   ///
 
-  ConstRestrictRealPtr() : dptr(0) { ; }
+  constexpr ConstRestrictRealPtr() : dptr(0) { ; }
 
-  ConstRestrictRealPtr(const Real_type* d) : dptr(d) { ; }
+  constexpr ConstRestrictRealPtr(const Real_type* d) : dptr(d) { ; }
 
-  ConstRestrictRealPtr& operator=(const Real_type* d)
+  constexpr ConstRestrictRealPtr& operator=(const Real_type* d)
   {
     ConstRestrictRealPtr copy(d);
     std::swap(dptr, copy.dptr);
@@ -351,18 +351,18 @@ public:
   ///
   ///  Implicit conversion operator to bare const pointer.
   ///
-  operator const Real_type*() { return dptr; }
+  constexpr operator const Real_type*() { return dptr; }
 
   ///
   ///  "Explicit conversion operator" to bare const pointer,
   ///  consistent with boost shared ptr.
   ///
-  const Real_type* get() const { return dptr; }
+  constexpr const Real_type* get() const { return dptr; }
 
   ///
   /// Bracket operator.
   ///
-  const Real_type& operator[](Index_type i) const
+  constexpr const Real_type& operator[](Index_type i) const
   {
     return ((const Real_type* RAJA_RESTRICT)dptr)[i];
   }
@@ -370,7 +370,7 @@ public:
   ///
   /// + operator for pointer arithmetic.
   ///
-  const Real_type* operator+(Index_type i) const { return dptr + i; }
+  constexpr const Real_type* operator+(Index_type i) const { return dptr + i; }
 
 private:
   const Real_type* dptr;
@@ -390,11 +390,11 @@ public:
   /// Ctors and assignment op.
   ///
 
-  RestrictRealPtr() : dptr(0) { ; }
+  constexpr RestrictRealPtr() : dptr(0) { ; }
 
-  RestrictRealPtr(Real_type* d) : dptr(d) { ; }
+  constexpr RestrictRealPtr(Real_type* d) : dptr(d) { ; }
 
-  RestrictRealPtr& operator=(Real_type* d)
+  constexpr RestrictRealPtr& operator=(Real_type* d)
   {
     RestrictRealPtr copy(d);
     std::swap(dptr, copy.dptr);
@@ -408,35 +408,38 @@ public:
   ///
   ///  Implicit conversion operator to (non-const) bare pointer.
   ///
-  operator Real_type*() { return dptr; }
+  constexpr operator Real_type*() { return dptr; }
 
   ///
   ///  Implicit conversion operator to const bare pointer.
   ///
-  operator const Real_type*() const { return dptr; }
+  constexpr operator const Real_type*() const { return dptr; }
 
   ///
   ///  "Explicit conversion operator" to (non-const) bare pointer,
   ///  consistent with boost shared ptr.
   ///
-  Real_type* get() { return dptr; }
+  constexpr Real_type* get() { return dptr; }
 
   ///
   ///  "Explicit conversion operator" to const bare pointer,
   ///  consistent with boost shared ptr.
   ///
-  const Real_type* get() const { return dptr; }
+  constexpr const Real_type* get() const { return dptr; }
 
   ///
   ///  Operator that enables implicit conversion from RestrictRealPtr to
   ///  RestrictRealConstPtr.
   ///
-  operator ConstRestrictRealPtr() { return ConstRestrictRealPtr(dptr); }
+  constexpr operator ConstRestrictRealPtr()
+  {
+    return ConstRestrictRealPtr(dptr);
+  }
 
   ///
   /// Bracket operator.
   ///
-  Real_type& operator[](Index_type i)
+  constexpr Real_type& operator[](Index_type i)
   {
     return ((Real_type * RAJA_RESTRICT) dptr)[i];
   }
@@ -444,12 +447,12 @@ public:
   ///
   /// + operator for (non-const) pointer arithmetic.
   ///
-  Real_type* operator+(Index_type i) { return dptr + i; }
+  constexpr Real_type* operator+(Index_type i) { return dptr + i; }
 
   ///
   /// + operator for const pointer arithmetic.
   ///
-  const Real_type* operator+(Index_type i) const { return dptr + i; }
+  constexpr const Real_type* operator+(Index_type i) const { return dptr + i; }
 
 private:
   Real_type* dptr;
@@ -469,11 +472,11 @@ public:
   /// Ctors and assignment op.
   ///
 
-  ConstRestrictAlignedRealPtr() : dptr(0) { ; }
+  constexpr ConstRestrictAlignedRealPtr() : dptr(0) { ; }
 
-  ConstRestrictAlignedRealPtr(const Real_type* d) : dptr(d) { ; }
+  constexpr ConstRestrictAlignedRealPtr(const Real_type* d) : dptr(d) { ; }
 
-  ConstRestrictAlignedRealPtr& operator=(const Real_type* d)
+  constexpr ConstRestrictAlignedRealPtr& operator=(const Real_type* d)
   {
     ConstRestrictAlignedRealPtr copy(d);
     std::swap(dptr, copy.dptr);
@@ -487,13 +490,13 @@ public:
   ///
   ///  Implicit conversion operator to bare const pointer.
   ///
-  operator const Real_type*() { return dptr; }
+  constexpr operator const Real_type*() { return dptr; }
 
   ///
   ///  "Explicit conversion operator" to bare const pointer,
   ///  consistent with boost shared ptr.
   ///
-  const Real_type* get() const { return dptr; }
+  constexpr const Real_type* get() const { return dptr; }
 
   ///
   /// Compiler-specific bracket operators.
@@ -501,7 +504,7 @@ public:
 
 #if defined(RAJA_COMPILER_ICC)
   ///
-  const Real_type& operator[](Index_type i) const
+  constexpr const Real_type& operator[](Index_type i) const
   {
 #if __ICC < 1300  // use alignment intrinsic
     RAJA_ALIGN_DATA(dptr);
@@ -513,7 +516,7 @@ public:
 
 #elif defined(RAJA_COMPILER_GNU)
   ///
-  const Real_type& operator[](Index_type i) const
+  constexpr const Real_type& operator[](Index_type i) const
   {
 #if 1  // NOTE: alignment instrinsic not available for older GNU compilers
     return ((const Real_type* RAJA_RESTRICT)RAJA_ALIGN_DATA(dptr))[i];
@@ -523,14 +526,14 @@ public:
   }
 
 #elif defined(RAJA_COMPILER_XLC)
-  const Real_type& operator[](Index_type i) const
+  constexpr const Real_type& operator[](Index_type i) const
   {
     RAJA_ALIGN_DATA(dptr);
     return ((const Real_type* RAJA_RESTRICT)dptr)[i];
   }
 
 #elif defined(RAJA_COMPILER_CLANG)
-  const Real_type& operator[](Index_type i) const
+  constexpr const Real_type& operator[](Index_type i) const
   {
     return ((const_TDRAReal_ptr)dptr)[i];
   }
@@ -543,7 +546,7 @@ public:
   ///
   /// + operator for pointer arithmetic.
   ///
-  const Real_type* operator+(Index_type i) const { return dptr + i; }
+  constexpr const Real_type* operator+(Index_type i) const { return dptr + i; }
 
 private:
   const Real_type* dptr;
@@ -563,11 +566,11 @@ public:
   /// Ctors and assignment op.
   ///
 
-  RestrictAlignedRealPtr() : dptr(0) { ; }
+  constexpr RestrictAlignedRealPtr() : dptr(0) { ; }
 
-  RestrictAlignedRealPtr(Real_type* d) : dptr(d) { ; }
+  constexpr RestrictAlignedRealPtr(Real_type* d) : dptr(d) { ; }
 
-  RestrictAlignedRealPtr& operator=(Real_type* d)
+  constexpr RestrictAlignedRealPtr& operator=(Real_type* d)
   {
     RestrictAlignedRealPtr copy(d);
     std::swap(dptr, copy.dptr);
@@ -581,30 +584,30 @@ public:
   ///
   ///  Implicit conversion operator to (non-const) bare pointer.
   ///
-  operator Real_type*() { return dptr; }
+  constexpr operator Real_type*() { return dptr; }
 
   ///
   ///  Implicit conversion operator to const bare pointer.
   ///
-  operator const Real_type*() const { return dptr; }
+  constexpr operator const Real_type*() const { return dptr; }
 
   ///
   ///  "Explicit conversion operator" to (non-const) bare pointer,
   ///  consistent with boost shared ptr.
   ///
-  Real_type* get() { return dptr; }
+  constexpr Real_type* get() { return dptr; }
 
   ///
   ///  "Explicit conversion operator" to const bare pointer,
   ///  consistent with boost shared ptr.
   ///
-  const Real_type* get() const { return dptr; }
+  constexpr const Real_type* get() const { return dptr; }
 
   ///
   ///  Operator that enables implicit conversion from
   ///  RestrictAlignedRealPtr to RestrictAlignedRealConstPtr.
   ///
-  operator ConstRestrictAlignedRealPtr()
+  constexpr operator ConstRestrictAlignedRealPtr()
   {
     return ConstRestrictAlignedRealPtr(dptr);
   }
@@ -615,7 +618,7 @@ public:
 
 #if defined(RAJA_COMPILER_ICC)
   ///
-  Real_type& operator[](Index_type i)
+  constexpr Real_type& operator[](Index_type i)
   {
 #if __ICC < 1300  // use alignment intrinsic
     RAJA_ALIGN_DATA(dptr);
@@ -626,7 +629,7 @@ public:
   }
 
   ///
-  const Real_type& operator[](Index_type i) const
+  constexpr const Real_type& operator[](Index_type i) const
   {
 #if __ICC < 1300  // use alignment intrinsic
     RAJA_ALIGN_DATA(dptr);
@@ -638,7 +641,7 @@ public:
 
 #elif defined(RAJA_COMPILER_GNU)
   ///
-  Real_type& operator[](Index_type i)
+  constexpr Real_type& operator[](Index_type i)
   {
 #if 1  // NOTE: alignment instrinsic not available for older GNU compilers
     return ((Real_type * RAJA_RESTRICT) RAJA_ALIGN_DATA(dptr))[i];
@@ -648,7 +651,7 @@ public:
   }
 
   ///
-  const Real_type& operator[](Index_type i) const
+  constexpr const Real_type& operator[](Index_type i) const
   {
 #if 1  // NOTE: alignment instrinsic not available for older GNU compilers
     return ((Real_type * RAJA_RESTRICT) RAJA_ALIGN_DATA(dptr))[i];
@@ -659,14 +662,14 @@ public:
 
 #elif defined(RAJA_COMPILER_XLC)
   ///
-  Real_type& operator[](Index_type i)
+  constexpr Real_type& operator[](Index_type i)
   {
     RAJA_ALIGN_DATA(dptr);
     return ((Real_type * RAJA_RESTRICT) dptr)[i];
   }
 
   ///
-  const Real_type& operator[](Index_type i) const
+  constexpr const Real_type& operator[](Index_type i) const
   {
     RAJA_ALIGN_DATA(dptr);
     return ((Real_type * RAJA_RESTRICT) dptr)[i];
@@ -674,7 +677,10 @@ public:
 
 #elif defined(RAJA_COMPILER_CLANG)
   ///
-  Real_type& operator[](Index_type i) { return ((TDRAReal_ptr)dptr)[i]; }
+  constexpr Real_type& operator[](Index_type i)
+  {
+    return ((TDRAReal_ptr)dptr)[i];
+  }
 
   ///
   const Real_type& operator[](Index_type i) const
@@ -690,12 +696,12 @@ public:
   ///
   /// + operator for (non-const) pointer arithmetic.
   ///
-  Real_type* operator+(Index_type i) { return dptr + i; }
+  constexpr Real_type* operator+(Index_type i) { return dptr + i; }
 
   ///
   /// + operator for const pointer arithmetic.
   ///
-  const Real_type* operator+(Index_type i) const { return dptr + i; }
+  constexpr const Real_type* operator+(Index_type i) const { return dptr + i; }
 
 private:
   Real_type* dptr;
@@ -716,11 +722,11 @@ public:
   /// Ctors and assignment op.
   ///
 
-  ConstRestrictComplexPtr() : dptr(0) { ; }
+  constexpr ConstRestrictComplexPtr() : dptr(0) { ; }
 
-  ConstRestrictComplexPtr(const Complex_type* d) : dptr(d) { ; }
+  constexpr ConstRestrictComplexPtr(const Complex_type* d) : dptr(d) { ; }
 
-  ConstRestrictComplexPtr& operator=(const Complex_type* d)
+  constexpr ConstRestrictComplexPtr& operator=(const Complex_type* d)
   {
     ConstRestrictComplexPtr copy(d);
     std::swap(dptr, copy.dptr);
@@ -734,18 +740,18 @@ public:
   ///
   ///  Implicit conversion operator to bare const pointer.
   ///
-  operator const Complex_type*() const { return dptr; }
+  constexpr operator const Complex_type*() const { return dptr; }
 
   ///
   ///  "Explicit conversion operator" to bare const pointer,
   ///  consistent with boost shared ptr.
   ///
-  const Complex_type* get() const { return dptr; }
+  constexpr const Complex_type* get() const { return dptr; }
 
   ///
   ///  Bracket operator.
   ///
-  const Complex_type& operator[](Index_type i) const
+  constexpr const Complex_type& operator[](Index_type i) const
   {
     return ((const Complex_type* RAJA_RESTRICT)dptr)[i];
   }
@@ -753,7 +759,10 @@ public:
   ///
   /// + operator for pointer arithmetic.
   ///
-  const Complex_type* operator+(Index_type i) const { return dptr + i; }
+  constexpr const Complex_type* operator+(Index_type i) const
+  {
+    return dptr + i;
+  }
 
 private:
   const Complex_type* dptr;
@@ -773,11 +782,11 @@ public:
   /// Ctors and assignment op.
   ///
 
-  RestrictComplexPtr() : dptr(0) { ; }
+  constexpr RestrictComplexPtr() : dptr(0) { ; }
 
-  RestrictComplexPtr(Complex_type* d) : dptr(d) { ; }
+  constexpr RestrictComplexPtr(Complex_type* d) : dptr(d) { ; }
 
-  RestrictComplexPtr& operator=(Complex_type* d)
+  constexpr RestrictComplexPtr& operator=(Complex_type* d)
   {
     RestrictComplexPtr copy(d);
     std::swap(dptr, copy.dptr);
@@ -791,35 +800,38 @@ public:
   ///
   ///  Implicit conversion operator to (non-const) bare pointer.
   ///
-  operator Complex_type*() { return dptr; }
+  constexpr operator Complex_type*() { return dptr; }
 
   ///
   ///  Implicit conversion operator to const bare pointer.
   ///
-  operator const Complex_type*() const { return dptr; }
+  constexpr operator const Complex_type*() const { return dptr; }
 
   ///
   ///  "Explicit conversion operator" to (non-const) bare pointer,
   ///  consistent with boost shared ptr.
   ///
-  Complex_type* get() { return dptr; }
+  constexpr Complex_type* get() { return dptr; }
 
   ///
   ///  "Explicit conversion operator" to const bare pointer,
   ///  consistent with boost shared ptr.
   ///
-  const Complex_type* get() const { return dptr; }
+  constexpr const Complex_type* get() const { return dptr; }
 
   ///
   ///  Operator that enables implicit conversion from RestrictComplexPtr to
   ///  RestrictComplexConstPtr.
   ///
-  operator ConstRestrictComplexPtr() { return ConstRestrictComplexPtr(dptr); }
+  constexpr operator ConstRestrictComplexPtr()
+  {
+    return ConstRestrictComplexPtr(dptr);
+  }
 
   ///
   ///  (Non-const) bracket operator.
   ///
-  Complex_type& operator[](Index_type i)
+  constexpr Complex_type& operator[](Index_type i)
   {
     return ((Complex_type * RAJA_RESTRICT) dptr)[i];
   }
@@ -827,7 +839,7 @@ public:
   ///
   ///  Const bracket operator.
   ///
-  const Complex_type& operator[](Index_type i) const
+  constexpr const Complex_type& operator[](Index_type i) const
   {
     return ((Complex_type * RAJA_RESTRICT) dptr)[i];
   }
@@ -835,12 +847,15 @@ public:
   ///
   /// + operator for (non-const) pointer arithmetic.
   ///
-  Complex_type* operator+(Index_type i) { return dptr + i; }
+  constexpr Complex_type* operator+(Index_type i) { return dptr + i; }
 
   ///
   /// + operator for const pointer arithmetic.
   ///
-  const Complex_type* operator+(Index_type i) const { return dptr + i; }
+  constexpr const Complex_type* operator+(Index_type i) const
+  {
+    return dptr + i;
+  }
 
 private:
   Complex_type* dptr;
@@ -920,13 +935,15 @@ namespace detail
 struct DefaultAccessor
 {
   template<typename T>
-  static RAJA_HOST_DEVICE RAJA_INLINE T get(T* ptr, size_t i)
+  static RAJA_HOST_DEVICE RAJA_INLINE constexpr T get(T* ptr, size_t i)
   {
     return ptr[i];
   }
 
   template<typename T>
-  static RAJA_HOST_DEVICE RAJA_INLINE void set(T* ptr, size_t i, T val)
+  static RAJA_HOST_DEVICE RAJA_INLINE constexpr void set(T* ptr,
+                                                         size_t i,
+                                                         T val)
   {
     ptr[i] = val;
   }
@@ -987,14 +1004,14 @@ struct AsIntegerArray
     return num_integer_type;
   }
 
-  RAJA_HOST_DEVICE constexpr T get_value() const
+  RAJA_HOST_DEVICE T get_value() const
   {
     T value;
     memcpy(&value, &array[0], sizeof(T));
     return value;
   }
 
-  RAJA_HOST_DEVICE constexpr void set_value(T value)
+  RAJA_HOST_DEVICE void set_value(T value)
   {
     memcpy(&array[0], &value, sizeof(T));
   }
@@ -1007,14 +1024,14 @@ struct AsIntegerArray
 template<typename T>
 struct ScopedAssignment
 {
-  ScopedAssignment(T& val, T const& new_val)
+  constexpr ScopedAssignment(T& val, T const& new_val)
       : m_ref_to_val(val),
         m_prev_val(std::move(val))
   {
     m_ref_to_val = new_val;
   }
 
-  ScopedAssignment(T& val, T&& new_val)
+  constexpr ScopedAssignment(T& val, T&& new_val)
       : m_ref_to_val(val),
         m_prev_val(std::move(val))
   {
@@ -1026,6 +1043,7 @@ struct ScopedAssignment
   ScopedAssignment& operator=(ScopedAssignment const&) = delete;
   ScopedAssignment& operator=(ScopedAssignment&&)      = delete;
 
+  // constexpr in c++20
   ~ScopedAssignment() { m_ref_to_val = std::move(m_prev_val); }
 
 private:
