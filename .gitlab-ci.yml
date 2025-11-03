@@ -48,8 +48,6 @@ variables:
   JOB_CMD:
     value: "./scripts/gitlab/build_and_test.sh"
     expand: false
-# Component version to use (using development branch for migration)
-  RADIUSS_SHARED_CI_REF: "woptim/migrate-to-components"
 # Override the pattern describing branches that will skip the "draft PR filter
 # test".  Add protected branches here. See default value in
 # preliminary-ignore-draft-pr.yml.
@@ -81,7 +79,6 @@ include:
       github_project_name: $GITHUB_PROJECT_NAME
       github_project_org: $GITHUB_PROJECT_ORG
       github_token: $GITHUB_TOKEN
-      component_version: $RADIUSS_SHARED_CI_REF
 
   # [Optional] Draft PR filter
   - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/utility-draft-pr-filter@woptim/migrate-to-components
