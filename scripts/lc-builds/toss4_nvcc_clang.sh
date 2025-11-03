@@ -43,10 +43,10 @@ cmake \
   -DBLT_CXX_STD=c++17 \
   -C ../host-configs/lc-builds/toss4/nvcc_clang_X.cmake \
   -DENABLE_CLANGFORMAT=Off \
-  -DCLANGFORMAT_EXECUTABLE=/opt/rocm-5.2.3/llvm/bin/clang-format \
+  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-14.0.6/bin/clang-format \
   -DENABLE_OPENMP=On \
   -DENABLE_CUDA=On \
-  -DRAJA_ENABLE_NV_TOOLS_EXT=OFF \
+  -DRAJA_ENABLE_NVTX=On \
   -DCUDA_TOOLKIT_ROOT_DIR=/usr/tce/packages/cuda/cuda-${COMP_NVCC_VER} \
   -DCMAKE_CUDA_COMPILER=/usr/tce/packages/cuda/cuda-${COMP_NVCC_VER}/bin/nvcc \
   -DCMAKE_CUDA_ARCHITECTURES=${COMP_ARCH} \
@@ -54,9 +54,6 @@ cmake \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \
   "$@" \
   ..
-
-#  -DRAJA_ENABLE_NV_TOOLS_EXT=ON \
-#  -DNVTOOLSEXT_DIR=/usr/tce/packages/cuda/cuda-12.9.1/targets/x86_64-linux/include/nvtx3 \
 
 echo
 echo "***********************************************************************"

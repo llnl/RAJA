@@ -43,9 +43,9 @@ cmake \
   -DBLT_CXX_STD=c++17 \
   -C ../host-configs/lc-builds/toss4/nvcc_gcc_X.cmake \
   -DENABLE_CLANGFORMAT=Off \
-  -DCLANGFORMAT_EXECUTABLE=/opt/rocm-5.2.3/llvm/bin/clang-format \
   -DENABLE_OPENMP=On \
   -DENABLE_CUDA=On \
+  -DRAJA_ENABLE_NVTX=On \
   -DCUDA_TOOLKIT_ROOT_DIR=/usr/tce/packages/cuda/cuda-${COMP_NVCC_VER} \
   -DCMAKE_CUDA_COMPILER=/usr/tce/packages/cuda/cuda-${COMP_NVCC_VER}/bin/nvcc \
   -DCMAKE_CUDA_ARCHITECTURES=${COMP_ARCH} \
