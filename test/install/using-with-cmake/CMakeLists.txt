@@ -5,22 +5,18 @@
 # SPDX-License-Identifier: (BSD-3-Clause)
 ###############################################################################
 
-if (ENABLE_HIP)
-  cmake_minimum_required(VERSION 3.23)
-else()
-  cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.23)
+
+project(using_with_cmake)
+
+if(NOT DEFINED RAJA_DIR OR NOT EXISTS ${RAJA_DIR}/lib/cmake/raja/raja-config.cmake)
+    message(FATAL_ERROR "Missing required 'RAJA_DIR' variable pointing to an installed RAJA")
 endif()
 
- project(using_with_cmake)
+find_package(RAJA REQUIRED
+             NO_DEFAULT_PATH 
+             PATHS ${RAJA_DIR}/lib/cmake/raja)
 
- if(NOT DEFINED RAJA_DIR OR NOT EXISTS ${RAJA_DIR}/lib/cmake/raja/raja-config.cmake)
-     message(FATAL_ERROR "Missing required 'RAJA_DIR' variable pointing to an installed RAJA")
- endif()
-
- find_package(RAJA REQUIRED
-              NO_DEFAULT_PATH 
-              PATHS ${RAJA_DIR}/lib/cmake/raja)
-
- add_executable(using-with-cmake using-with-cmake.cpp)
- target_link_libraries(using-with-cmake RAJA)
+add_executable(using-with-cmake using-with-cmake.cpp)
+target_link_libraries(using-with-cmake RAJA)
  
