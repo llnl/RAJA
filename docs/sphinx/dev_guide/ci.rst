@@ -176,22 +176,23 @@ Briefly, these files play the following roles in GitLab CI testing:
 
   * The `RAJA/.gitlab-ci.yml
     <https://github.com/LLNL/RAJA/tree/develop/.gitlab-ci.yml>`_ file is the
-    top-level file for GitLab CI configuration. It defines variables used
-    throughout the CI configuration such as GitHub project name and
-    organization, service user account name, version information for RADIUSS
-    Shared CI project we are using, and top-level information for triggering
-    build-and-test sub-pipelines.
+    top-level file for GitLab CI configuration. It uses GitLab CI Components
+    (requires GitLab 17.0+) from the RADIUSS Shared CI project. It defines
+    variables used throughout the CI configuration such as GitHub project name
+    and organization, service user account name, and includes components for
+    machine-specific pipelines and utilities.
   * The `RAJA/.uberenv_config.json
     <https://github.com/LLNL/RAJA/tree/develop/.uberenv_config.json>`_ file
     defines information about Spack such as Spack version we are using,
     location of Spack packages, etc.
   * The `RAJA/.gitlab <https://github.com/LLNL/RAJA/tree/develop/.gitlab>`_
-    directory contains several files that connect RAJA GitLab pipelines to
-    shared pipelines defined in the `RADIUSS Shared CI
-    <https://github.com/LLNL/radiuss-shared-ci>`_ project, as well as
-    RAJA-specific jobs and global job customizations that we use, such as job
-    time limits, etc. These files are modified from templates provided by the
-    RADIUSS Shared CI project.
+    directory contains RAJA-specific CI configuration files:
+
+    * ``.gitlab/custom-jobs.yml`` - Job templates for child pipelines, created
+      and customized by the project based on templates from RADIUSS Shared CI.
+    * ``.gitlab/custom-variables.yml`` - Machine-specific allocation variables
+      and build configurations, created and customized by the project based on
+      templates from RADIUSS Shared CI.
   * In particular, `RAJA/.gitlab/jobs
     <https://github.com/LLNL/RAJA/tree/develop/.gitlab/jobs>`_ directory
     contains the files defining RAJA specific jobs per machine. This file is
@@ -211,16 +212,25 @@ steps of the RAJA GitLab CI testing process summarized above.
 Launching CI pipelines (step 2) 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In **step 2** of the diagram above, GitLab launches RAJA test pipelines 
+In **step 2** of the diagram above, GitLab launches RAJA test pipelines
 starting with the content of the ``RAJA/.gitlab-ci.yml`` file described above.
-Most importantly, this file identifies the location of two files 
-`RAJA/.gitlab/subscribed-pipelines.yml <https://github.com/LLNL/RAJA/tree/develop/.gitlab/subscribed-pipelines.yml>`_ and
-`RAJA/.gitlab/custom-jobs-and-variables.yml <https://github.com/LLNL/RAJA/tree/develop/.gitlab/custom-jobs-and-variables.yml>`_.
-The ``subscribed-pipelines.yml`` file connects the RAJA GitLab environment to 
-the platform and pipelines defined in the RADIUSS Shared CI project.
-The ``custom-jobs-and-variables.yml`` file defines how resources are 
-allocated to run test jobs on various LC platforms and common build 
-configuration variants for those platforms
+This file includes GitLab CI Components directly from the RADIUSS Shared CI
+project using the syntax
+``component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/<component-name>@<version>``.
+The available components include:
+
+  * ``base-pipeline`` - Provides core templates for machine availability checks
+    and pipeline orchestration
+  * ``utility-draft-pr-filter`` - Filters out draft pull requests
+  * Machine-specific pipeline components (``dane-pipeline``, ``matrix-pipeline``,
+    ``corona-pipeline``, ``tioga-pipeline``, ``tuolumne-pipeline``,
+    ``lassen-pipeline``) - Define the build and test workflows for each machine
+
+Machine pipelines are defined inline in the ``.gitlab-ci.yml`` file using
+trigger syntax with component includes. Each project creates and customizes
+``.gitlab/custom-variables.yml`` locally (based on templates from RADIUSS
+Shared CI) to define allocation settings for each machine, and
+``.gitlab/custom-jobs.yml`` to define job-specific templates and behaviors
 
 Each job that is run is defined by a Spack spec in one of two places, depending
 on whether it is *shared* with other projects or it is specific to RAJA. The
