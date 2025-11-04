@@ -126,9 +126,11 @@ Changing run parameters
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 The parameters for each system/scheduler on which we run GitLab CI for
-RAJA, such as job time limits, resource allocations, etc. are defined in the 
-``RAJA/.gitlab/custom-jobs-and-variables.yml`` file. This information can
-remain as is, for the most part, and should not be changed unless absolutely 
+RAJA, such as job time limits, resource allocations, etc. are defined in the
+``RAJA/.gitlab/custom-variables.yml`` file, which each project creates and
+customizes for its specific needs. Job-specific templates and customizations
+are defined in ``RAJA/.gitlab/custom-jobs.yml``. This information can
+remain as is, for the most part, and should not be changed unless absolutely
 necessary.
 
 For example, sometimes a particular job will take longer to build and run than
@@ -394,10 +396,13 @@ Specifically,
 
   * The RAJA Performance Suite GitLab CI process is driven by the
     `RAJAPerf/.gitlab-ci.yml
-    <https://github.com/LLNL/RAJAPerf/blob/develop/.gitlab-ci.yml>`_ file.
-  * The ``custom-jobs-and-variables.yml`` and ``subscribed-pipelines.yml``
-    files reside in the `RAJAPerf/.gitlab
-    <https://github.com/LLNL/RAJAPerf/tree/develop/.gitlab>`_ directory.
+    <https://github.com/LLNL/RAJAPerf/blob/develop/.gitlab-ci.yml>`_ file,
+    which uses GitLab CI Components from radiuss-shared-ci.
+  * Each project creates and customizes ``custom-jobs.yml`` and
+    ``custom-variables.yml`` files (based on templates from RADIUSS Shared CI)
+    in the ``.gitlab`` directory. For RAJAPerf, these reside in
+    `RAJAPerf/.gitlab
+    <https://github.com/LLNL/RAJAPerf/tree/develop/.gitlab>`_.
   * The ``build_and_test.sh`` script resides in the `RAJAPerf/scripts/gitlab
     <https://github.com/LLNL/RAJAPerf/tree/develop/scripts/gitlab>`_ directory.
   * The `RAJAPerf/Dockerfile
