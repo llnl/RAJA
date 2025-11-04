@@ -7,9 +7,9 @@
 
 set(RAJA_COMPILER "RAJA_COMPILER_CLANG" CACHE STRING "")
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O2" CACHE STRING "")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g" CACHE STRING "")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
+set(CMAKE_CXX_FLAGS_RELEASE "--gcc-toolchain=/opt/rh/gcc-toolset-13/root/usr -O2" CACHE STRING "")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "--gcc-toolchain=/opt/rh/gcc-toolset-13/root/usr -O2 -g" CACHE STRING "")
+set(CMAKE_CXX_FLAGS_DEBUG "--gcc-toolchain=/opt/rh/gcc-toolset-13/root/usr -O0 -g" CACHE STRING "")
 
 set(HIP_COMMON_OPT_FLAGS )
 set(HIP_COMMON_DEBUG_FLAGS)
