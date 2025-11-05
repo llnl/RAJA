@@ -22,9 +22,9 @@
 #include <functional>
 #include <memory>
 
+#include "RAJA/util/msg_header.hpp"
 #include "RAJA/policy/msg_queue.hpp"
 
-#include "camp/tuple.hpp"
 #include "camp/resource.hpp"
 
 namespace RAJA
@@ -35,36 +35,87 @@ namespace RAJA
 /// class, use the `get_queue` member function, which allows copying.
 ///
 template<typename T>
-class message_bus
-{
-public:
-  using value_type     = T;
-  using size_type      = unsigned long long;
-  using pointer        = value_type*;
-  using const_pointer  = const value_type*;
-  using iterator       = value_type*;
-  using const_iterator = const value_type*;
-  using resource_type  = camp::resources::Resource;
+class message_bus;
 
+///
+/// Specialized case from message bus.
+/// This will store a msg_header and arguments in a char* buffer. These
+/// are later reinterpretted to the correct message arguments.
+/// 
+template<>
+class message_bus<char>
+{
 private:
   // Internal classes
   struct queue
   {
-    using value_type     = T;
+    using value_type     = char;
     using size_type      = unsigned long long;
     using pointer        = value_type*;
     using const_pointer  = const value_type*;
     using iterator       = value_type*;
     using const_iterator = const value_type*;
 
-    size_type m_size {0};
+    size_type m_begin {0};
+    size_type m_end {0};
     size_type m_capacity {0};
     pointer m_data {nullptr};
+  };
+
+  struct msg_iterator
+  {
+    using value_type        = char;
+    using pointer           = value_type*;
+    using reference         = value_type&;
+    using difference_type   = std::ptrdiff_t;
+    using iterator_categroy = std::forward_iterator_tag;
+
+    msg_iterator(pointer ptr) : cur_ptr(ptr) {}
+
+    msg_header& operator*() const 
+    {
+      return *std::launder(reinterpret_cast<msg_header*>(cur_ptr));
+    } 
+
+    msg_header* operator->() const 
+    {
+      return std::launder(reinterpret_cast<msg_header*>(cur_ptr));
+    } 
+
+    msg_iterator& operator++()
+    {
+      msg_header& msg = *std::launder(reinterpret_cast<msg_header*>(cur_ptr));
+      cur_ptr += msg.sz + sizeof(msg_header);
+
+      return (*this); 
+    }
+
+    msg_iterator operator++(int)
+    {
+      msg_iterator temp = *this;
+      ++(*this);
+      return temp;
+    }
+
+    bool operator==(const msg_iterator& other) const
+    {
+      return (cur_ptr == other.cur_ptr); 
+    }
+
+    bool operator!=(const msg_iterator& other) const
+    {
+      return !(*this == other); 
+    }
+
+  private:
+    pointer cur_ptr;
   };
 
   struct resource_deleter
   {
   public:
+    using resource_type  = camp::resources::Resource;
+
     template<typename Resource>
     resource_deleter(Resource res) : m_res {res}
     {}
@@ -72,6 +123,7 @@ private:
     void operator()(queue* ptr)
     {
       m_res.wait();
+      ptr->~queue();
       m_res.deallocate(ptr, camp::resources::MemoryAccess::Pinned);
     }
 
@@ -80,9 +132,19 @@ private:
   };
 
 public:
+  using value_type     = char;
+  using size_type      = unsigned long long;
+  using pointer        = value_type*;
+  using const_pointer  = const value_type*;
+  using iterator       = msg_iterator;
+  using const_iterator = const iterator;
+  using resource_type  = resource_deleter::resource_type;
+
   message_bus()
       : m_res {camp::resources::Host()},
-        m_bus {m_res.allocate<queue>(1, camp::resources::MemoryAccess::Pinned),
+        m_bus {new (m_res.allocate<queue>(
+                   1,
+                   camp::resources::MemoryAccess::Pinned)) queue {},
                resource_deleter {m_res}}
   {}
 
@@ -96,9 +158,9 @@ public:
   {}
 
   template<typename Resource>
-  message_bus(const size_type num_messages, Resource res) : message_bus {res}
+  message_bus(const size_type bus_sz, Resource res) : message_bus {res}
   {
-    reserve(num_messages);
+    reserve(bus_sz);
   }
 
   ~message_bus() { reset(); }
@@ -111,12 +173,12 @@ public:
   message_bus(message_bus&&)            = default;
   message_bus& operator=(message_bus&&) = default;
 
-  void reserve(size_type num_messages)
+  void reserve(size_type bus_sz)
   {
     reset();
     m_bus->m_data = m_res.allocate<value_type>(
-        num_messages, camp::resources::MemoryAccess::Pinned);
-    m_bus->m_capacity = num_messages;
+        bus_sz, camp::resources::MemoryAccess::Pinned);
+    m_bus->m_capacity = bus_sz;
   }
 
   void reset()
@@ -129,7 +191,8 @@ public:
       m_bus->m_data = nullptr;
     }
     m_bus->m_capacity = 0;
-    m_bus->m_size     = 0;
+    m_bus->m_end      = 0;
+    m_bus->m_begin    = 0;
   }
 
   bool has_pending_messages() { return get_num_pending_messages() != 0; }
@@ -137,32 +200,34 @@ public:
   size_type get_num_pending_messages()
   {
     m_res.wait();
-    return std::min(m_bus->m_size, m_bus->m_capacity);
+    return std::min(m_bus->m_end, m_bus->m_capacity);
   }
 
   void clear_messages()
   {
     m_res.wait();
-    m_bus->m_size = 0;
+    m_bus->m_begin = 0;
+    m_bus->m_end   = 0;
   }
 
-  template<typename Policy>
-  RAJA::messages::queue<queue, Policy> get_queue() const noexcept
+  template<typename Policy, typename... Args>
+  auto get_queue(int id) noexcept
   {
-    return RAJA::messages::queue<queue, Policy> {m_bus.get()};
+    return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {id, m_bus.get()};
+  }
+  template<typename Policy, typename... Args>
+  auto get_queue(int id) const noexcept
+  {
+    return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {id, m_bus.get()};
   }
 
-  iterator begin() noexcept { return m_bus->m_data; }
-
-  iterator end() noexcept { return m_bus->m_data + get_num_pending_messages(); }
+  iterator begin() noexcept { return iterator{m_bus->m_data}; }
+  iterator end() noexcept { return iterator{m_bus->m_data + get_num_pending_messages()}; }
 
 private:
   resource_type m_res;
   std::unique_ptr<queue, resource_deleter> m_bus;
 };
-
-template<typename Callable>
-class message_handler;
 
 ///
 /// Provides a way to handle messages from a GPU. This currently
@@ -173,35 +238,34 @@ class message_handler;
 /// Currently, this forces a synchronize prior to calling
 /// the callback function or testing if there are any messages.
 ///
-template<typename R, typename... Args>
-class message_handler<R(Args...)>
+class message_manager
 {
 public:
-  using message       = camp::tuple<std::decay_t<Args>...>;
-  using callback_type = std::function<R(Args...)>;
-  using msg_bus       = message_bus<message>;
+  using callback_type = std::function<void(char*)>;
+  using msg_id        = int;
+  using msg_bus       = message_bus<char>;
 
 public:
   template<typename Resource>
-  message_handler(const std::size_t num_messages, Resource res, callback_type c)
-      : m_bus {num_messages, res},
-        m_callback {c}
+  message_manager(const std::size_t bus_sz, Resource res)
+      : m_bus {bus_sz, res}
   {}
 
-  ~message_handler() = default;
+  ~message_manager() = default;
 
   // Doesn't support copying
-  message_handler(const message_handler&)            = delete;
-  message_handler& operator=(const message_handler&) = delete;
+  message_manager(const message_manager&)            = delete;
+  message_manager& operator=(const message_manager&) = delete;
 
   // Move ctor/operator
-  message_handler(message_handler&&)            = default;
-  message_handler& operator=(message_handler&&) = default;
+  message_manager(message_manager&&)            = default;
+  message_manager& operator=(message_manager&&) = default;
 
-  template<typename Policy>
-  auto get_queue()
+  template <typename Policy, typename Callable>
+  auto get_queue(msg_id id, Callable&& c)
   {
-    return m_bus.template get_queue<Policy>();
+    return get_queue_impl<Policy>(id, std::forward<Callable>(c),
+             std::function{std::forward<Callable>(c)});
   }
 
   void clear() { m_bus.clear_messages(); }
@@ -212,42 +276,41 @@ public:
   {
     if (test_any())
     {
-      for (const auto& msg : m_bus)
+      for (auto& msg : m_bus)
       {
-        camp::apply(m_callback, msg);
+        m_callbacks[msg.id](msg.args);
       }
       clear();
     }
   }
 
-  template<typename Callable>
-  friend auto make_message_handler(std::size_t num_messages, Callable c);
-
-  template<typename Resource, typename Callable>
-  friend auto make_message_handler(std::size_t num_messages,
-                                   Resource r,
-                                   Callable c);
-
 private:
+  template <typename Policy, typename Callable, typename R, typename... Args>
+  auto get_queue_impl(msg_id id, Callable&& c, std::function<R(Args...)>)
+  {
+    m_callbacks[id] = callback_type{[=] (char* msg_args_buf) {
+      msg_args<Args...>& aligned_args = *std::launder(reinterpret_cast<msg_args<Args...>*>(msg_args_buf));
+      camp::apply(c, aligned_args.args);
+      aligned_args.~msg_args<Args...>();
+    }};
+    return m_bus.template get_queue<Policy, Args...>(id);
+  }
+
   msg_bus m_bus;
-  callback_type m_callback;
+  std::map<msg_id, callback_type> m_callbacks;
 };
 
-template<typename Resource, typename R, typename... Args>
-message_handler(const std::size_t, Resource, std::function<R(Args...)>)
-    -> message_handler<R(Args...)>;
-
-template<typename Resource, typename Callable>
-auto make_message_handler(std::size_t num_msgs, Resource r, Callable c)
+template<typename Resource>
+auto make_message_manager(std::size_t bus_sz, Resource r)
 {
-  return RAJA::message_handler(num_msgs, r, std::function(c));
+  return RAJA::message_manager(bus_sz, r);
 }
 
-template<typename ExecPol, typename Callable>
-auto make_message_handler(std::size_t num_msgs, Callable c)
+template<typename ExecPol> 
+auto make_message_manager(std::size_t bus_sz)
 {
   auto r = RAJA::resources::get_default_resource<ExecPol>();
-  return RAJA::make_message_handler(num_msgs, r, std::function(c));
+  return RAJA::message_manager(bus_sz, r);
 }
 
 }  // namespace RAJA

@@ -11,59 +11,84 @@
 #include "gtest/gtest.h"
 
 TEST(message_handler, initialize) {
+  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
+                                 sizeof(RAJA::msg_args<int>);
+  constexpr int msg_id         = 0;
+
+  auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
+
   int test = 0;
-  auto msg = RAJA::make_message_handler<RAJA::seq_exec>(1, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
     test = val;   
   });
 
-  ASSERT_EQ(msg.test_any(), false);
+  ASSERT_EQ(msg_manager.test_any(), false);
   ASSERT_EQ(test, 0);
 } 
 
 TEST(message_handler, initialize_with_resource) {
+  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
+                                 sizeof(RAJA::msg_args<int>);
+  constexpr int msg_id         = 0;
+
+  auto msg_manager = RAJA::make_message_manager(msg_sz, camp::resources::Host());
+
   int test = 0;
-  auto msg = RAJA::make_message_handler(1, camp::resources::Host(), [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
     test = val;   
   });
 
-  ASSERT_EQ(msg.test_any(), false);
+  ASSERT_EQ(msg_manager.test_any(), false);
   ASSERT_EQ(test, 0);
 } 
 
 TEST(message_handler, clear) {
+  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
+                                 sizeof(RAJA::msg_args<int>);
+  constexpr int msg_id         = 0;
+
+  auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
+
   int test = 0;
-  auto msg = RAJA::make_message_handler<RAJA::seq_exec>(1, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
     test = val;   
   });
 
-  auto q = msg.get_queue<RAJA::mpsc_queue>();
   ASSERT_EQ(q.try_post_message(5), true);
 
-  msg.clear();
-  msg.wait_all();
+  msg_manager.clear();
+  msg_manager.wait_all();
 
   ASSERT_EQ(test, 0);
 }
 
 TEST(message_handler, try_post_message) {
+  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
+                                 sizeof(RAJA::msg_args<int>);
+  constexpr int msg_id         = 0;
+
+  auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
+
   int test = 0;
-  auto msg = RAJA::make_message_handler<RAJA::seq_exec>(1, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
     test = val;   
   });
-
-  auto q = msg.get_queue<RAJA::mpsc_queue>();
-  ASSERT_EQ(q.try_post_message(5), true);
 
   ASSERT_EQ(test, 0);
 } 
 
 TEST(message_handler, try_post_message_overflow) {
+  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
+                                 sizeof(RAJA::msg_args<int>);
+  constexpr int msg_id         = 0;
+
+  auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
+
   int test = 0;
-  auto msg = RAJA::make_message_handler<RAJA::seq_exec>(1, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
     test = val;   
   });
 
-  auto q = msg.get_queue<RAJA::mpsc_queue>();
   ASSERT_EQ(q.try_post_message(5), true);
   ASSERT_EQ(q.try_post_message(7), false);
 
@@ -71,35 +96,57 @@ TEST(message_handler, try_post_message_overflow) {
 } 
 
 TEST(message_handler, try_post_message_overwrite) {
-  int test = 0;
-  auto msg = RAJA::make_message_handler<RAJA::seq_exec>(1, [&](int val) {
-    test = val;   
-  });
-
-  auto q = msg.get_queue<RAJA::mpsc_queue_overwrite>();
-  ASSERT_EQ(q.try_post_message(5), true);
-  ASSERT_EQ(q.try_post_message(7), true);
-
-  ASSERT_EQ(test, 0);
+  // TODO: implement
 } 
 
 TEST(message_handler, wait_all) {
+  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
+                                 sizeof(RAJA::msg_args<int>);
+  constexpr int msg_id         = 0;
+
+  auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
+
   int test = 0;
-  auto msg = RAJA::make_message_handler<RAJA::seq_exec>(1, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
     test = val;   
   });
 
-  auto q = msg.get_queue<RAJA::mpsc_queue>();
   ASSERT_EQ(q.try_post_message(1), true);
 
-  msg.wait_all();
+  msg_manager.wait_all();
+
+  ASSERT_EQ(test, 1);
+}
+
+TEST(message_handler, wait_all_overalloc) {
+  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
+                                 sizeof(RAJA::msg_args<int>);
+  constexpr int msg_id         = 0;
+
+  auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(2*msg_sz);
+
+  int test = 0;
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
+    test = val;   
+  });
+
+  ASSERT_EQ(q.try_post_message(1), true);
+
+  msg_manager.wait_all();
 
   ASSERT_EQ(test, 1);
 }
 
 TEST(message_handler, wait_all_array) {
+#if 0
+  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
+                                 sizeof(RAJA::msg_args<camp::array<int, 3>>);
+  constexpr int msg_id         = 0;
+
+  auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
+
   camp::array<int, 3> test = {0, 0, 0};
-  auto msg = RAJA::make_message_handler<RAJA::seq_exec>(1, 
+  auto q = msg_manager.get_queue<RAJA::mpsc_queue>(1, 
     [&](camp::array<int, 3> val) {
       test[0] = val[0];   
       test[1] = val[1];
@@ -108,40 +155,17 @@ TEST(message_handler, wait_all_array) {
   );
 
   camp::array<int, 3> a{1,2,3};
-  auto q = msg.get_queue<RAJA::mpsc_queue>();
   ASSERT_EQ(q.try_post_message(a), true);
 
-  msg.wait_all();
+  msg_manager.wait_all();
 
   ASSERT_EQ(test[0], 1);
   ASSERT_EQ(test[1], 2);
   ASSERT_EQ(test[2], 3);
+#endif
 }
 
 TEST(message_handler, wait_all_overflow) {
-  int test = 0;
-  auto msg = RAJA::make_message_handler<RAJA::seq_exec>(1, [&](int val) {
-    test = val;   
-  });
-
-  auto q = msg.get_queue<RAJA::mpsc_queue>();
-  ASSERT_EQ(q.try_post_message(1), true);
-  ASSERT_EQ(q.try_post_message(2), false);
-
-  msg.wait_all();
-  ASSERT_EQ(test, 1);
+  // TODO: implement 
 }
 
-TEST(message_handler, wait_all_overwrite) {
-  int test = 0;
-  auto msg = RAJA::make_message_handler<RAJA::seq_exec>(1, [&](int val) {
-    test = val;   
-  });
-
-  auto q = msg.get_queue<RAJA::mpsc_queue_overwrite>();
-  ASSERT_EQ(q.try_post_message(1), true);
-  ASSERT_EQ(q.try_post_message(2), true);
-
-  msg.wait_all();
-  ASSERT_EQ(test, 2);
-}

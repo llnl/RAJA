@@ -28,7 +28,7 @@ namespace messages
 ///
 /// This is a view-like queue so that message queues can be copied to kernels.
 ///
-template<typename Container, typename policy>
+template<typename Container, typename Policy, typename Args>
 class queue;
 
 }  // namespace messages
@@ -61,7 +61,6 @@ struct spsc_queue
 }  // namespace messages
 }  // namespace policy
 
-// TODO: support other queue policies
 using spsc_queue           = policy::messages::spsc_queue<false>;
 using spsc_queue_overwrite = policy::messages::spsc_queue<true>;
 using mpsc_queue           = policy::messages::mpsc_queue<false>;
