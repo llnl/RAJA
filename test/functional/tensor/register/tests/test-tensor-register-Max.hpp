@@ -13,11 +13,11 @@
 template <typename REGISTER_TYPE>
 void MaxImpl()
 {
-  using register_t = REGISTER_TYPE;
-  using element_t = typename register_t::element_type;
-  using policy_t = typename register_t::register_policy;
+  using reg_t = REGISTER_TYPE;
+  using element_t = typename reg_t::element_type;
+  using policy_t = typename reg_t::register_policy;
 
-  static constexpr camp::idx_t num_elem = register_t::s_num_elem;
+  static constexpr camp::idx_t num_elem = reg_t::s_num_elem;
 
   // Allocate
 
@@ -53,10 +53,10 @@ void MaxImpl()
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
     // load input vectors
-    register_t x;
+    reg_t x;
     x.load_packed(input0_dptr);
 
-    register_t y;
+    reg_t y;
     y.load_packed(input1_dptr);
 
 
@@ -65,7 +65,7 @@ void MaxImpl()
 
 
     // compute element-wise
-    register_t z = x.vmax(y);
+    reg_t z = x.vmax(y);
     z.store_packed(output1_dptr);
   });
 
@@ -100,7 +100,7 @@ void MaxImpl()
 
     tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
-      register_t x;
+      reg_t x;
       x.load_packed(input0_dptr);
 
       output0_dptr[0] = x.max_n(N);
@@ -111,13 +111,13 @@ void MaxImpl()
 
 
     // compute expected value for reduction
-    element_t expected = RAJA::operators::limits<element_t>::min();
+    element_t expected2 = RAJA::operators::limits<element_t>::min();
     for(camp::idx_t i = 0;i < N;++i){
-      expected = expected < input0_vec[i] ? input0_vec[i] : expected;
+      expected2 = expected2 < input0_vec[i] ? input0_vec[i] : expected2;
     }
 
     // check reduction
-    ASSERT_SCALAR_EQ(expected, output0_vec[0]);
+    ASSERT_SCALAR_EQ(expected2, output0_vec[0]);
 
   }
 

@@ -37,7 +37,6 @@ if ( MSVC )
 endif()
 
 if (RAJA_ENABLE_CUDA)
-  set(CMAKE_CUDA_STANDARD 17)
   set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -restrict --expt-extended-lambda --expt-relaxed-constexpr -Xcudafe \"--display_error_number\"")
 
   if (NOT RAJA_HOST_CONFIG_LOADED)

@@ -204,7 +204,9 @@ template<size_t BLOCK_SIZE,
          typename index_type,
          typename... Args>
 __launch_bounds__(BLOCK_SIZE, BLOCKS_PER_SM) __global__
-    void cuda_unordered_y_block_global(StorageIter iter, Args... args)
+    void cuda_unordered_y_block_global(const RAJA_CUDA_GRID_CONSTANT StorageIter
+                                           iter,
+                                       Args... args)
 {
   const index_type i_loop = blockIdx.y;
   // TODO: cache pointer to value_type in shared memory

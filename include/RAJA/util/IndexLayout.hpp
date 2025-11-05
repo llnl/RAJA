@@ -126,6 +126,28 @@ struct IndexLayout_impl<camp::idx_seq<RangeInts...>, IdxLin, IndexTypes...>
     return sum<IdxLin>(
         (base_.strides[RangeInts] * camp::get<RangeInts>(tuple)(indices))...);
   }
+
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear size() const
+  {
+    return base_.size();
+  }
+
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear size_noproj() const
+  {
+    return base_.size_noproj();
+  }
+
+  template<camp::idx_t DIM>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_stride() const
+  {
+    return base_.template get_dim_stride<DIM>();
+  }
+
+  template<camp::idx_t DIM>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_size() const
+  {
+    return base_.template get_dim_size<DIM>();
+  }
 };
 
 }  // namespace internal
@@ -158,7 +180,8 @@ struct IndexLayout
  *
  */
 template<typename... IndexTypes>
-auto make_index_tuple(IndexTypes... it) -> camp::tuple<IndexTypes...>
+RAJA_INLINE RAJA_HOST_DEVICE auto make_index_tuple(IndexTypes... it)
+    -> camp::tuple<IndexTypes...>
 {
   return camp::tuple<IndexTypes...>(it...);
 }
@@ -170,8 +193,9 @@ auto make_index_tuple(IndexTypes... it) -> camp::tuple<IndexTypes...>
 template<typename IdxLin = Index_type,
          typename... Types,
          typename... IndexTypes>
-auto make_index_layout(camp::tuple<IndexTypes...> index_tuple_in, Types... ns)
-    -> IndexLayout<sizeof...(Types), IdxLin, IndexTypes...>
+RAJA_INLINE RAJA_HOST_DEVICE auto make_index_layout(
+    camp::tuple<IndexTypes...> index_tuple_in,
+    Types... ns) -> IndexLayout<sizeof...(Types), IdxLin, IndexTypes...>
 {
   static_assert(sizeof...(Types) == sizeof...(IndexTypes), "");
   return IndexLayout<sizeof...(Types), IdxLin, IndexTypes...>(index_tuple_in,

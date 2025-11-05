@@ -39,25 +39,39 @@ include(CMakeFindDependencyMacro)
 
 if (NOT TARGET camp)
   set(RAJA_CAMP_DIR "@camp_DIR@")
-  if(NOT camp_DIR) 
-    set(camp_DIR ${RAJA_CAMP_DIR}) 
+  if(NOT camp_DIR)
+    set(camp_DIR ${RAJA_CAMP_DIR})
   endif()
 
-  find_dependency(camp CONFIG NO_DEFAULT_PATH PATHS 
+  find_dependency(camp CONFIG NO_DEFAULT_PATH PATHS
     ${camp_DIR}
     ${camp_DIR}/lib/cmake/camp
     ${RAJA_PACKAGE_PREFIX_DIR}
     ${RAJA_PACKAGE_PREFIX_DIR}/lib/cmake/camp)
 endif ()
 
+if (@RAJA_ENABLE_CALIPER@)
+  if (NOT TARGET caliper)
+    set(RAJA_CALIPER_DIR "@caliper_DIR@")
+    if(NOT caliper_DIR)
+      set(caliper_DIR ${RAJA_CALIPER_DIR})
+    endif()
+    find_dependency(caliper CONFIG NO_DEFAULT_PATH PATHS
+      ${caliper_DIR}
+      ${caliper_DIR}/share/cmake/caliper
+      ${RAJA_PACKAGE_PREFIX_DIR}
+      ${RAJA_PACKAGE_PREFIX_DIR}/share/cmake/caliper)
+  endif ()
+endif ()
+
 if (@RAJA_ENABLE_DESUL_ATOMICS@)
   if (NOT TARGET desul_atomics)
     set(RAJA_DESUL_DIR "@desul_DIR@")
-    if(NOT desul_DIR) 
-      set(desul_DIR ${RAJA_DESUL_DIR}) 
+    if(NOT desul_DIR)
+      set(desul_DIR ${RAJA_DESUL_DIR})
     endif()
 
-    find_dependency(desul_atomics CONFIG NO_DEFAULT_PATH PATHS 
+    find_dependency(desul_atomics CONFIG NO_DEFAULT_PATH PATHS
       ${desul_DIR}
       ${desul_DIR}/lib/cmake/desul
       ${RAJA_PACKAGE_PREFIX_DIR}

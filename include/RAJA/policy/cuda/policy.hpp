@@ -39,11 +39,7 @@
 namespace RAJA
 {
 
-#if defined(RAJA_ENABLE_CLANG_CUDA)
-using cuda_dim_t = uint3;
-#else
-using cuda_dim_t = dim3;
-#endif
+using cuda_dim_t = RAJA_CUDA_DIM_T;
 
 using cuda_dim_member_t = camp::decay<decltype(std::declval<cuda_dim_t>().x)>;
 

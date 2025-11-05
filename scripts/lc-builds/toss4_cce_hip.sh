@@ -53,6 +53,8 @@ cmake \
   -DGPU_TARGETS=${HIP_ARCH} \
   -DAMDGPU_TARGETS=${HIP_ARCH} \
   -DBLT_CXX_STD=c++17 \
+  -DENABLE_CLANGFORMAT=On \
+  -DCLANGFORMAT_EXECUTABLE=/opt/rocm-5.2.3/llvm/bin/clang-format \
   -C "../host-configs/lc-builds/toss4/${HOSTCONFIG}.cmake" \
   -DENABLE_HIP=ON \
   -DENABLE_OPENMP=ON \

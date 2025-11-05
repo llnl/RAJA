@@ -8,7 +8,6 @@
 #
 # List of core reduction types for generating test files.
 # Only does a couple as they are covered in the forall tests
-#set(REDUCETYPES ReduceSum ReduceMin)
 set(REDUCETYPES ReduceSum ReduceMin)
 
 set(DATATYPES CoreReductionDataTypeList)

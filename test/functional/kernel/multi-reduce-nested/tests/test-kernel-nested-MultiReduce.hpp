@@ -173,8 +173,8 @@ KernelMultiReduceNestedTestImpl(const SEGMENTS_TYPE& segments,
       }
 
       RAJA::kernel_resource<EXEC_POLICY>(segments, working_res,
-          [=] RAJA_HOST_DEVICE (IDX_TYPE k, IDX_TYPE j, IDX_TYPE i) {
-        IDX_TYPE ii = (dimi * dimj * k) + (dimi * j) + i;
+          [=] RAJA_HOST_DEVICE (IDX_TYPE K, IDX_TYPE J, IDX_TYPE I) {
+        IDX_TYPE ii = (dimi * dimj * K) + (dimi * J) + I;
         for (IDX_TYPE idx = working_range[ii]; idx < working_range[ii+1]; ++idx) {
           ABSTRACTION::reduce(red[working_bins[idx]],  working_array[idx]);
         }
@@ -212,8 +212,8 @@ KernelMultiReduceNestedTestImpl(const SEGMENTS_TYPE& segments,
       red.reset();
 
       RAJA::kernel_resource<EXEC_POLICY>(segments, working_res,
-          [=] RAJA_HOST_DEVICE (IDX_TYPE k, IDX_TYPE j, IDX_TYPE i) {
-        IDX_TYPE ii = (dimi * dimj * k) + (dimi * j) + i;
+          [=] RAJA_HOST_DEVICE (IDX_TYPE K, IDX_TYPE J, IDX_TYPE I) {
+        IDX_TYPE ii = (dimi * dimj * K) + (dimi * J) + I;
         for (IDX_TYPE idx = working_range[ii]; idx < working_range[ii+1]; ++idx) {
           ABSTRACTION::reduce(red[working_bins[idx]],  working_array[idx]);
         }

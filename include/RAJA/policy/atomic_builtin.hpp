@@ -109,9 +109,21 @@ RAJA_INLINE char builtin_atomicOr(char* acc, char value)
   return _InterlockedOr8(acc, value);
 }
 
+RAJA_INLINE uint8_t builtin_atomicOr(uint8_t* acc, uint8_t value)
+{
+  char return_val = _InterlockedOr8((char*)acc, *((char*)&value));
+  return *(reinterpret_cast<uint8_t*>(&return_val));
+}
+
 RAJA_INLINE short builtin_atomicOr(short* acc, short value)
 {
   return _InterlockedOr16(acc, value);
+}
+
+RAJA_INLINE uint16_t builtin_atomicOr(uint16_t* acc, uint16_t value)
+{
+  short return_val = _InterlockedOr16((short*)acc, *((short*)&value));
+  return *(reinterpret_cast<uint16_t*>(&return_val));
 }
 
 RAJA_INLINE long builtin_atomicOr(long* acc, long value)
@@ -119,11 +131,24 @@ RAJA_INLINE long builtin_atomicOr(long* acc, long value)
   return _InterlockedOr(acc, value);
 }
 
+RAJA_INLINE uint32_t builtin_atomicOr(uint32_t* acc, uint32_t value)
+{
+  long return_val = _InterlockedOr((long*)acc, *((long*)&value));
+  return *(reinterpret_cast<uint32_t*>(&return_val));
+}
+
 #if defined(_WIN64)
 
 RAJA_INLINE long long builtin_atomicOr(long long* acc, long long value)
 {
   return _InterlockedOr64(acc, value);
+}
+
+RAJA_INLINE uint64_t builtin_atomicOr(uint64_t* acc, uint64_t value)
+{
+  long long return_val =
+      _InterlockedOr64((long long*)acc, *((long long*)&value));
+  return *(reinterpret_cast<uint64_t*>(&return_val));
 }
 
 #endif
@@ -146,9 +171,21 @@ RAJA_INLINE char builtin_atomicExchange(char* acc, char value)
   return _InterlockedExchange8(acc, value);
 }
 
+RAJA_INLINE uint8_t builtin_atomicExchange(uint8_t* acc, uint8_t value)
+{
+  char return_val = _InterlockedExchange8((char*)acc, *((char*)&value));
+  return *(reinterpret_cast<uint8_t*>(&return_val));
+}
+
 RAJA_INLINE short builtin_atomicExchange(short* acc, short value)
 {
   return _InterlockedExchange16(acc, value);
+}
+
+RAJA_INLINE uint16_t builtin_atomicExchange(uint16_t* acc, uint16_t value)
+{
+  short return_val = _InterlockedExchange16((short*)acc, *((short*)&value));
+  return *(reinterpret_cast<uint16_t*>(&return_val));
 }
 
 RAJA_INLINE long builtin_atomicExchange(long* acc, long value)
@@ -156,11 +193,24 @@ RAJA_INLINE long builtin_atomicExchange(long* acc, long value)
   return _InterlockedExchange(acc, value);
 }
 
+RAJA_INLINE uint32_t builtin_atomicExchange(uint32_t* acc, uint32_t value)
+{
+  long return_val = _InterlockedExchange((long*)acc, *((long*)&value));
+  return *(reinterpret_cast<uint32_t*>(&return_val));
+}
+
 #if defined(_WIN64)
 
 RAJA_INLINE long long builtin_atomicExchange(long long* acc, long long value)
 {
   return _InterlockedExchange64(acc, value);
+}
+
+RAJA_INLINE uint64_t builtin_atomicExchange(uint64_t* acc, uint64_t value)
+{
+  long long return_val =
+      _InterlockedExchange64((long long*)acc, *((long long*)&value));
+  return *(reinterpret_cast<uint64_t*>(&return_val));
 }
 
 #endif
@@ -184,14 +234,41 @@ RAJA_INLINE char builtin_atomicCAS(char* acc, char compare, char value)
   return _InterlockedCompareExchange8(acc, value, compare);
 }
 
+RAJA_INLINE uint8_t builtin_atomicCAS(uint8_t* acc,
+                                      uint8_t compare,
+                                      uint8_t value)
+{
+  char return_val = _InterlockedCompareExchange8((char*)acc, *((char*)&value),
+                                                 *((char*)&compare));
+  return *(reinterpret_cast<uint8_t*>(&return_val));
+}
+
 RAJA_INLINE short builtin_atomicCAS(short* acc, short compare, short value)
 {
   return _InterlockedCompareExchange16(acc, value, compare);
 }
 
+RAJA_INLINE uint16_t builtin_atomicCAS(uint16_t* acc,
+                                       uint16_t compare,
+                                       uint16_t value)
+{
+  short return_val = _InterlockedCompareExchange16(
+      (short*)acc, *((short*)&value), *((short*)&compare));
+  return *(reinterpret_cast<uint16_t*>(&return_val));
+}
+
 RAJA_INLINE long builtin_atomicCAS(long* acc, long compare, long value)
 {
   return _InterlockedCompareExchange(acc, value, compare);
+}
+
+RAJA_INLINE uint32_t builtin_atomicCAS(uint32_t* acc,
+                                       uint32_t compare,
+                                       uint32_t value)
+{
+  long return_val = _InterlockedCompareExchange((long*)acc, *((long*)&value),
+                                                *((long*)&compare));
+  return *(reinterpret_cast<uint32_t*>(&return_val));
 }
 
 #if defined(_WIN64)
@@ -201,6 +278,15 @@ RAJA_INLINE long long builtin_atomicCAS(long long* acc,
                                         long long value)
 {
   return _InterlockedCompareExchange64(acc, value, compare);
+}
+
+RAJA_INLINE uint64_t builtin_atomicCAS(uint64_t* acc,
+                                       uint64_t compare,
+                                       uint64_t value)
+{
+  long long return_val = _InterlockedCompareExchange64(
+      (long long*)acc, *((long long*)&value), *((long long*)&compare));
+  return *(reinterpret_cast<uint64_t*>(&return_val));
 }
 
 #endif
@@ -214,9 +300,21 @@ RAJA_INLINE char builtin_atomicAdd(char* acc, char value)
   return _InterlockedExchangeAdd8(acc, value);
 }
 
+RAJA_INLINE uint8_t builtin_atomicAdd(uint8_t* acc, uint8_t value)
+{
+  char return_val = _InterlockedExchangeAdd8((char*)acc, *((char*)&value));
+  return *(reinterpret_cast<uint8_t*>(&return_val));
+}
+
 RAJA_INLINE short builtin_atomicAdd(short* acc, short value)
 {
   return _InterlockedExchangeAdd16(acc, value);
+}
+
+RAJA_INLINE uint16_t builtin_atomicAdd(uint16_t* acc, uint16_t value)
+{
+  short return_val = _InterlockedExchangeAdd16((short*)acc, *((short*)&value));
+  return *(reinterpret_cast<uint16_t*>(&return_val));
 }
 
 RAJA_INLINE long builtin_atomicAdd(long* acc, long value)
@@ -224,11 +322,24 @@ RAJA_INLINE long builtin_atomicAdd(long* acc, long value)
   return _InterlockedExchangeAdd(acc, value);
 }
 
+RAJA_INLINE uint32_t builtin_atomicAdd(uint32_t* acc, uint32_t value)
+{
+  long return_val = _InterlockedExchangeAdd((long*)acc, *((long*)&value));
+  return *(reinterpret_cast<uint32_t*>(&return_val));
+}
+
 #if defined(_WIN64)
 
 RAJA_INLINE long long builtin_atomicAdd(long long* acc, long long value)
 {
   return _InterlockedExchangeAdd64(acc, value);
+}
+
+RAJA_INLINE uint64_t builtin_atomicAdd(uint64_t* acc, uint64_t value)
+{
+  long long return_val =
+      _InterlockedExchangeAdd64((long long*)acc, *((long long*)&value));
+  return *(reinterpret_cast<uint64_t*>(&return_val));
 }
 
 #endif
@@ -242,9 +353,23 @@ RAJA_INLINE char builtin_atomicSub(char* acc, char value)
   return _InterlockedExchangeAdd8(acc, -value);
 }
 
+RAJA_INLINE uint8_t builtin_atomicSub(uint8_t* acc, uint8_t value)
+{
+  char neg_value  = -(*((char*)&(value)));
+  char return_val = _InterlockedExchangeAdd8((char*)acc, neg_value);
+  return *(reinterpret_cast<uint8_t*>(&return_val));
+}
+
 RAJA_INLINE short builtin_atomicSub(short* acc, short value)
 {
   return _InterlockedExchangeAdd16(acc, -value);
+}
+
+RAJA_INLINE uint16_t builtin_atomicSub(uint16_t* acc, uint16_t value)
+{
+  short neg_value  = -(*((short*)&(value)));
+  short return_val = _InterlockedExchangeAdd16((short*)acc, neg_value);
+  return *(reinterpret_cast<uint16_t*>(&return_val));
 }
 
 RAJA_INLINE long builtin_atomicSub(long* acc, long value)
@@ -252,11 +377,25 @@ RAJA_INLINE long builtin_atomicSub(long* acc, long value)
   return _InterlockedExchangeAdd(acc, -value);
 }
 
+RAJA_INLINE uint32_t builtin_atomicSub(uint32_t* acc, uint32_t value)
+{
+  long neg_value  = -(*((long*)&(value)));
+  long return_val = _InterlockedExchangeAdd((long*)acc, neg_value);
+  return *(reinterpret_cast<uint32_t*>(&return_val));
+}
+
 #if defined(_WIN64)
 
 RAJA_INLINE long long builtin_atomicSub(long long* acc, long long value)
 {
   return _InterlockedExchangeAdd64(acc, -value);
+}
+
+RAJA_INLINE uint64_t builtin_atomicSub(uint64_t* acc, uint64_t value)
+{
+  long long neg_value  = -(*((long long*)&(value)));
+  long long return_val = _InterlockedExchangeAdd64((long long*)acc, neg_value);
+  return *(reinterpret_cast<uint64_t*>(&return_val));
 }
 
 #endif
@@ -270,9 +409,21 @@ RAJA_INLINE char builtin_atomicAnd(char* acc, char value)
   return _InterlockedAnd8(acc, value);
 }
 
+RAJA_INLINE uint8_t builtin_atomicAnd(uint8_t* acc, uint8_t value)
+{
+  char return_val = _InterlockedAnd8((char*)acc, *((char*)&value));
+  return *(reinterpret_cast<uint8_t*>(&return_val));
+}
+
 RAJA_INLINE short builtin_atomicAnd(short* acc, short value)
 {
   return _InterlockedAnd16(acc, value);
+}
+
+RAJA_INLINE uint16_t builtin_atomicAnd(uint16_t* acc, uint16_t value)
+{
+  short return_val = _InterlockedAnd16((short*)acc, *((short*)&value));
+  return *(reinterpret_cast<uint16_t*>(&return_val));
 }
 
 RAJA_INLINE long builtin_atomicAnd(long* acc, long value)
@@ -280,11 +431,24 @@ RAJA_INLINE long builtin_atomicAnd(long* acc, long value)
   return _InterlockedAnd(acc, value);
 }
 
+RAJA_INLINE uint32_t builtin_atomicAnd(uint32_t* acc, uint32_t value)
+{
+  long return_val = _InterlockedAnd((long*)acc, *((long*)&value));
+  return *(reinterpret_cast<uint32_t*>(&return_val));
+}
+
 #if defined(_WIN64)
 
 RAJA_INLINE long long builtin_atomicAnd(long long* acc, long long value)
 {
   return _InterlockedAnd64(acc, value);
+}
+
+RAJA_INLINE uint64_t builtin_atomicAnd(uint64_t* acc, uint64_t value)
+{
+  long long return_val =
+      _InterlockedAnd64((long long*)acc, *((long long*)&value));
+  return *(reinterpret_cast<uint64_t*>(&return_val));
 }
 
 #endif
@@ -298,14 +462,32 @@ RAJA_INLINE char builtin_atomicXor(char* acc, char value)
   return _InterlockedXor8(acc, value);
 }
 
+RAJA_INLINE uint8_t builtin_atomicXor(uint8_t* acc, uint8_t value)
+{
+  char return_val = _InterlockedXor8((char*)acc, *((char*)&value));
+  return *(reinterpret_cast<uint8_t*>(&return_val));
+}
+
 RAJA_INLINE short builtin_atomicXor(short* acc, short value)
 {
   return _InterlockedXor16(acc, value);
 }
 
+RAJA_INLINE uint16_t builtin_atomicXor(uint16_t* acc, uint16_t value)
+{
+  short return_val = _InterlockedXor16((short*)acc, *((short*)&value));
+  return *(reinterpret_cast<uint16_t*>(&return_val));
+}
+
 RAJA_INLINE long builtin_atomicXor(long* acc, long value)
 {
   return _InterlockedXor(acc, value);
+}
+
+RAJA_INLINE uint32_t builtin_atomicXor(uint32_t* acc, uint32_t value)
+{
+  long return_val = _InterlockedXor((long*)acc, *((long*)&value));
+  return *(reinterpret_cast<uint32_t*>(&return_val));
 }
 
 #if defined(_WIN64)
@@ -315,10 +497,18 @@ RAJA_INLINE long long builtin_atomicXor(long long* acc, long long value)
   return _InterlockedXor64(acc, value);
 }
 
+RAJA_INLINE uint64_t builtin_atomicXor(uint64_t* acc, uint64_t value)
+{
+  long long return_val =
+      _InterlockedXor64((long long*)acc, *((long long*)&value));
+  return *(reinterpret_cast<uint64_t*>(&return_val));
+}
+
 #endif
 
 
-#else  // RAJA_COMPILER_MSVC
+#else  // else clause from if defined(RAJA_COMPILER_MSVC) ||
+       // ((defined(_WIN32) || defined(_WIN64)) && defined(__INTEL_COMPILER))
 
 
 /*!

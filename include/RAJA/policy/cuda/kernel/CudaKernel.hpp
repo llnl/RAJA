@@ -211,7 +211,7 @@ namespace internal
  * CUDA global function for launching CudaKernel policies
  */
 template<typename Data, typename Exec>
-__global__ void CudaKernelLauncher(Data data)
+__global__ void CudaKernelLauncher(const RAJA_CUDA_GRID_CONSTANT Data data)
 {
 
   using data_t        = camp::decay<Data>;
@@ -232,7 +232,7 @@ __global__ void CudaKernelLauncher(Data data)
  */
 template<int BlockSize, int BlocksPerSM, typename Data, typename Exec>
 __launch_bounds__(BlockSize, BlocksPerSM) __global__
-    void CudaKernelLauncherFixed(Data data)
+    void CudaKernelLauncherFixed(const RAJA_CUDA_GRID_CONSTANT Data data)
 {
 
   using data_t        = camp::decay<Data>;

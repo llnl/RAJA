@@ -20,7 +20,7 @@ struct Index2D {
    RAJA::Index_type idx, idy;
    constexpr Index2D() : idx(-1), idy(-1) {}
    constexpr Index2D(RAJA::Index_type init) : idx(init), idy(init) {}
-   constexpr Index2D(RAJA::Index_type idx, RAJA::Index_type idy) : idx(idx), idy(idy) {}
+   constexpr Index2D(RAJA::Index_type ix, RAJA::Index_type iy) : idx(ix), idy(iy) {}
    template<typename T>
    RAJA_HOST_DEVICE void operator=(T rhs) { idx = rhs; idx = rhs; }
 };

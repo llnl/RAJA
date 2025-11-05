@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <cfloat>
 #include <cstdint>
+#include <ostream>
 #include <type_traits>
 #if defined(RAJA_CHECK_LIMITS)
 #include <limits>
@@ -369,6 +370,11 @@ struct plus : public detail::binary_function<Arg1, Arg2, Ret>,
   }
 
   RAJA_HOST_DEVICE static constexpr Ret identity() { return Ret {0}; }
+
+  friend inline std::ostream& operator<<(std::ostream& str, plus const&)
+  {
+    return str << "RAJA::operators::plus{}";
+  }
 };
 
 template<typename Ret, typename Arg1 = Ret, typename Arg2 = Arg1>
@@ -378,6 +384,11 @@ struct minus : public detail::binary_function<Arg1, Arg2, Ret>
                                             const Arg2& rhs) const
   {
     return Ret {lhs} - rhs;
+  }
+
+  friend inline std::ostream& operator<<(std::ostream& str, minus const&)
+  {
+    return str << "RAJA::operators::minus{}";
   }
 };
 
@@ -393,6 +404,11 @@ struct multiplies : public detail::binary_function<Arg1, Arg2, Ret>,
   }
 
   RAJA_HOST_DEVICE static constexpr Ret identity() { return Ret {1}; }
+
+  friend inline std::ostream& operator<<(std::ostream& str, multiplies const&)
+  {
+    return str << "RAJA::operators::multiplies{}";
+  }
 };
 
 template<typename Ret, typename Arg1 = Ret, typename Arg2 = Arg1>
@@ -403,6 +419,11 @@ struct divides : public detail::binary_function<Arg1, Arg2, Ret>
   {
     return Ret {lhs} / rhs;
   }
+
+  friend inline std::ostream& operator<<(std::ostream& str, divides const&)
+  {
+    return str << "RAJA::operators::divides{}";
+  }
 };
 
 template<typename Ret, typename Arg1 = Ret, typename Arg2 = Arg1>
@@ -412,6 +433,11 @@ struct modulus : public detail::binary_function<Arg1, Arg2, Ret>
                                             const Arg2& rhs) const
   {
     return Ret {lhs} % rhs;
+  }
+
+  friend inline std::ostream& operator<<(std::ostream& str, modulus const&)
+  {
+    return str << "RAJA::operators::modulus{}";
   }
 };
 
@@ -428,6 +454,11 @@ struct logical_and : public detail::comparison_function<Arg1, Arg2>,
   }
 
   RAJA_HOST_DEVICE static constexpr bool identity() { return true; }
+
+  friend inline std::ostream& operator<<(std::ostream& str, logical_and const&)
+  {
+    return str << "RAJA::operators::logical_and{}";
+  }
 };
 
 template<typename Arg1, typename Arg2 = Arg1>
@@ -441,6 +472,11 @@ struct logical_or : public detail::comparison_function<Arg1, Arg2>,
   }
 
   RAJA_HOST_DEVICE static constexpr bool identity() { return false; }
+
+  friend inline std::ostream& operator<<(std::ostream& str, logical_or const&)
+  {
+    return str << "RAJA::operators::logical_or{}";
+  }
 };
 
 template<typename T>
@@ -449,6 +485,11 @@ struct logical_not : public detail::unary_function<T, bool>
   RAJA_HOST_DEVICE constexpr bool operator()(const T& lhs) const
   {
     return !lhs;
+  }
+
+  friend inline std::ostream& operator<<(std::ostream& str, logical_not const&)
+  {
+    return str << "RAJA::operators::logical_not{}";
   }
 };
 
@@ -464,6 +505,11 @@ struct bit_or : public detail::binary_function<Arg1, Arg2, Ret>
   }
 
   RAJA_HOST_DEVICE static constexpr Ret identity() { return Ret {0}; }
+
+  friend inline std::ostream& operator<<(std::ostream& str, bit_or const&)
+  {
+    return str << "RAJA::operators::bit_or{}";
+  }
 };
 
 template<typename Ret, typename Arg1 = Ret, typename Arg2 = Arg1>
@@ -476,6 +522,11 @@ struct bit_and : public detail::binary_function<Arg1, Arg2, Ret>
   }
 
   RAJA_HOST_DEVICE static constexpr Ret identity() { return ~Ret {0}; }
+
+  friend inline std::ostream& operator<<(std::ostream& str, bit_and const&)
+  {
+    return str << "RAJA::operators::bit_and{}";
+  }
 };
 
 template<typename Ret, typename Arg1 = Ret, typename Arg2 = Arg1>
@@ -485,6 +536,11 @@ struct bit_xor : public detail::binary_function<Arg1, Arg2, Ret>
                                             const Arg2& rhs) const
   {
     return lhs ^ rhs;
+  }
+
+  friend inline std::ostream& operator<<(std::ostream& str, bit_xor const&)
+  {
+    return str << "RAJA::operators::bit_xor{}";
   }
 };
 
@@ -509,6 +565,11 @@ struct minimum : public detail::binary_function<Arg1, Arg2, Ret>,
   {
     return limits<Ret>::max();
   }
+
+  friend inline std::ostream& operator<<(std::ostream& str, minimum const&)
+  {
+    return str << "RAJA::operators::minimum{}";
+  }
 };
 
 template<typename Ret, typename Arg1 = Ret, typename Arg2 = Arg1>
@@ -525,6 +586,11 @@ struct maximum : public detail::binary_function<Arg1, Arg2, Ret>,
   {
     return limits<Ret>::min();
   }
+
+  friend inline std::ostream& operator<<(std::ostream& str, maximum const&)
+  {
+    return str << "RAJA::operators::maximum{}";
+  }
 };
 
 // Logical Comparison
@@ -537,6 +603,11 @@ struct equal_to : public detail::comparison_function<Arg1, Arg2>
   {
     return lhs == rhs;
   }
+
+  friend inline std::ostream& operator<<(std::ostream& str, equal_to const&)
+  {
+    return str << "RAJA::operators::equal_to{}";
+  }
 };
 
 template<typename Arg1, typename Arg2 = Arg1>
@@ -546,6 +617,11 @@ struct not_equal_to : public detail::comparison_function<Arg1, Arg2>
                                              const Arg2& rhs) const
   {
     return lhs != rhs;
+  }
+
+  friend inline std::ostream& operator<<(std::ostream& str, not_equal_to const&)
+  {
+    return str << "RAJA::operators::not_equal_to{}";
   }
 };
 
@@ -557,6 +633,11 @@ struct greater : public detail::comparison_function<Arg1, Arg2>
   {
     return lhs > rhs;
   }
+
+  friend inline std::ostream& operator<<(std::ostream& str, greater const&)
+  {
+    return str << "RAJA::operators::greater{}";
+  }
 };
 
 template<typename Arg1, typename Arg2 = Arg1>
@@ -566,6 +647,11 @@ struct less : public detail::comparison_function<Arg1, Arg2>
                                              const Arg2& rhs) const
   {
     return lhs < rhs;
+  }
+
+  friend inline std::ostream& operator<<(std::ostream& str, less const&)
+  {
+    return str << "RAJA::operators::less{}";
   }
 };
 
@@ -577,6 +663,12 @@ struct greater_equal : public detail::comparison_function<Arg1, Arg2>
   {
     return lhs >= rhs;
   }
+
+  friend inline std::ostream& operator<<(std::ostream& str,
+                                         greater_equal const&)
+  {
+    return str << "RAJA::operators::greater_equal{}";
+  }
 };
 
 template<typename Arg1, typename Arg2 = Arg1>
@@ -586,6 +678,11 @@ struct less_equal : public detail::comparison_function<Arg1, Arg2>
                                              const Arg2& rhs) const
   {
     return lhs <= rhs;
+  }
+
+  friend inline std::ostream& operator<<(std::ostream& str, less_equal const&)
+  {
+    return str << "RAJA::operators::less_equal{}";
   }
 };
 
@@ -598,6 +695,11 @@ struct identity : public detail::unary_function<Orig, Ret>
   {
     return lhs;
   }
+
+  friend inline std::ostream& operator<<(std::ostream& str, identity const&)
+  {
+    return str << "RAJA::operators::identity{}";
+  }
 };
 
 template<typename T, typename U>
@@ -608,6 +710,11 @@ struct project1st : public detail::binary_function<T, U, T>
   {
     return lhs;
   }
+
+  friend inline std::ostream& operator<<(std::ostream& str, project1st const&)
+  {
+    return str << "RAJA::operators::project1st{}";
+  }
 };
 
 template<typename T, typename U = T>
@@ -617,6 +724,11 @@ struct project2nd : public detail::binary_function<T, U, U>
                                           const U& rhs) const
   {
     return rhs;
+  }
+
+  friend inline std::ostream& operator<<(std::ostream& str, project2nd const&)
+  {
+    return str << "RAJA::operators::project2nd{}";
   }
 };
 
@@ -642,7 +754,12 @@ struct safe_plus
                   Arg2,
                   typename types::larger<
                       typename types::larger_of<Arg1, Arg2>::type>::type>
-{};
+{
+  friend inline std::ostream& operator<<(std::ostream& str, safe_plus const&)
+  {
+    return str << "RAJA::operators::safe_plus{}";
+  }
+};
 
 }  // namespace operators
 

@@ -59,14 +59,6 @@ For example,
 
 will create a build space for the clang 10.0.1 compiler on a TOSS3 LC machine. 
 
-.. code-block:: bash
-
-  $ ./scripts/lc-builds/blueos_nvcc_gcc.sh 10.2.89 70 8.3.1
-
-will create a build space for a blueos LC machine using GNU 8.3.1 as the host 
-compiler and nvcc 10.2.89 as the GPU device compiler targeting CUDA compute 
-architecture 'sm_70'. 
-
 .. note:: Each RAJA build script for an LC machine does the following:
 
             * Create a build space directory named for the specified build 
@@ -86,8 +78,8 @@ After running a build script, one then goes into that directory and runs
 
 .. code-block:: bash
 
-  $ ./scripts/lc-builds/blueos_nvcc_gcc.sh 10.2.89 sm_70 8.3.1
-  $ cd build_lc_blueos-nvcc10.2.89-70-gcc8.3.1
+  $ ./scripts/lc-builds/toss4_amdclang.sh 6.4.1 gfx942
+  $ cd build_lc_toss4-amdclang-6.4.1-gfx942
   $ make -j
   $ make test
 
@@ -241,13 +233,13 @@ Reproducing Docker Builds Locally
 ==================================
 
 RAJA uses Docker container images that it shares with other LLNL GitHub projects
-for Azure and GitHub Actions CI testing (see :ref:`azure_ci-label` for more 
-information). We use Azure Pipelines and GitHub Actions for Linux, Windows,
-and MacOS builds for build environments and compiler versions that
-are not available on LLNL LC machines. 
+for GitHub Actions CI testing (see :ref:`github_actions_ci-label` for more 
+information). We use GitHub Actions for Linux, Windows, and MacOS builds for 
+build environments and compiler versions that are not available on LLNL LC 
+machines. 
 
-You can reproduce Azure and GitHub Actions builds locally for testing using
-the following steps if you have access to Docker.
+You can reproduce GitHub Actions builds locally for testing using the 
+following steps if you have access to Docker.
 
   #. Run the command to build a local Docker image::
 

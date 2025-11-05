@@ -46,6 +46,8 @@ cmake \
   -C ${RAJA_HOSTCONFIG} \
   -DENABLE_OPENMP=Off \
   -DENABLE_CUDA=Off \
+  -DENABLE_CLANGFORMAT=On \
+  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-14.0.6/bin/clang-format \
   -DRAJA_ENABLE_TARGET_OPENMP=Off \
   -DENABLE_ALL_WARNINGS=Off \
   -DRAJA_ENABLE_SYCL=On \
@@ -60,7 +62,7 @@ cmake \
 
 echo
 echo "***********************************************************************"
-echo 
+echo
 echo "cd into directory build_${BUILD_SUFFIX}_${USER} and run make to build RAJA"
 echo
 echo "To run RAJA tests, exercises, etc. with the build, please do the following:"

@@ -126,18 +126,18 @@ stable(resources::Cuda cuda_res,
   // Determine temporary device storage requirements
   void* d_temp_storage      = nullptr;
   size_t temp_storage_bytes = 0;
-  cudaErrchk(::cub::DeviceRadixSort::SortKeys(d_temp_storage,
-                                              temp_storage_bytes, d_keys, len,
-                                              begin_bit, end_bit, stream));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortKeys,
+                                 d_temp_storage, temp_storage_bytes, d_keys,
+                                 len, begin_bit, end_bit, stream);
   // Allocate temporary storage
   d_temp_storage =
       cuda::device_mempool_type::getInstance().malloc<unsigned char>(
           temp_storage_bytes);
 
   // Run
-  cudaErrchk(::cub::DeviceRadixSort::SortKeys(d_temp_storage,
-                                              temp_storage_bytes, d_keys, len,
-                                              begin_bit, end_bit, stream));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortKeys,
+                                 d_temp_storage, temp_storage_bytes, d_keys,
+                                 len, begin_bit, end_bit, stream);
   // Free temporary storage
   cuda::device_mempool_type::getInstance().free(d_temp_storage);
 
@@ -145,8 +145,8 @@ stable(resources::Cuda cuda_res,
   {
 
     // copy
-    cudaErrchk(cudaMemcpyAsync(begin, d_out, len * sizeof(R), cudaMemcpyDefault,
-                               stream));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, begin, d_out,
+                                   len * sizeof(R), cudaMemcpyDefault, stream);
   }
 
   cuda::device_mempool_type::getInstance().free(d_out);
@@ -196,18 +196,18 @@ stable(resources::Cuda cuda_res,
   // Determine temporary device storage requirements
   void* d_temp_storage      = nullptr;
   size_t temp_storage_bytes = 0;
-  cudaErrchk(::cub::DeviceRadixSort::SortKeysDescending(
-      d_temp_storage, temp_storage_bytes, d_keys, len, begin_bit, end_bit,
-      stream));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortKeysDescending,
+                                 d_temp_storage, temp_storage_bytes, d_keys,
+                                 len, begin_bit, end_bit, stream);
   // Allocate temporary storage
   d_temp_storage =
       cuda::device_mempool_type::getInstance().malloc<unsigned char>(
           temp_storage_bytes);
 
   // Run
-  cudaErrchk(::cub::DeviceRadixSort::SortKeysDescending(
-      d_temp_storage, temp_storage_bytes, d_keys, len, begin_bit, end_bit,
-      stream));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortKeysDescending,
+                                 d_temp_storage, temp_storage_bytes, d_keys,
+                                 len, begin_bit, end_bit, stream);
   // Free temporary storage
   cuda::device_mempool_type::getInstance().free(d_temp_storage);
 
@@ -215,8 +215,8 @@ stable(resources::Cuda cuda_res,
   {
 
     // copy
-    cudaErrchk(cudaMemcpyAsync(begin, d_out, len * sizeof(R), cudaMemcpyDefault,
-                               stream));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, begin, d_out,
+                                   len * sizeof(R), cudaMemcpyDefault, stream);
   }
 
   cuda::device_mempool_type::getInstance().free(d_out);
@@ -420,18 +420,18 @@ stable_pairs(resources::Cuda cuda_res,
   // Determine temporary device storage requirements
   void* d_temp_storage      = nullptr;
   size_t temp_storage_bytes = 0;
-  cudaErrchk(::cub::DeviceRadixSort::SortPairs(
-      d_temp_storage, temp_storage_bytes, d_keys, d_vals, len, begin_bit,
-      end_bit, stream));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairs,
+                                 d_temp_storage, temp_storage_bytes, d_keys,
+                                 d_vals, len, begin_bit, end_bit, stream);
   // Allocate temporary storage
   d_temp_storage =
       cuda::device_mempool_type::getInstance().malloc<unsigned char>(
           temp_storage_bytes);
 
   // Run
-  cudaErrchk(::cub::DeviceRadixSort::SortPairs(
-      d_temp_storage, temp_storage_bytes, d_keys, d_vals, len, begin_bit,
-      end_bit, stream));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairs,
+                                 d_temp_storage, temp_storage_bytes, d_keys,
+                                 d_vals, len, begin_bit, end_bit, stream);
   // Free temporary storage
   cuda::device_mempool_type::getInstance().free(d_temp_storage);
 
@@ -439,15 +439,15 @@ stable_pairs(resources::Cuda cuda_res,
   {
 
     // copy keys
-    cudaErrchk(cudaMemcpyAsync(keys_begin, d_keys_out, len * sizeof(K),
-                               cudaMemcpyDefault, stream));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, keys_begin, d_keys_out,
+                                   len * sizeof(K), cudaMemcpyDefault, stream);
   }
   if (d_vals.Current() == d_vals_out)
   {
 
     // copy vals
-    cudaErrchk(cudaMemcpyAsync(vals_begin, d_vals_out, len * sizeof(V),
-                               cudaMemcpyDefault, stream));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, vals_begin, d_vals_out,
+                                   len * sizeof(V), cudaMemcpyDefault, stream);
   }
 
   cuda::device_mempool_type::getInstance().free(d_keys_out);
@@ -505,18 +505,18 @@ stable_pairs(resources::Cuda cuda_res,
   // Determine temporary device storage requirements
   void* d_temp_storage      = nullptr;
   size_t temp_storage_bytes = 0;
-  cudaErrchk(::cub::DeviceRadixSort::SortPairsDescending(
-      d_temp_storage, temp_storage_bytes, d_keys, d_vals, len, begin_bit,
-      end_bit, stream));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairsDescending,
+                                 d_temp_storage, temp_storage_bytes, d_keys,
+                                 d_vals, len, begin_bit, end_bit, stream);
   // Allocate temporary storage
   d_temp_storage =
       cuda::device_mempool_type::getInstance().malloc<unsigned char>(
           temp_storage_bytes);
 
   // Run
-  cudaErrchk(::cub::DeviceRadixSort::SortPairsDescending(
-      d_temp_storage, temp_storage_bytes, d_keys, d_vals, len, begin_bit,
-      end_bit, stream));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairsDescending,
+                                 d_temp_storage, temp_storage_bytes, d_keys,
+                                 d_vals, len, begin_bit, end_bit, stream);
   // Free temporary storage
   cuda::device_mempool_type::getInstance().free(d_temp_storage);
 
@@ -524,15 +524,15 @@ stable_pairs(resources::Cuda cuda_res,
   {
 
     // copy keys
-    cudaErrchk(cudaMemcpyAsync(keys_begin, d_keys_out, len * sizeof(K),
-                               cudaMemcpyDefault, stream));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, keys_begin, d_keys_out,
+                                   len * sizeof(K), cudaMemcpyDefault, stream);
   }
   if (d_vals.Current() == d_vals_out)
   {
 
     // copy vals
-    cudaErrchk(cudaMemcpyAsync(vals_begin, d_vals_out, len * sizeof(V),
-                               cudaMemcpyDefault, stream));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, vals_begin, d_vals_out,
+                                   len * sizeof(V), cudaMemcpyDefault, stream);
   }
 
   cuda::device_mempool_type::getInstance().free(d_keys_out);

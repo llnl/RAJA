@@ -116,7 +116,7 @@ The following tables describe which variables set RAJA options and
 and their default settings. 
 
 .. note:: Items marked with a double asterisk (**) indicate variables that 
-          are supported directly in CMake and are also supported in RAJA as
+          are supported directly in BLT/CMake and are also supported in RAJA as
           CMake dependent options, for finer-grained configuration control.
           The RAJA CMake dependent variable form adds the prefix ``RAJA_``.
 
@@ -202,7 +202,7 @@ Other programming model specific compilation options are also available:
       **ENABLE_CLANG_CUDA                      Off (if on, ENABLE_CUDA 
                                                must be on too!)
       RAJA_ENABLE_EXTERNAL_CUB                 Off
-      RAJA_ENABLE_NV_TOOLS_EXT                 Off
+      RAJA_ENABLE_NVTX                         Off
       RAJA_ENABLE_EXTERNAL_ROCPRIM             Off
       RAJA_ENABLE_ROCTX                        Off
       ======================================   =================================

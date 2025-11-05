@@ -32,17 +32,17 @@ cce_18_0_1:
 # ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
 # describe the spec here.
 
-cce_17_0_1:
+cce_19_0_0:
   variables:
-    SPEC: "${PROJECT_TIOGA_VARIANTS} %cce@=17.0.1 ${PROJECT_TIOGA_DEPS}"
+    SPEC: "${PROJECT_TIOGA_VARIANTS} %cce@=19.0.0 ${PROJECT_TIOGA_DEPS}"
   extends: .job_on_tioga
 
-rocmcc_6_3_1_hip_desul_atomics:
+rocmcc_6_4_1_hip_desul_atomics:
   variables:
-    SPEC: "~shared +rocm ~openmp +desul +tests amdgpu_target=gfx90a %rocmcc@=6.3.1 ^hip@6.3.1"
+    SPEC: "~shared +rocm ~openmp +desul +tests amdgpu_target=gfx90a %llvm-amdgpu@=6.4.1 ^hip@6.4.1"
   extends: .job_on_tioga
 
-rocmcc_6_3_1_hip_openmp:
+rocmcc_6_4_1_hip_openmp:
   variables:
-    SPEC: "~shared +rocm +openmp +omptask +tests amdgpu_target=gfx90a %rocmcc@=6.3.1 ^hip@6.3.1"
+    SPEC: "~shared +rocm +openmp +omptask +tests amdgpu_target=gfx90a %llvm-amdgpu@=6.4.1 ^hip@6.4.1"
   extends: .job_on_tioga

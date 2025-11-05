@@ -10,6 +10,7 @@
 
 #include "RAJA/util/RuntimePluginLoader.hpp"
 #include "RAJA/util/KokkosPluginLoader.hpp"
+#include "RAJA/util/CaliperPlugin.hpp"
 
 namespace
 {
@@ -21,6 +22,9 @@ struct pluginLinker
   {
     (void)RAJA::util::linkRuntimePluginLoader();
     (void)RAJA::util::linkKokkosPluginLoader();
+#if defined(RAJA_ENABLE_CALIPER)
+    (void)RAJA::util::linkCaliperPlugin();
+#endif
   }
 } pluginLinker;
 }  // namespace anonymous_RAJA

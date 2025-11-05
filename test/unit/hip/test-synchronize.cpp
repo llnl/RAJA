@@ -16,7 +16,7 @@ GPU_TEST(SynchronizeUnitTest, HIP)
 
   double* managed_data = (double*) malloc(sizeof(double)*50);
   double* d_managed_data;
-  hipMalloc(&d_managed_data, sizeof(double)*50);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, &d_managed_data, sizeof(double)*50);
 
   RAJA::forall<RAJA::hip_exec_async<256>>( RAJA::RangeSegment(0, 50),
     [=] RAJA_HOST_DEVICE(RAJA::Index_type i) {
@@ -24,7 +24,7 @@ GPU_TEST(SynchronizeUnitTest, HIP)
   });
   RAJA::synchronize<RAJA::hip_synchronize>();
 
-  hipMemcpy(managed_data, d_managed_data, sizeof(double)*50, hipMemcpyDeviceToHost);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, managed_data, d_managed_data, sizeof(double)*50, hipMemcpyDeviceToHost);
 
   RAJA::forall<RAJA::seq_exec>( RAJA::RangeSegment(0, 50),
     [=](RAJA::Index_type i) {
@@ -32,5 +32,5 @@ GPU_TEST(SynchronizeUnitTest, HIP)
   });
 
   free(managed_data);
-  hipFree(d_managed_data);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, d_managed_data);
 }

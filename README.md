@@ -9,7 +9,6 @@
 
 # <img src="/share/raja/logo/RAJA_LOGO_Color.png?raw=true" width="128" valign="middle" alt="RAJA"/>
 
-[![Azure Pipeline Build Status](https://dev.azure.com/LLNL-RAJA/RAJA/_apis/build/status/LLNL.RAJA?branchName=develop)](https://dev.azure.com/LLNL-RAJA/RAJA/_build/latest?definitionId=1&branchName=develop)
 [![Documentation Status](https://readthedocs.org/projects/raja/badge/?version=develop)](https://raja.readthedocs.io/en/develop/?badge=develop)
 [![Coverage](https://img.shields.io/codecov/c/github/LLNL/RAJA/develop.svg)](https://codecov.io/gh/LLNL/RAJA)
 [![Join the chat at https://gitter.im/llnl/raja](https://badges.gitter.im/llnl/raja.svg)](https://gitter.im/llnl/raja?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -113,8 +112,6 @@ Communicate with Us
 
 The most effective way to communicate with the core RAJA development team
 is via our mailing list: **raja-dev@llnl.gov** 
-
-You are also welcome to join our [RAJA Google Group](https://groups.google.com/forum/#!forum/raja-users).
 
 If you have questions, find a bug, or have ideas about expanding the
 functionality or applicability of RAJA and are interested in contributing

@@ -13,14 +13,14 @@
 template <typename REGISTER_TYPE>
 void ScatterImpl()
 {
-  using register_t = REGISTER_TYPE;
-  using element_t = typename register_t::element_type;
-  using policy_t = typename register_t::register_policy;
+  using reg_t = REGISTER_TYPE;
+  using element_t = typename reg_t::element_type;
+  using policy_t = typename reg_t::register_policy;
 
-  static constexpr camp::idx_t num_elem = register_t::s_num_elem;
+  static constexpr camp::idx_t num_elem = reg_t::s_num_elem;
 
   // get the integer indexing types
-  using int_register_t = typename register_t::int_vector_type;
+  using int_register_t = typename reg_t::int_vector_type;
   using index_t = typename int_register_t::element_type;
 
   // Allocate
@@ -69,7 +69,7 @@ void ScatterImpl()
     int_register_t idx;
     idx.load_packed(input1_dptr);
 
-    register_t a;
+    reg_t a;
     a.load_packed(input0_dptr);
 
     a.scatter(output0_dptr, idx);
@@ -111,7 +111,7 @@ void ScatterImpl()
       int_register_t idx;
       idx.load_packed(input1_dptr);
 
-      register_t a;
+      reg_t a;
       a.load_packed(input0_dptr);
 
       a.scatter_n(output0_dptr, idx, N);

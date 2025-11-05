@@ -71,7 +71,7 @@
                   GTEST_TEST_CLASS_NAME_(test_case_name, test_name)>());     \
       return 0;                                                              \
     }                                                                        \
-    static int gtest_registering_dummy_ GTEST_ATTRIBUTE_UNUSED_;             \
+    static int gtest_registering_dummy_;                                     \
     GTEST_DISALLOW_COPY_AND_ASSIGN_(GTEST_TEST_CLASS_NAME_(test_case_name,   \
                                                            test_name));      \
   };                                                                         \
@@ -91,7 +91,7 @@
        public:                                                          \
         void TestBody() override;                                       \
       };                                                                \
-      static bool gtest_##TestName##_defined_ GTEST_ATTRIBUTE_UNUSED_ = \
+      static bool gtest_##TestName##_defined_ =                         \
           GTEST_TYPED_TEST_SUITE_P_STATE_(SuiteName).AddTestName(       \
               __FILE__, __LINE__, GTEST_STRINGIFY_(SuiteName),          \
               GTEST_STRINGIFY_(TestName));                              \

@@ -209,7 +209,7 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv[]))
   std::cout << "\n Running RAJA HIP reductions...\n";
 
   int* d_a = memoryManager::allocate_gpu<int>(N);
-  hipErrchk(hipMemcpy( d_a, a, N * sizeof(int), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_a, a, N * sizeof(int), hipMemcpyHostToDevice);
 
   // _reductions_raja_hippolicy_start
   using EXEC_POL3   = RAJA::hip_exec<HIP_BLOCK_SIZE>;

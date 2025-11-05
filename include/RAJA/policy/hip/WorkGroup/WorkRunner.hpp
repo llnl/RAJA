@@ -197,7 +197,7 @@ template<size_t BLOCK_SIZE,
          typename index_type,
          typename... Args>
 __launch_bounds__(BLOCK_SIZE, 1) __global__
-    void hip_unordered_y_block_global(StorageIter iter, Args... args)
+    void hip_unordered_y_block_global(const StorageIter iter, Args... args)
 {
   const index_type i_loop = blockIdx.y;
   // TODO: cache pointer to value_type in shared memory

@@ -203,8 +203,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   int *d_b = memoryManager::allocate_gpu<int>(N);
   int *d_c = memoryManager::allocate_gpu<int>(N);
 
-  cudaErrchk(cudaMemcpy( d_a, a, N * sizeof(int), cudaMemcpyHostToDevice ));
-  cudaErrchk(cudaMemcpy( d_b, b, N * sizeof(int), cudaMemcpyHostToDevice ));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, d_a, a, N * sizeof(int), cudaMemcpyHostToDevice);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, d_b, b, N * sizeof(int), cudaMemcpyHostToDevice);
 
   ///
   /// TODO...
@@ -216,7 +216,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   ///                 top of the file if you want to use it here. 
   ///
 
-  cudaErrchk(cudaMemcpy( c, d_c, N * sizeof(int), cudaMemcpyDeviceToHost ));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, c, d_c, N * sizeof(int), cudaMemcpyDeviceToHost);
 
   checkResult(c, c_ref, N);
 //printArray(c, N);
@@ -241,7 +241,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   ///                 top of the file if you want to use it here. 
   ///
 
-  cudaErrchk(cudaMemcpy( c, d_c, N * sizeof(int), cudaMemcpyDeviceToHost ));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, c, d_c, N * sizeof(int), cudaMemcpyDeviceToHost);
 
   checkResult(c, c_ref, N);
 //printResult(c, N);
@@ -258,8 +258,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   int *d_b = memoryManager::allocate_gpu<int>(N);
   int *d_c = memoryManager::allocate_gpu<int>(N);
 
-  hipErrchk(hipMemcpy( d_a, a, N * sizeof(int), hipMemcpyHostToDevice ));
-  hipErrchk(hipMemcpy( d_b, b, N * sizeof(int), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_a, a, N * sizeof(int), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_b, b, N * sizeof(int), hipMemcpyHostToDevice);
 
   ///
   /// TODO...
@@ -271,7 +271,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   ///                 top of the file if you want to use it here. 
   ///
 
-  hipErrchk(hipMemcpy( c, d_c, N * sizeof(int), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, c, d_c, N * sizeof(int), hipMemcpyDeviceToHost);
 
   checkResult(c, c_ref, N);
 //printResult(c, N);

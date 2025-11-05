@@ -118,20 +118,6 @@ template<typename... T>
 RAJA_HOST_DEVICE RAJA_INLINE void RAJA_UNUSED_VAR(T&&...) noexcept
 {}
 
-/*!
- * \def RAJA_STRINGIFY_HELPER(x)
- *
- * Helper for RAJA_STRINGIFY_MACRO
- */
-#define RAJA_STRINGIFY_HELPER(x) #x
-
-/*!
- * \def RAJA_STRINGIFY_MACRO(x)
- *
- * Used in static_assert macros to print values of defines
- */
-#define RAJA_STRINGIFY_MACRO(x) RAJA_STRINGIFY_HELPER(x)
-
 #define RAJA_DIVIDE_CEILING_INT(dividend, divisor)                             \
   (((dividend) + (divisor)-1) / (divisor))
 

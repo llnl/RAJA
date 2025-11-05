@@ -196,8 +196,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   int *d_b = memoryManager::allocate_gpu<int>(N);
   int *d_c = memoryManager::allocate_gpu<int>(N);
 
-  cudaErrchk(cudaMemcpy( d_a, a, N * sizeof(int), cudaMemcpyHostToDevice ));
-  cudaErrchk(cudaMemcpy( d_b, b, N * sizeof(int), cudaMemcpyHostToDevice ));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, d_a, a, N * sizeof(int), cudaMemcpyHostToDevice);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, d_b, b, N * sizeof(int), cudaMemcpyHostToDevice);
 
   // _rajacuda_vector_add_start
   RAJA::forall< RAJA::cuda_exec<CUDA_BLOCK_SIZE> >(RAJA::TypedRangeSegment<int>(0, N), 
@@ -206,7 +206,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   });
   // _rajacuda_vector_add_end
 
-  cudaErrchk(cudaMemcpy( c, d_c, N * sizeof(int), cudaMemcpyDeviceToHost ));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, c, d_c, N * sizeof(int), cudaMemcpyDeviceToHost);
 
   checkResult(c, c_ref, N);
 //printArray(c, N);
@@ -229,7 +229,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   });    
   // _rajacuda_explicit_vector_add_end
 
-  cudaErrchk(cudaMemcpy( c, d_c, N * sizeof(int), cudaMemcpyDeviceToHost ));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, c, d_c, N * sizeof(int), cudaMemcpyDeviceToHost);
 
   checkResult(c, c_ref, N);
 //printResult(c, N);
@@ -246,8 +246,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   int *d_b = memoryManager::allocate_gpu<int>(N);
   int *d_c = memoryManager::allocate_gpu<int>(N);
 
-  hipErrchk(hipMemcpy( d_a, a, N * sizeof(int), hipMemcpyHostToDevice ));
-  hipErrchk(hipMemcpy( d_b, b, N * sizeof(int), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_a, a, N * sizeof(int), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_b, b, N * sizeof(int), hipMemcpyHostToDevice);
 
   // _rajahip_vector_add_start
   RAJA::forall<RAJA::hip_exec<HIP_BLOCK_SIZE>>(RAJA::TypedRangeSegment<int>(0, N),
@@ -256,7 +256,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   });
   // _rajahip_vector_add_end
 
-  hipErrchk(hipMemcpy( c, d_c, N * sizeof(int), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, c, d_c, N * sizeof(int), hipMemcpyDeviceToHost);
 
   checkResult(c, c_ref, N);
 //printResult(c, N);

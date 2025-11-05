@@ -93,11 +93,11 @@ are described in other tables below.
  ========================================= ============== ======================
  OpenMP CPU Full Policies                  Works with     Brief description
  ========================================= ============== ======================
- omp_parallel_for_exec                     forall,        Same as applying
-                                           kernel (For),  'omp parallel for'
-                                           launch (loop), pragma
-                                           scan,
-                                           sort
+ omp_parallel_for_exec                     forall,        Same as applying the
+                                           kernel (For),  OpenMP pragma
+                                           launch (loop), 'omp parallel for
+                                           scan,          schedule(auto)'
+                                           sort                                
  omp_parallel_for_static_exec<ChunkSize>   forall,        Same as applying
                                            kernel (For)   'omp parallel for
                                                           schedule(static,
@@ -133,7 +133,7 @@ kernel will execute in parallel inside the region.
  ====================================== ============= ==========================
  omp_launch_t                           launch        Creates an OpenMP parallel
                                                       region. Same as applying
-                                                      'omp parallel' pragma
+                                                      'omp parallel' pragma.
  omp_parallel_exec<InnerPolicy>         forall,       Creates OpenMP parallel
                                         kernel (For), region and requires an
                                         scan          **InnerPolicy**. Same as
@@ -150,8 +150,10 @@ a template argument as described above.
  ====================================== ============= ==========================
  omp_for_exec                           forall,       Parallel execution within
                                         kernel (For), existing parallel
-                                        launch (loop) region; i.e.,
-                                        scan          apply 'omp for' pragma.
+                                        launch (loop) region, specifically
+                                        scan          apply the OpenMP pragma
+                                                      'omp for schedule (auto)'
+                                                      pragma.
  omp_for_static_exec<ChunkSize>         forall,       Same as applying
                                         kernel (For)  'omp for
                                                       schedule(static,
@@ -190,7 +192,7 @@ a template argument as described above.
           is optional. If not provided, the default chunk size that the OpenMP
           implementation applies will be used.
 
-.. note:: As noted above, RAJA inner OpenMP policies must only be used within an
+.. note:: As noted above, RAJA inner OpenMP policies must be used within an
           **existing** parallel region to work properly. Embedding an inner
           policy inside the RAJA outer ``omp_parallel_exec`` will allow you to
           apply the OpenMP execution prescription specified by the policies to
@@ -220,14 +222,16 @@ a template argument as described above.
           kernels. The first uses the ``RAJA::omp_for_nowait_static_exec< >``
           policy, meaning that no thread synchronization is needed after the
           kernel. Thus, threads can start working on the second kernel while
-          others are still working on the first kernel. I general, this will
-          be correct when the segments used in the two kernels are the same,
-          each loop is data parallel, and static scheduling is applied to both
-          loops. The second kernel uses the ``RAJA::omp_for_static_exec``
-          policy, which means that all threads will complete before the kernel
-          exits. In this example, this is not really needed since there is no
-          more code to execute in the parallel region and there is an implicit
-          barrier at the end of it.
+          others are still working on the first kernel. In general, this will
+          be correct when the iteration segments used in the two kernels are
+          the same and each kernel is data parallel. Static scheduling is
+          applied to both kernels. The second kernel uses the 
+          ``RAJA::omp_for_static_exec`` policy (NO 'no wait' clause), which
+          means that all threads will complete before the kernel exits. In
+          this example, this is not really needed since there is no
+          more code to execute in the parallel region and the 
+          ``RAJA::omp_parallel_region`` construct applies a barrier
+          at the end of it.
 
 GPU Policies for CUDA and HIP
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1065,7 +1069,7 @@ Atomic Policy                 Loop Policies Brief description
 ============================= ============= ========================================
 seq_atomic                    seq_exec,     Atomic operation performed in a
                                             non-parallel (sequential) kernel.
-omp_atomic                    any OpenMP    Atomic operation in OpenM kernel.P
+omp_atomic                    any OpenMP    Atomic operation in OpenMP
                               policy        multithreading or target kernel;
                                             i.e., apply ``omp atomic`` pragma.
 cuda/hip/sycl_atomic          any           Atomic operation performed in a
@@ -1157,12 +1161,12 @@ RAJA kernel policies are constructed using a combination of *Statements* and
 *Statement Lists*. A RAJA Statement is an action, such as execute a loop,
 invoke a lambda, set a thread barrier, etc. A StatementList is an ordered list
 of Statements that are composed in the order that they appear in the kernel
-policy to construct a kernel. A Statement may contain an enclosed StatmentList. Thus, a ``RAJA::KernelPolicy`` type is really just a StatementList.
+policy to construct a kernel. A Statement may contain an enclosed StatementList. Thus, a ``RAJA::KernelPolicy`` type is really just a StatementList.
 
 The main Statement types provided by RAJA are ``RAJA::statement::For`` and
 ``RAJA::statement::Lambda``, that we discussed in
 :ref:`loop_elements-kernel-label`.
-A ``RAJA::statement::For<ArgID, ExecPolicy, Enclosed Satements>`` type
+A ``RAJA::statement::For<ArgID, ExecPolicy, Enclosed Statements>`` type
 indicates a for-loop structure. The ``ArgID`` parameter is an integral constant
 that identifies the position of the iteration space in the iteration space
 tuple passed to the ``RAJA::kernel`` method to be used for the loop. The
@@ -1217,7 +1221,7 @@ the ``RAJA::kernel`` examples in :ref:`tutorial-label`.
            in a kernel for local arrays, thread local variables, tiling
            information, etc.
 
-Several RAJA statements can be specialized with auxilliary types, which are
+Several RAJA statements can be specialized with auxiliary types, which are
 described in :ref:`auxilliarypolicy_label`.
 
 The following list contains the most commonly used statement types.
@@ -1297,12 +1301,12 @@ RAJA provides some statement types that apply in specific kernel scenarios.
 Auxilliary Types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following list summarizes auxilliary types used in the above statements. These
+The following list summarizes auxiliary types used in the above statements. These
 types live in the ``RAJA`` namespace.
 
   * ``tile_fixed<TileSize>`` tile policy argument to a ``Tile`` or ``TileTCount`` statement; partitions loop iterations into tiles of a fixed size specified by ``TileSize``. This statement type can be used as the ``TilePolicy`` template parameter in the ``Tile`` statements above.
 
-  * ``tile_dynamic<ParamIdx>`` TilePolicy argument to a Tile or TileTCount statement; partitions loop iterations into tiles of a size specified by a ``TileSize{}`` positional parameter argument. This statement type can be used as the ``TilePolicy`` template paramter in the ``Tile`` statements above.
+  * ``tile_dynamic<ParamIdx>`` TilePolicy argument to a Tile or TileTCount statement; partitions loop iterations into tiles of a size specified by a ``TileSize{}`` positional parameter argument. This statement type can be used as the ``TilePolicy`` template parameter in the ``Tile`` statements above.
 
   * ``Segs<...>`` argument to a Lambda statement; used to specify which segments in a tuple will be used as lambda arguments.
 

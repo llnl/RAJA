@@ -503,9 +503,9 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
   std::memset(C, 0, N*N * sizeof(double));
 
-  hipErrchk(hipMemcpy( d_A, A, N * N * sizeof(double), hipMemcpyHostToDevice ));
-  hipErrchk(hipMemcpy( d_B, B, N * N * sizeof(double), hipMemcpyHostToDevice ));
-  hipErrchk(hipMemcpy( d_C, C, N * N * sizeof(double), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_A, A, N * N * sizeof(double), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_B, B, N * N * sizeof(double), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_C, C, N * N * sizeof(double), hipMemcpyHostToDevice);
 
   RAJA::View<double, RAJA::Layout<DIM>> d_Aview(d_A, N, N);
   RAJA::View<double, RAJA::Layout<DIM>> d_Bview(d_B, N, N);
@@ -540,7 +540,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
      });
   });
 
-  hipErrchk(hipMemcpy( C, d_C, N * N * sizeof(double), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, C, d_C, N * N * sizeof(double), hipMemcpyDeviceToHost);
   checkResult<double>(Cview, N);
 //printResult<double>(Cview, N);
 
@@ -550,7 +550,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   std::cout << "\n Running HIP tiled mat-mult ...\n";
 
   std::memset(C, 0, N*N * sizeof(double));
-  hipErrchk(hipMemcpy( d_C, C, N * N * sizeof(double), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_C, C, N * N * sizeof(double), hipMemcpyHostToDevice);
 
   //
   // This example takes the extents of the col and row loops and breaks
@@ -586,7 +586,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
         });
    });
 
-  hipErrchk(hipMemcpy( C, d_C, N * N * sizeof(double), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, C, d_C, N * N * sizeof(double), hipMemcpyDeviceToHost);
   checkResult<double>(Cview, N);
 //printResult<double>(Cview, N);
 #endif // if RAJA_ENABLE_HIP
@@ -693,7 +693,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   // Launch CUDA kernel defined near the top of this file.
   matMultKernel<<<griddim, blockdim>>>(N, C, A, B);
 
-  cudaDeviceSynchronize();
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetLastError);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 
   checkResult<double>(Cview, N);
 
@@ -703,7 +704,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
   sharedMatMultKernel<<<griddim, blockdim>>>(N, C, A, B);
 
-  cudaDeviceSynchronize();
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetLastError);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 
   checkResult<double>(Cview, N);
 //printResult<double>(Cview, N);
@@ -725,28 +727,30 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 //printf("griddim = (%d,%d), blockdim = (%d,%d)\n", (int)griddim.x, (int)griddim.y, (int)blockdim.x, (int)blockdim.y);
 
   std::memset(C, 0, N*N * sizeof(double));
-  hipErrchk(hipMemcpy( d_C, C, N * N * sizeof(double), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_C, C, N * N * sizeof(double), hipMemcpyHostToDevice);
 
   // Launch HIP kernel defined near the top of this file.
   hipLaunchKernelGGL((matMultKernel), dim3(griddim), dim3(blockdim), 0, 0, N, d_C, d_A, d_B);
 
-  hipDeviceSynchronize();
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipGetLastError);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
 
-  hipErrchk(hipMemcpy( C, d_C, N * N * sizeof(double), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, C, d_C, N * N * sizeof(double), hipMemcpyDeviceToHost);
   checkResult<double>(Cview, N);
 //printResult<double>(Cview, N);
 
   std::cout << "\n Running HIP tiled mat-mult with shared memory (no RAJA)...\n";
 
   std::memset(C, 0, N*N * sizeof(double));
-  hipErrchk(hipMemcpy( d_C, C, N * N * sizeof(double), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_C, C, N * N * sizeof(double), hipMemcpyHostToDevice);
 
   // Launch HIP kernel defined near the top of this file.
   hipLaunchKernelGGL((sharedMatMultKernel), dim3(griddim), dim3(blockdim), 0, 0, N, d_C, d_A, d_B);
 
-  hipDeviceSynchronize();
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipGetLastError);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
 
-  hipErrchk(hipMemcpy( C, d_C, N * N * sizeof(double), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, C, d_C, N * N * sizeof(double), hipMemcpyDeviceToHost);
   checkResult<double>(Cview, N);
 //printResult<double>(Cview, N);
 

@@ -36,10 +36,10 @@ void ForallResourceRangeStrideSegmentTestImpl(INDEX_TYPE first, INDEX_TYPE last,
   working_res.memcpy(working_array, test_array, sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
   working_res.wait();
 
-  INDEX_TYPE idx = first;
+  INDEX_TYPE index = first;
   for (INDEX_TYPE i = INDEX_TYPE(0); i < N; ++i) {
-    test_array[ RAJA::stripIndexType((idx-first)/stride) ] = idx;
-    idx += stride; 
+    test_array[ RAJA::stripIndexType((index-first)/stride) ] = index;
+    index += stride; 
   }
 
   RAJA::forall<EXEC_POLICY>(working_res, r1, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {

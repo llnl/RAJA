@@ -44,10 +44,10 @@ void LaunchRangeStrideSegmentTestImpl(INDEX_TYPE first, INDEX_TYPE last,
 
   if ( RAJA::stripIndexType(N) > 0 ) {
 
-    INDEX_TYPE idx = first;
+    INDEX_TYPE index = first;
     for (INDEX_TYPE i = INDEX_TYPE(0); i < N; ++i) {
-      test_array[ RAJA::stripIndexType((idx-first)/stride) ] = idx;
-      idx += stride;
+      test_array[ RAJA::stripIndexType((index-first)/stride) ] = index;
+      index += stride;
     }
 
     RAJA::launch<LAUNCH_POLICY>(

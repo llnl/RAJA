@@ -309,7 +309,7 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv[]))
   int* d_input  = memoryManager::allocate_gpu<int>(totCells * sizeof(int));
   int* d_output = memoryManager::allocate_gpu<int>(totCells * sizeof(int));
 
-  hipErrchk(hipMemcpy( d_input, input, totCells * sizeof(int), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_input, input, totCells * sizeof(int), hipMemcpyHostToDevice);
 
   RAJA::View<int, RAJA::OffsetLayout<DIM, int>> d_inputView (d_input, layout);
   RAJA::View<int, RAJA::OffsetLayout<DIM, int>> d_outputView(d_output, layout);
@@ -338,7 +338,7 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv[]))
                                  });
   // _offsetlayout_rajahip_end
 
-  hipErrchk(hipMemcpy( output, d_output, totCells * sizeof(int), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, output, d_output, totCells * sizeof(int), hipMemcpyDeviceToHost);
 
   std::cout << "\noutput lattice:\n"; 
   printLattice(output, totCellsInRow, totCellsInCol);

@@ -59,10 +59,10 @@ void operator()(
     ASSERT_EQ(pool.num_loops(), (size_t)0);
     ASSERT_EQ(pool.storage_bytes(), (size_t)0);
 
-    for (size_t i = 0; i < rep; ++i) {
+    for (size_t ii = 0; ii < rep; ++ii) {
 
       {
-        for (size_t i = 0; i < num; ++i) {
+        for (size_t jj = 0; jj < num; ++jj) {
           pool.enqueue(range_segment{0, 1}, callable{&success, IndexType(0)});
         }
 

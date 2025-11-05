@@ -234,13 +234,15 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv))
 #if defined(RAJA_ENABLE_CUDA)
   if(select_cpu_or_gpu == RAJA::ExecPlace::DEVICE)
     gpuKernel<<<griddim, blockdim>>>();
-  cudaDeviceSynchronize();
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetLastError);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 #endif
 
 #if defined(RAJA_ENABLE_HIP)
   if(select_cpu_or_gpu == RAJA::ExecPlace::DEVICE)
     hipLaunchKernelGGL((gpuKernel), dim3(griddim), dim3(blockdim), 0, 0);
-  hipDeviceSynchronize();
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipGetLastError);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
 #endif
 
 #else

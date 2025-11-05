@@ -131,9 +131,9 @@ GPU_TYPED_TEST_P( AtomicCUDAIncDecUnitTest, CUDAIncDecs )
 
   T * inc_result = nullptr;
   T * dec_result = nullptr;
-  cudaErrchk(cudaMallocManaged((void **)&inc_result, sizeof(T)));
-  cudaErrchk(cudaMallocManaged((void **)&dec_result, sizeof(T)));
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, (void **)&inc_result, sizeof(T));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, (void **)&dec_result, sizeof(T));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 
   // test "wrapping" increment
   // See: http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#atomicinc
@@ -141,18 +141,18 @@ GPU_TYPED_TEST_P( AtomicCUDAIncDecUnitTest, CUDAIncDecs )
   inc_result[0] = (T)0;
   // oldval < val, increment oldval
   forone<test_cuda>( [=] __device__ () {RAJA::atomicInc<AtomicPolicy>(inc_result, (T)1);} );
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
   ASSERT_EQ( inc_result[0], (T)1 );
 
   // oldval == val, wrap to 0
   forone<test_cuda>( [=] __device__ () {RAJA::atomicInc<AtomicPolicy>(inc_result, (T)1);} );
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
   ASSERT_EQ( inc_result[0], (T)0 );
 
   // oldval > val, wrap to 0
   inc_result[0] = (T)2;
   forone<test_cuda>( [=] __device__ () {RAJA::atomicInc<AtomicPolicy>(inc_result, (T)1);} );
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
   ASSERT_EQ( inc_result[0], (T)0 );
 
   // test "wrapping" decrement
@@ -161,23 +161,23 @@ GPU_TYPED_TEST_P( AtomicCUDAIncDecUnitTest, CUDAIncDecs )
   dec_result[0] = (T)1;
   // oldval > 0, decrement oldval
   forone<test_cuda>( [=] __device__ () {RAJA::atomicDec<AtomicPolicy>(dec_result, (T)1);} );
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
   ASSERT_EQ( dec_result[0], (T)0 );
 
   // oldval == 0, wrap to val
   forone<test_cuda>( [=] __device__ () {RAJA::atomicDec<AtomicPolicy>(dec_result, (T)1);} );
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
   ASSERT_EQ( dec_result[0], (T)1 );
 
   // oldval > val, wrap to val
   dec_result[0] = (T)3;
   forone<test_cuda>( [=] __device__ () {RAJA::atomicDec<AtomicPolicy>(dec_result, (T)1);} );
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
   ASSERT_EQ( dec_result[0], (T)1 );
 
-  cudaErrchk(cudaDeviceSynchronize());
-  cudaErrchk(cudaFree(inc_result));
-  cudaErrchk(cudaFree(dec_result));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, inc_result);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, dec_result);
 }
 
 REGISTER_TYPED_TEST_SUITE_P( AtomicCUDAIncDecUnitTest,

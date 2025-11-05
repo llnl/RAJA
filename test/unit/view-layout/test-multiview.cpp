@@ -40,8 +40,66 @@ TYPED_TEST(MultiViewUnitTest, Constructors)
   a1[0] = val;
   a2[0] = val;
 
+  TypeParam   b1[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  TypeParam   b2[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+  TypeParam const * data2[2];
+
+  data2[0] = b1;
+  data2[1] = b2;
+
+  b1[0] = val + 1;
+  b2[0] = val + 1;
+
   RAJA::MultiView<TypeParam, layout> view(data, layout(10));
   ASSERT_EQ( val, view(0,0) );
+
+  /*
+   * Should be able to construct a const MultiView from const array of arrays
+   */
+  RAJA::MultiView<TypeParam const, layout> view_from_const(data2, layout(10));
+  ASSERT_EQ( val + 1, view_from_const(0,0) );
+
+  /*
+   * TODO: Should be able to construct a const MultiView from non-const array of arrays. For now, this becomes an ambiguous call to constructor error.
+   */
+  //RAJA::MultiView<TypeParam const, layout> constview_from_nonconst(data, layout(10));
+  //ASSERT_EQ( val, constview_from_nonconst(0,0) );
+
+  /*
+   * Should be able to construct an empty const MultiView
+   */
+  RAJA::MultiView<TypeParam const, layout> view_from_const2;
+  ASSERT_EQ( nullptr, view_from_const2.get_data() );
+  ASSERT_EQ( 1, (view_from_const2.get_layout()).size() );
+
+  /*
+   * Should be able to set data and layout in an empty const MultiView
+   */
+  view_from_const2.set_layout(layout(10));
+  view_from_const2.set_data(data2);
+  ASSERT_EQ( 10, (view_from_const2.get_layout()).size() );
+  ASSERT_EQ( val + 1, view_from_const2(0,0) );
+
+  /*
+   * Should be able to set non-const data in a const MultiView
+   */
+  view_from_const2.set_data(data);
+  ASSERT_EQ( val, view_from_const2(0,0) );
+
+  /*
+   * Should be able to construct an empty MultiView
+   */
+  RAJA::MultiView<TypeParam, layout> view_empty;
+  ASSERT_EQ( nullptr, view_empty.get_data() );
+  ASSERT_EQ( 1, (view_empty.get_layout()).size() );
+
+  /*
+   * Should be able to set data and layout in an empty MultiView
+   */
+  view_empty.set_layout(layout(10));
+  view_empty.set_data(data);
+  ASSERT_EQ( 10, (view_empty.get_layout()).size() );
+  ASSERT_EQ( val, view_empty(0,0) );
 
   /*
    * Should be able to construct a non-const MultiView from a non-const MultiView

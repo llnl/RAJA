@@ -181,7 +181,7 @@ static_assert(RAJA_HAS_SOME_CXX14,
 #cmakedefine RAJA_ENABLE_VECTORIZATION
 
 #cmakedefine RAJA_ENABLE_CALIPER
-#cmakedefine RAJA_ENABLE_NV_TOOLS_EXT
+#cmakedefine RAJA_ENABLE_NVTX
 #cmakedefine RAJA_ENABLE_ROCTX
 
 #define RAJA_CUDA_WARPSIZE 32
@@ -238,8 +238,8 @@ static_assert(RAJA_HAS_SOME_CXX14,
 #define RAJA_COMPILER_GNU
 #endif
 
-#define RAJA_STRINGIFY(x) RAJA_DO_STRINGIFY(x)
-#define RAJA_DO_STRINGIFY(x) #x
+#define RAJA_STRINGIFY_HELPER(...) #__VA_ARGS__
+#define RAJA_STRINGIFY(...) RAJA_STRINGIFY_HELPER(__VA_ARGS__)
 #ifdef _WIN32
 #define RAJA_PRAGMA(x) __pragma(x)
 #else
@@ -249,19 +249,19 @@ static_assert(RAJA_HAS_SOME_CXX14,
 
 /* NOTE: Below we define RAJA_MAX_ALIGN for each compiler, currently it is set as 16 bytes
 for all cases, except MSVC. Previously this was set by alignof(std::max_align_t) which, in Clang,
-is based on the sizeof(long double). This causes an in inconsistency as CUDA/HIP long doubles 
+is based on the sizeof(long double). This causes an in inconsistency as CUDA/HIP long doubles
 are demoted to doubles causing alignof(std::max_align_t) to return 8 bytes on the device and
-16 bytes on the host. We therefore set a standard size and ensure validity through a 
+16 bytes on the host. We therefore set a standard size and ensure validity through a
 static_assert.
 */
 
 namespace RAJA {
 
-// Enables OpenMP 5.1 atomics for min/max operations  
+// Enables OpenMP 5.1 atomics for min/max operations
 #if defined(RAJA_ENABLE_OPENMP) && _OPENMP >= 202011 && defined(RAJA_ALLOW_OPENMP_5_1_ATOMICS)
 #define RAJA_USE_OPENMP_5_1_ATOMICS
 #endif
-  
+
 #if defined(RAJA_ENABLE_OPENMP) && !defined(__HIP_DEVICE_COMPILE__)
 #if defined(_OPENMP)
 #if (_OPENMP >= 200805)
@@ -276,10 +276,25 @@ namespace RAJA {
 
 #if defined(RAJA_ENABLE_CUDA) && defined(__CUDACC__)
 #define RAJA_CUDA_ACTIVE
+
+#if defined(RAJA_ENABLE_CLANG_CUDA)
+#define RAJA_CUDA_DIM_T uint3
+#else
+#define RAJA_CUDA_DIM_T dim3
+#endif
+
+#if ( (__CUDACC_VER_MAJOR__ > 11) || (__CUDACC_VER_MAJOR__ == 11 && __CUDACC_VER_MINOR__ >= 7) ) && !defined(RAJA_ENABLE_CLANG_CUDA)
+// only supported by nvcc on sm_70 and above
+#define RAJA_CUDA_GRID_CONSTANT __grid_constant__
+#else
+#define RAJA_CUDA_GRID_CONSTANT
+#endif
 #endif // RAJA_ENABLE_CUDA && __CUDACC__
 
 #if defined(RAJA_ENABLE_HIP) && defined(__HIPCC__)
 #define RAJA_HIP_ACTIVE
+
+#define RAJA_HIP_DIM_T dim3
 
 #include <hip/hip_version.h>
 #if (HIP_VERSION_MAJOR > 5) || \
@@ -564,7 +579,7 @@ const int DATA_ALIGN = @RAJA_DATA_ALIGN@;
 
 #endif
 
-static_assert(RAJA_MAX_ALIGN >= alignof(std::max_align_t) && (RAJA_MAX_ALIGN/alignof(std::max_align_t))*alignof(std::max_align_t) == RAJA_MAX_ALIGN, 
+static_assert(RAJA_MAX_ALIGN >= alignof(std::max_align_t) && (RAJA_MAX_ALIGN/alignof(std::max_align_t))*alignof(std::max_align_t) == RAJA_MAX_ALIGN,
         "Inconsistent RAJA_MAX_ALIGN size");
 
 #cmakedefine RAJA_HAVE_POSIX_MEMALIGN
@@ -592,7 +607,6 @@ T * align_hint(T * x)
   return static_cast<T *>(RAJA_ALIGN_DATA(x));
 #endif
 }
-
 
 }  // closing brace for RAJA namespace
 

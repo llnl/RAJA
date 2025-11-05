@@ -13,11 +13,11 @@
 template <typename REGISTER_TYPE>
 void SubtractImpl()
 {
-  using register_t = REGISTER_TYPE;
-  using element_t = typename register_t::element_type;
-  using policy_t = typename register_t::register_policy;
+  using reg_t = REGISTER_TYPE;
+  using element_t = typename reg_t::element_type;
+  using policy_t = typename reg_t::register_policy;
 
-  static constexpr camp::idx_t num_elem = register_t::s_num_elem;
+  static constexpr camp::idx_t num_elem = reg_t::s_num_elem;
 
   // Allocate
 
@@ -50,13 +50,13 @@ void SubtractImpl()
   // operator -
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
-    register_t x;
+    reg_t x;
     x.load_packed(input0_dptr);
 
-    register_t y;
+    reg_t y;
     y.load_packed(input1_dptr);
 
-    register_t z = x - y;
+    reg_t z = x - y;
 
     z.store_packed(output0_dptr);
   });
@@ -72,13 +72,13 @@ void SubtractImpl()
   // operator -=
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
-    register_t x;
+    reg_t x;
     x.load_packed(input0_dptr);
 
-    register_t y;
+    reg_t y;
     y.load_packed(input1_dptr);
 
-    register_t z = x;
+    reg_t z = x;
 
     z -= y;
 
@@ -97,10 +97,10 @@ void SubtractImpl()
   // operator - scalar
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
-    register_t x;
+    reg_t x;
     x.load_packed(input0_dptr);
 
-    register_t z = x - 7;
+    reg_t z = x - 7;
 
     z.store_packed(output0_dptr);
   });
@@ -117,10 +117,10 @@ void SubtractImpl()
   // operator -= scalar
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
-    register_t x;
+    reg_t x;
     x.load_packed(input0_dptr);
 
-    register_t z = x;
+    reg_t z = x;
 
     z -= 3;
 

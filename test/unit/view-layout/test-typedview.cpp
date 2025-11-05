@@ -35,8 +35,16 @@ TYPED_TEST(TypedViewUnitTest, Constructors)
   TypeParam data[10];
   data[0] = val;
 
+  const TypeParam data2[10] = {2, 0, 1, 3, 4, 5, 6, 7, 8, 9};
+
   RAJA::View<TypeParam, layout> view(data, layout(10));
   ASSERT_EQ(val, view(0));
+
+  /*
+   * Should be able to construct a View from const array
+   */
+  RAJA::View<const TypeParam, layout> viewc(data2, layout(10));
+  ASSERT_EQ(val, viewc(0));
 
   /*
    * Should be able to construct a non-const View from a non-const View

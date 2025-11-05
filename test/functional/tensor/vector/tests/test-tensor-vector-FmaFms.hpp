@@ -62,15 +62,15 @@ void FmaFmsImpl()
 
       // try FMA (A*B+C)
 
-      vector_t fma = vec_A.multiply_add(vec_B, vec_C);
+      vector_t _fma = vec_A.multiply_add(vec_B, vec_C);
       for(camp::idx_t i = 0;i < N;++ i){
-        fma_ptr[i] = fma.get(i);
+        fma_ptr[i] = _fma.get(i);
       }
 
       // try FMS (A*B-C)
-      vector_t fms = vec_A.multiply_subtract(vec_B, vec_C);
+      vector_t _fms = vec_A.multiply_subtract(vec_B, vec_C);
       for(camp::idx_t i = 0;i < N;++ i){
-        fms_ptr[i] = fms.get(i);
+        fms_ptr[i] = _fms.get(i);
       }
     }
   });

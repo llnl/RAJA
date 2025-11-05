@@ -52,11 +52,12 @@ struct TensorTestHelper<RAJA::expt::cuda_warp_register>
     template<typename BODY>
     static
     void exec(BODY const &body){
-      cudaDeviceSynchronize();
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 
       test_launcher<<<1,32>>>(body);
 
-      cudaDeviceSynchronize();
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetLastError);
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 
     }
 
@@ -85,7 +86,7 @@ struct TensorTestHelper<RAJA::expt::hip_wave_register>
     template<typename BODY>
     static
     void exec(BODY const &body){
-      hipDeviceSynchronize();
+      CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
 
       static constexpr int warp_size = RAJA::policy::hip::device_constants.WARP_SIZE;
 
@@ -94,7 +95,7 @@ struct TensorTestHelper<RAJA::expt::hip_wave_register>
         body();
       });
 
-      hipDeviceSynchronize();
+      CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
 
     }
 
@@ -118,7 +119,7 @@ T* tensor_malloc(size_t len){
   if(TensorTestHelper<POL>::is_device){
     T *ptr;
 
-    cudaErrchk(cudaMalloc(&ptr, len*sizeof(T)));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMalloc, &ptr, len*sizeof(T));
 
     return ptr;
   }
@@ -130,7 +131,7 @@ T* tensor_malloc(size_t len){
 template<typename POL, typename T>
 void tensor_free(T *ptr){
   if(TensorTestHelper<POL>::is_device){
-    cudaErrchk(cudaFree(ptr));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, ptr);
   }
   else{
     delete[] ptr;
@@ -140,7 +141,7 @@ void tensor_free(T *ptr){
 template<typename POL, typename T>
 void tensor_copy_to_device(T *d_ptr, std::vector<T> const &h_vec){
   if(TensorTestHelper<POL>::is_device){
-    cudaErrchk(cudaMemcpy(d_ptr, h_vec.data(), h_vec.size()*sizeof(T), cudaMemcpyHostToDevice));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, d_ptr, h_vec.data(), h_vec.size()*sizeof(T), cudaMemcpyHostToDevice);
   }
   else{
     memcpy(d_ptr, h_vec.data(), h_vec.size()*sizeof(T));
@@ -150,7 +151,7 @@ void tensor_copy_to_device(T *d_ptr, std::vector<T> const &h_vec){
 template<typename POL, typename T>
 void tensor_copy_to_host(std::vector<T> &h_vec, T const *d_ptr){
   if(TensorTestHelper<POL>::is_device){
-    cudaErrchk(cudaMemcpy(h_vec.data(), d_ptr, h_vec.size()*sizeof(T), cudaMemcpyDeviceToHost));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, h_vec.data(), d_ptr, h_vec.size()*sizeof(T), cudaMemcpyDeviceToHost);
   }
   else{
     memcpy(h_vec.data(), d_ptr, h_vec.size()*sizeof(T));
@@ -167,7 +168,7 @@ T* tensor_malloc(size_t len){
   if(TensorTestHelper<POL>::is_device){
     T *ptr;
 
-    hipErrchk(hipMalloc(&ptr, len*sizeof(T)));
+    CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, &ptr, len*sizeof(T));
 
     return ptr;
   }
@@ -179,7 +180,7 @@ T* tensor_malloc(size_t len){
 template<typename POL, typename T>
 void tensor_free(T *ptr){
   if(TensorTestHelper<POL>::is_device){
-    hipErrchk(hipFree(ptr));
+    CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, ptr);
   }
   else{
     delete[] ptr;
@@ -189,7 +190,7 @@ void tensor_free(T *ptr){
 template<typename POL, typename T>
 void tensor_copy_to_device(T *d_ptr, std::vector<T> const &h_vec){
   if(TensorTestHelper<POL>::is_device){
-    hipErrchk(hipMemcpy(d_ptr, h_vec.data(), h_vec.size()*sizeof(T), hipMemcpyHostToDevice));
+    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_ptr, h_vec.data(), h_vec.size()*sizeof(T), hipMemcpyHostToDevice);
   }
   else{
     memcpy(d_ptr, h_vec.data(), h_vec.size()*sizeof(T));
@@ -199,7 +200,7 @@ void tensor_copy_to_device(T *d_ptr, std::vector<T> const &h_vec){
 template<typename POL, typename T>
 void tensor_copy_to_host(std::vector<T> &h_vec, T const *d_ptr){
   if(TensorTestHelper<POL>::is_device){
-    hipErrchk(hipMemcpy(h_vec.data(), d_ptr, h_vec.size()*sizeof(T), hipMemcpyDeviceToHost));
+    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, h_vec.data(), d_ptr, h_vec.size()*sizeof(T), hipMemcpyDeviceToHost);
   }
   else{
     memcpy(h_vec.data(), d_ptr, h_vec.size()*sizeof(T));

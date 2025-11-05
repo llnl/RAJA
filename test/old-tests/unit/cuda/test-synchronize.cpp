@@ -14,7 +14,7 @@ GPU_TEST(SynchronizeTest, CUDA)
 {
 
   double* managed_data;
-  cudaErrchk(cudaMallocManaged(&managed_data, sizeof(double) * 50));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, &managed_data, sizeof(double) * 50);
 
   RAJA::forall<RAJA::cuda_exec_async<256>>( RAJA::RangeSegment(0, 50),
     [=] RAJA_HOST_DEVICE(RAJA::Index_type i) {
@@ -27,5 +27,5 @@ GPU_TEST(SynchronizeTest, CUDA)
     EXPECT_EQ(managed_data[i], 1.0 * i);
   });
 
-  cudaErrchk(cudaFree(managed_data));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, managed_data);
 }

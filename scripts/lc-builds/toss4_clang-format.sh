@@ -38,6 +38,7 @@ cmake \
   -DCMAKE_CXX_COMPILER=/usr/tce/packages/clang/clang-${COMP_VER}/bin/clang++ \
   -DBLT_CXX_STD=c++17 \
   -C ../host-configs/lc-builds/toss4/clang_X.cmake \
+  -DENABLE_CLANGFORMAT=On \
   -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-${COMP_VER}/bin/clang-format \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \
   "$@" \

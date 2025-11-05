@@ -13,11 +13,11 @@
 template <typename REGISTER_TYPE>
 void FMSImpl()
 {
-  using register_t = REGISTER_TYPE;
-  using element_t = typename register_t::element_type;
-  using policy_t = typename register_t::register_policy;
+  using reg_t = REGISTER_TYPE;
+  using element_t = typename reg_t::element_type;
+  using policy_t = typename reg_t::register_policy;
 
-  static constexpr camp::idx_t num_elem = register_t::s_num_elem;
+  static constexpr camp::idx_t num_elem = reg_t::s_num_elem;
 
   // Allocate
 
@@ -56,16 +56,16 @@ void FMSImpl()
   // operator z = a*b-c
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
-    register_t a;
+    reg_t a;
     a.load_packed(input0_dptr);
 
-    register_t b;
+    reg_t b;
     b.load_packed(input1_dptr);
 
-    register_t c;
+    reg_t c;
     c.load_packed(input2_dptr);
 
-    register_t z = a.multiply_subtract(b,c);
+    reg_t z = a.multiply_subtract(b,c);
 
     z.store_packed(output0_dptr);
   });

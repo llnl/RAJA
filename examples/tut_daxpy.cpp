@@ -148,21 +148,21 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   std::cout << "\n Running RAJA CUDA daxpy...\n";
 
   a = 0; b = 0;
-  cudaErrchk(cudaMalloc( (void**)&a, N * sizeof(double) ));
-  cudaErrchk(cudaMalloc( (void**)&b, N * sizeof(double) ));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMalloc, (void**)&a, N * sizeof(double));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMalloc, (void**)&b, N * sizeof(double));
  
-  cudaErrchk(cudaMemcpy( a, a0, N * sizeof(double), cudaMemcpyHostToDevice )); 
-  cudaErrchk(cudaMemcpy( b, tb, N * sizeof(double), cudaMemcpyHostToDevice )); 
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, a, a0, N * sizeof(double), cudaMemcpyHostToDevice);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, b, tb, N * sizeof(double), cudaMemcpyHostToDevice);
 
   RAJA::forall<RAJA::cuda_exec<256>>(RAJA::RangeSegment(0, N), 
     [=] RAJA_DEVICE (int i) {
     a[i] += b[i] * c;
   });
 
-  cudaErrchk(cudaMemcpy( ta, a, N * sizeof(double), cudaMemcpyDeviceToHost ));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpy, ta, a, N * sizeof(double), cudaMemcpyDeviceToHost);
 
-  cudaErrchk(cudaFree(a));
-  cudaErrchk(cudaFree(b));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, a);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, b);
 
   a = ta;
   checkResult(a, aref, N);
@@ -178,21 +178,21 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   std::cout << "\n Running RAJA HIP daxpy...\n";
 
   a = 0; b = 0;
-  hipErrchk(hipMalloc( (void**)&a, N * sizeof(double) ));
-  hipErrchk(hipMalloc( (void**)&b, N * sizeof(double) ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, (void**)&a, N * sizeof(double));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, (void**)&b, N * sizeof(double));
 
-  hipErrchk(hipMemcpy( a, a0, N * sizeof(double), hipMemcpyHostToDevice ));
-  hipErrchk(hipMemcpy( b, tb, N * sizeof(double), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, a, a0, N * sizeof(double), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, b, tb, N * sizeof(double), hipMemcpyHostToDevice);
 
   RAJA::forall<RAJA::hip_exec<256>>(RAJA::RangeSegment(0, N),
     [=] RAJA_DEVICE (int i) {
     a[i] += b[i] * c;
   });
 
-  hipErrchk(hipMemcpy( ta, a, N * sizeof(double), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, ta, a, N * sizeof(double), hipMemcpyDeviceToHost);
 
-  hipErrchk(hipFree(a));
-  hipErrchk(hipFree(b));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, a);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, b);
 
   a = ta;
   checkResult(a, aref, N);

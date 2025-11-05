@@ -549,10 +549,10 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   RAJA::View<double, RAJA::Layout<3, int, 0>> d_Bview2(d_B2, layout2);
   RAJA::View<double, RAJA::Layout<3, int, 0>> d_Cview2(d_C2, layout2);
 
-  hipErrchk(hipMemcpy( d_A, A, N_c * N_r * N * sizeof(double), hipMemcpyHostToDevice ));
-  hipErrchk(hipMemcpy( d_B, B, N_c * N_r * N * sizeof(double), hipMemcpyHostToDevice ));
-  hipErrchk(hipMemcpy( d_A2, A2, N_c * N_r * N * sizeof(double), hipMemcpyHostToDevice ));
-  hipErrchk(hipMemcpy( d_B2, B2, N_c * N_r * N * sizeof(double), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_A, A, N_c * N_r * N * sizeof(double), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_B, B, N_c * N_r * N * sizeof(double), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_A2, A2, N_c * N_r * N * sizeof(double), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_B2, B2, N_c * N_r * N * sizeof(double), hipMemcpyHostToDevice);
 
   minRun = std::numeric_limits<double>::max();
   for (int i = 0; i < NITER; ++i) {
@@ -600,7 +600,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
     timer.reset();
   }
 
-  hipErrchk(hipMemcpy( C, d_C, N_c * N_r * N * sizeof(double), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, C, d_C, N_c * N_r * N * sizeof(double), hipMemcpyDeviceToHost);
 
   std::cout<< "\trun time: "<< minRun << " seconds" << std::endl;
   checkResult(Cview, N, N_r, N_c);
@@ -656,7 +656,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
     timer.reset();
   }
 
-  hipErrchk(hipMemcpy( C2, d_C2, N_c * N_r * N * sizeof(double), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, C2, d_C2, N_c * N_r * N * sizeof(double), hipMemcpyDeviceToHost);
 
   std::cout<< "\trun time : "<< minRun << " seconds" << std::endl;
   checkResult(Cview2, N, N_r, N_c);

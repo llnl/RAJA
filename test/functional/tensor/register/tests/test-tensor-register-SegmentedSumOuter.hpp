@@ -13,11 +13,11 @@
 template <typename REGISTER_TYPE>
 void SegmentedSumOuterImpl()
 {
-  using register_t = REGISTER_TYPE;
-  using element_t = typename register_t::element_type;
-  using policy_t = typename register_t::register_policy;
+  using reg_t = REGISTER_TYPE;
+  using element_t = typename reg_t::element_type;
+  using policy_t = typename reg_t::register_policy;
 
-  static constexpr camp::idx_t num_elem = register_t::s_num_elem;
+  static constexpr camp::idx_t num_elem = reg_t::s_num_elem;
 
   // Allocate
 
@@ -47,10 +47,10 @@ void SegmentedSumOuterImpl()
       // Execute segmented broadcast
       tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
-        register_t x;
+        reg_t x;
         x.load_packed(input0_dptr);
 
-        register_t y = x.segmented_sum_outer(segbits, output_segment);
+        reg_t y = x.segmented_sum_outer(segbits, output_segment);
 
         y.store_packed(output0_dptr);
 

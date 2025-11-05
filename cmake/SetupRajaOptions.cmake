@@ -8,7 +8,7 @@
 set(RAJA_ENABLE_WARNINGS_AS_ERRORS Off CACHE BOOL "")
 set(ENABLE_GTEST_DEATH_TESTS On CACHE BOOL "Enable tests asserting failure.")
 
-option(RAJA_ENABLE_NV_TOOLS_EXT "Build with NV_TOOLS_EXT support" Off)
+option(RAJA_ENABLE_NVTX "Build with NVTX support" Off)
 option(RAJA_ENABLE_ROCTX "Build with ENABLE_ROCTX support" Off)
 
 option(RAJA_ENABLE_TARGET_OPENMP "Build OpenMP on target device support" Off)
@@ -18,7 +18,7 @@ option(RAJA_ENABLE_VECTORIZATION "Build experimental vectorization support" On)
 
 option(RAJA_ENABLE_OPENMP_TASK "Build OpenMP task variants of certain algorithms" Off)
 
-option(RAJA_ALLOW_OPENMP_5_1_ATOMICS "Enable OpenMP 5.1 atomics for min/max operations" On)
+option(RAJA_ALLOW_OPENMP_5_1_ATOMICS "Enable OpenMP 5.1 atomics for min/max operations" Off)
 
 option(RAJA_ENABLE_REPRODUCERS "Build issue reproducers" Off)
 

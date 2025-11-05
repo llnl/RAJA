@@ -31,10 +31,10 @@ void ForallRangeStrideSegmentViewTestImpl(INDEX_TYPE first, INDEX_TYPE last,
 
   working_res.memcpy(working_array, test_array, sizeof(INDEX_TYPE) * N);
 
-  INDEX_TYPE idx = first;
+  INDEX_TYPE index = first;
   for (INDEX_TYPE i = 0; i < N; ++i) {
-    test_array[ (idx-first)/stride ] = idx;
-    idx += stride;
+    test_array[ (index-first)/stride ] = index;
+    index += stride;
   }
 
   using view_type = RAJA::View< INDEX_TYPE, RAJA::Layout<1, INDEX_TYPE, 0> >;

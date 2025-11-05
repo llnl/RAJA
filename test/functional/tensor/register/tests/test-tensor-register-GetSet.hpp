@@ -13,11 +13,11 @@
 template <typename REGISTER_TYPE>
 void GetSetImpl()
 {
-  using register_t = REGISTER_TYPE;
-  using element_t = typename register_t::element_type;
-  using policy_t = typename register_t::register_policy;
+  using reg_t = REGISTER_TYPE;
+  using element_t = typename reg_t::element_type;
+  using policy_t = typename reg_t::register_policy;
 
-  static constexpr camp::idx_t num_elem = register_t::s_num_elem;
+  static constexpr camp::idx_t num_elem = reg_t::s_num_elem;
 
   // Allocate
   std::vector<element_t> input0_vec(num_elem);
@@ -38,7 +38,7 @@ void GetSetImpl()
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
     // fill x using set
-    register_t x;
+    reg_t x;
     for(camp::idx_t i = 0;i < num_elem; ++ i){
       x.set(input0_dptr[i], i);
     }
@@ -63,12 +63,12 @@ void GetSetImpl()
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
     // fill x using set
-    register_t x;
+    reg_t x;
     for(camp::idx_t i = 0;i < num_elem; ++ i){
       x.set(input0_dptr[i], i);
     }
 
-    register_t cc(x);
+    reg_t cc(x);
 
     // extract from x using get
     for(camp::idx_t i = 0;i < num_elem; ++ i){
@@ -92,12 +92,12 @@ void GetSetImpl()
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
     // fill x using set
-    register_t x;
+    reg_t x;
     for(camp::idx_t i = 0;i < num_elem; ++ i){
       x.set(input0_dptr[i], i);
     }
 
-    register_t cc;
+    reg_t cc;
     cc.copy(x);
 
     // extract from x using get
@@ -122,12 +122,12 @@ void GetSetImpl()
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
     // fill x using set
-    register_t x;
+    reg_t x;
     for(camp::idx_t i = 0;i < num_elem; ++ i){
       x.set(input0_dptr[i], i);
     }
 
-    register_t cc = x;
+    reg_t cc = x;
 
     // extract from x using get
     for(camp::idx_t i = 0;i < num_elem; ++ i){
@@ -151,7 +151,7 @@ void GetSetImpl()
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
 
-    register_t cc = (element_t) 5;
+    reg_t cc = (element_t) 5;
 
     // extract from x using get
     for(camp::idx_t i = 0;i < num_elem; ++ i){
@@ -176,7 +176,7 @@ void GetSetImpl()
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
 
-    register_t cc = (element_t) 0;
+    reg_t cc = (element_t) 0;
     cc = (element_t) 11.0;
 
     // extract from x using get
@@ -199,7 +199,7 @@ void GetSetImpl()
   //
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
-    register_t cc = (element_t) 0;
+    reg_t cc = (element_t) 0;
     cc.broadcast(13.0);
 
     // extract from x using get

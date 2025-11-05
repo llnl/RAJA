@@ -111,8 +111,6 @@ interested in improving RAJA and exploring new ways to use it.
 
 The best way to communicate with us is via our email list: ``raja-dev@llnl.gov``
 
-You are also welcome to join our `Google Group <https://groups.google.com/forum/#!forum/raja-users>`_
-
 A brief description of how to start a contribution to RAJA can be found in
 :ref:`contributing-label`.
 

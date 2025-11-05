@@ -52,24 +52,29 @@ namespace multi
 template<typename Selector, typename... Policies>
 class MultiPolicy
 {
-  Selector s;
+  Selector _selector;
 
 public:
   MultiPolicy() = delete;  // No default construction
 
-  MultiPolicy(Selector s) : s(s), _policies({Policies {}...}) {}
+  MultiPolicy(Selector s) : _selector(s), _policies({Policies {}...}) {}
 
-  MultiPolicy(Selector s, Policies... policies) : s(s), _policies({policies...})
+  MultiPolicy(Selector s, Policies... policies)
+      : _selector(s),
+        _policies({policies...})
   {}
 
-  MultiPolicy(const MultiPolicy& p) : s(p.s), _policies(p._policies) {}
+  MultiPolicy(const MultiPolicy& p)
+      : _selector(p._selector),
+        _policies(p._policies)
+  {}
 
   template<typename Iterable, typename Body>
   int invoke(Iterable&& i, Body&& b)
   {
-    size_t index = s(i);
+    size_t index = _selector(i);
     _policies.invoke(index, i, b);
-    return s(i);
+    return _selector(i);
   }
 
   detail::

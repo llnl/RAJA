@@ -356,11 +356,11 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   double* d_areav = memoryManager::allocate_gpu<double>(Nvert_tot);
   int* d_e2v_map  = memoryManager::allocate_gpu<int>(4*Nelem_tot);
 
-  hipMemcpy(d_areae, areae, Nelem_tot*sizeof(double), hipMemcpyHostToDevice);
-  hipMemcpy(d_e2v_map, e2v_map, 4*Nelem_tot*sizeof(int), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_areae, areae, Nelem_tot*sizeof(double), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_e2v_map, e2v_map, 4*Nelem_tot*sizeof(int), hipMemcpyHostToDevice);
 
   std::memset(areav, 0, Nvert_tot * sizeof(double));
-  hipMemcpy(d_areav, areav, Nvert_tot*sizeof(double), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_areav, areav, Nvert_tot*sizeof(double), hipMemcpyHostToDevice);
 
 //
 // Resource object used to construct list segment objects with indices
@@ -395,7 +395,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   });
 // _raja_vertexarea_hip_end
 
-  hipMemcpy(areav, d_areav, Nvert_tot*sizeof(double), hipMemcpyDeviceToHost);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, areav, d_areav, Nvert_tot*sizeof(double), hipMemcpyDeviceToHost);
   checkResult(areav, areav_ref, Nvert);
 //std::cout << "\n Vertex volumes...\n";
 //printMeshData(areav, Nvert, jvoff);

@@ -373,7 +373,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
     }
     iteration++;
   }
-  cudaDeviceSynchronize();
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
   computeErr(I, gridx);
   printf("No of iterations: %d \n \n", iteration);
 #endif
@@ -412,8 +412,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
   double *d_I    = memoryManager::allocate_gpu<double>(NN);
   double *d_Iold = memoryManager::allocate_gpu<double>(NN);
-  hipErrchk(hipMemcpy( d_I, I, NN * sizeof(double), hipMemcpyHostToDevice ));
-  hipErrchk(hipMemcpy( d_Iold, Iold, NN * sizeof(double), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_I, I, NN * sizeof(double), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_Iold, Iold, NN * sizeof(double), hipMemcpyHostToDevice);
 
   while (resI2 > tol * tol) {
 
@@ -455,8 +455,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
     }
     iteration++;
   }
-  hipDeviceSynchronize();
-  hipErrchk(hipMemcpy( I, d_I, NN * sizeof(double), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, I, d_I, NN * sizeof(double), hipMemcpyDeviceToHost);
   computeErr(I, gridx);
   printf("No of iterations: %d \n \n", iteration);
 

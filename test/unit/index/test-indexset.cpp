@@ -186,8 +186,8 @@ TEST(IndexSetUnitTest, ConditionalEvenIndices)
   ref_even_indices.push_back(16);
 
   RAJA::RAJAVec<int> even_indices;
-  getIndicesConditional(even_indices, iset, [] (int idx) {
-    return !(idx % 2);
+  getIndicesConditional(even_indices, iset, [] (int i) {
+    return !(i % 2);
   });
 
   EXPECT_EQ(even_indices.size(), ref_even_indices.size());

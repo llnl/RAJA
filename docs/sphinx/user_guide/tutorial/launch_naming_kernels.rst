@@ -60,5 +60,5 @@ the resulting json file can be viewed using tools such as `Perfetto
 
 
 Enabling NVTX profiling with RAJA Launch requires RAJA to be configured with 
-RAJA_ENABLE_NV_TOOLS_EXT=ON or RAJA_ENABLE_ROCTX=ON for ROCTX profiling on AMD platforms platforms.
+RAJA_ENABLE_NVTX=ON. For ROCTX profiling on AMD platforms platforms, configure RAJA with RAJA_ENABLE_ROCTX=ON.
 To profile with Caliper we refer the reader to the following section :ref:`profiling-with-Caliper-label`.

@@ -32,8 +32,8 @@ T *allocate(RAJA::Index_type size)
 {
   T *ptr;
 #if defined(RAJA_ENABLE_CUDA)
-  cudaErrchk(
-      cudaMallocManaged((void **)&ptr, sizeof(T) * size, cudaMemAttachGlobal));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(
+      cudaMallocManaged, (void **)&ptr, sizeof(T) * size, cudaMemAttachGlobal);
 #else
   ptr = new T[size];
 #endif
@@ -45,7 +45,7 @@ void deallocate(T *&ptr)
 {
   if (ptr) {
 #if defined(RAJA_ENABLE_CUDA)
-    cudaErrchk(cudaFree(ptr));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, ptr);
 #else
     delete[] ptr;
 #endif
@@ -59,9 +59,9 @@ void deallocate(T *&ptr)
   {
     T *ptr;
 #if defined(RAJA_ENABLE_CUDA)
-    cudaErrchk(cudaMalloc((void **)&ptr, sizeof(T) * size));
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMalloc, (void **)&ptr, sizeof(T) * size);
 #elif defined(RAJA_ENABLE_HIP)
-    hipErrchk(hipMalloc((void **)&ptr, sizeof(T) * size));
+    CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, (void **)&ptr, sizeof(T) * size);
 #endif
     return ptr;
   }
@@ -71,9 +71,9 @@ void deallocate(T *&ptr)
   {
     if (ptr) {
 #if defined(RAJA_ENABLE_CUDA)
-      cudaErrchk(cudaFree(ptr));
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, ptr);
 #elif defined(RAJA_ENABLE_HIP)
-      hipErrchk(hipFree(ptr));
+      CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, ptr);
 #endif
       ptr = nullptr;
     }

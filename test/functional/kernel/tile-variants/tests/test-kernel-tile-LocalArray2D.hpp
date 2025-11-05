@@ -73,12 +73,12 @@ void KernelTileLocalArray2DTestImpl(const int rows, const int cols)
   RAJA::TypedRangeSegment<INDEX_TYPE> colrange( 0, cols );
 
   RAJA::kernel_param<EXEC_POLICY> ( RAJA::make_tuple( colrange, rowrange ), RAJA::make_tuple( (INDEX_TYPE)0, (INDEX_TYPE)0, Tile_Array ),
-    [=] RAJA_HOST_DEVICE ( INDEX_TYPE cc, INDEX_TYPE rr, INDEX_TYPE tx, INDEX_TYPE ty, TILE_MEM &Tile_Array ) {
-      Tile_Array( ty, tx ) = WorkView( rr, cc );
+    [=] RAJA_HOST_DEVICE ( INDEX_TYPE cc, INDEX_TYPE rr, INDEX_TYPE tx, INDEX_TYPE ty, TILE_MEM &_Tile_Array ) {
+      _Tile_Array( ty, tx ) = WorkView( rr, cc );
     },
 
-    [=] RAJA_HOST_DEVICE ( INDEX_TYPE cc, INDEX_TYPE rr, INDEX_TYPE tx, INDEX_TYPE ty, TILE_MEM &Tile_Array ) {
-      WorkTView( cc, rr ) = Tile_Array( ty, tx );
+    [=] RAJA_HOST_DEVICE ( INDEX_TYPE cc, INDEX_TYPE rr, INDEX_TYPE tx, INDEX_TYPE ty, TILE_MEM &_Tile_Array ) {
+      WorkTView( cc, rr ) = _Tile_Array( ty, tx );
     }
   );
 

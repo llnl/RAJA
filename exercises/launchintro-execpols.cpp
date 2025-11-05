@@ -334,8 +334,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
   nested_init<i_block_sz, j_block_sz, k_block_sz>
     <<<nblocks, nthreads_per_block>>>(a, c, N);
-  cudaErrchk( cudaGetLastError() );
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetLastError);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 // _cuda_tensorinit_tiled_direct_end
 
   checkResult(a, a_ref, N_tot);
@@ -371,7 +371,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   RAJA::View< double, RAJA::Layout<3, int> > d_aView(d_a, N, N, N);
 // _3D_raja_deviceview_end
 
-  hipErrchk(hipMemcpy( d_a, a, N_tot * sizeof(double), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_a, a, N_tot * sizeof(double), hipMemcpyHostToDevice);
 
 // _raja_tensorinit_hip_start
   using hip_teams_z_5 = RAJA::LoopPolicy<RAJA::hip_block_z_direct>;
@@ -399,7 +399,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   });
 // _raja_tensorinit_hip_end
 
-  hipErrchk(hipMemcpy( a, d_a, N_tot * sizeof(double), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, a, d_a, N_tot * sizeof(double), hipMemcpyDeviceToHost);
   checkResult(a, a_ref, N_tot);
 
 //----------------------------------------------------------------------------//
@@ -408,7 +408,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
   // set tensor data to zero to ensure we initializing it correctly.
   std::memset(a, 0, N_tot * sizeof(double));
-  hipErrchk(hipMemcpy( d_a, a, N_tot * sizeof(double), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_a, a, N_tot * sizeof(double), hipMemcpyHostToDevice);
 
 // _raja_tensorinit_hip_tiled_direct_start
   using hip_teams_z_6 = RAJA::LoopPolicy<RAJA::hip_block_z_direct>;
@@ -449,7 +449,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
     });
 // _raja_tensorinit_hip_tiled_direct_end
 
-  hipErrchk(hipMemcpy( a, d_a, N_tot * sizeof(double), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, a, d_a, N_tot * sizeof(double), hipMemcpyDeviceToHost);
   checkResult(a, a_ref, N_tot);
 
   memoryManager::deallocate_gpu(d_a);

@@ -94,7 +94,7 @@ Kernels which are not provided a name are ommited from Caliper profiling.
 .. note:: When RAJA is not configured with Caliper, NVTX and ROCTX profiling can
           still be configured with RAJA using the following CMAKE variables respectively::
 
-            -DRAJA_ENABLE_NV_TOOLS_EXT=ON
+            -DRAJA_ENABLE_NVTX=ON
             -DRAJA_ENABLE_ROCTX=ON
 
 .. note:: When Caliper is configured with RAJA all performance profiling is performed by Caliper.

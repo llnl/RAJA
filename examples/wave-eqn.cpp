@@ -162,7 +162,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
     P1 = Temp;
   }
 #if defined(RAJA_ENABLE_CUDA)
-  cudaDeviceSynchronize();
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 #endif
   computeErr(P2, time, grid);
   printf("Evolved solution to time = %f \n", time);

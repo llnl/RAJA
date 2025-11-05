@@ -39,7 +39,8 @@
 namespace RAJA
 {
 
-using hip_dim_t        = dim3;
+using hip_dim_t = RAJA_HIP_DIM_T;
+
 using hip_dim_member_t = camp::decay<decltype(std::declval<hip_dim_t>().x)>;
 
 //

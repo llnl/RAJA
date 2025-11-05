@@ -342,8 +342,8 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv[]))
   int* d_out = memoryManager::allocate_gpu<int>(N);
   int* d_out_vals = memoryManager::allocate_gpu<int>(N);
 
-  hipErrchk(hipMemcpy( d_out, out, N * sizeof(int), hipMemcpyHostToDevice ));
-  hipErrchk(hipMemcpy( d_out_vals, out_vals, N * sizeof(int), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_out, out, N * sizeof(int), hipMemcpyHostToDevice);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_out_vals, out_vals, N * sizeof(int), hipMemcpyHostToDevice);
 
   ///
   /// TODO...
@@ -355,8 +355,8 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv[]))
   ///                 top of the file if you want to use it here.
   ///
 
-  hipErrchk(hipMemcpy( out, d_out, N * sizeof(int), hipMemcpyDeviceToHost ));
-  hipErrchk(hipMemcpy( out_vals, d_out_vals, N * sizeof(int), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, out, d_out, N * sizeof(int), hipMemcpyDeviceToHost);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, out_vals, d_out_vals, N * sizeof(int), hipMemcpyDeviceToHost);
 
   //checkUnstableSortResult<RAJA::operators::less<int>>(in, out, in_vals, out_vals, N);
   CHECK_UNSTABLE_SORT_PAIR_RESULT(OP_LESS);
@@ -369,7 +369,7 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv[]))
 
   std::copy_n(in, N, out);
 
-  hipErrchk(hipMemcpy( d_out, out, N * sizeof(int), hipMemcpyHostToDevice ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, d_out, out, N * sizeof(int), hipMemcpyHostToDevice);
 
   ///
   /// TODO...
@@ -381,7 +381,7 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv[]))
   ///                 top of the file if you want to use it here.
   ///
 
-  hipErrchk(hipMemcpy( out, d_out, N * sizeof(int), hipMemcpyDeviceToHost ));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, out, d_out, N * sizeof(int), hipMemcpyDeviceToHost);
 
   //checkStableSortResult<RAJA::operators::greater<int>>(in, out, N);
   CHECK_STABLE_SORT_RESULT(OP_GREATER);

@@ -15,8 +15,8 @@ include(CMakeDependentOption)
 
 # Set version number
 set(RAJA_VERSION_MAJOR 2025)
-set(RAJA_VERSION_MINOR 03)
-set(RAJA_VERSION_PATCHLEVEL 2)
+set(RAJA_VERSION_MINOR 09)
+set(RAJA_VERSION_PATCHLEVEL 1)
 
 if (RAJA_LOADED AND (NOT RAJA_LOADED STREQUAL "${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}"))
   message(FATAL_ERROR "You are mixing RAJA versions. Loaded is ${RAJA_LOADED}, expected ${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}")
@@ -106,23 +106,14 @@ include(cmake/SetupBasics.cmake)
 # Find third-party packages
 include(cmake/SetupPackages.cmake)
 
+# Add workaround flags to host compiler if necessary
 if (RAJA_ENABLE_CUDA)
-  if (DEFINED CMAKE_CUDA_ARCHITECTURES)
-    if ("${CMAKE_CUDA_ARCHITECTURES}" STRLESS "35")
-      message( FATAL_ERROR "RAJA requires minimum CUDA compute architecture of 35")
-    endif()
-  else()
-    message(STATUS "CUDA compute architecture set to RAJA default 35 since it was not specified")
-    set(CMAKE_CUDA_ARCHITECTURES "35" CACHE STRING "Set CMAKE_CUDA_ARCHITECTURES to RAJA minimum supported" FORCE)
-  endif()
-  message(STATUS "CMAKE_CUDA_ARCHITECTURES set to ${CMAKE_CUDA_ARCHITECTURES}")
-  if ( (CMAKE_CXX_COMPILER_ID MATCHES GNU) AND (CMAKE_SYSTEM_PROCESSOR MATCHES ppc64le) )
+  if (CMAKE_CXX_COMPILER_ID MATCHES GNU AND CMAKE_SYSTEM_PROCESSOR MATCHES ppc64le)
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.0)
-      set (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -mno-float128")
+      set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -mno-float128")
     endif ()
   endif ()
-endif()
-
+endif ()
 
 # Setup vendor-specific compiler flags
 include(cmake/SetupCompilers.cmake)
@@ -146,11 +137,17 @@ if (RAJA_ENABLE_RUNTIME_PLUGINS)
     ${raja_sources}
     src/RuntimePluginLoader.cpp
     src/KokkosPluginLoader.cpp)
+
+if (RAJA_ENABLE_CALIPER)
+   list(APPEND raja_sources src/plugins/caliper-plugin.cpp)
+endif ()
+
 endif ()
 
 set (raja_depends)
 
 if (RAJA_ENABLE_CALIPER)
+
 set (raja_depends
     ${raja_depends}
     caliper)
@@ -158,6 +155,7 @@ set (raja_depends
     NO_DEFAULT_PATH
     PATHS ${caliper_DIR}
   )
+
 endif()
 
 if (RAJA_ENABLE_OPENMP)
@@ -188,10 +186,10 @@ if (RAJA_ENABLE_CUDA)
   set(raja_depends
     ${raja_depends}
     cuda)
-  if(RAJA_ENABLE_NV_TOOLS_EXT)
+  if(RAJA_ENABLE_NVTX)
     set(raja_depends
       ${raja_depends}
-      nvtoolsext)
+      nvtx3)
   endif ()
 endif ()
 
@@ -256,7 +254,7 @@ camp source repository")
         PATHS ${camp_DIR}
         ${camp_DIR}/lib/cmake/camp
       )
-      message(STATUS "Using installed CAMP from:  ${camp_INSTALL_PREFIX}")
+      message(STATUS "Using CAMP version ${camp_VERSION} installed at: ${camp_INSTALL_PREFIX}")
     else ()
       message(STATUS "Using RAJA CAMP submodule.")
       # propagate setting for sycl since there's no common enable to use

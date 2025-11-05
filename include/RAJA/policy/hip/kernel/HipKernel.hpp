@@ -179,7 +179,7 @@ namespace internal
  * HIP global function for launching HipKernel policies
  */
 template<typename Data, typename Exec>
-__global__ void HipKernelLauncher(Data data)
+__global__ void HipKernelLauncher(const Data data)
 {
 
   using data_t        = camp::decay<Data>;
@@ -199,7 +199,7 @@ __global__ void HipKernelLauncher(Data data)
  */
 template<int BlockSize, typename Data, typename Exec>
 __launch_bounds__(BlockSize, 1) __global__
-    void HipKernelLauncherFixed(Data data)
+    void HipKernelLauncherFixed(const Data data)
 {
 
   using data_t        = camp::decay<Data>;

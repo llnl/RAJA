@@ -13,11 +13,11 @@
 template <typename REGISTER_TYPE>
 void LoadImpl()
 {
-  using register_t = REGISTER_TYPE;
-  using element_t = typename register_t::element_type;
-  using policy_t = typename register_t::register_policy;
+  using reg_t = REGISTER_TYPE;
+  using element_t = typename reg_t::element_type;
+  using policy_t = typename reg_t::register_policy;
 
-  static constexpr camp::idx_t num_elem = register_t::s_num_elem;
+  static constexpr camp::idx_t num_elem = reg_t::s_num_elem;
 
   // Allocate
   std::vector<element_t> input0_vec(10*num_elem);
@@ -41,7 +41,7 @@ void LoadImpl()
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
     // fill x using set
-    register_t x;
+    reg_t x;
     x.load_packed(input0_dptr);
 
     // extract from x using get
@@ -64,7 +64,7 @@ void LoadImpl()
     tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
       // fill x using set
-      register_t x;
+      reg_t x;
       x.load_packed_n(input0_dptr, N);
 
       // extract from x using get
@@ -93,7 +93,7 @@ void LoadImpl()
   tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
     // fill x using set
-    register_t x;
+    reg_t x;
     x.load_strided(input0_dptr, 2);
 
     // extract from x using get
@@ -116,7 +116,7 @@ void LoadImpl()
     tensor_do<policy_t>([=] RAJA_HOST_DEVICE (){
 
       // fill x using set
-      register_t x;
+      reg_t x;
       x.load_strided_n(input0_dptr, 2, N);
 
       // extract from x using get

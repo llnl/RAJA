@@ -49,15 +49,15 @@ using zip_tuple_element_t = typename zip_tuple_element<I, ZT>::type;
 // the reference type returned by get depends on the reference type
 // of the zip_tuple that get is called on
 template<camp::idx_t I, bool is_val, typename... Ts>
-RAJA_HOST_DEVICE constexpr RAJA::zip_tuple_element_t<I,
-                                                     zip_tuple<is_val, Ts...>>&
-get(zip_tuple<is_val, Ts...>& z) noexcept
+RAJA_HOST_DEVICE RAJA_INLINE constexpr RAJA::
+    zip_tuple_element_t<I, zip_tuple<is_val, Ts...>>&
+    get(zip_tuple<is_val, Ts...>& z) noexcept
 {
   return z.template get<I>();
 }
 
 template<camp::idx_t I, bool is_val, typename... Ts>
-RAJA_HOST_DEVICE constexpr RAJA::
+RAJA_HOST_DEVICE RAJA_INLINE constexpr RAJA::
     zip_tuple_element_t<I, zip_tuple<is_val, Ts...>> const&
     get(zip_tuple<is_val, Ts...> const& z) noexcept
 {
@@ -65,7 +65,7 @@ RAJA_HOST_DEVICE constexpr RAJA::
 }
 
 template<camp::idx_t I, bool is_val, typename... Ts>
-RAJA_HOST_DEVICE constexpr std::remove_reference_t<
+RAJA_HOST_DEVICE RAJA_INLINE constexpr std::remove_reference_t<
     RAJA::zip_tuple_element_t<I, zip_tuple<is_val, Ts...>>>&&
 get(zip_tuple<is_val, Ts...>&& z) noexcept
 {
@@ -73,7 +73,7 @@ get(zip_tuple<is_val, Ts...>&& z) noexcept
 }
 
 template<camp::idx_t I, bool is_val, typename... Ts>
-RAJA_HOST_DEVICE constexpr std::remove_reference_t<
+RAJA_HOST_DEVICE RAJA_INLINE constexpr std::remove_reference_t<
     RAJA::zip_tuple_element_t<I, zip_tuple<is_val, Ts...>>> const&&
 get(zip_tuple<is_val, Ts...> const&& z) noexcept
 {
@@ -86,7 +86,7 @@ namespace detail
 struct PassThrough
 {
   template<typename T>
-  RAJA_HOST_DEVICE RAJA_INLINE auto operator()(T&& t) const
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr auto operator()(T&& t) const
       -> decltype(std::forward<T>(t))
   {
     return std::forward<T>(t);
@@ -96,7 +96,7 @@ struct PassThrough
 struct Move
 {
   template<typename T>
-  RAJA_HOST_DEVICE RAJA_INLINE auto operator()(T&& t) const
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr auto operator()(T&& t) const
       -> decltype(std::move(t))
   {
     return std::move(t);
@@ -106,7 +106,7 @@ struct Move
 struct PreInc
 {
   template<typename Iter>
-  RAJA_HOST_DEVICE inline auto operator()(Iter&& iter) const
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr auto operator()(Iter&& iter) const
       -> decltype(++std::forward<Iter>(iter))
   {
     return ++std::forward<Iter>(iter);
@@ -116,7 +116,7 @@ struct PreInc
 struct PreDec
 {
   template<typename Iter>
-  RAJA_HOST_DEVICE inline auto operator()(Iter&& iter) const
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr auto operator()(Iter&& iter) const
       -> decltype(--std::forward<Iter>(iter))
   {
     return --std::forward<Iter>(iter);
@@ -129,7 +129,7 @@ struct PlusEq
   const difference_type& rhs;
 
   template<typename Iter>
-  RAJA_HOST_DEVICE inline auto operator()(Iter&& iter) const
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr auto operator()(Iter&& iter) const
       -> decltype(std::forward<Iter>(iter) += rhs)
   {
     return std::forward<Iter>(iter) += rhs;
@@ -142,7 +142,7 @@ struct MinusEq
   const difference_type& rhs;
 
   template<typename Iter>
-  RAJA_HOST_DEVICE inline auto operator()(Iter&& iter) const
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr auto operator()(Iter&& iter) const
       -> decltype(std::forward<Iter>(iter) -= rhs)
   {
     return std::forward<Iter>(iter) -= rhs;
@@ -152,7 +152,7 @@ struct MinusEq
 struct DeRef
 {
   template<typename Iter>
-  RAJA_HOST_DEVICE inline auto operator()(Iter&& iter) const
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr auto operator()(Iter&& iter) const
       -> decltype(*std::forward<Iter>(iter))
   {
     return *std::forward<Iter>(iter);
@@ -162,7 +162,7 @@ struct DeRef
 struct Swap
 {
   template<typename T0, typename T1>
-  RAJA_HOST_DEVICE inline int operator()(T0&& t0, T1&& t1) const
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr int operator()(T0&& t0, T1&& t1) const
   {
     using camp::safe_swap;
     safe_swap(std::forward<T0>(t0), std::forward<T1>(t1));
@@ -173,7 +173,7 @@ struct Swap
 struct IterSwap
 {
   template<typename T0, typename T1>
-  RAJA_HOST_DEVICE inline int operator()(T0&& t0, T1&& t1) const
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr int operator()(T0&& t0, T1&& t1) const
   {
     using RAJA::safe_iter_swap;
     safe_iter_swap(std::forward<T0>(t0), std::forward<T1>(t1));
@@ -185,9 +185,10 @@ struct IterSwap
     \brief Call f on each member of t (f(t)...).
 */
 template<typename Tuple, typename F, camp::idx_t... Is>
-RAJA_HOST_DEVICE inline void zip_for_each_impl(Tuple&& t,
-                                               F&& f,
-                                               camp::idx_seq<Is...>)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr void zip_for_each_impl(
+    Tuple&& t,
+    F&& f,
+    camp::idx_seq<Is...>)
 {
   camp::sink(std::forward<F>(f)(RAJA::get<Is>(std::forward<Tuple>(t)))...);
 }
@@ -196,10 +197,11 @@ RAJA_HOST_DEVICE inline void zip_for_each_impl(Tuple&& t,
     \brief Call f on each member of t0 and t1 (f(t0, t1)...).
 */
 template<typename Tuple0, typename Tuple1, typename F, camp::idx_t... Is>
-RAJA_HOST_DEVICE inline void zip_for_each_impl(Tuple0&& t0,
-                                               Tuple1&& t1,
-                                               F&& f,
-                                               camp::idx_seq<Is...>)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr void zip_for_each_impl(
+    Tuple0&& t0,
+    Tuple1&& t1,
+    F&& f,
+    camp::idx_seq<Is...>)
 {
   camp::sink(std::forward<F>(f)(RAJA::get<Is>(std::forward<Tuple0>(t0)),
                                 RAJA::get<Is>(std::forward<Tuple1>(t1)))...);
@@ -209,7 +211,7 @@ RAJA_HOST_DEVICE inline void zip_for_each_impl(Tuple0&& t0,
     \brief Call f on each member of t (f(t)...).
 */
 template<typename Tuple, typename F>
-RAJA_HOST_DEVICE inline void zip_for_each(Tuple&& t, F&& f)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr void zip_for_each(Tuple&& t, F&& f)
 {
   zip_for_each_impl(std::forward<Tuple>(t), std::forward<F>(f),
                     typename camp::decay<Tuple>::IdxSeq {});
@@ -219,7 +221,9 @@ RAJA_HOST_DEVICE inline void zip_for_each(Tuple&& t, F&& f)
     \brief Call f on each member of t0 and t1 (f(t0, t1)...).
 */
 template<typename Tuple0, typename Tuple1, typename F>
-RAJA_HOST_DEVICE inline void zip_for_each(Tuple0&& t0, Tuple1&& t1, F&& f)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr void zip_for_each(Tuple0&& t0,
+                                                         Tuple1&& t1,
+                                                         F&& f)
 {
   static_assert(std::is_same<typename camp::decay<Tuple0>::IdxSeq,
                              typename camp::decay<Tuple1>::IdxSeq>::value,
@@ -257,7 +261,7 @@ struct zip_tuple
   template<
       typename... Os,
       typename = concepts::enable_if<type_traits::convertible_to<Os&&, Ts>...>>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(Os&&... os)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(Os&&... os)
       : m_tuple(std::forward<Os>(os)...)
   {}
 
@@ -266,63 +270,67 @@ struct zip_tuple
            typename = concepts::enable_if<type_traits::convertible_to<
                Os&&,
                typename std::remove_reference<Ts>::type>...>>
-  zip_tuple& assign(Os&&... os)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& assign(Os&&... os)
   {
     return assign_helper(IdxSeq {}, std::forward<Os>(os)...);
   }
 
   // copy and move constructors
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(zip_tuple& o) : zip_tuple(o, IdxSeq {})
-  {}
-
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(zip_tuple const& o)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(zip_tuple& o)
       : zip_tuple(o, IdxSeq {})
   {}
 
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(zip_tuple&& o)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(zip_tuple const& o)
+      : zip_tuple(o, IdxSeq {})
+  {}
+
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(zip_tuple&& o)
       : zip_tuple(std::move(o), IdxSeq {})
   {}  // move if is_val, pass-through otherwise
 
   // copy and move assignment operators
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& operator=(zip_tuple& o)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& operator=(zip_tuple& o)
   {
     return assign_helper(o, IdxSeq {});
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& operator=(zip_tuple const& o)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& operator=(
+      zip_tuple const& o)
   {
     return assign_helper(o, IdxSeq {});
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& operator=(zip_tuple&& o)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& operator=(zip_tuple&& o)
   {
     return assign_helper(std::move(o), IdxSeq {});
   }
 
   // copy and move constructors from opp_tuple type zip_tuples
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(opp_tuple& o) : zip_tuple(o, IdxSeq {})
-  {}
-
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(opp_tuple const& o)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(opp_tuple& o)
       : zip_tuple(o, IdxSeq {})
   {}
 
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(opp_tuple&& o)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(opp_tuple const& o)
+      : zip_tuple(o, IdxSeq {})
+  {}
+
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(opp_tuple&& o)
       : zip_tuple(std::move(o), IdxSeq {})
   {}  // move if is_val, pass-through otherwise
 
   // copy and move assignment operators from opp_tuple type zip_tuples
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& operator=(opp_tuple& o)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& operator=(opp_tuple& o)
   {
     return assign_helper(o, IdxSeq {});
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& operator=(opp_tuple const& o)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& operator=(
+      opp_tuple const& o)
   {
     return assign_helper(o, IdxSeq {});
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& operator=(opp_tuple&& o)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& operator=(opp_tuple&& o)
   {
     return assign_helper(std::move(o), IdxSeq {});
   }
@@ -331,21 +339,22 @@ struct zip_tuple
   // the reference type returned by get depends on the reference type
   // of the zip_tuple that get is called on
   template<camp::idx_t I>
-  RAJA_HOST_DEVICE constexpr RAJA::tuple_element_t<I, value_type>&
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr RAJA::tuple_element_t<I, value_type>&
   get() & noexcept
   {
     return RAJA::get<I>(m_tuple);
   }
 
   template<camp::idx_t I>
-  RAJA_HOST_DEVICE constexpr RAJA::tuple_element_t<I, value_type> const& get()
-      const& noexcept
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr RAJA::
+      tuple_element_t<I, value_type> const&
+      get() const& noexcept
   {
     return RAJA::get<I>(m_tuple);
   }
 
   template<camp::idx_t I>
-  RAJA_HOST_DEVICE constexpr std::remove_reference_t<
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr std::remove_reference_t<
       RAJA::tuple_element_t<I, value_type>>&&
   get() && noexcept
   {
@@ -353,7 +362,7 @@ struct zip_tuple
   }
 
   template<camp::idx_t I>
-  RAJA_HOST_DEVICE constexpr std::remove_reference_t<
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr std::remove_reference_t<
       RAJA::tuple_element_t<I, value_type>> const&&
   get() const&& noexcept
   {
@@ -361,16 +370,16 @@ struct zip_tuple
   }
 
   // safe_swap that calls swap on each pair in the tuple
-  RAJA_HOST_DEVICE friend RAJA_INLINE void safe_swap(zip_tuple& lhs,
-                                                     zip_tuple& rhs)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr friend void safe_swap(zip_tuple& lhs,
+                                                               zip_tuple& rhs)
   {
     detail::zip_for_each(lhs, rhs, detail::Swap {});
   }
 
   // safe_swap for swapping zip_tuples with opposite is_val
   // calls swap on each pair in the tuple
-  RAJA_HOST_DEVICE friend RAJA_INLINE void safe_swap(zip_tuple& lhs,
-                                                     opp_tuple& rhs)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr friend void safe_swap(zip_tuple& lhs,
+                                                               opp_tuple& rhs)
   {
     detail::zip_for_each(lhs, rhs, detail::Swap {});
   }
@@ -391,7 +400,9 @@ private:
 
   // assignment helper from types convertible to Ts
   template<typename... Os, camp::idx_t... Is>
-  zip_tuple& assign_helper(camp::idx_seq<Is...>, Os&&... os)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& assign_helper(
+      camp::idx_seq<Is...>,
+      Os&&... os)
   {
     camp::sink(get<Is>() = std::forward<Os>(os)...);
     return *this;
@@ -399,25 +410,28 @@ private:
 
   // copy and move constructor helpers
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(zip_tuple& o, camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(zip_tuple& o,
+                                                   camp::idx_seq<Is...>)
       : zip_tuple(RAJA::get<Is>(o)...)
   {}
 
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(zip_tuple const& o,
-                                         camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(zip_tuple const& o,
+                                                   camp::idx_seq<Is...>)
       : zip_tuple(RAJA::get<Is>(o)...)
   {}
 
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(zip_tuple&& o, camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(zip_tuple&& o,
+                                                   camp::idx_seq<Is...>)
       : zip_tuple(RAJA::get<Is>(IsValMover {}(o))...)
   {}  // move if is_val, pass-through otherwise
 
   // copy and move assignment operator helpers
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& assign_helper(zip_tuple& o,
-                                                        camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& assign_helper(
+      zip_tuple& o,
+      camp::idx_seq<Is...>)
   {
     if (this != &o)
     {
@@ -427,8 +441,9 @@ private:
   }
 
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& assign_helper(zip_tuple const& o,
-                                                        camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& assign_helper(
+      zip_tuple const& o,
+      camp::idx_seq<Is...>)
   {
     if (this != &o)
     {
@@ -438,8 +453,9 @@ private:
   }
 
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& assign_helper(zip_tuple&& o,
-                                                        camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& assign_helper(
+      zip_tuple&& o,
+      camp::idx_seq<Is...>)
   {
     if (this != &o)
     {
@@ -450,41 +466,46 @@ private:
 
   // copy and move constructor helpers from opp_tuple type zip_tuples
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(opp_tuple& o, camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(opp_tuple& o,
+                                                   camp::idx_seq<Is...>)
       : zip_tuple(RAJA::get<Is>(o)...)
   {}
 
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(opp_tuple const& o,
-                                         camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(opp_tuple const& o,
+                                                   camp::idx_seq<Is...>)
       : zip_tuple(RAJA::get<Is>(o)...)
   {}
 
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple(opp_tuple&& o, camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(opp_tuple&& o,
+                                                   camp::idx_seq<Is...>)
       : zip_tuple(RAJA::get<Is>(IsValMover {}(o))...)
   {}  // move if is_val, pass-through otherwise
 
   // copy and move assignment operator helpers from opp_tuple type zip_tuples
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& assign_helper(opp_tuple& o,
-                                                        camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& assign_helper(
+      opp_tuple& o,
+      camp::idx_seq<Is...>)
   {
     camp::sink(get<Is>() = RAJA::get<Is>(o)...);
     return *this;
   }
 
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& assign_helper(opp_tuple const& o,
-                                                        camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& assign_helper(
+      opp_tuple const& o,
+      camp::idx_seq<Is...>)
   {
     camp::sink(get<Is>() = RAJA::get<Is>(o)...);
     return *this;
   }
 
   template<camp::idx_t... Is>
-  RAJA_HOST_DEVICE RAJA_INLINE zip_tuple& assign_helper(opp_tuple&& o,
-                                                        camp::idx_seq<Is...>)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& assign_helper(
+      opp_tuple&& o,
+      camp::idx_seq<Is...>)
   {
     camp::sink(get<Is>() = RAJA::get<Is>(std::move(o))...);
     return *this;

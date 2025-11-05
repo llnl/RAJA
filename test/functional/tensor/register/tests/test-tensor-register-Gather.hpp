@@ -13,14 +13,14 @@
 template <typename REGISTER_TYPE>
 void GatherImpl()
 {
-  using register_t = REGISTER_TYPE;
-  using element_t = typename register_t::element_type;
-  using policy_t = typename register_t::register_policy;
+  using reg_t = REGISTER_TYPE;
+  using element_t = typename reg_t::element_type;
+  using policy_t = typename reg_t::register_policy;
 
-  static constexpr camp::idx_t num_elem = register_t::s_num_elem;
+  static constexpr camp::idx_t num_elem = reg_t::s_num_elem;
 
   // get the integer indexing types
-  using int_register_t = typename register_t::int_vector_type;
+  using int_register_t = typename reg_t::int_vector_type;
   using index_t = typename int_register_t::element_type;
 
   // Allocate
@@ -63,7 +63,7 @@ void GatherImpl()
     idx.load_packed(input1_dptr);
 
     // gather elements from a given offsets in idx
-    register_t a;
+    reg_t a;
     a.gather(input0_dptr, idx);
 
     // write out gathered elements in packed order
@@ -91,7 +91,7 @@ void GatherImpl()
       idx.load_packed_n(input1_dptr, N);
 
       // gather elements from a given offsets in idx
-      register_t a;
+      reg_t a;
       a.gather_n(input0_dptr, idx, N);
 
       // write out gathered elements in packed order

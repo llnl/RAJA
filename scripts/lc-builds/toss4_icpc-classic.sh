@@ -39,6 +39,8 @@ cmake \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_CXX_COMPILER=/usr/tce/packages/intel-classic/intel-classic-${COMP_VER}/bin/icpc \
   -DCMAKE_C_COMPILER=/usr/tce/packages/intel-classic/intel-classic-${COMP_VER}/bin/icc \
+  -DENABLE_CLANGFORMAT=On \
+  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-14.0.6/bin/clang-format \
   -DBLT_CXX_STD=c++17 \
   -C ../host-configs/lc-builds/toss4/icpc-classic_X.cmake \
   -DRAJA_ENABLE_FORCEINLINE_RECURSIVE=Off \

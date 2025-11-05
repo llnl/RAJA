@@ -1,15 +1,9 @@
 [submodule "blt"]
 	path = blt
 	url = https://github.com/LLNL/blt.git
-[submodule "include/cub"]
-	path = tpl/cub
-	url = https://github.com/NVlabs/cub.git
 [submodule "include/camp"]
 	path = tpl/camp
 	url = https://github.com/llnl/camp
-[submodule "tpl/rocPRIM"]
-	path = tpl/rocPRIM
-	url = https://github.com/ROCmSoftwarePlatform/rocPRIM.git
 [submodule "scripts/radiuss-spack-configs"]
 	path = scripts/radiuss-spack-configs
 	url = https://github.com/LLNL/radiuss-spack-configs

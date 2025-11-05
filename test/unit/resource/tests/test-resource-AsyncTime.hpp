@@ -31,8 +31,8 @@ int get_clockrate()
 {
   int cuda_device = 0;
   cudaDeviceProp deviceProp;
-  cudaGetDevice(&cuda_device);
-  cudaGetDeviceProperties(&deviceProp, cuda_device);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetDevice, &cuda_device);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetDeviceProperties, &deviceProp, cuda_device);
   if ((deviceProp.concurrentKernels == 0))
   {
     printf("> GPU does not support concurrent kernel execution\n");

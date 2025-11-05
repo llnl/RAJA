@@ -6,7 +6,7 @@
 ##############################################################################
 
 # Override reproducer section to define project specific variables.
-.poodle_reproducer_vars:
+.dane_reproducer_vars:
   script:
     - !reference [.reproducer_vars, script]
 
@@ -20,21 +20,21 @@
 # Identical to shared job, but use OpenMP tasks and no vectorization
 clang_14_0_6:
   variables:
-    SPEC: " ~shared +openmp +omptask ~vectorization +tests %clang@=14.0.6 ${PROJECT_POODLE_DEPS}"
-  extends: .job_on_poodle
+    SPEC: " ~shared +openmp +omptask ~vectorization +tests %llvm@=14.0.6 ${PROJECT_POODLE_DEPS}"
+  extends: .job_on_dane
 
 # Identical to shared job, but use OpenMP tasks and no vectorization
 gcc_10_3_1:
   variables:
     SPEC: " ~shared +openmp +omptask ~vectorization +tests %gcc@=10.3.1 ${PROJECT_POODLE_DEPS}"
-  extends: .job_on_poodle
+  extends: .job_on_dane
 
 # custom variant
 # https://github.com/LLNL/RAJA/pull/1712#issuecomment-2292006843
 oneapi_2023_2_1:
   variables:
     SPEC: "${PROJECT_POODLE_VARIANTS} +lowopttest cxxflags==-fp-model=precise %oneapi@=2023.2.1 ${PROJECT_POODLE_DEPS}"
-  extends: .job_on_poodle
+  extends: .job_on_dane
 
 ############
 # Extra jobs
@@ -45,16 +45,16 @@ oneapi_2023_2_1:
 
 clang_14_0_6_openmp_off:
   variables:
-    SPEC: " ~shared ~openmp +tests %clang@=14.0.6"
-  extends: .job_on_poodle
+    SPEC: " ~shared ~openmp +tests %llvm@=14.0.6"
+  extends: .job_on_dane
 
 gcc_10_3_1_openmp_default:
   variables:
     SPEC: " ~shared +tests %gcc@=10.3.1"
-  extends: .job_on_poodle
+  extends: .job_on_dane
 
 # OTHERS
-clang_14_0_6_gcc_10_3_1_desul_atomics:
+clang_14_0_6_gcc_11_2_1_desul_atomics:
   variables:
-    SPEC: " ~shared +openmp +tests +desul %clang@=14.0.6.gcc.10.3.1"
-  extends: .job_on_poodle
+    SPEC: " ~shared +openmp +tests +desul %clang-14-gcc-11"
+  extends: .job_on_dane

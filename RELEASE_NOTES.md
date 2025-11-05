@@ -20,16 +20,89 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
+Version 2025.09.1 -- Release date 2025-10-01
+============================================
+
+This release contains a bugfix and a submodule update
+
+Notable changes include:
+  * CAMP submodule was updated to point at the patch release v2025.09.2
+  * A build conflict with Caliper and ROCTX/NVTX has been fixed
+  * BlueOS cmake scripts have been removed
+  * toss3/clangcuda_6_0_0_nvcc_8_0.cmake has been removed
+  * C++17 features have been used to simplify RAJA internals 
+  * Missing use of const has been corrected in the CompareFirst struct methods
+
+
+Version 2025.09.0 -- Release date 2025-09-12
+============================================
+
+This release contains a variety of new features, bug fixes, and build changes.
+
+Notable changes include:
+
+  * New features / API changes:
+    * The RAJA::expt::Reduce interface now works with RAJA::kernel. There is
+      an example of this usage in the RAJA/examples/kernel-reduction.cpp file.
+    * Builtin atomics for unsigned fixed width integer types that support 
+      Windows builds have been added.
+    * Added a global function to turn on/off Caliper profiling, when enabled.
+    * Added some quality-of-life improvements to RAJA MultiView construct, 
+      such as the ability to construct and set a MultiView with const data,
+      the ability to construct an empty MultiView, and new accessors to data and layout.
+    * Added `size` methods to the RAJA IndexLayout construct. These can be
+      used to check the size of the layout or to determine whether the size
+      is non-zero. All the size methods directly call the base Layout
+      implementation. Also added host-device decorators to the methods
+      `make_tuple_index` and `make_index_layout`.
+    * Added the `grid_constant` decorator to global function parameters for
+      CUDA and make most global function parameters const for CUDA and HIP.
+      This allows nvcc to better optimize parameter usage in some cases.
+      ROCm compilers do not support this decorator and do not appear to 
+      optimize use of this parameter. For more details, please see
+      https://docs.nvidia.com/cuda/cuda-c-programming-guide/#grid-constant
+    * Added an experimental feature to support printing of arguments to GPU
+      API functions on error. This capability will continue to improve and
+      mature. Hopefully, it will help RAJA users understand what went wrong
+      when a GPU kernel fails. This capability is currently supported for RAJA
+      CUDA and HIP back-ends.
+
+  * Build changes/improvements:
+    * **RAJA now requires C++17 as the minimum C++ standard.**
+    * Updated BLT submodule to v0.7.1 release.
+    * Updated Camp submodule to v2025.09.2 release.
+    * Updated to NVTX3 profiling library to support CUDA 12.9 and above
+      (also supports back to CUDA 10)
+    * [BREAKING CHANGE] Renamed CMake option `RAJA_ENABLE_NV_TOOLS_EXT` to `RAJA_ENABLE_NVTX`
+    * Updated desul submodule to 6114dd25b54782678c555c0c1d2197f13cc8d2a0
+      commit.
+    * The CUB and rocPRIM submodules in RAJA have been removed. Moving forward,
+      the versions of these that are deployed with the CUDA and ROCm compiler
+      stacks will be used.
+    * Fixed the RAJA minimum architecture check, which did not work on 
+      Blackwell cards. Now, if `CMAKE_CUDA_ARCHITECTURES` is not set, the 
+      compiler will select a reasonable architecture default, which is 
+      guaranteed to be at least `sm_35` for nvcc since RAJA now requires
+      CUDA 11 as the minimum CUDA version.
+
+  * Bug fixes/improvements:
+    * Race conditions due to inconsistent usage of Camp resources (CUDA/HIP
+      streams) in RAJA tests have been fixed.
+    * Resolved a bunch of shadow variable warnings reported by some users.
+
+
 Version 2025.03.2 -- Release date 2025-05-14
 ============================================
 
-This release contains bugfixes
+This release contains several improvements
 
      * Build changes/improvements:
        * Removed unused variables related to kernel naming
        * Added missing host device annotations on missing param reducers
-       * CMAKE build option to allow for use of OpenMP 5.1 atomics for min/max operations. The option is on by default.
-       * Full backwards compatibility of kernel naming and lambda capture style reducers.
+       * CMake build option to allow for use of OpenMP 5.1 atomics for min/max
+         operations. The option is on by default.
+       * Full backwards compatibility of kernel naming and lambda capture
+         style reducers.
        * Removed compiler warnings related to NVCC and loop unrolling
 
 

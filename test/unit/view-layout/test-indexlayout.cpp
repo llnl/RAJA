@@ -25,6 +25,11 @@ TEST(IndexLayout, IndexList1D) {
   EXPECT_EQ(index_layout(1), 2);
   EXPECT_EQ(index_layout(2), 3);
 
+  EXPECT_EQ(index_layout.size(), 3);
+  EXPECT_EQ(index_layout.size_noproj(), 3);
+  EXPECT_EQ(index_layout.get_dim_stride<0>(), 1);
+  EXPECT_EQ(index_layout.get_dim_size<0>(), 3);
+
 }
 
 TEST(IndexLayout, IndexList1DSubsetOfLayout) {
@@ -68,6 +73,13 @@ TEST(IndexLayout, ExtractTwoIndices2DLayoutAxis0) {
     EXPECT_EQ(index_layout(0,i), i+10);
     EXPECT_EQ(index_layout(1,i), i+20);
   }
+
+  EXPECT_EQ(index_layout.size(), 30);
+  EXPECT_EQ(index_layout.size_noproj(), 30);
+  EXPECT_EQ(index_layout.get_dim_stride<0>(), 10);
+  EXPECT_EQ(index_layout.get_dim_stride<1>(), 1);
+  EXPECT_EQ(index_layout.get_dim_size<0>(), 3);
+  EXPECT_EQ(index_layout.get_dim_size<1>(), 10);
 
 }
 

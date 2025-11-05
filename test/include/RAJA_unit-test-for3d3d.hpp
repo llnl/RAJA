@@ -112,8 +112,8 @@ inline void for3d3d(test_cuda, dim3d3d dim, L&& run)
 {
    for3d3d_cuda_global<<<dim3(dim.block[0], dim.block[1], dim.block[2]),
                          dim3(dim.thread[0], dim.thread[1], dim.thread[2])>>>(std::forward<L>(run));
-   cudaErrchk(cudaGetLastError());
-   cudaErrchk(cudaDeviceSynchronize());
+   CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetLastError);
+   CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 }
 
 #endif
@@ -138,8 +138,8 @@ inline void for3d3d(test_hip, dim3d3d dim, L&& run)
                       dim3(dim.thread[0], dim.thread[1], dim.thread[2]),
                       0, 0,
                       std::forward<L>(run));
-   hipErrchk(hipGetLastError());
-   hipErrchk(hipDeviceSynchronize());
+   CAMP_HIP_API_INVOKE_AND_CHECK(hipGetLastError);
+   CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
 }
 
 #endif

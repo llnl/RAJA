@@ -63,6 +63,8 @@ cmake \
   -DROCM_ROOT_DIR="/opt/rocm-${COMP_VER}" \
   -DHIP_ROOT_DIR="/opt/rocm-${COMP_VER}/hip" \
   -DHIP_PATH=/opt/rocm-${COMP_VER}/llvm/bin \
+  -DENABLE_CLANGFORMAT=On \
+  -DCLANGFORMAT_EXECUTABLE=/opt/rocm-5.2.3/llvm/bin/clang-format \
   -DCMAKE_C_COMPILER=/opt/rocm-${COMP_VER}/llvm/bin/amdclang \
   -DCMAKE_CXX_COMPILER=/opt/rocm-${COMP_VER}/llvm/bin/amdclang++ \
   -DCMAKE_HIP_ARCHITECTURES="${COMP_ARCH}" \

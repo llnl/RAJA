@@ -467,8 +467,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   int imin = -5;
   int imax = 6;
 
-  for (int i = imin; i < imax; ++i) {
-    ao_ref[ i-imin ] = i;
+  for (int ii = imin; ii < imax; ++ii) {
+    ao_ref[ ii-imin ] = i;
   }
   // _cstyle_offlayout1D_end
 
@@ -485,8 +485,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   RAJA::View< int, RAJA::OffsetLayout<1, int> > aoview_1Doff(ao,
                                                              offlayout_1D);
 
-  for (int i = imin; i < imax; ++i) {
-    aoview_1Doff(i) = i;
+  for (int ii = imin; ii < imax; ++ii) {
+    aoview_1Doff(ii) = ii;
   }
   // _raja_offlayout1D_end
 
@@ -510,9 +510,9 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   int jmax = 5;
 
   iter = 0;
-  for (int i = imin; i < imax; ++i) {
-    for (int j = jmin; j < jmax; ++j) {
-      ao_ref[ (j-jmin) + (i-imin) * (jmax-jmin)  ] = iter;
+  for (int ii = imin; ii < imax; ++ii) {
+    for (int jj = jmin; jj < jmax; ++jj) {
+      ao_ref[ (jj-jmin) + (ii-imin) * (jmax-jmin)  ] = iter;
       iter++;
     }
   }
@@ -547,9 +547,9 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
   // _cstyle_permofflayout2D_start
   iter = 0;
-  for (int j = jmin; j < jmax; ++j) {
-    for (int i = imin; i < imax; ++i) {
-      ao_ref[ (i-imin) + (j-jmin) * (imax-imin)  ] = iter; 
+  for (int jj = jmin; jj < jmax; ++jj) {
+    for (int ii = imin; ii < imax; ++ii) {
+      ao_ref[ (ii-imin) + (jj-jmin) * (imax-imin)  ] = iter; 
       iter++;
     }
   }
@@ -572,9 +572,9 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
                                                             permofflayout_2D);
 
   iter = 0;
-  for (int j = jmin; j < jmax; ++j) {
-    for (int i = imin; i < imax; ++i) {
-      aoview_2Dpermoff(i, j) = iter;
+  for (int jj = jmin; jj < jmax; ++jj) {
+    for (int ii = imin; ii < imax; ++ii) {
+      aoview_2Dpermoff(ii, jj) = iter;
       iter++;
     }
   }

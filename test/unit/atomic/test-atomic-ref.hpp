@@ -24,6 +24,15 @@ using basic_types =
                       std::tuple<float, RAJA::seq_atomic>,
                       std::tuple<double, RAJA::builtin_atomic>,
                       std::tuple<double, RAJA::seq_atomic>
+#if defined(RAJA_COMPILER_MSVC) ||  \
+    ((defined(_WIN32) || defined(_WIN64)) && defined(__INTEL_COMPILER))
+// Test unsigned fixed width integer types for Windows builds
+                      , 
+                      std::tuple<uint8_t, RAJA::builtin_atomic>,
+                      std::tuple<uint16_t, RAJA::builtin_atomic>,
+                      std::tuple<uint32_t, RAJA::builtin_atomic>,
+                      std::tuple<uint64_t, RAJA::builtin_atomic>
+#endif
 #if defined(RAJA_ENABLE_OPENMP)
                       ,
                       std::tuple<int, RAJA::omp_atomic>,

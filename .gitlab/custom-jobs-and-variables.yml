@@ -7,31 +7,30 @@
 
 # We define the following GitLab pipeline variables:
 variables:
-# On LLNL's ruby, this pipeline creates only one allocation shared among jobs
+# On LLNL's machines, this pipeline creates only one allocation shared among jobs
 # in order to save time and resources. This allocation has to be uniquely named
 # so that we are sure to retrieve it and avoid collisions.
   ALLOC_NAME: ${CI_PROJECT_NAME}_ci_${CI_PIPELINE_ID}
 
-# Ruby
+# Dane
 # Arguments for top level allocation
-  RUBY_SHARED_ALLOC: "--exclusive --reservation=ci --time=40 --nodes=2"
+  DANE_SHARED_ALLOC: "--exclusive --reservation=ci --time=120 --nodes=1"
 # Arguments for job level allocation
-# Note: We repeat the reservation, necessary when jobs are manually re-triggered.
-  RUBY_JOB_ALLOC: "--reservation=ci --nodes=1"
-# Project specific variants for ruby
-  PROJECT_RUBY_VARIANTS: "~shared +openmp +vectorization +tests"
-# Project specific deps for ruby
-  PROJECT_RUBY_DEPS:
+  DANE_JOB_ALLOC: "--reservation=ci --nodes=1"
+# Project specific variants for dane
+  PROJECT_DANE_VARIANTS: "~shared +openmp +vectorization +tests"
+# Project specific deps for dane
+  PROJECT_DANE_DEPS:
 
-# Poodle
+# Matrix
 # Arguments for top level allocation
-  POODLE_SHARED_ALLOC: "--exclusive --time=120 --nodes=1"
+  MATRIX_SHARED_ALLOC: "--exclusive --partition=pdebug --time=60 --nodes=1"
 # Arguments for job level allocation
-  POODLE_JOB_ALLOC: "--nodes=1"
-# Project specific variants for poodle
-  PROJECT_POODLE_VARIANTS: "~shared +openmp +vectorization +tests"
-# Project specific deps for poodle
-  PROJECT_POODLE_DEPS:
+  MATRIX_JOB_ALLOC: "--partition=pdebug --nodes=1"
+# Project specific variants for matrix
+  PROJECT_MATRIX_VARIANTS: "~shared +cuda cuda_arch=75 +tests"
+# Project specific deps for matrix
+  PROJECT_MATRIX_DEPS:
 
 # Corona
 # Arguments for top level allocation
@@ -53,14 +52,15 @@ variables:
 # Project specific deps for corona
   PROJECT_TIOGA_DEPS:
 
-# Lassen and Butte use a different job scheduler (spectrum lsf) that does not
-# allow pre-allocation the same way slurm does.
+# Tuolumne
+# Arguments for top level allocation
+  TUOLUMNE_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=90m --nodes=1 -o per-resource.count=2"
 # Arguments for job level allocation
-  LASSEN_JOB_ALLOC: "1 -W 50 -q pci"
-# Project specific variants for lassen
-  PROJECT_LASSEN_VARIANTS: "~shared +openmp +vectorization +tests cuda_arch=70"
-# Project specific deps for lassen
-  PROJECT_LASSEN_DEPS:
+  TUOLUMNE_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
+# Project specific variants for corona
+  PROJECT_TUOLUMNE_VARIANTS: "~shared +openmp +vectorization +tests"
+# Project specific deps for corona
+  PROJECT_TUOLUMNE_DEPS:
 
 # Configuration shared by build and test jobs specific to this project.
 # Not all configuration can be shared. Here projects can fine tune the

@@ -129,34 +129,34 @@ GPU_TYPED_TEST_P( AtomicRefCUDAExchangeUnitTest, CUDAExchanges )
   T * memaddr = nullptr;
   T * testval = nullptr;
   bool * result = nullptr;
-  cudaErrchk(cudaMallocManaged(&swapper, sizeof(T)));
-  cudaErrchk(cudaMallocManaged(&memaddr, sizeof(T)));
-  cudaErrchk(cudaMallocManaged(&testval, sizeof(T)));
-  cudaErrchk(cudaMallocManaged(&result, sizeof(bool)));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, &swapper, sizeof(T));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, &memaddr, sizeof(T));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, &testval, sizeof(T));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, &result, sizeof(bool));
   swapper[0] = (T)91;
   memaddr[0] = (T)0;
   testval[0] = (T)19;
   result[0] = true;
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 
   // explicit constructor with memory address
   RAJA::AtomicRef<T, AtomicPolicy> test1( memaddr );
 
   // test exchange method
   forone<test_cuda>( [=] __device__ () {swapper[0] = test1.exchange( swapper[0] );} );
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
   ASSERT_EQ( test1, (T)91 );
   ASSERT_EQ( swapper[0], (T)0 );
 
   // test CAS method
   forone<test_cuda>( [=] __device__ () {swapper[0] = test1.CAS( (T)91, swapper[0] );} );
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
   ASSERT_EQ( test1, (T)0 );
   ASSERT_EQ( swapper[0], (T)91 );
 
   // test strong exchange method
   forone<test_cuda>( [=] __device__ () {result[0] = test1.compare_exchange_strong( testval[0], testval[0] );} );
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
   ASSERT_EQ( result[0], false );
   ASSERT_EQ( test1, (T)0 );
   ASSERT_EQ( swapper[0], (T)91 );
@@ -164,17 +164,17 @@ GPU_TYPED_TEST_P( AtomicRefCUDAExchangeUnitTest, CUDAExchanges )
 
   // test weak exchange method (same as strong exchange)
   forone<test_cuda>( [=] __device__ () {result[0] = test1.compare_exchange_weak( testval[0], swapper[0] );} );
-  cudaErrchk(cudaDeviceSynchronize());
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
   ASSERT_EQ( result[0], true );
   ASSERT_EQ( test1, (T)91 );
   ASSERT_EQ( swapper[0], (T)91 );
   ASSERT_EQ( testval[0], (T)0 );
 
-  cudaErrchk(cudaDeviceSynchronize());
-  cudaErrchk(cudaFree(swapper));
-  cudaErrchk(cudaFree(memaddr));
-  cudaErrchk(cudaFree(testval));
-  cudaErrchk(cudaFree(result));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, swapper);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, memaddr);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, testval);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, result);
 }
 
 REGISTER_TYPED_TEST_SUITE_P( AtomicRefCUDAExchangeUnitTest,
