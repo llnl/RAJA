@@ -329,7 +329,7 @@ public:
   /// Free all backing allocations, even if they are currently in use
   void free_chunks()
   {
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
     lock_guard<omp::mutex> lock(m_mutex);
 #endif
 
@@ -343,7 +343,7 @@ public:
 
   size_t arena_size()
   {
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
     lock_guard<omp::mutex> lock(m_mutex);
 #endif
 
@@ -352,7 +352,7 @@ public:
 
   size_t arena_size(size_t new_size)
   {
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
     lock_guard<omp::mutex> lock(m_mutex);
 #endif
 
@@ -364,7 +364,7 @@ public:
   template<typename T>
   T* malloc(size_t nTs, size_t alignment = alignof(T))
   {
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
     lock_guard<omp::mutex> lock(m_mutex);
 #endif
 
@@ -398,7 +398,7 @@ public:
 
   void free(const void* cptr)
   {
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
     lock_guard<omp::mutex> lock(m_mutex);
 #endif
 
@@ -422,7 +422,7 @@ public:
 private:
   using arena_container_type = std::list<detail::MemoryArena>;
 
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
   omp::mutex m_mutex;
 #endif
 

@@ -264,14 +264,14 @@ namespace RAJA {
 
 #if defined(RAJA_ENABLE_OPENMP) && !defined(__HIP_DEVICE_COMPILE__)
 #if defined(_OPENMP)
+// RAJA build can be configured but downstream packages may not; guard OpenMP 
+#define RAJA_OPENMP_ACTIVE  
 #if (_OPENMP >= 200805)
 #if defined(RAJA_ENABLE_OPENMP_TASK)
 #define RAJA_ENABLE_OPENMP_TASK_INTERNAL
 #endif
 #endif // _OPENMP >= 200805
-#else
-#error RAJA configured with RAJA_ENABLE_OPENMP, but _OPENMP is not defined in this code section
-#endif // else
+#endif // OPENMP
 #endif // RAJA_ENABLE_OPENMP && !__HIP_DEVICE_COMPILE__
 
 #if defined(RAJA_ENABLE_CUDA) && defined(__CUDACC__)
