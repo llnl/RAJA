@@ -75,17 +75,21 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 //
 // Define number of messages that can be stored
 //
-  const int num_messages = 1;
+  const std::size_t num_messages = 1;
+  const std::size_t message_sz   = sizeof(RAJA::msg_header) + 
+    sizeof(RAJA::msg_args<my_string<128>, int*, int, int>);
+
+  const std::size_t buf_sz       = num_messages*message_sz;
 
 //
 // Allocate and initialize message handler and queue
 //
-  auto logger = RAJA::make_message_handler(num_messages, host, 
+  auto logger = RAJA::make_message_manager(buf_sz, host);
+  auto cpu_msg_queue = logger.get_queue<RAJA::mpsc_queue>(0,
     [](const my_string<128>& str, int* ptr, int idx, int value) {
       std::cout << "\n " << str.c_str() << " " << ptr << " a[" << idx << "] = " << value << "\n";
     }
   );
-  auto cpu_msg_queue = logger.get_queue<RAJA::mpsc_queue>();
 
 //
 // Define vector length
@@ -238,20 +242,19 @@ const int GPU_BLOCK_SIZE = 256;
   RAJA::resources::Sycl res_gpu2;
   using EXEC_POLICY = RAJA::sycl_exec<GPU_BLOCK_SIZE>;
 #endif
-  // TODO: does this work with sycl?
-  auto gpu_logger1 = RAJA::make_message_handler(num_messages, res_gpu1, 
+  auto gpu_logger1    = RAJA::make_message_manager(buf_sz, res_gpu1);
+  auto gpu_msg_queue1 = gpu_logger1.get_queue<RAJA::mpsc_queue>(0,
     [](const my_string<128>& str, int* ptr, int idx, int value) {
       std::cout << "\n " << str.c_str() << " " << ptr << " a[" << idx << "] = " << value << "\n";
     }
   );
-  auto gpu_msg_queue1 = gpu_logger1.get_queue<RAJA::mpsc_queue>();
 
-  auto gpu_logger2 = RAJA::make_message_handler(num_messages, res_gpu2, 
+  auto gpu_logger2    = RAJA::make_message_manager(buf_sz, res_gpu2); 
+  auto gpu_msg_queue2 = gpu_logger2.get_queue<RAJA::mpsc_queue>(0,
     [](const my_string<128>& str, int* ptr, int idx, int value) {
       std::cout << "\n " << str.c_str() << " " << ptr << " a[" << idx << "] = " << value << "\n";
     }
   );
-  auto gpu_msg_queue2 = gpu_logger2.get_queue<RAJA::mpsc_queue>();
 
   int* d_a1 = res_gpu1.allocate<int>(N);
   int* d_b1 = res_gpu1.allocate<int>(N);
@@ -330,19 +333,19 @@ const int GPU_BLOCK_SIZE = 256;
 
   using EXEC_POLICY = RAJA::sycl_exec<GPU_BLOCK_SIZE>;
 #endif
-  auto gpu_logger1 = RAJA::make_message_handler(num_messages, res_gpu1, 
+  auto gpu_logger1    = RAJA::make_message_manager(buf_sz, res_gpu1); 
+  auto gpu_msg_queue1 = gpu_logger1.get_queue<RAJA::mpsc_queue>(0,
     [](int* ptr, int idx, int value) {
       std::cout << "\n gpu stream 1: pointer (" << ptr << ") d_array1[" << idx << "] = " << value << "\n";
     }
   );
-  auto gpu_msg_queue1 = gpu_logger1.get_queue<RAJA::mpsc_queue>();
 
-  auto gpu_logger2 = RAJA::make_message_handler(num_messages, res_gpu2, 
+  auto gpu_logger2    = RAJA::make_message_manager(buf_sz, res_gpu2);
+  auto gpu_msg_queue2 = gpu_logger2.get_queue<RAJA::mpsc_queue>(0,
     [](int* ptr, int idx, int value) {
       std::cout << "\n gpu stream 2: pointer (" << ptr << ") d_array2[" << idx << "] = " << value << "\n";
     }
   );
-  auto gpu_msg_queue2 = gpu_logger2.get_queue<RAJA::mpsc_queue>();
 
   // _raja_res_alloc_start
   int* d_array1 = res_gpu1.allocate<int>(N);

@@ -38,7 +38,7 @@ class queue<Container, RAJA::mpsc_queue, RAJA::msg_args<Args...>>
 public:
   using policy = RAJA::mpsc_queue;
 
-  using value_type = typename Container::value_type;
+  using args_type = camp::tuple<Args...>;
   using size_type  = typename Container::size_type;
 
   queue(int id, Container& container) : m_id{id}, m_container {&container} {}
@@ -48,7 +48,8 @@ public:
   /// Posts message to queue. This is marked `const` to pass to lambda by
   /// copy. This throws away messages that are over the capacity of the
   /// container.
-  RAJA_HOST_DEVICE bool try_post_message(Args&&... args) const
+  template <typename... Ts>
+  RAJA_HOST_DEVICE bool try_post_message(Ts&&... args) const
   {
     if (m_container != nullptr)
     {
@@ -61,8 +62,7 @@ public:
       {
         char *buf = m_container->m_data + local_size;
         new (buf) msg_header{args_sz, m_id, buf+header_sz};
-        new (buf+header_sz) msg_args<Args...>{
-          camp::make_tuple(std::forward<Args>(args)...)};
+        new (buf+header_sz) msg_args<Args...>{args_type(std::forward<Ts>(args)...)};
         return true;
       }
     }

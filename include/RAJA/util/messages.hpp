@@ -245,6 +245,9 @@ public:
   using msg_id        = int;
   using msg_bus       = message_bus<char>;
 
+  template <typename T>
+  using msg_decay_t   = std::decay_t<T>;
+
 public:
   template<typename Resource>
   message_manager(const std::size_t bus_sz, Resource res)
@@ -285,15 +288,17 @@ public:
   }
 
 private:
+  // TODO: create small wrapper for callables
   template <typename Policy, typename Callable, typename R, typename... Args>
   auto get_queue_impl(msg_id id, Callable&& c, std::function<R(Args...)>)
   {
     m_callbacks[id] = callback_type{[=] (char* msg_args_buf) {
-      msg_args<Args...>& aligned_args = *std::launder(reinterpret_cast<msg_args<Args...>*>(msg_args_buf));
+      msg_args<msg_decay_t<Args>...>& aligned_args = 
+        *std::launder(reinterpret_cast<msg_args<msg_decay_t<Args>...>*>(msg_args_buf));
       camp::apply(c, aligned_args.args);
-      aligned_args.~msg_args<Args...>();
+      aligned_args.~msg_args<msg_decay_t<Args>...>();
     }};
-    return m_bus.template get_queue<Policy, Args...>(id);
+    return m_bus.template get_queue<Policy, msg_decay_t<Args>...>(id);
   }
 
   msg_bus m_bus;
