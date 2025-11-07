@@ -129,12 +129,10 @@ dane-up-check:
   extends: [.dane, .machine-check]
 
 dane-build-and-test:
-  stage: build-and-test
-  extends: [.dane]
+  extends: [.dane, .build-and-test]
   needs: [dane-up-check, generate-job-lists]
   trigger:
     include:
-      - local: '.gitlab/custom-jobs.yml'
       - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/dane-pipeline@woptim/migrate-to-components
         inputs:
           job_cmd: $JOB_CMD
@@ -142,23 +140,19 @@ dane-build-and-test:
           job_alloc: $DANE_JOB_ALLOC
           github_project_name: $GITHUB_PROJECT_NAME
           github_project_org: $GITHUB_PROJECT_ORG
+      - local: '.gitlab/custom-jobs.yml'
       - artifact: 'dane-jobs.yml'
         job: 'generate-job-lists'
-    strategy: depend
-    forward:
-      pipeline_variables: true
 
 # MATRIX
 matrix-up-check:
   extends: [.matrix, .machine-check]
 
 matrix-build-and-test:
-  stage: build-and-test
-  extends: [.matrix]
+  extends: [.matrix, .build-and-test]
   needs: [matrix-up-check, generate-job-lists]
   trigger:
     include:
-      - local: '.gitlab/custom-jobs.yml'
       - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/matrix-pipeline@woptim/migrate-to-components
         inputs:
           job_cmd: $JOB_CMD
@@ -166,23 +160,19 @@ matrix-build-and-test:
           job_alloc: $MATRIX_JOB_ALLOC
           github_project_name: $GITHUB_PROJECT_NAME
           github_project_org: $GITHUB_PROJECT_ORG
+      - local: '.gitlab/custom-jobs.yml'
       - artifact: 'matrix-jobs.yml'
         job: 'generate-job-lists'
-    strategy: depend
-    forward:
-      pipeline_variables: true
 
 # CORONA
 corona-up-check:
   extends: [.corona, .machine-check]
 
 corona-build-and-test:
-  stage: build-and-test
-  extends: [.corona]
+  extends: [.corona, .build-and-test]
   needs: [corona-up-check, generate-job-lists]
   trigger:
     include:
-      - local: '.gitlab/custom-jobs.yml'
       - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/corona-pipeline@woptim/migrate-to-components
         inputs:
           job_cmd: $JOB_CMD
@@ -190,23 +180,19 @@ corona-build-and-test:
           job_alloc: $CORONA_JOB_ALLOC
           github_project_name: $GITHUB_PROJECT_NAME
           github_project_org: $GITHUB_PROJECT_ORG
+      - local: '.gitlab/custom-jobs.yml'
       - artifact: 'corona-jobs.yml'
         job: 'generate-job-lists'
-    strategy: depend
-    forward:
-      pipeline_variables: true
 
 # TIOGA
 tioga-up-check:
   extends: [.tioga, .machine-check]
 
 tioga-build-and-test:
-  stage: build-and-test
-  extends: [.tioga]
+  extends: [.tioga, .build-and-test]
   needs: [tioga-up-check, generate-job-lists]
   trigger:
     include:
-      - local: '.gitlab/custom-jobs.yml'
       - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/tioga-pipeline@woptim/migrate-to-components
         inputs:
           job_cmd: $JOB_CMD
@@ -214,23 +200,19 @@ tioga-build-and-test:
           job_alloc: $TIOGA_JOB_ALLOC
           github_project_name: $GITHUB_PROJECT_NAME
           github_project_org: $GITHUB_PROJECT_ORG
+      - local: '.gitlab/custom-jobs.yml'
       - artifact: 'tioga-jobs.yml'
         job: 'generate-job-lists'
-    strategy: depend
-    forward:
-      pipeline_variables: true
 
 # TUOLUMNE
 tuolumne-up-check:
   extends: [.tuolumne, .machine-check]
 
 tuolumne-build-and-test:
-  stage: build-and-test
-  extends: [.tuolumne]
+  extends: [.tuolumne, .build-and-test]
   needs: [tuolumne-up-check, generate-job-lists]
   trigger:
     include:
-      - local: '.gitlab/custom-jobs.yml'
       - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/tuolumne-pipeline@woptim/migrate-to-components
         inputs:
           job_cmd: $JOB_CMD
@@ -238,12 +220,9 @@ tuolumne-build-and-test:
           job_alloc: $TUOLUMNE_JOB_ALLOC
           github_project_name: $GITHUB_PROJECT_NAME
           github_project_org: $GITHUB_PROJECT_ORG
+      - local: '.gitlab/custom-jobs.yml'
       - artifact: 'tuolumne-jobs.yml'
         job: 'generate-job-lists'
-    strategy: depend
-    forward:
-      pipeline_variables: true
-
 
 # If testing develop branch, trigger RAJAPerf pipeline with this version of
 # RAJA.
