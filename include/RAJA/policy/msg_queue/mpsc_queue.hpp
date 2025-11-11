@@ -5,7 +5,7 @@
  *
  * \brief   Header file containing implementation for a MPSC
  *          message queue policy. By SPSC, means multi-producer
- *          single-consumer. In other words, messages produced 
+ *          single-consumer. In other words, messages produced
  *          could be from multiple thread may require atomics.
  *
  ******************************************************************************
@@ -39,16 +39,16 @@ public:
   using policy = RAJA::mpsc_queue;
 
   using args_type = camp::tuple<Args...>;
-  using size_type  = typename Container::size_type;
+  using size_type = typename Container::size_type;
 
-  queue(int id, Container& container) : m_id{id}, m_container {&container} {}
+  queue(int id, Container& container) : m_id {id}, m_container {&container} {}
 
-  queue(int id, Container* container) : m_id{id}, m_container {container} {}
+  queue(int id, Container* container) : m_id {id}, m_container {container} {}
 
   /// Posts message to queue. This is marked `const` to pass to lambda by
   /// copy. This throws away messages that are over the capacity of the
   /// container.
-  template <typename... Ts>
+  template<typename... Ts>
   RAJA_HOST_DEVICE bool try_post_message(Ts&&... args) const
   {
     if (m_container != nullptr)
@@ -56,15 +56,17 @@ public:
       constexpr size_type header_sz = align(sizeof(msg_header));
       constexpr size_type args_sz   = align(sizeof(msg_args<Args...>));
       constexpr size_type msg_sz    = header_sz + args_sz;
-      auto local_size = RAJA::atomicAdd<auto_atomic>(&(m_container->m_end), msg_sz);
+      auto local_size =
+          RAJA::atomicAdd<auto_atomic>(&(m_container->m_end), msg_sz);
       if (m_container->m_data != nullptr &&
           local_size + msg_sz <= m_container->m_capacity)
       {
-        char *buf = m_container->m_data + local_size;
-        new (buf) msg_header{args_sz, m_id, buf+header_sz};
-        new (buf+header_sz) msg_args<Args...>{args_type(std::forward<Ts>(args)...)};
+        char* buf = m_container->m_data + local_size;
+        new (buf) msg_header {args_sz, m_id, buf + header_sz};
+        new (buf + header_sz)
+            msg_args<Args...> {args_type(std::forward<Ts>(args)...)};
 
-	// Actual size of buffer used
+        // Actual size of buffer used
         RAJA::atomicAdd<auto_atomic>(&(m_container->m_size), msg_sz);
         return true;
       }

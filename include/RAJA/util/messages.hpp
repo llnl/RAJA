@@ -41,7 +41,7 @@ class message_bus;
 /// Specialized case from message bus.
 /// This will store a msg_header and arguments in a char* buffer. These
 /// are later reinterpretted to the correct message arguments.
-/// 
+///
 template<>
 class message_bus<char>
 {
@@ -73,22 +73,22 @@ private:
 
     msg_iterator(pointer ptr) : cur_ptr(ptr) {}
 
-    msg_header& operator*() const 
+    msg_header& operator*() const
     {
       return *std::launder(reinterpret_cast<msg_header*>(cur_ptr));
-    } 
+    }
 
-    msg_header* operator->() const 
+    msg_header* operator->() const
     {
       return std::launder(reinterpret_cast<msg_header*>(cur_ptr));
-    } 
+    }
 
     msg_iterator& operator++()
     {
       msg_header& msg = *std::launder(reinterpret_cast<msg_header*>(cur_ptr));
       cur_ptr += msg.sz + align(sizeof(msg_header));
 
-      return (*this); 
+      return (*this);
     }
 
     msg_iterator operator++(int)
@@ -100,12 +100,12 @@ private:
 
     bool operator==(const msg_iterator& other) const
     {
-      return (cur_ptr == other.cur_ptr); 
+      return (cur_ptr == other.cur_ptr);
     }
 
     bool operator!=(const msg_iterator& other) const
     {
-      return !(*this == other); 
+      return !(*this == other);
     }
 
   private:
@@ -115,7 +115,7 @@ private:
   struct resource_deleter
   {
   public:
-    using resource_type  = camp::resources::Resource;
+    using resource_type = camp::resources::Resource;
 
     template<typename Resource>
     resource_deleter(Resource res) : m_res {res}
@@ -216,16 +216,23 @@ public:
   template<typename Policy, typename... Args>
   auto get_queue(int id) noexcept
   {
-    return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {id, m_bus.get()};
+    return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {
+        id, m_bus.get()};
   }
+
   template<typename Policy, typename... Args>
   auto get_queue(int id) const noexcept
   {
-    return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {id, m_bus.get()};
+    return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {
+        id, m_bus.get()};
   }
 
-  iterator begin() noexcept { return iterator{m_bus->m_data}; }
-  iterator end() noexcept { return iterator{m_bus->m_data + get_num_pending_messages()}; }
+  iterator begin() noexcept { return iterator {m_bus->m_data}; }
+
+  iterator end() noexcept
+  {
+    return iterator {m_bus->m_data + get_num_pending_messages()};
+  }
 
 private:
   resource_type m_res;
@@ -248,13 +255,12 @@ public:
   using msg_id        = int;
   using msg_bus       = message_bus<char>;
 
-  template <typename T>
-  using msg_decay_t   = std::decay_t<T>;
+  template<typename T>
+  using msg_decay_t = std::decay_t<T>;
 
 public:
   template<typename Resource>
-  message_manager(const std::size_t bus_sz, Resource res)
-      : m_bus {bus_sz, res}
+  message_manager(const std::size_t bus_sz, Resource res) : m_bus {bus_sz, res}
   {}
 
   ~message_manager() = default;
@@ -267,11 +273,11 @@ public:
   message_manager(message_manager&&)            = default;
   message_manager& operator=(message_manager&&) = default;
 
-  template <typename Policy, typename Callable>
+  template<typename Policy, typename Callable>
   auto get_queue(msg_id id, Callable&& c)
   {
     return get_queue_impl<Policy>(id, std::forward<Callable>(c),
-             std::function{std::forward<Callable>(c)});
+                                  std::function {std::forward<Callable>(c)});
   }
 
   void clear() { m_bus.clear_messages(); }
@@ -292,12 +298,12 @@ public:
 
 private:
   // TODO: create small wrapper for callables
-  template <typename Policy, typename Callable, typename R, typename... Args>
+  template<typename Policy, typename Callable, typename R, typename... Args>
   auto get_queue_impl(msg_id id, Callable&& c, std::function<R(Args...)>)
   {
-    m_callbacks[id] = callback_type{[=] (char* msg_args_buf) {
-      msg_args<msg_decay_t<Args>...>& aligned_args = 
-        *std::launder(reinterpret_cast<msg_args<msg_decay_t<Args>...>*>(msg_args_buf));
+    m_callbacks[id] = callback_type {[=](char* msg_args_buf) {
+      msg_args<msg_decay_t<Args>...>& aligned_args = *std::launder(
+          reinterpret_cast<msg_args<msg_decay_t<Args>...>*>(msg_args_buf));
       camp::apply(c, aligned_args);
       aligned_args.~msg_args<msg_decay_t<Args>...>();
     }};
@@ -314,7 +320,7 @@ auto make_message_manager(std::size_t bus_sz, Resource r)
   return RAJA::message_manager(bus_sz, r);
 }
 
-template<typename ExecPol> 
+template<typename ExecPol>
 auto make_message_manager(std::size_t bus_sz)
 {
   auto r = RAJA::resources::get_default_resource<ExecPol>();
