@@ -23,7 +23,20 @@
 
 namespace RAJA
 {
-  struct alignas(std::max_align_t) msg_header
+  RAJA_HOST_DEVICE
+  constexpr std::size_t align(std::size_t size, 
+    std::size_t alignment = 16)
+  /** Returns the aligned size. This would use `alignof(std::max_align_t)`;
+   *  however, the device side can get a different value compared to the 
+   *  host.
+   *
+   * @return The size with proper alignment
+   */
+  {
+    return ((size + alignment-1)/alignment) * alignment;
+  }
+
+  struct msg_header
   {
     std::size_t sz; 
     int id;
@@ -31,10 +44,7 @@ namespace RAJA
   };
 
   template <typename... Args>
-  struct alignas(std::max_align_t) msg_args
-  {
-    camp::tuple<Args...> args;
-  };
+  using msg_args = camp::tuple<Args...>;
 } // end of RAJA namespace
 
 #endif // RAJA_MSG_ALIGN_HPP

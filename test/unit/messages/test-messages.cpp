@@ -11,8 +11,8 @@
 #include "gtest/gtest.h"
 
 TEST(message_handler, initialize) {
-  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
-                                 sizeof(RAJA::msg_args<int>);
+  constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
+                                 RAJA::align(sizeof(RAJA::msg_args<int>));
   constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
@@ -27,8 +27,8 @@ TEST(message_handler, initialize) {
 } 
 
 TEST(message_handler, initialize_with_resource) {
-  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
-                                 sizeof(RAJA::msg_args<int>);
+  constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
+                                 RAJA::align(sizeof(RAJA::msg_args<int>));
   constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager(msg_sz, camp::resources::Host());
@@ -43,8 +43,8 @@ TEST(message_handler, initialize_with_resource) {
 } 
 
 TEST(message_handler, clear) {
-  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
-                                 sizeof(RAJA::msg_args<int>);
+  constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
+                                 RAJA::align(sizeof(RAJA::msg_args<int>));
   constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
@@ -63,8 +63,8 @@ TEST(message_handler, clear) {
 }
 
 TEST(message_handler, try_post_message) {
-  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
-                                 sizeof(RAJA::msg_args<int>);
+  constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
+                                 RAJA::align(sizeof(RAJA::msg_args<int>));
   constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
@@ -78,8 +78,8 @@ TEST(message_handler, try_post_message) {
 } 
 
 TEST(message_handler, try_post_message_overflow) {
-  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
-                                 sizeof(RAJA::msg_args<int>);
+  constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
+                                 RAJA::align(sizeof(RAJA::msg_args<int>));
   constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
@@ -100,8 +100,8 @@ TEST(message_handler, try_post_message_overwrite) {
 } 
 
 TEST(message_handler, wait_all) {
-  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
-                                 sizeof(RAJA::msg_args<int>);
+  constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
+                                 RAJA::align(sizeof(RAJA::msg_args<int>));
   constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
@@ -119,8 +119,8 @@ TEST(message_handler, wait_all) {
 }
 
 TEST(message_handler, wait_all_overalloc) {
-  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
-                                 sizeof(RAJA::msg_args<int>);
+  constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
+                                 RAJA::align(sizeof(RAJA::msg_args<int>));
   constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(2*msg_sz);
@@ -138,9 +138,8 @@ TEST(message_handler, wait_all_overalloc) {
 }
 
 TEST(message_handler, wait_all_array) {
-#if 0
-  constexpr std::size_t msg_sz = sizeof(RAJA::msg_header) +
-                                 sizeof(RAJA::msg_args<camp::array<int, 3>>);
+  constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
+                                 RAJA::align(sizeof(RAJA::msg_args<camp::array<int, 3>>));
   constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
@@ -162,7 +161,6 @@ TEST(message_handler, wait_all_array) {
   ASSERT_EQ(test[0], 1);
   ASSERT_EQ(test[1], 2);
   ASSERT_EQ(test[2], 3);
-#endif
 }
 
 TEST(message_handler, wait_all_overflow) {

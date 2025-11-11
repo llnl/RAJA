@@ -59,6 +59,7 @@ private:
     size_type m_begin {0};
     size_type m_end {0};
     size_type m_capacity {0};
+    size_type m_size {0};
     pointer m_data {nullptr};
   };
 
@@ -85,7 +86,7 @@ private:
     msg_iterator& operator++()
     {
       msg_header& msg = *std::launder(reinterpret_cast<msg_header*>(cur_ptr));
-      cur_ptr += msg.sz + sizeof(msg_header);
+      cur_ptr += msg.sz + align(sizeof(msg_header));
 
       return (*this); 
     }
@@ -191,6 +192,7 @@ public:
       m_bus->m_data = nullptr;
     }
     m_bus->m_capacity = 0;
+    m_bus->m_size     = 0;
     m_bus->m_end      = 0;
     m_bus->m_begin    = 0;
   }
@@ -200,14 +202,15 @@ public:
   size_type get_num_pending_messages()
   {
     m_res.wait();
-    return std::min(m_bus->m_end, m_bus->m_capacity);
+    return m_bus->m_size;
   }
 
   void clear_messages()
   {
     m_res.wait();
-    m_bus->m_begin = 0;
+    m_bus->m_size  = 0;
     m_bus->m_end   = 0;
+    m_bus->m_begin = 0;
   }
 
   template<typename Policy, typename... Args>
@@ -295,7 +298,7 @@ private:
     m_callbacks[id] = callback_type{[=] (char* msg_args_buf) {
       msg_args<msg_decay_t<Args>...>& aligned_args = 
         *std::launder(reinterpret_cast<msg_args<msg_decay_t<Args>...>*>(msg_args_buf));
-      camp::apply(c, aligned_args.args);
+      camp::apply(c, aligned_args);
       aligned_args.~msg_args<msg_decay_t<Args>...>();
     }};
     return m_bus.template get_queue<Policy, msg_decay_t<Args>...>(id);
