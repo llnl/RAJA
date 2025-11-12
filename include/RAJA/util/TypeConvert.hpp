@@ -33,6 +33,18 @@ namespace RAJA
 namespace util
 {
 
+void * custom_memcpy( void * dest, const void * src, size_t len )
+{
+  char * customdest = (char *) dest;
+  const char * customsrc = (const char *) src;
+
+  for ( size_t ii = 0; ii < len; ++ii )
+  {
+    customdest[ii] = customsrc[ii];
+  }
+
+  return dest;
+}
 
 /*!
  * Reinterpret any datatype as another datatype of the same size
@@ -43,7 +55,8 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr B reinterp_A_as_B(A const& a)
   static_assert(sizeof(A) == sizeof(B), "A and B must be the same size");
 
   B b;
-  memcpy(&b, &a, sizeof(A));
+  //memcpy(&b, &a, sizeof(A));
+  custom_memcpy(&b, &a, sizeof(A));
   return b;
 }
 
