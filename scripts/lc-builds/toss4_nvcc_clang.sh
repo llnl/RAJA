@@ -11,7 +11,7 @@ if [[ $# -lt 3 ]]; then
   echo
   echo "You must pass 3 arguments to the script (in this order): "
   echo "   1) compiler version number for nvcc"
-  echo "   2) CUDA compute architecture (number only, not 'sm_90' for example)"
+  echo "   2) CUDA compute architecture (number only, e.g., '90' not 'sm_90')"
   echo "   3) compiler version number for clang"
   echo
   echo "For example: "
