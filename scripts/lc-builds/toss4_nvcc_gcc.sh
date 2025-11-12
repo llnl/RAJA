@@ -15,7 +15,10 @@ if [[ $# -lt 3 ]]; then
   echo "   3) compiler version number for gcc"
   echo
   echo "For example: "
-  echo "    toss4_nvcc_gcc.sh 12.9.1 90 13.3.1-magic"
+  echo "    toss4_nvcc_gcc.sh 12.6.0 90 13.3.1-magic"
+  echo
+  echo "    toss4_nvcc_clang.sh 12.9.1 90 19.1.3-magic"
+  echo "         (note: a compilation issue with one RAJA benchmark code)"
   exit
 fi
 
@@ -58,5 +61,9 @@ echo
 echo "***********************************************************************"
 echo
 echo "cd into directory build_${BUILD_SUFFIX} and run make to build RAJA"
+echo
+echo "On LC machines, you are likely to hit cudafe++ signal errors due to"
+echo "insufficient virtual memory if you try to build in parallel using all"
+echo "available cores; i.e., make -j. Try backing off to make -j 16."
 echo
 echo "***********************************************************************"

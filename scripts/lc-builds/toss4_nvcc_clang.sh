@@ -15,11 +15,10 @@ if [[ $# -lt 3 ]]; then
   echo "   3) compiler version number for clang"
   echo
   echo "For example: "
+  echo "    toss4_nvcc_clang.sh 12.6.0 90 14.0.6"
+  echo
   echo "    toss4_nvcc_clang.sh 12.9.1 90 19.1.3-magic"
   echo "         (note: a compilation issue with one RAJA benchmark code)"
-  echo
-  echo "    toss4_nvcc_clang.sh 12.6.0 90 14.0.6"
-  echo "         (note: this configuration works!)"
   exit
 fi
 
