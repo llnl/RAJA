@@ -38,12 +38,14 @@ generate-job-lists:
     LOCAL_JOBS_PATH: ".gitlab/jobs"
   script:
     - cat ${RADIUSS_JOBS_PATH}/dane.yml ${LOCAL_JOBS_PATH}/dane.yml > dane-jobs.yml
+    - cat ${RADIUSS_JOBS_PATH}/matrix.yml ${LOCAL_JOBS_PATH}/matrix.yml > matrix-jobs.yml
     - cat ${RADIUSS_JOBS_PATH}/corona.yml ${LOCAL_JOBS_PATH}/corona.yml > corona-jobs.yml
     - cat ${RADIUSS_JOBS_PATH}/tioga.yml ${LOCAL_JOBS_PATH}/tioga.yml > tioga-jobs.yml
     - cat ${RADIUSS_JOBS_PATH}/tuolumne.yml ${LOCAL_JOBS_PATH}/tuolumne.yml > tuolumne-jobs.yml
   artifacts:
     paths:
       - dane-jobs.yml
+      - matrix-jobs.yml
       - corona-jobs.yml
       - tioga-jobs.yml
       - tuolumne-jobs.yml
@@ -67,6 +69,28 @@ dane-build-and-test:
   rules:
     # Runs except if we explicitly deactivate dane by variable.
     - if: '$ON_DANE == "OFF"'
+      when: never
+    - when: on_success
+
+# MATRIX
+matrix-up-check:
+  variables:
+    CI_MACHINE: "matrix"
+  extends: [.machine-check]
+  rules:
+    # Runs except if we explicitly deactivate matrix by variable.
+    - if: '$ON_MATRIX == "OFF"'
+      when: never
+    - when: on_success
+
+matrix-build-and-test:
+  variables:
+    CI_MACHINE: "matrix"
+  needs: [matrix-up-check, generate-job-lists]
+  extends: [.build-and-test]
+  rules:
+    # Runs except if we explicitly deactivate matrix by variable.
+    - if: '$ON_MATRIX == "OFF"'
       when: never
     - when: on_success
 
