@@ -194,6 +194,12 @@ Building the Compiler
    badge next to each commit. Look for a commit that passes.
 
 
+#. On LC machines, it is following the good neighbor policy to do your build a compute node.
+
+   Use an appropriate bank to get an interactive node, e.g on Corona::
+
+    flux alloc -t 60 -N 1 --bank=wbronze
+
 #. Load the module of the version of GCC headers that you want to use. We typically use the system default, which on corona at time of writing is gcc/10.3.1-magic::
 
     GCC_VERSION=10.3.1
@@ -219,14 +225,11 @@ Building the Compiler
 
 #. Build the compiler. 
 
-   Note that in this example, we are using rocm5.7.1, but one can change the
-   version they wish to use simply by changing the paths in the configure step
-
    a. Configure
 
      .. code-block:: bash
 
-     srun -n1  python3 buildbot/configure.py --hip -o buildrocm${ROCM_VERSION} \
+     python3 buildbot/configure.py --hip -o buildrocm${ROCM_VERSION} \
      --cmake-gen "Unix Makefiles" \
      --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=/opt/rocm-${ROCM_VERSION} \
      --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_INCLUDE_DIR=/opt/rocm-${ROCM_VERSION}/include \
@@ -241,40 +244,20 @@ Building the Compiler
 
    #. Build::
 
-      srun -n1 python buildbot/compile.py -o buildrocm${ROCM_VERSION}		     
+      python buildbot/compile.py -o buildrocm${ROCM_VERSION}		     
 
    #. Install::
 	
       cp -rp buildrocm${ROCM_VERSION}/install ${INSTALL_PREFIX}
       cd ..
 
-#. Install the oneDPL library.
-
-   The oneDPL library contains efficient SYCL implementations for scan, sort and other algorithms.
-
-   a. Clone::
-
-      git clone https://github.com/uxlfoundation/oneDPL
-
-   #. Configure::
-	
-      srun -n1 cmake -S oneDPL -B build-oneDPL-rocm${ROCM_VERSION} -DCMAKE_CXX_COMPILER=${INSTALL_PREFIX}/bin/clang++ -DONEDPL_BACKEND=dpcpp_only -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
-      
-   #. Build::
-
-      srun -n1 cmake --build build-oneDPL-rocm${ROCM_VERSION}
-
-   #. Install::
-
-      srun -n1 cmake --install build-oneDPL-rocm${ROCM_VERSION}	
-
 #. Set the permissions of the folder, and everything in it to 750::
 
-      chmod 750 /usr/workspace/raja-dev/<foldername>/ -R  
+      chmod 750 ${INSTALL_PREFIX} -R  
 
 #. Change the group of the folder and everything in it to raja-dev::
 
-      chgrp raja-dev /usr/workspace/raja-dev/<foldername>/ -R
+      chgrp raja-dev ${INSTALL_PREFIX} -R
 
 #. Test the compiler
 
@@ -292,13 +275,19 @@ Using the compiler
 
     cd /path/to/raja
 
+#. Determine where you installed the compiler.
+
+   This is the ``INSTALL_PREFIX`` used above.  For example::
+
+    SYCL_INSTALL_PREFIX=/usr/workspace/raja-dev/clang_sycl_16b7bcb09915_hip_gcc10.3.1_rocm6.4.2
+
 #. Run the test config script::
 
-    ./scripts/lc-builds/corona_sycl.sh ${INSTALL_PREFIX}
+    ./scripts/lc-builds/corona_sycl.sh ${SYCL_INSTALL_PREFIX}
 
 #. As indicated in the output of the ``corona_sycl.sh`` script the SYCL compiler libraries need to be on the ``LD_LIBRARY_PATH``::
    
-    export LD_LIBRARY_PATH=${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib64:$LD_LIBRARY_PATH    
+    export LD_LIBRARY_PATH=${SYCL_INSTALL_PREFIX}/lib:${SYCL_INSTALL_PREFIX}/lib64:$LD_LIBRARY_PATH    
 
 #. cd into the generated build directory::
 
