@@ -20,7 +20,7 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 
 #include "RAJA/pattern/detail/privatizer.hpp"
 
@@ -245,6 +245,6 @@ struct StatementExecutor<statement::Collapse<omp_parallel_collapse_exec,
 
 #undef RAJA_COLLAPSE
 
-#endif  // closing endif for RAJA_ENABLE_OPENMP guard
+#endif  // closing endif for RAJA_OPENMP_ACTIVE guard
 
 #endif  // closing endif for header file include guard

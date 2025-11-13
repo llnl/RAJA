@@ -600,7 +600,7 @@ public:
   //! get new value for use in resource
   auto new_value(::RAJA::resources::Cuda res) -> T (&)[num_slots]
   {
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
     lock_guard<omp::mutex> lock(m_mutex);
 #endif
     ResourceNode* rn = resource_list;
@@ -652,7 +652,7 @@ public:
 
   ~PinnedTally() { free_list(); }
 
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
   omp::mutex m_mutex;
 #endif
 
@@ -1099,7 +1099,7 @@ public:
     {
       if (val.value != val.identity)
       {
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
         lock_guard<omp::mutex> lock(tally_or_val_ptr.list->m_mutex);
 #endif
         parent->combine(val.value);

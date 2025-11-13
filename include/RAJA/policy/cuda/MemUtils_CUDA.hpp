@@ -182,7 +182,7 @@ struct cudaInfo
 
 struct cudaStatusInfo : cudaInfo
 {
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
   omp::mutex lock;
 #endif
 };
@@ -190,7 +190,7 @@ struct cudaStatusInfo : cudaInfo
 extern cudaStatusInfo g_status;
 
 extern cudaStatusInfo tl_status;
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 #pragma omp threadprivate(tl_status)
 #endif
 
@@ -206,7 +206,7 @@ void synchronize_impl(::RAJA::resources::Cuda res) { res.wait(); }
 RAJA_INLINE
 void synchronize()
 {
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
   lock_guard<omp::mutex> lock(detail::g_status.lock);
 #endif
   bool synchronize = false;
@@ -228,7 +228,7 @@ void synchronize()
 RAJA_INLINE
 void synchronize(::RAJA::resources::Cuda res)
 {
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
   lock_guard<omp::mutex> lock(detail::g_status.lock);
 #endif
   auto iter = detail::g_stream_info_map.find(res.get_stream());
@@ -250,7 +250,7 @@ void synchronize(::RAJA::resources::Cuda res)
 RAJA_INLINE
 void launch(::RAJA::resources::Cuda res, bool async = true)
 {
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
   lock_guard<omp::mutex> lock(detail::g_status.lock);
 #endif
   auto iter = detail::g_stream_info_map.find(res.get_stream());

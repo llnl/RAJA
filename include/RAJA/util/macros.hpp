@@ -125,7 +125,7 @@ RAJA_HOST_DEVICE RAJA_INLINE void RAJA_UNUSED_VAR(T&&...) noexcept
  * OpenMP helper for the new RAJA reducer interface.
  * Used in forall and launch
  */
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 #define RAJA_OMP_DECLARE_REDUCTION_COMBINE                                     \
   RAJA_UNUSED_VAR(EXEC_POL {});                                                \
   _Pragma(" omp declare reduction( combine \

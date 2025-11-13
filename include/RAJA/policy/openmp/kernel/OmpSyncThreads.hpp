@@ -20,7 +20,7 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 
 #include "RAJA/pattern/kernel/internal.hpp"
 
@@ -60,6 +60,6 @@ struct StatementExecutor<statement::OmpSyncThreads, Types>
 }  // namespace RAJA
 
 
-#endif  // closing endif for RAJA_ENABLE_OPENMP guard
+#endif  // closing endif for RAJA_OPENMP_ACTIVE guard
 
 #endif  // closing endif for header file include guard

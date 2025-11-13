@@ -21,7 +21,7 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 #include <omp.h>
 #endif
 
@@ -40,7 +40,7 @@ int getMaxOMPThreadsCPU()
 {
   int nthreads = 1;
 
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
   nthreads = omp_get_max_threads();
 #endif
 

@@ -47,7 +47,7 @@
 #elif defined(__SYCL_DEVICE_ONLY__)
 #define RAJA_AUTO_ATOMIC                                                       \
   RAJA::sycl_atomic {}
-#elif defined(RAJA_ENABLE_OPENMP)
+#elif defined(RAJA_OPENMP_ACTIVE)
 #define RAJA_AUTO_ATOMIC                                                       \
   RAJA::omp_atomic {}
 #else

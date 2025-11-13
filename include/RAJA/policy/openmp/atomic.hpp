@@ -20,7 +20,7 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 
 #include "RAJA/policy/openmp/policy.hpp"
 
@@ -233,5 +233,5 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicCAS(omp_atomic, T* acc, T compare, T value)
 
 }  // namespace RAJA
 
-#endif  // RAJA_ENABLE_OPENMP
+#endif  // RAJA_OPENMP_ACTIVE
 #endif  // guard
