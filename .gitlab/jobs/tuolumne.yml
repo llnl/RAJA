@@ -21,9 +21,8 @@
 # https://github.com/LLNL/RAJA/pull/1712#issuecomment-2316335119
 cce_18_0_1:
   variables:
-    SPEC: "${PROJECT_TUOLUMNE_VARIANTS} %cce@=18.0.1 ${PROJECT_TUOLUMNE_DEPS}"
+    ON_TUOLUMNE: "OFF"
   extends: .job_on_tuolumne
-  allow_failure: true
 
 ############
 # Extra jobs
@@ -35,6 +34,11 @@ cce_18_0_1:
 cce_19_0_0:
   variables:
     SPEC: "${PROJECT_TUOLUMNE_VARIANTS} %cce@=19.0.0 ${PROJECT_TUOLUMNE_DEPS}"
+  extends: .job_on_tuolumne
+
+cce_20_0_0:
+  variables:
+    SPEC: "${PROJECT_TUOLUMNE_VARIANTS} %cce@=20.0.0 ${PROJECT_TUOLUMNE_DEPS}"
   extends: .job_on_tuolumne
 
 rocmcc_6_4_1_hip_desul_atomics:
