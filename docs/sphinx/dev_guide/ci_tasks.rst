@@ -284,46 +284,28 @@ Using the compiler
     make test
 
 
-============================================
-Azure Pipelines and GitHub Actions CI Tasks
-============================================
+========================
+GitHub Actions CI Tasks
+========================
 
-The tasks in this section apply to RAJA Azure Pipelines and GitHub Actions
-CI testing that was described in :ref:`azure_ci-label`
+The tasks in this section apply to RAJA GitHub Actions CI testing that was 
+described in :ref:`github_actions_ci-label`
 
 Changing Builds/Container Images
 --------------------------------
 
-The builds we run in Azure are defined in the `RAJA/azure-pipelines.yml <https://github.com/LLNL/RAJA/blob/develop/azure-pipelines.yml>`_ file.
-
-The builds we run in GitHub Actions are defined in the `RAJA/.github/workflows/build.yml <https://github.com/LLNL/RAJA/blob/develop/.github/workflows/build.yml>`_ file.
+The builds we run in GitHub Actions are defined in the 
+`RAJA/.github/workflows/build.yml <https://github.com/LLNL/RAJA/blob/develop/.github/workflows/build.yml>`_ file.
   
 Linux/Docker
 ^^^^^^^^^^^^
 
-To update or add a new compiler / job to Azure Pipelines or GitHub Actions CI, 
-we need to edit either the ``RAJA/azure-pipelines.yml`` file or the
-``RAJA/.github/workflows/build.yml`` file and the ``RAJA/Dockerfile``, if
+To update or add a new compiler / job to GitHub Actions CI, we need to edit 
+the ``RAJA/.github/workflows/build.yml`` file and the ``RAJA/Dockerfile``, if
 changes are needed there.
 
-If we want to add a new Azure pipeline to build with ``compilerX``, then in the
-``RAJA/azure-pipelines.yml`` file we can add the job like so::
-
-  -job: Docker
-    ...
-    strategy:
-      matrix:
-        ...
-        compilerX: 
-          docker_target: compilerX
-
-Here, ``compilerX`` defines the name of a job in Azure. ``docker_target: compilerX`` defines a variable ``docker_target``, which is used to determine which 
-entry in the ``Dockerfile`` file to use, where the name after ``docker_target``
-is the shorthand name of job in the ``Dockerfile`` file following the word 
-``AS``.
-
-Similarly, for GitHub Actions, we add the name of the job to the job list in
-the ``RAJA/.github/workflows/build.yaml`` file::
+For GitHub Actions, we add the name of the job to the job list in the
+``RAJA/.github/workflows/build.yml`` file::
 
   jobs:
   build_docker:
@@ -355,24 +337,9 @@ list of currently available images.
 Windows / MacOS
 ^^^^^^^^^^^^^^^
 
-We run our Windows and MacOS builds directly on the provided Azure machine 
-instances. To change the versions, change the ``pool`` under ``-job: Windows``
-or ``-job: Mac`` in the ``RAJA/azure-pipelines.yml`` file::
-  
-  -job: Windows
-    ...
-    pool:
-      vmImage: 'windows-2019'
-    ...
-
-  -job: Mac
-    ...
-    pool:
-      vmImage: 'macOS-latest'
-
-Similarly, in GitHub Actions, we run our Windows and MacOS builds directly on
-the provided machine instances. To change the versions, change the
-appropriate lines in the ``RAJA/.github/workflows/build.yml`` file::
+In GitHub Actions, we run our Windows and MacOS builds directly on the 
+provided machine instances. To change the versions, change the appropriate 
+lines in the ``RAJA/.github/workflows/build.yml`` file::
 
   build_mac:
     runs-on: macos-latest
@@ -410,7 +377,9 @@ Windows / MacOS
 ^^^^^^^^^^^^^^^
 
 Windows and MacOS build / run parameters can be configured directly in the
-``RAJA/azure-pipelines.yml`` or ``RAJA/.github/workflows/build.yml`` file. CMake options can be configured with ``CMAKE_EXTRA_FLAGS`` for each job. The ``-j`` value can also be edited directly in these files for each job.
+``RAJA/.github/workflows/build.yml`` file. CMake options can be configured 
+in the workflow file for each job. The parallel build value can also be 
+edited directly in the workflow file for each job.
 
 .. _rajaperf_ci_tasks-label:
 
@@ -433,7 +402,7 @@ Specifically,
     <https://github.com/LLNL/RAJAPerf/tree/develop/scripts/gitlab>`_ directory.
   * The `RAJAPerf/Dockerfile
     <https://github.com/LLNL/RAJAPerf/blob/develop/Dockerfile>`_ drives the
-    Azure testing pipelines.
+    GitHub Actions testing pipelines.
 
 The Performance Suite GitLab CI uses the ``uberenv`` and
 ``radiuss-spack-configs`` versions located in the RAJA submodule to make the

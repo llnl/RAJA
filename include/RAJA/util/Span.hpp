@@ -72,94 +72,122 @@ struct Span
   static_assert(type_traits::is_random_access_iterator<IterType>::value,
                 "IterType must model RandomAccessIterator");
 
-  RAJA_HOST_DEVICE Span(iterator begin, iterator end)
+  constexpr RAJA_HOST_DEVICE Span(iterator begin, iterator end)
       : m_begin {begin},
         m_end {end}
   {}
 
-  RAJA_HOST_DEVICE Span(iterator begin, size_type size)
+  constexpr RAJA_HOST_DEVICE Span(iterator begin, size_type size)
       : m_begin {begin},
         m_end {begin + size}
   {}
 
-  RAJA_HOST_DEVICE RAJA_INLINE iterator begin() { return m_begin; }
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE iterator begin() { return m_begin; }
 
-  RAJA_HOST_DEVICE RAJA_INLINE iterator end() { return m_end; }
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE iterator end() { return m_end; }
 
-  RAJA_HOST_DEVICE RAJA_INLINE const_iterator begin() const { return m_begin; }
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE const_iterator begin() const
+  {
+    return m_begin;
+  }
 
-  RAJA_HOST_DEVICE RAJA_INLINE const_iterator end() const { return m_end; }
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE const_iterator end() const
+  {
+    return m_end;
+  }
 
-  RAJA_HOST_DEVICE RAJA_INLINE const_iterator cbegin() const { return m_begin; }
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE const_iterator cbegin() const
+  {
+    return m_begin;
+  }
 
-  RAJA_HOST_DEVICE RAJA_INLINE const_iterator cend() const { return m_end; }
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE const_iterator cend() const
+  {
+    return m_end;
+  }
 
-  RAJA_HOST_DEVICE RAJA_INLINE friend iterator begin(Span& s)
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE friend iterator begin(Span& s)
   {
     return s.begin();
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE friend iterator end(Span& s) { return s.end(); }
-
-  RAJA_HOST_DEVICE RAJA_INLINE friend const_iterator begin(const Span& s)
-  {
-    return s.begin();
-  }
-
-  RAJA_HOST_DEVICE RAJA_INLINE friend const_iterator end(const Span& s)
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE friend iterator end(Span& s)
   {
     return s.end();
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE friend const_iterator cbegin(const Span& s)
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE friend const_iterator begin(
+      const Span& s)
+  {
+    return s.begin();
+  }
+
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE friend const_iterator end(
+      const Span& s)
+  {
+    return s.end();
+  }
+
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE friend const_iterator cbegin(
+      const Span& s)
   {
     return s.cbegin();
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE friend const_iterator cend(const Span& s)
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE friend const_iterator cend(
+      const Span& s)
   {
     return s.cend();
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE reference front() const { return *begin(); }
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE reference front() const
+  {
+    return *begin();
+  }
 
-  RAJA_HOST_DEVICE RAJA_INLINE reference back() const { return *(end() - 1); }
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE reference back() const
+  {
+    return *(end() - 1);
+  }
 
-  RAJA_HOST_DEVICE RAJA_INLINE reference operator[](size_type i) const
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE reference operator[](size_type i) const
   {
     return data()[i];
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE iterator data() const { return m_begin; }
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE iterator data() const
+  {
+    return m_begin;
+  }
 
-  RAJA_HOST_DEVICE RAJA_INLINE size_type size() const
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE size_type size() const
   {
     return static_cast<size_type>(m_end - m_begin);
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE bool empty() const
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE bool empty() const
   {
     return size() == static_cast<size_type>(0);
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE Span first(size_type count) const
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE Span first(size_type count) const
   {
     return slice(0, count);
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE Span last(size_type count) const
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE Span last(size_type count) const
   {
     return slice(size() - count, count);
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE Span subspan(size_type begin,
-                                            size_type length) const
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE Span subspan(size_type begin,
+                                                      size_type length) const
   {
     return slice(begin, length);
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE Span slice(size_type begin,
-                                          size_type length) const
+  constexpr RAJA_HOST_DEVICE RAJA_INLINE Span slice(size_type begin,
+                                                    size_type length) const
   {
     auto start = m_begin + begin;
     auto end   = start + length > m_end ? m_end : start + length;
@@ -192,14 +220,15 @@ private:
  *
  */
 template<typename IterType, typename IndexType>
-RAJA_HOST_DEVICE RAJA_INLINE Span<IterType, IndexType> make_span(IterType begin,
-                                                                 IndexType size)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE Span<IterType, IndexType> make_span(
+    IterType begin,
+    IndexType size)
 {
   return Span<IterType, IndexType>(begin, size);
 }
 
 template<typename Iter>
-RAJA_INLINE auto make_span(Iter& iterable)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE auto make_span(Iter& iterable)
 {
   using std::begin;
   using std::distance;

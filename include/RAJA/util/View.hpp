@@ -57,7 +57,8 @@ using TypedView = internal::
     TypedViewBase<ValueType, ValueType*, LayoutType, camp::list<IndexTypes...>>;
 
 template<typename IndexType, typename ValueType>
-RAJA_INLINE View<ValueType, Layout<1, IndexType, 0>> make_view(ValueType* ptr)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr View<ValueType, Layout<1, IndexType, 0>>
+make_view(ValueType* ptr)
 {
   return View<ValueType, Layout<1, IndexType, 0>>(ptr, 1);
 }
@@ -66,7 +67,9 @@ template<size_t n_dims,
          typename IndexType,
          typename ValueType,
          typename... IndexTypes>
-RAJA_INLINE View<ValueType, IndexLayout<n_dims, IndexType, IndexTypes...>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr View<
+    ValueType,
+    IndexLayout<n_dims, IndexType, IndexTypes...>>
 make_index_view(ValueType* ptr,
                 IndexLayout<n_dims, IndexType, IndexTypes...> index_layout)
 {
@@ -77,9 +80,9 @@ make_index_view(ValueType* ptr,
 // select certain indices from a tuple, given a curated index sequence
 // returns linear index of layout(ar...)
 template<typename Lay, typename Tup, camp::idx_t... Idxs>
-RAJA_HOST_DEVICE RAJA_INLINE auto selecttuple(Lay lyout,
-                                              Tup&& tup,
-                                              camp::idx_seq<Idxs...>)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto selecttuple(Lay lyout,
+                                                        Tup&& tup,
+                                                        camp::idx_seq<Idxs...>)
     -> decltype(lyout(camp::get<Idxs>(std::forward<Tup>(tup))...))
 {
   return lyout(camp::get<Idxs>(std::forward<Tup>(tup))...);
@@ -114,7 +117,7 @@ using offset_seq_t = typename offset_seq<Offset, Seq>::type;
 // remove the Nth index in a parameter pack
 // returns linear index of layout(ar...)
 template<typename Lay, RAJA::Index_type Nth = 0, typename Tup>
-RAJA_HOST_DEVICE RAJA_INLINE auto removenth(Lay lyout, Tup&& tup)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto removenth(Lay lyout, Tup&& tup)
     -> decltype(selecttuple<Lay>(
         lyout,
         std::forward<Tup>(tup),
@@ -165,12 +168,14 @@ struct MultiView
   MultiView() = default;
 
   template<typename... Args>
-  RAJA_INLINE constexpr MultiView(pointer_type data_ptr, Args... dim_sizes)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr MultiView(pointer_type data_ptr,
+                                                   Args... dim_sizes)
       : layout(dim_sizes...),
         data(nc_pointer_type(data_ptr))
   {}
 
-  RAJA_INLINE constexpr MultiView(pointer_type data_ptr, layout_type const& ly)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr MultiView(pointer_type data_ptr,
+                                                   layout_type const& ly)
       : layout(ly),
         data(nc_pointer_type(data_ptr))
   {}
@@ -179,46 +184,46 @@ struct MultiView
   // arrays. For now, this becomes an ambiguous call to constructor error.
   // template<typename... Args,
   //         bool IsConstValue = std::is_const<value_type>::value>
-  // RAJA_INLINE constexpr MultiView(
+  // RAJA_HOST_DEVICE RAJA_INLINE constexpr MultiView(
   //    std::enable_if_t<IsConstValue, NonConstPointerType> data_ptr,
   //    Args... dim_sizes)
   //    : layout(dim_sizes...),
   //      data(nc_pointer_type(data_ptr))
   //{}
   // template<bool IsConstValue = std::is_const<value_type>::value>
-  // RAJA_INLINE constexpr MultiView(
+  // RAJA_HOST_DEVICE RAJA_INLINE constexpr MultiView(
   //    std::enable_if_t<IsConstValue, NonConstPointerType> data_ptr,
   //    layout_type const& ly)
   //    : layout(ly),
   //      data(nc_pointer_type(data_ptr))
   //{}
 
-  RAJA_INLINE constexpr MultiView(MultiView const&)  = default;
-  RAJA_INLINE constexpr MultiView(MultiView&&)       = default;
-  RAJA_INLINE MultiView& operator=(MultiView const&) = default;
-  RAJA_INLINE MultiView& operator=(MultiView&&)      = default;
+  RAJA_INLINE constexpr MultiView(MultiView const&)            = default;
+  RAJA_INLINE constexpr MultiView(MultiView&&)                 = default;
+  RAJA_INLINE constexpr MultiView& operator=(MultiView const&) = default;
+  RAJA_INLINE constexpr MultiView& operator=(MultiView&&)      = default;
 
   template<bool IsConstView = std::is_const<value_type>::value>
-  RAJA_INLINE constexpr MultiView(
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr MultiView(
       std::enable_if_t<IsConstView, NonConstView> const& rhs)
       : layout(rhs.layout),
         data(nc_pointer_type(rhs.data))
   {}
 
-  RAJA_HOST_DEVICE RAJA_INLINE void set_layout(layout_type const& ly)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void set_layout(layout_type const& ly)
   {
     layout = ly;
   }
 
   template<bool IsConstValue = std::is_const<value_type>::value>
-  RAJA_HOST_DEVICE RAJA_INLINE void set_data(
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void set_data(
       std::enable_if_t<IsConstValue, NonConstPointerType> data_ptr)
   {
     data = nc_pointer_type(
         data_ptr);  // This data_ptr should already be non-const.
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE void set_data(pointer_type data_ptr)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void set_data(pointer_type data_ptr)
   {
     data = nc_pointer_type(data_ptr);
   }
@@ -233,8 +238,9 @@ struct MultiView
     return pointer_type(data);
   }
 
+  // why doesn't this return a shifted copy instead of shifting this view?
   template<size_t n_dims = layout_type::n_dims, typename IdxLin = Index_type>
-  RAJA_INLINE RAJA::
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr RAJA::
       MultiView<ValueType, typename add_offset<layout_type>::type, P2Pidx>
       shift(const std::array<IdxLin, n_dims>& shift)
   {
@@ -279,10 +285,15 @@ struct AtomicViewWrapper
 
   base_type base_;
 
-  RAJA_INLINE
-  constexpr explicit AtomicViewWrapper(ViewType view) : base_(view) {}
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit AtomicViewWrapper(
+      ViewType view)
+      : base_(view)
+  {}
 
-  RAJA_INLINE void set_data(pointer_type data_ptr) { base_.set_data(data_ptr); }
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void set_data(pointer_type data_ptr)
+  {
+    base_.set_data(data_ptr);
+  }
 
   template<typename... ARGS>
   RAJA_HOST_DEVICE RAJA_INLINE atomic_type operator()(ARGS&&... args) const
@@ -305,10 +316,15 @@ struct AtomicViewWrapper<ViewType, RAJA::seq_atomic>
 
   base_type base_;
 
-  RAJA_INLINE
-  constexpr explicit AtomicViewWrapper(ViewType const& view) : base_ {view} {}
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit AtomicViewWrapper(
+      ViewType const& view)
+      : base_ {view}
+  {}
 
-  RAJA_INLINE void set_data(pointer_type data_ptr) { base_.set_data(data_ptr); }
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void set_data(pointer_type data_ptr)
+  {
+    base_.set_data(data_ptr);
+  }
 
   template<typename... ARGS>
   RAJA_HOST_DEVICE RAJA_INLINE value_type& operator()(ARGS&&... args) const
@@ -318,8 +334,8 @@ struct AtomicViewWrapper<ViewType, RAJA::seq_atomic>
 };
 
 template<typename AtomicPolicy, typename ViewType>
-RAJA_INLINE AtomicViewWrapper<ViewType, AtomicPolicy> make_atomic_view(
-    ViewType const& view)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr AtomicViewWrapper<ViewType, AtomicPolicy>
+make_atomic_view(ViewType const& view)
 {
 
   return RAJA::AtomicViewWrapper<ViewType, AtomicPolicy>(view);
@@ -338,13 +354,15 @@ template<typename meta_layout>
 struct PermutedViewHelper;
 
 template<typename T>
-constexpr auto get_last_index(T last)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto get_last_index(T last)
 {
   return last;
 }
 
 template<typename T0, typename T1, typename... Args>
-constexpr auto get_last_index(T0, T1 t1, Args... args)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto get_last_index(T0,
+                                                           T1 t1,
+                                                           Args... args)
 {
   return get_last_index(t1, args...);
 }
@@ -353,7 +371,8 @@ template<std::size_t... stride_order_idx>
 struct PermutedViewHelper<std::index_sequence<stride_order_idx...>>
 {
   template<typename IndexType, typename T, typename... Extents>
-  static auto get(T* ptr, Extents&&... extents)
+  static RAJA_HOST_DEVICE RAJA_INLINE constexpr auto get(T* ptr,
+                                                         Extents&&... extents)
   {
     constexpr int N = sizeof...(Extents);
 
@@ -372,7 +391,8 @@ template<>
 struct PermutedViewHelper<layout_right>
 {
   template<typename IndexType, typename T, typename... Extents>
-  static auto get(T* ptr, Extents&&... extents)
+  static RAJA_HOST_DEVICE RAJA_INLINE constexpr auto get(T* ptr,
+                                                         Extents&&... extents)
   {
     constexpr int N = sizeof...(Extents);
     using view_t    = RAJA::View<T, RAJA::Layout<N, IndexType, N - 1>>;
@@ -382,7 +402,8 @@ struct PermutedViewHelper<layout_right>
 };
 
 template<std::size_t... idx>
-constexpr auto make_reverse_array(std::index_sequence<idx...>)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto make_reverse_array(
+    std::index_sequence<idx...>)
 {
   return std::array<RAJA::idx_t, sizeof...(idx)> {sizeof...(idx) - 1U - idx...};
 }
@@ -391,7 +412,8 @@ template<>
 struct PermutedViewHelper<layout_left>
 {
   template<typename IndexType, typename T, typename... Extents>
-  static auto get(T* ptr, Extents&&... extents)
+  static RAJA_HOST_DEVICE RAJA_INLINE constexpr auto get(T* ptr,
+                                                         Extents&&... extents)
   {
     constexpr int N = sizeof...(Extents);
 
@@ -410,7 +432,9 @@ template<typename meta_layout,
          typename IndexType = RAJA::Index_type,
          typename T,
          typename... Extents>
-auto make_permuted_view(T* ptr, Extents&&... extents)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto make_permuted_view(
+    T* ptr,
+    Extents&&... extents)
 {
   return detail::PermutedViewHelper<meta_layout>::template get<IndexType>(
       ptr, std::forward<Extents>(extents)...);
