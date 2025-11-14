@@ -11,6 +11,10 @@
 #include "roctx.h"
 #endif
 
+#if defined(RAJA_ENABLE_CALIPER)
+#include "RAJA/util/CaliperPlugin.hpp"
+#endif
+
 namespace RAJA
 {
 namespace expt
@@ -26,7 +30,11 @@ param_init(EXEC_POL const&,
            const RAJA::hip::detail::hipInfo&)
 {
 #if defined(RAJA_ENABLE_ROCTX)
-  if (kn.name != nullptr && expt::detail::RAJA_caliper_profile == false)
+  if (kn.name != nullptr
+#if defined(RAJA_ENABLE_CALIPER)
+      && RAJA::util::RAJA_caliper_profile == false
+#endif
+  )
   {
     roctxRangePush(kn.name);
   }
@@ -50,7 +58,11 @@ param_resolve(EXEC_POL const&,
               const RAJA::hip::detail::hipInfo&)
 {
 #if defined(RAJA_ENABLE_ROCTX)
-  if (kn.name != nullptr && expt::detail::RAJA_caliper_profile == false)
+  if (kn.name != nullptr
+#if defined(RAJA_ENABLE_CALIPER)
+      && RAJA::util::RAJA_caliper_profile == false
+#endif
+  )
   {
     roctxRangePop();
   }

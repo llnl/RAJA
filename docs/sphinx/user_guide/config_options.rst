@@ -116,7 +116,7 @@ The following tables describe which variables set RAJA options and
 and their default settings. 
 
 .. note:: Items marked with a double asterisk (**) indicate variables that 
-          are supported directly in CMake and are also supported in RAJA as
+          are supported directly in BLT/CMake and are also supported in RAJA as
           CMake dependent options, for finer-grained configuration control.
           The RAJA CMake dependent variable form adds the prefix ``RAJA_``.
 

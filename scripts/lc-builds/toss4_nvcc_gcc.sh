@@ -11,20 +11,23 @@ if [[ $# -lt 3 ]]; then
   echo
   echo "You must pass 3 arguments to the script (in this order): "
   echo "   1) compiler version number for nvcc"
-  echo "   2) CUDA compute architecture (number only, not 'sm_70' for example)"
-  echo "   3) compiler version number for xl"
+  echo "   2) CUDA compute architecture (number only, e.g., '90' not 'sm_90')"
+  echo "   3) compiler version number for gcc"
   echo
   echo "For example: "
-  echo "    blueos_nvcc_xl.sh 11.1.1 70 2021.03.31"
+  echo "    toss4_nvcc_gcc.sh 12.6.0 90 13.3.1-magic"
+  echo
+  echo "    toss4_nvcc_gcc.sh 12.9.1 90 13.3.1-magic"
+  echo "         (note: a compilation issue with one RAJA benchmark code)"
   exit
 fi
 
 COMP_NVCC_VER=$1
 COMP_ARCH=$2
-COMP_XL_VER=$3
+COMP_GCC_VER=$3
 shift 3
 
-BUILD_SUFFIX=lc_blueos-nvcc${COMP_NVCC_VER}-${COMP_ARCH}-xl${COMP_XL_VER}
+BUILD_SUFFIX=lc_toss4-nvcc${COMP_NVCC_VER}-${COMP_ARCH}-gcc${COMP_GCC_VER}
 
 echo
 echo "Creating build directory build_${BUILD_SUFFIX} and generating configuration in it"
@@ -35,17 +38,17 @@ echo
 rm -rf build_${BUILD_SUFFIX} >/dev/null
 mkdir build_${BUILD_SUFFIX} && cd build_${BUILD_SUFFIX}
 
-module load cmake/3.23.1
+module load cmake/3.25.2
 
 cmake \
   -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_CXX_COMPILER=/usr/tce/packages/xl/xl-${COMP_XL_VER}/bin/xlc++_r \
+  -DCMAKE_CXX_COMPILER=/usr/tce/packages/gcc/gcc-${COMP_GCC_VER}/bin/g++ \
   -DBLT_CXX_STD=c++17 \
-  -C ../host-configs/lc-builds/blueos/nvcc_xl_X.cmake \
+  -C ../host-configs/lc-builds/toss4/nvcc_gcc_X.cmake \
+  -DENABLE_CLANGFORMAT=Off \
   -DENABLE_OPENMP=On \
   -DENABLE_CUDA=On \
-  -DENABLE_CLANGFORMAT=On \
-  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-14.0.4/bin/clang-format \
+  -DRAJA_ENABLE_NVTX=On \
   -DCUDA_TOOLKIT_ROOT_DIR=/usr/tce/packages/cuda/cuda-${COMP_NVCC_VER} \
   -DCMAKE_CUDA_COMPILER=/usr/tce/packages/cuda/cuda-${COMP_NVCC_VER}/bin/nvcc \
   -DCMAKE_CUDA_ARCHITECTURES=${COMP_ARCH} \
@@ -59,9 +62,8 @@ echo "***********************************************************************"
 echo
 echo "cd into directory build_${BUILD_SUFFIX} and run make to build RAJA"
 echo
-echo "  Please note that you have to disable CUDA GPU hooks when you run"
-echo "  the RAJA tests; for example,"
-echo
-echo "    lrun -1 --smpiargs="-disable_gpu_hooks" make test"
+echo "On LC machines, you are likely to hit cudafe++ signal errors due to"
+echo "insufficient virtual memory if you try to build in parallel using all"
+echo "available cores; i.e., make -j. Try backing off to make -j 16."
 echo
 echo "***********************************************************************"

@@ -1,0 +1,28 @@
+##############################################################################
+# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
+# and RAJA project contributors. See the RAJA/LICENSE file for details.
+#
+# SPDX-License-Identifier: (BSD-3-Clause)
+##############################################################################
+
+# Override reproducer section to define project specific variables.
+.matrix_reproducer_vars:
+  script:
+    - !reference [.reproducer_vars, script]
+
+########################
+# Overridden shared jobs
+########################
+# We duplicate the shared jobs description and add necessary changes for this
+# project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
+# when possible so that the comparison with the original job is easier.
+
+# No overridden jobs so far...
+
+############
+# Extra jobs
+############
+# We do not recommend using ${PROJECT_<MACHINE>_VARIANTS} and
+# ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
+# describe the spec here.
+

@@ -22,6 +22,16 @@ variables:
 # Project specific deps for dane
   PROJECT_DANE_DEPS:
 
+# Matrix
+# Arguments for top level allocation
+  MATRIX_SHARED_ALLOC: "--exclusive --partition=pdebug --time=60 --nodes=1"
+# Arguments for job level allocation
+  MATRIX_JOB_ALLOC: "--partition=pdebug --nodes=1"
+# Project specific variants for matrix
+  PROJECT_MATRIX_VARIANTS: "~shared +cuda cuda_arch=75 +tests"
+# Project specific deps for matrix
+  PROJECT_MATRIX_DEPS:
+
 # Corona
 # Arguments for top level allocation
   CORONA_SHARED_ALLOC: "--exclusive --time-limit=60m --nodes=1 -o per-resource.count=2"
@@ -44,22 +54,13 @@ variables:
 
 # Tuolumne
 # Arguments for top level allocation
-  TUOLUMNE_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=60m --nodes=1 -o per-resource.count=2"
+  TUOLUMNE_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=90m --nodes=1 -o per-resource.count=2"
 # Arguments for job level allocation
   TUOLUMNE_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
 # Project specific variants for corona
   PROJECT_TUOLUMNE_VARIANTS: "~shared +openmp +vectorization +tests"
 # Project specific deps for corona
   PROJECT_TUOLUMNE_DEPS:
-
-# Lassen and Butte use a different job scheduler (spectrum lsf) that does not
-# allow pre-allocation the same way slurm does.
-# Arguments for job level allocation
-  LASSEN_JOB_ALLOC: "1 -W 50 -q pci"
-# Project specific variants for lassen
-  PROJECT_LASSEN_VARIANTS: "~shared +openmp +vectorization +tests cuda_arch=70"
-# Project specific deps for lassen
-  PROJECT_LASSEN_DEPS:
 
 # Configuration shared by build and test jobs specific to this project.
 # Not all configuration can be shared. Here projects can fine tune the

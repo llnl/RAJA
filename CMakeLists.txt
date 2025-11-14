@@ -16,7 +16,7 @@ include(CMakeDependentOption)
 # Set version number
 set(RAJA_VERSION_MAJOR 2025)
 set(RAJA_VERSION_MINOR 09)
-set(RAJA_VERSION_PATCHLEVEL 0)
+set(RAJA_VERSION_PATCHLEVEL 1)
 
 if (RAJA_LOADED AND (NOT RAJA_LOADED STREQUAL "${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}"))
   message(FATAL_ERROR "You are mixing RAJA versions. Loaded is ${RAJA_LOADED}, expected ${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}")
@@ -254,7 +254,7 @@ camp source repository")
         PATHS ${camp_DIR}
         ${camp_DIR}/lib/cmake/camp
       )
-      message(STATUS "Using installed CAMP from:  ${camp_INSTALL_PREFIX}")
+      message(STATUS "Using CAMP version ${camp_VERSION} installed at: ${camp_INSTALL_PREFIX}")
     else ()
       message(STATUS "Using RAJA CAMP submodule.")
       # propagate setting for sycl since there's no common enable to use

@@ -12,6 +12,10 @@
 #include "RAJA/policy/cuda/MemUtils_CUDA.hpp"
 #include "RAJA/pattern/params/kernel_name.hpp"
 
+#if defined(RAJA_ENABLE_CALIPER)
+#include "RAJA/util/CaliperPlugin.hpp"
+#endif
+
 namespace RAJA
 {
 namespace expt
@@ -27,7 +31,11 @@ param_init(EXEC_POL const&,
            const RAJA::cuda::detail::cudaInfo&)
 {
 #if defined(RAJA_ENABLE_NVTX)
-  if (kn.name != nullptr && expt::detail::RAJA_caliper_profile == false)
+  if (kn.name != nullptr
+#if defined(RAJA_ENABLE_CALIPER)
+      && RAJA::util::RAJA_caliper_profile == false
+#endif
+  )
   {
     nvtxRangePush(kn.name);
   }
@@ -51,7 +59,11 @@ param_resolve(EXEC_POL const&,
               const RAJA::cuda::detail::cudaInfo&)
 {
 #if defined(RAJA_ENABLE_NVTX)
-  if (kn.name != nullptr && expt::detail::RAJA_caliper_profile == false)
+  if (kn.name != nullptr
+#if defined(RAJA_ENABLE_CALIPER)
+      && RAJA::util::RAJA_caliper_profile == false
+#endif
+  )
   {
     nvtxRangePop();
   }

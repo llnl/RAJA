@@ -14,17 +14,6 @@ namespace RAJA
 namespace util
 {
 
-// Internal variable to toggle Caliper profiling on and off
-// Users have access to a global function.
-inline bool RAJA_caliper_profile = false;
-
-// Experimental global function to toggle Caliper
-// profiling on and off
-inline void SetRAJACaliperProfiling(bool enable)
-{
-  RAJA_caliper_profile = enable;
-}
-
 CaliperPlugin::CaliperPlugin()
 {
   const std::string varName = "RAJA_CALIPER";

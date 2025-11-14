@@ -383,26 +383,15 @@ __launch_bounds__(BlockSize, 1) __global__
   auto privatizer = thread_privatize(loop_body);
   auto& body      = privatizer.get_priv();
   auto ii         = IterationGetter::template index<IndexType>();
-  constexpr bool is_forall_parampack_empty =
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;
+
   if (ii < length)
   {
-    if constexpr (is_forall_parampack_empty)
-    {
-      body(idx[ii]);
-    }
-    else
-    {
-      RAJA::expt::invoke_body(f_params, body, idx[ii]);
-    }
+    RAJA::expt::invoke_body(f_params, body, idx[ii]);
   }
-  if constexpr (!is_forall_parampack_empty)
-  {
-    RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
-  }
+
+  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
 }
 
-///
 template<typename EXEC_POL,
          typename Iterator,
          typename LOOP_BODY,
@@ -423,26 +412,14 @@ __global__ void forallp_hip_kernel(const LOOP_BODY loop_body,
   auto privatizer = thread_privatize(loop_body);
   auto& body      = privatizer.get_priv();
   auto ii         = IterationGetter::template index<IndexType>();
-  constexpr bool is_forall_parampack_empty =
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;
+  ;
   if (ii < length)
   {
-    if constexpr (is_forall_parampack_empty)
-    {
-      body(idx[ii]);
-    }
-    else
-    {
-      RAJA::expt::invoke_body(f_params, body, idx[ii]);
-    }
+    RAJA::expt::invoke_body(f_params, body, idx[ii]);
   }
-  if constexpr (!is_forall_parampack_empty)
-  {
-    RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
-  }
+  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
 }
 
-///
 template<
     typename EXEC_POL,
     typename Iterator,
@@ -466,27 +443,15 @@ __launch_bounds__(BlockSize, 1) __global__
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
   auto& body      = privatizer.get_priv();
-  constexpr bool is_forall_parampack_empty =
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;
+
   for (auto ii = IterationGetter::template index<IndexType>(); ii < length;
        ii += IterationGetter::template size<IndexType>())
   {
-    if constexpr (is_forall_parampack_empty)
-    {
-      body(idx[ii]);
-    }
-    else
-    {
-      RAJA::expt::invoke_body(f_params, body, idx[ii]);
-    }
+    RAJA::expt::invoke_body(f_params, body, idx[ii]);
   }
-  if constexpr (!is_forall_parampack_empty)
-  {
-    RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
-  }
+  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
 }
 
-///
 template<
     typename EXEC_POL,
     typename Iterator,
@@ -509,24 +474,15 @@ __global__ void forallp_hip_kernel(const LOOP_BODY loop_body,
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
   auto& body      = privatizer.get_priv();
-  constexpr bool is_forall_parampack_empty =
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;
+
   for (auto ii = IterationGetter::template index<IndexType>(); ii < length;
        ii += IterationGetter::template size<IndexType>())
   {
-    if constexpr (is_forall_parampack_empty)
-    {
-      body(idx[ii]);
-    }
-    else
-    {
-      RAJA::expt::invoke_body(f_params, body, idx[ii]);
-    }
+
+    RAJA::expt::invoke_body(f_params, body, idx[ii]);
   }
-  if constexpr (!is_forall_parampack_empty)
-  {
-    RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
-  }
+
+  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
 }
 
 }  // namespace impl
@@ -576,8 +532,7 @@ forall_impl(resources::Hip hip_res,
   Iterator begin = std::begin(iter);
   Iterator end   = std::end(iter);
   IndexType len  = std::distance(begin, end);
-  constexpr bool is_forallparampack_empty =
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;
+
   // Only launch kernel if we have something to iterate over
   if (len > 0)
   {
@@ -605,11 +560,7 @@ forall_impl(resources::Hip hip_res,
     launch_info.res      = hip_res;
 
     {
-      if constexpr (!is_forallparampack_empty)
-      {
-        RAJA::expt::ParamMultiplexer::parampack_init(pol, f_params,
-                                                     launch_info);
-      }
+      RAJA::expt::ParamMultiplexer::parampack_init(pol, f_params, launch_info);
 
       //
       // Privatize the loop_body, using make_launch_body to setup reductions
@@ -625,11 +576,9 @@ forall_impl(resources::Hip hip_res,
                       (void*)&f_params};
       RAJA::hip::launch(func, dims.blocks, dims.threads, args, shmem, hip_res,
                         Async);
-      if constexpr (!is_forallparampack_empty)
-      {
-        RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params,
-                                                        launch_info);
-      }
+
+      RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params,
+                                                      launch_info);
     }
 
     RAJA_FT_END;
