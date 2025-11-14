@@ -17,7 +17,7 @@
 # project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
 # So that the comparison with the original job is easier.
 
-## rocm 5.7.1 job is shared
+## rocm 5.7.1 job is in the shared RSC set of jobs
 
 ############
 # Extra jobs
