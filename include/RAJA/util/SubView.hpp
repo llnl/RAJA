@@ -155,14 +155,22 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_slice_index_map() {
 }
 
 template <typename LayoutType, typename SliceTypes, typename IndexType = Index_type>
-struct SubLayout;
+struct SubRegion;
+
+/* SubLayout is a semantic alias for a SubRegion whose parent is a layout */
+template <typename LayoutType, typename SliceTypes, typename IndexType = Index_type>
+using SubLayout = SubRegion<LayoutType, SliceTypes, IndexType>;
+
+/* SubView is a semantic alias for a SubRegion whose parent is a view */
+template <typename LayoutType, typename SliceTypes, typename IndexType = Index_type>
+using SubView = SubRegion<LayoutType, SliceTypes, IndexType>;
 
 template <typename LayoutType, typename IndexType, typename... Slices>
-struct SubLayout<LayoutType, camp::list<Slices...>, IndexType> {
+struct SubRegion<LayoutType, camp::list<Slices...>, IndexType> {
 
     using IndexLinear = IndexType;
 
-    const LayoutType& parent_layout_;
+    const LayoutType& parent_;
     camp::tuple<Slices...> slices_;
 
     static inline constexpr size_t num_slices_ = sizeof...(Slices);
@@ -178,11 +186,11 @@ struct SubLayout<LayoutType, camp::list<Slices...>, IndexType> {
     camp::array<IndexType, n_dims> parent_to_slice_map_ = 
         make_parent_to_slice_index_map<IndexType, n_dims, Slices...>();
 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr SubLayout(const LayoutType& parent_layout, Slices... slices)
-        : parent_layout_(parent_layout), slices_(slices...) { }
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr SubRegion(const LayoutType& parent, Slices... slices)
+        : parent_(parent), slices_(slices...) { }
 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_parent_layout() const {
-        return parent_layout_;
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_parent() const {
+        return parent_;
     }
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr auto& get_slices() const {
@@ -199,7 +207,7 @@ struct SubLayout<LayoutType, camp::list<Slices...>, IndexType> {
         IndexType prod_dims = 1;
         for_each_tuple_index( slices_,
             [&](auto slice, auto index) {
-                const IndexType dim_size = slice.template size<index>(parent_layout_);
+                const IndexType dim_size = slice.template size<index>(parent_);
                 prod_dims *= (dim_size == 0) ? 1 : dim_size;
             });
 
@@ -211,7 +219,7 @@ struct SubLayout<LayoutType, camp::list<Slices...>, IndexType> {
         IndexType prod_dims = 1;
         for_each_tuple_index( slices_,
             [&](auto slice, auto index) {
-                prod_dims *= slice.template size<index>(parent_layout_);
+                prod_dims *= slice.template size<index>(parent_);
             });
 
         return prod_dims;
@@ -220,7 +228,7 @@ struct SubLayout<LayoutType, camp::list<Slices...>, IndexType> {
     template<IndexType DIM> 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_size() const {
         constexpr auto SliceDim = parent_to_slice_map_[DIM];
-        return camp::get<SliceDim>(slices_).template size<DIM>(parent_layout_);
+        return camp::get<SliceDim>(slices_).template size<DIM>(parent_);
     }
 
     template<IndexType DIM> 
@@ -231,7 +239,7 @@ struct SubLayout<LayoutType, camp::list<Slices...>, IndexType> {
 
     template <typename... Idxs>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr auto operator()(Idxs... idxs) const {
-        static_assert(sizeof...(idxs) == n_dims, "Wrong number of indices for subview");
+        static_assert(sizeof...(idxs) == n_dims, "Wrong number of indices");
 
         camp::array<IndexType, n_dims> arr{idxs...};
         camp::array<IndexType, num_slices_> parent_indices;
@@ -248,12 +256,12 @@ struct SubLayout<LayoutType, camp::list<Slices...>, IndexType> {
                 }
             });
 
-        return camp::apply(parent_layout_, parent_indices);
+        return camp::apply(parent_, parent_indices);
     }
 };
 
 template <typename LayoutType, typename... Slices>
-SubLayout(LayoutType, Slices...) -> SubLayout<LayoutType, camp::list<Slices...>>;
+SubRegion(LayoutType, Slices...) -> SubRegion<LayoutType, camp::list<Slices...>>;
 
 }  // namespace RAJA
 

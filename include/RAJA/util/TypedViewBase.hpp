@@ -674,10 +674,26 @@ public:
     return m_layout.size();
   }
 
+  RAJA_HOST_DEVICE
+  RAJA_INLINE
+  constexpr linear_index_type size_noproj() const { return m_layout.size_noproj(); }
+
+  template<camp::idx_t DIM>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_stride() const
+  {
+    return m_layout.template get_dim_stride<DIM>();
+  }
+
   template<camp::idx_t DIM>
   RAJA_HOST_DEVICE RAJA_INLINE constexpr linear_index_type get_dim_size() const
   {
     return m_layout.template get_dim_size<DIM>();
+  }
+
+  template<camp::idx_t DIM>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_begin() const
+  {
+    return m_layout.template get_dim_begin<DIM>();
   }
 
   template<typename... Args>
