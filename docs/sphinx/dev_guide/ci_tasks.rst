@@ -194,7 +194,7 @@ Building the Compiler
    badge next to each commit. Look for a commit that passes.
 
 
-#. On LC machines, it is following the good neighbor policy to do your build a compute node.
+#. On LC machines, it is following the good neighbor policy to do your build on a compute node.
 
    Use an appropriate bank to get an interactive node, e.g on Corona::
 
