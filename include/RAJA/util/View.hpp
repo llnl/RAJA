@@ -159,6 +159,7 @@ struct MultiView
   using value_type      = ValueType;
   using pointer_type    = PointerType;
   using layout_type     = LayoutType;
+  using linear_index_type = typename layout_type::IndexLinear;
   using nc_value_type   = camp::decay<value_type>;
   using nc_pointer_type = NonConstPointerType;
   using NonConstView =
@@ -233,6 +234,32 @@ struct MultiView
   RAJA_HOST_DEVICE RAJA_INLINE constexpr layout_type const& get_layout() const
   {
     return layout;
+  }
+
+  RAJA_HOST_DEVICE
+  RAJA_INLINE
+  constexpr linear_index_type size() const { return layout.size(); }
+
+  RAJA_HOST_DEVICE
+  RAJA_INLINE
+  constexpr linear_index_type size_noproj() const { return layout.size_noproj(); }
+
+  template<camp::idx_t DIM>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_stride() const
+  {
+    return layout.template get_dim_stride<DIM>();
+  }
+
+  template<camp::idx_t DIM>
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr linear_index_type get_dim_size() const
+  {
+    return layout.template get_dim_size<DIM>();
+  }
+
+  template<camp::idx_t DIM>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_begin() const
+  {
+    return layout.template get_dim_begin<DIM>();
   }
 
   RAJA_HOST_DEVICE RAJA_INLINE constexpr pointer_type get_data() const
