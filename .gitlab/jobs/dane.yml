@@ -23,10 +23,10 @@ clang_14_0_6:
     SPEC: " ~shared +openmp +omptask ~vectorization +tests %llvm@=14.0.6 ${PROJECT_DANE_DEPS}"
   extends: .job_on_dane
 
-## gcc 11.2.1 job is shared
+## gcc 11.2.1 job is in the shared RSC set of jobs
 
-# Identical to shared job, but use OpenMP tasks and no vectorization
-# custom variant
+# Similar to shared RSC job, but use OpenMP task, turn off vectorization,
+# and lower optimization level to get correct results
 # https://github.com/LLNL/RAJA/pull/1712#issuecomment-2292006843
 oneapi_2023_2_1:
   variables:
