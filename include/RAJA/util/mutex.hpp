@@ -20,14 +20,14 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 #include <omp.h>
 #endif
 
 namespace RAJA
 {
 
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 namespace omp
 {
 
