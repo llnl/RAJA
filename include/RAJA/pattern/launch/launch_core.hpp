@@ -185,7 +185,7 @@ public:
 
   void* shared_mem_ptr;
 
-#if defined(RAJA_ENABLE_SYCL)
+#if defined(RAJA_SYCL_ACTIVE)
   mutable ::sycl::nd_item<3>* itm;
 #endif
 
@@ -231,11 +231,11 @@ public:
   RAJA_HOST_DEVICE
   void teamSync()
   {
-#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && defined(RAJA_ENABLE_SYCL)
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && defined(RAJA_SYCL_ACTIVE)
     itm->barrier(::sycl::access::fence_space::local_space);
 #endif
 
-#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_ENABLE_SYCL)
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_SYCL_ACTIVE)
     __syncthreads();
 #endif
   }
