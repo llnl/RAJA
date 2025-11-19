@@ -20,14 +20,14 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
 #include <omp.h>
 #endif
 
 namespace RAJA
 {
 
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
 namespace omp
 {
 
@@ -59,7 +59,7 @@ private:
 };
 
 }  // namespace omp
-#endif  // closing endif for if defined(RAJA_OPENMP_ACTIVE)
+#endif  // closing endif for if defined(RAJA_ENABLE_OPENMP)
 
 //! class providing functionality of std::lock_guard
 template<typename mutex_type>

@@ -10,7 +10,7 @@ namespace expt
 namespace detail
 {
 
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
 
 // Init
 template<typename EXEC_POL>

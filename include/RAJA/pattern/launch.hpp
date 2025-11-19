@@ -34,7 +34,7 @@
 #include "RAJA/policy/hip/launch.hpp"
 #endif
 
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
 #include "RAJA/policy/openmp/launch.hpp"
 #endif
 

@@ -23,7 +23,7 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
 
 #include <memory>
 #include <vector>
@@ -129,6 +129,6 @@ RAJA_DECLARE_ALL_REDUCERS(omp_reduce_ordered, detail::ReduceOMPOrdered)
 
 }  // namespace RAJA
 
-#endif  // closing endif for RAJA_OPENMP_ACTIVE guard
+#endif  // closing endif for RAJA_ENABLE_OPENMP guard
 
 #endif  // closing endif for header file include guard

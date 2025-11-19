@@ -320,7 +320,7 @@ private:
   static int get_tally_replication()
   {
     int min_tally_replication = 1;
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
     min_tally_replication = omp_get_max_threads();
 #endif
 
@@ -452,7 +452,7 @@ struct MultiReduceGridAtomicHostInit_Data
   void combine_host(int bin, T value)
   {
     int tally_rep = 0;
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
     tally_rep = omp_get_thread_num();
 #endif
     int tally_offset =
@@ -598,7 +598,7 @@ struct MultiReduceBlockThenGridAtomicHostInit_Data
   void combine_host(int bin, T value)
   {
     int tally_rep = 0;
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
     tally_rep = omp_get_thread_num();
 #endif
     int tally_offset =

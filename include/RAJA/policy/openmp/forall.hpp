@@ -23,7 +23,7 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
 
 #include <iostream>
 #include <type_traits>
@@ -436,6 +436,6 @@ RAJA_INLINE void forall(
 
 }  // namespace RAJA
 
-#endif  // closing endif for if defined(RAJA_OPENMP_ACTIVE)
+#endif  // closing endif for if defined(RAJA_ENABLE_OPENMP)
 
 #endif  // closing endif for header file include guard

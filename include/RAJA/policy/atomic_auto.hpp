@@ -44,16 +44,17 @@
 #elif defined(__HIP_DEVICE_COMPILE__) && defined(RAJA_HIP_ACTIVE)
 #define RAJA_AUTO_ATOMIC                                                       \
   RAJA::hip_atomic {}
-#elif defined(__SYCL_DEVICE_ONLY__) && defined(RAJA_SYCL_ACTIVE)
+#elif defined(__SYCL_DEVICE_ONLY__)
 #define RAJA_AUTO_ATOMIC                                                       \
   RAJA::sycl_atomic {}
-#elif defined(RAJA_OPENMP_ACTIVE)
+#elif defined(RAJA_ENABLE_OPENMP)
 #define RAJA_AUTO_ATOMIC                                                       \
   RAJA::omp_atomic {}
 #else
 #define RAJA_AUTO_ATOMIC                                                       \
   RAJA::seq_atomic {}
 #endif
+
 
 namespace RAJA
 {

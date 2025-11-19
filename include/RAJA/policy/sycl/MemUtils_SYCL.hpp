@@ -53,7 +53,7 @@ struct syclInfo
   sycl_dim_t blockDim {0};
   ::sycl::queue qu    = ::sycl::queue();
   bool setup_reducers = false;
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
   syclInfo* thread_states = nullptr;
   omp::mutex lock;
 #endif

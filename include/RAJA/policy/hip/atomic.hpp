@@ -31,7 +31,7 @@
 
 #include "RAJA/policy/sequential/atomic.hpp"
 #include "RAJA/policy/atomic_builtin.hpp"
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
 #include "RAJA/policy/openmp/atomic.hpp"
 #endif
 

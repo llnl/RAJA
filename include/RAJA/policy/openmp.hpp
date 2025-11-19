@@ -23,7 +23,7 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_OPENMP_ACTIVE)
+#if defined(RAJA_ENABLE_OPENMP)
 
 #include <omp.h>
 #include <iostream>
@@ -48,6 +48,6 @@
 #include "RAJA/policy/openmp/params/kernel_name.hpp"
 
 
-#endif  // closing endif for if defined(RAJA_OPENMP_ACTIVE)
+#endif  // closing endif for if defined(RAJA_ENABLE_OPENMP)
 
 #endif  // closing endif for header file include guard
