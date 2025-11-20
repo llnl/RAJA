@@ -24,9 +24,9 @@ variables:
 
 # Matrix
 # Arguments for top level allocation
-  MATRIX_SHARED_ALLOC: "--exclusive --partition=pdebug --time=60 --nodes=1"
+  MATRIX_SHARED_ALLOC: "--exclusive --partition=pci --time=60 --nodes=1"
 # Arguments for job level allocation
-  MATRIX_JOB_ALLOC: "--partition=pdebug --nodes=1"
+  MATRIX_JOB_ALLOC: "--partition=pci --nodes=1"
 # Project specific variants for matrix
   PROJECT_MATRIX_VARIANTS: "~shared +cuda cuda_arch=75 +tests"
 # Project specific deps for matrix
