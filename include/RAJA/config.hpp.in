@@ -167,8 +167,15 @@ static_assert(RAJA_HAS_SOME_CXX14,
  *
  * \brief Programming model back-ends.
  *
+ * \note The RAJA_ENABLE_<back-end> macros indicate if the back-end was
+ * enabled when RAJA was configured.   RAJA_<back-end>_ACTIVE macros
+ * indicate if the back-end is present when the application/library
+ * using RAJA is compiled.   An application/library can use a subset of
+ * back-ends that are present in a RAJA install.
+ * 
  ******************************************************************************
  */
+
 #cmakedefine RAJA_ENABLE_OPENMP
 #cmakedefine RAJA_ENABLE_TARGET_OPENMP
 #cmakedefine RAJA_ENABLE_CUDA

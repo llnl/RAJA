@@ -54,7 +54,7 @@ struct syclInfo
   ::sycl::queue qu    = ::sycl::queue();
   bool setup_reducers = false;
 #if 0
-// SGS this isn't used anywhere
+// SGS this isn't used anywhere, should these be removed?
 #if defined(RAJA_ENABLE_OPENMP)
   syclInfo* thread_states = nullptr;
   omp::mutex lock;
