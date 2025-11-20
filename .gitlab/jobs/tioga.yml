@@ -17,7 +17,7 @@
 # project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
 # So that the comparison with the original job is easier.
 
-## NOTE: rocm 6.4.1 job is shared
+## NOTE: rocm 6.4.1 job is in the shared RSC set of jobs
 
 # Compiler error preventing a test to succeed.
 # https://github.com/LLNL/RAJA/pull/1712#issuecomment-2316335119
@@ -27,7 +27,7 @@ cce_18_0_1:
   extends: .job_on_tioga
   allow_failure: true
 
-## NOTE: cce 19.0.0 job is shared
+## NOTE: cce 19.0.0 job is in the shared RSC set of jobs
 
 ############
 # Extra jobs
