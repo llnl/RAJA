@@ -21,13 +21,13 @@
 clang_14_0_6_gcc_11_3_1:
   extends: .job_on_dane
   variables:
-    ON_DANE: OFF
+    ON_DANE: "OFF"
 
 # Shared job uses %clang-19-gcc-13, replaced with %clang-19 below
 clang_19_1_3_gcc_13_3_1:
   extends: .job_on_dane
   variables:
-    ON_DANE: OFF
+    ON_DANE: "OFF"
 
 ## gcc 13.3.1 job is shared
 
