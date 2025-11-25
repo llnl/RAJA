@@ -32,7 +32,9 @@ template<typename BODY, typename ReduceParams>
 __global__ void launch_new_reduce_global_fcn(const BODY body_in,
                                              ReduceParams reduce_params)
 {
-  LaunchContext ctx;
+  LaunchContext ctx(blockDim.x, blockDim.y, blockDim.z,
+  gridDim.x, gridDim.y, gridDim.z);
+
 
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);

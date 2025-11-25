@@ -185,14 +185,27 @@ public:
 
   void* shared_mem_ptr;
 
+  const size_t thread_dim[3];
+  const size_t block_dim[3];
+
 #if defined(RAJA_ENABLE_SYCL)
   mutable ::sycl::nd_item<3>* itm;
 #endif
 
-  RAJA_HOST_DEVICE LaunchContext()
+ RAJA_HOST_DEVICE LaunchContext()
       : shared_mem_offset(0),
-        shared_mem_ptr(nullptr)
+        shared_mem_ptr(nullptr),
+        thread_dim{1, 1, 1},
+        block_dim{1, 1, 1}
   {}
+
+  RAJA_HOST_DEVICE LaunchContext(const size_t tx, const size_t ty, const size_t tz,
+  const size_t bx, const size_t by, const size_t bz)
+      : shared_mem_offset(0),
+        shared_mem_ptr(nullptr),
+        thread_dim{tx, ty, tz},
+        block_dim{bx, by, bz}
+  {}        
 
   // TODO handle alignment
   template<typename T>
