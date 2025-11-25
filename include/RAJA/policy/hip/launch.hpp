@@ -32,9 +32,8 @@ template<typename BODY, typename ReduceParams>
 __global__ void launch_new_reduce_global_fcn(const BODY body_in,
                                              ReduceParams reduce_params)
 {
-  LaunchContext ctx(blockDim.x, blockDim.y, blockDim.z,
-  gridDim.x, gridDim.y, gridDim.z);
-
+  LaunchContext ctx(threadIdx.x, threadIdx.y, threadIdx.z,
+                    blockDim.x, blockDim.y, blockDim.z);
 
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
@@ -139,7 +138,8 @@ __launch_bounds__(num_threads, 1) __global__
     void launch_new_reduce_global_fcn_fixed(const BODY body_in,
                                             ReduceParams reduce_params)
 {
-  LaunchContext ctx;
+  LaunchContext ctx(threadIdx.x, threadIdx.y, threadIdx.z,
+                    blockDim.x, blockDim.y, blockDim.z);
 
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
@@ -240,6 +240,40 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
     return resources::EventProxy<resources::Resource>(res);
   }
 };
+
+template<named_dim DIM>
+struct hip_ctx_thread_loop;
+
+using hip_ctx_thread_loop_x = hip_ctx_thread_loop<named_dim::x>;
+using hip_ctx_thread_loop_y = hip_ctx_thread_loop<named_dim::y>;
+using hip_ctx_thread_loop_z = hip_ctx_thread_loop<named_dim::z>;
+
+template<typename SEGMENT, named_dim DIM>
+struct LoopExecute<hip_ctx_thread_loop<DIM>, SEGMENT>
+{
+
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           SEGMENT const& segment,
+                                           BODY const& body)
+  {
+
+    const int len = segment.end() - segment.begin();
+    constexpr int int_dim = static_cast<int>(DIM);
+
+    //for(int i=::RAJA::internal::HipDimHelper<DIM>::get(threadIdx);
+    for(int i = ctx.thread_id[int_dim];
+          i < len;
+        i+=ctx.block_dim[int_dim])
+        //i+=4)
+    {
+         body(*(segment.begin() + i));
+    }
+
+  }
+};
+
+
 
 /*
    HIP generic loop implementations

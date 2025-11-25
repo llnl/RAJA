@@ -185,7 +185,7 @@ public:
 
   void* shared_mem_ptr;
 
-  const size_t thread_dim[3];
+  const size_t thread_id[3];
   const size_t block_dim[3];
 
 #if defined(RAJA_ENABLE_SYCL)
@@ -195,7 +195,7 @@ public:
  RAJA_HOST_DEVICE LaunchContext()
       : shared_mem_offset(0),
         shared_mem_ptr(nullptr),
-        thread_dim{1, 1, 1},
+        thread_id{1, 1, 1},
         block_dim{1, 1, 1}
   {}
 
@@ -203,7 +203,7 @@ public:
   const size_t bx, const size_t by, const size_t bz)
       : shared_mem_offset(0),
         shared_mem_ptr(nullptr),
-        thread_dim{tx, ty, tz},
+        thread_id{tx, ty, tz},
         block_dim{bx, by, bz}
   {}        
 
