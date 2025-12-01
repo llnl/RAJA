@@ -36,8 +36,9 @@ void resolve_params_helper(ParamTuple& params_tuple,
                            const camp::idx_seq<Seq...>&,
                            Args&&... args)
 {
-  CAMP_EXPAND(param_resolve(ExecPol {}, camp::get<Seq>(params_tuple),
-                            std::forward<Args>(args)...));
+  (param_resolve(ExecPol {}, camp::get<Seq>(params_tuple),
+                 std::forward<Args>(args)...),
+   ...);
 }
 
 template<typename ExecPol, typename... Params, typename... Args>
@@ -58,8 +59,9 @@ void init_params_helper(ParamTuple& params_tuple,
                         const camp::idx_seq<Seq...>&,
                         Args&&... args)
 {
-  CAMP_EXPAND(param_init(ExecPol {}, camp::get<Seq>(params_tuple),
-                         std::forward<Args>(args)...));
+  (param_init(ExecPol {}, camp::get<Seq>(params_tuple),
+              std::forward<Args>(args)...),
+   ...);
 }
 
 template<typename ExecPol, typename... Params, typename... Args>
@@ -76,7 +78,7 @@ template<typename ExecPol, typename ParamTuple, camp::idx_t... Seq>
 RAJA_HOST_DEVICE void combine_params_helper(const camp::idx_seq<Seq...>&,
                                             ParamTuple& params_tuple)
 {
-  CAMP_EXPAND(param_combine(ExecPol {}, camp::get<Seq>(params_tuple)));
+  (param_combine(ExecPol {}, camp::get<Seq>(params_tuple)), ...);
 }
 
 template<typename EXEC_POL, typename T>
@@ -91,8 +93,9 @@ RAJA_HOST_DEVICE void combine_params_helper(const camp::idx_seq<Seq...>&,
                                             ParamTuple& params_tuple,
                                             const ParamTuple& params_tuple_in)
 {
-  CAMP_EXPAND(param_combine(ExecPol {}, camp::get<Seq>(params_tuple),
-                            camp::get<Seq>(params_tuple_in)));
+  (param_combine(ExecPol {}, camp::get<Seq>(params_tuple),
+                 camp::get<Seq>(params_tuple_in)),
+   ...);
 }
 
 template<typename ExecPol, typename... Params>
@@ -143,8 +146,9 @@ private:
                                        ForallParamPack& f_params,
                                        Args&&... args)
   {
-    CAMP_EXPAND(param_init(pol, camp::get<Seq>(f_params.param_tup),
-                           std::forward<Args>(args)...));
+    (param_init(pol, camp::get<Seq>(f_params.param_tup),
+                std::forward<Args>(args)...),
+     ...);
   }
 
   // Combine
@@ -155,8 +159,9 @@ private:
       ForallParamPack& out,
       const ForallParamPack& in)
   {
-    CAMP_EXPAND(param_combine(pol, camp::get<Seq>(out.param_tup),
-                              camp::get<Seq>(in.param_tup)));
+    (param_combine(pol, camp::get<Seq>(out.param_tup),
+                   camp::get<Seq>(in.param_tup)),
+     ...);
   }
 
   template<typename EXEC_POL, camp::idx_t... Seq>
@@ -165,7 +170,7 @@ private:
       camp::idx_seq<Seq...>,
       ForallParamPack& f_params)
   {
-    CAMP_EXPAND(param_combine(pol, camp::get<Seq>(f_params.param_tup)));
+    (param_combine(pol, camp::get<Seq>(f_params.param_tup)), ...);
   }
 
   // Resolve
@@ -175,8 +180,9 @@ private:
                                           ForallParamPack& f_params,
                                           Args&&... args)
   {
-    CAMP_EXPAND(param_resolve(pol, camp::get<Seq>(f_params.param_tup),
-                              std::forward<Args>(args)...));
+    (param_resolve(pol, camp::get<Seq>(f_params.param_tup),
+                   std::forward<Args>(args)...),
+     ...);
   }
 
   // Used to construct the argument TYPES that will be invoked with the lambda.
