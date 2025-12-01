@@ -550,8 +550,6 @@ forall_impl(resources::Cuda cuda_res,
   Iterator begin = std::begin(iter);
   Iterator end   = std::end(iter);
   IndexType len  = std::distance(begin, end);
-  constexpr bool is_forallparampack_empty =
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;
 
   // Only launch kernel if we have something to iterate over
   if (len > 0)
