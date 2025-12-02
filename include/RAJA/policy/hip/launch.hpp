@@ -32,8 +32,7 @@ template<typename BODY, typename ReduceParams>
 __global__ void launch_new_reduce_global_fcn(const BODY body_in,
                                              ReduceParams reduce_params)
 {
-  LaunchContext ctx(threadIdx.x, threadIdx.y, threadIdx.z,
-                    blockDim.x, blockDim.y, blockDim.z);
+  LaunchContext ctx(threadIdx, blockDim);
 
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
@@ -138,8 +137,7 @@ __launch_bounds__(num_threads, 1) __global__
     void launch_new_reduce_global_fcn_fixed(const BODY body_in,
                                             ReduceParams reduce_params)
 {
-  LaunchContext ctx(threadIdx.x, threadIdx.y, threadIdx.z,
-                    blockDim.x, blockDim.y, blockDim.z);
+  LaunchContext ctx(threadIdx, blockDim);
 
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
@@ -241,6 +239,12 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
   }
 };
 
+/*
+  Loop methods which rely on a copy of threaIdx/BlockDim
+  for performance. In collaboration with AMD we have have this
+  to be more performant.
+*/
+
 template<named_dim DIM>
 struct hip_ctx_thread_loop;
 
@@ -258,22 +262,16 @@ struct LoopExecute<hip_ctx_thread_loop<DIM>, SEGMENT>
                                            BODY const& body)
   {
 
-    const int len = segment.end() - segment.begin();
+    const int len         = segment.end() - segment.begin();
     constexpr int int_dim = static_cast<int>(DIM);
 
-    //for(int i=::RAJA::internal::HipDimHelper<DIM>::get(threadIdx);
-    for(int i = ctx.thread_id[int_dim];
-          i < len;
-        i+=ctx.block_dim[int_dim])
-        //i+=4)
+    for (int i = ::RAJA::internal::HipDimHelper<DIM>::get(ctx.thread_id);
+         i < len; i += ::RAJA::internal::HipDimHelper<DIM>::get(ctx.block_dim))
     {
-         body(*(segment.begin() + i));
+      body(*(segment.begin() + i));
     }
-
   }
 };
-
-
 
 /*
    HIP generic loop implementations

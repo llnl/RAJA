@@ -185,27 +185,28 @@ public:
 
   void* shared_mem_ptr;
 
-  const size_t thread_id[3];
-  const size_t block_dim[3];
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+  const dim3 thread_id;
+  const dim3 block_dim;
+#endif
 
 #if defined(RAJA_ENABLE_SYCL)
   mutable ::sycl::nd_item<3>* itm;
 #endif
 
- RAJA_HOST_DEVICE LaunchContext()
+  RAJA_HOST_DEVICE LaunchContext()
       : shared_mem_offset(0),
-        shared_mem_ptr(nullptr),
-        thread_id{1, 1, 1},
-        block_dim{1, 1, 1}
+        shared_mem_ptr(nullptr)
   {}
 
-  RAJA_HOST_DEVICE LaunchContext(const size_t tx, const size_t ty, const size_t tz,
-  const size_t bx, const size_t by, const size_t bz)
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+  RAJA_HOST_DEVICE LaunchContext(dim3 thread_id_, dim3 block_id_)
       : shared_mem_offset(0),
         shared_mem_ptr(nullptr),
-        thread_id{tx, ty, tz},
-        block_dim{bx, by, bz}
-  {}        
+        thread_id {thread_id_},
+        block_dim {block_id_}
+  {}
+#endif
 
   // TODO handle alignment
   template<typename T>

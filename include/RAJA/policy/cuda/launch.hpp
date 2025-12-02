@@ -33,7 +33,7 @@ __global__ void launch_new_reduce_global_fcn(const RAJA_CUDA_GRID_CONSTANT BODY
                                                  body_in,
                                              ReduceParams reduce_params)
 {
-  LaunchContext ctx;
+  LaunchContext ctx(threadIdx, blockDim);
 
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
@@ -143,7 +143,7 @@ __launch_bounds__(num_threads, BLOCKS_PER_SM) __global__
                                                 body_in,
                                             ReduceParams reduce_params)
 {
-  LaunchContext ctx;
+  LaunchContext ctx(threadIdx, blockDim);
 
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
@@ -242,6 +242,40 @@ struct LaunchExecute<
     }
 
     return resources::EventProxy<resources::Resource>(res);
+  }
+};
+
+/*
+  Loop methods which rely on a copy of threaIdx/BlockDim
+  for performance. In collaboration with AMD we have have this
+  to be more performat.
+*/
+
+template<named_dim DIM>
+struct hip_ctx_thread_loop;
+
+using hip_ctx_thread_loop_x = hip_ctx_thread_loop<named_dim::x>;
+using hip_ctx_thread_loop_y = hip_ctx_thread_loop<named_dim::y>;
+using hip_ctx_thread_loop_z = hip_ctx_thread_loop<named_dim::z>;
+
+template<typename SEGMENT, named_dim DIM>
+struct LoopExecute<hip_ctx_thread_loop<DIM>, SEGMENT>
+{
+
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           SEGMENT const& segment,
+                                           BODY const& body)
+  {
+
+    const int len         = segment.end() - segment.begin();
+    constexpr int int_dim = static_cast<int>(DIM);
+
+    for (int i = ::RAJA::internal::HipDimHelper<DIM>::get(ctx.thread_id);
+         i < len; i += ::RAJA::internal::HipDimHelper<DIM>::get(ctx.block_dim))
+    {
+      body(*(segment.begin() + i));
+    }
   }
 };
 
