@@ -19,6 +19,10 @@ Notable changes include:
 
   * Bug fixes/improvements:
 
+Version 2025.12.0 -- Release date 2025-12-xx
+============================================
+
+.....
 
 Version 2025.09.1 -- Release date 2025-10-01
 ============================================
