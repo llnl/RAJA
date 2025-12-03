@@ -593,9 +593,7 @@ public:
   //! get new value for use in resource
   auto new_value(::RAJA::resources::Hip res) -> T (&)[num_slots]
   {
-#if defined(RAJA_OPENMP_ACTIVE)
-    lock_guard<omp::mutex> lock(m_mutex);
-#endif
+    std::lock_guard<std::mutex> lock(m_mutex);
     ResourceNode* rn = resource_list;
     while (rn)
     {
@@ -645,9 +643,7 @@ public:
 
   ~PinnedTally() { free_list(); }
 
-#if defined(RAJA_OPENMP_ACTIVE)
-  omp::mutex m_mutex;
-#endif
+  std::mutex m_mutex;
 
 private:
   ResourceNode* resource_list;
@@ -1091,9 +1087,7 @@ public:
     {
       if (val.value != val.identity)
       {
-#if defined(RAJA_OPENMP_ACTIVE)
-        lock_guard<omp::mutex> lock(tally_or_val_ptr.list->m_mutex);
-#endif
+	std::lock_guard<std::mutex> lock(tally_or_val_ptr.list->m_mutex);
         parent->combine(val.value);
       }
     }

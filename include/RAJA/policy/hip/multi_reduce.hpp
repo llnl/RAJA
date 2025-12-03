@@ -30,6 +30,11 @@
 #include <utility>
 #include <vector>
 
+// SGS hacking
+#if defined(RAJA_ENABLE_OPENMP)
+#include <omp.h>
+#endif
+
 #include "hip/hip_runtime.h"
 
 #include "RAJA/util/macros.hpp"

@@ -44,10 +44,7 @@ namespace detail
 hipStatusInfo g_status;
 
 //! State of the host code in this thread
-hipStatusInfo tl_status;
-#if defined(RAJA_ENABLE_OPENMP)
-#pragma omp threadprivate(tl_status)
-#endif
+thread_local hipStatusInfo tl_status;
 
 //! State of raja hip stream synchronization for hip reducer objects
 std::unordered_map<hipStream_t, bool> g_stream_info_map;
