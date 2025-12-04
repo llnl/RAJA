@@ -135,6 +135,10 @@
 //
 #include "RAJA/pattern/atomic.hpp"
 
+// Thread operations support
+//
+#include "RAJA/pattern/thread.hpp"
+
 //
 // Shared memory view patterns
 //

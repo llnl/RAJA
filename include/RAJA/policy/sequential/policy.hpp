@@ -124,6 +124,9 @@ struct seq_multi_reduce_policy : make_policy_pattern_launch_platform_t<
 struct seq_atomic
 {};
 
+struct seq_thread
+{};
+  
 template<RAJA::sequential::multi_reduce_algorithm algorithm>
 using seq_multi_reduce_tuning =
     seq_multi_reduce_policy<RAJA::sequential::MultiReduceTuning<algorithm>>;
@@ -141,6 +144,7 @@ using seq_multi_reduce = seq_multi_reduce_left_fold;
 }  // namespace policy
 
 using policy::sequential::seq_atomic;
+using policy::sequential::seq_thread;
 using policy::sequential::seq_exec;
 using policy::sequential::seq_launch_t;
 using policy::sequential::seq_multi_reduce;
