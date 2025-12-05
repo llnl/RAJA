@@ -20,6 +20,23 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
+Version 2025.12.0 -- Release date 2025-12-dd
+============================================
+
+This release contains mostly improvements to code robustness and testing, 
+including evolving internal code implementations to use C++17.
+
+Notable changes include:
+
+  * New features / API changes:
+
+  * Build changes/improvements:
+    * Updated Camp submodule to v2025.12.0 release.
+    * Improved CMake support for configuring with Caliper.
+
+  * Bug fixes/improvements:
+
+
 Version 2025.09.1 -- Release date 2025-10-01
 ============================================
 
