@@ -51,6 +51,8 @@
 #include "RAJA/policy/cuda/atomic.hpp"
 #endif
 
+#include "RAJA/pattern/thread.hpp"
+
 #include "RAJA/policy/cuda/policy.hpp"
 #include "RAJA/policy/cuda/raja_cudaerrchk.hpp"
 

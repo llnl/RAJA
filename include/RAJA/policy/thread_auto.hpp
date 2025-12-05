@@ -22,11 +22,11 @@
 
 #include "RAJA/util/macros.hpp"
 
+#include "RAJA/policy/thread_builtin.hpp"
+
 #ifdef RAJA_ENABLE_OPENMP
 #include "RAJA/policy/openmp/policy.hpp"
 #endif
-
-#include "RAJA/policy/thread_builtin.hpp"
 
 #include "RAJA/policy/sequential/policy.hpp"
 

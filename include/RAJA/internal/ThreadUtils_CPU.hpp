@@ -21,15 +21,6 @@
 
 #include "RAJA/config.hpp"
 
-
-// SGS includes are mess cleanup
-#ifdef RAJA_ENABLE_OPENMP
-#include "RAJA/policy/openmp/policy.hpp"
-#endif
-
-#include "RAJA/policy/thread_builtin.hpp"
-#include "RAJA/policy/sequential/policy.hpp"
-#include "RAJA/policy/thread_auto.hpp"
 #include "RAJA/pattern/thread.hpp"
 
 namespace RAJA

@@ -39,8 +39,7 @@
 #include "RAJA/policy/sequential/atomic.hpp"
 #include "RAJA/policy/atomic_builtin.hpp"
 
-// SGS This is still required for resolving some atomics
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 #include "RAJA/policy/openmp/atomic.hpp"
 #endif
 

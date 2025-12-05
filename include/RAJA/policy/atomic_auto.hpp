@@ -46,7 +46,7 @@ namespace RAJA
   using auto_atomic = RAJA::hip_atomic;
 #elif defined(__SYCL_DEVICE_ONLY__)
   using auto_atomic = RAJA::sycl_atomic;
-#elif defined(RAJA_ENABLE_OPENMP)
+#elif defined(RAJA_OPENMP_ACTIVE)
   using auto_atomic = RAJA::omp_atomic;
 #else
   using auto_atomic = RAJA::seq_atomic;

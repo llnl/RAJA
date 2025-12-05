@@ -54,9 +54,6 @@
 #include "RAJA/policy/hip/policy.hpp"
 #include "RAJA/policy/hip/raja_hiperrchk.hpp"
 
-// SGS includes are a mess
-#include "RAJA/policy/thread_builtin.hpp"
-#include "RAJA/policy/thread_auto.hpp"
 #include "RAJA/pattern/thread.hpp"
 
 namespace RAJA

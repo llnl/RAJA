@@ -32,11 +32,8 @@
 #include "RAJA/policy/sequential/atomic.hpp"
 #include "RAJA/policy/atomic_builtin.hpp"
 
-// SGS
-#if 1
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 #include "RAJA/policy/openmp/atomic.hpp"
-#endif
 #endif
 
 #include "RAJA/util/EnableIf.hpp"
