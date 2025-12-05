@@ -17,14 +17,14 @@
 # project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
 # when possible so that the comparison with the original job is easier.
 
-# Shared job uses %clang-14-gcc-11, replaced with %clang-14 below
-clang_14_0_6_gcc_11_3_1:
+# Shared job uses %clang-19-gcc-13, replaced with %clang-19 below
+clang_19_1_3_gcc_13_3_1:
   extends: .job_on_dane
   variables:
     ON_DANE: "OFF"
 
-# Shared job uses %clang-19-gcc-13, replaced with %clang-19 below
-clang_19_1_3_gcc_13_3_1:
+# Shared job uses %oneapi-2025-gcc-10, replaced with %oneapi@=2025.2 below
+oneapi_2025_2_0_gcc_10_3_1:
   extends: .job_on_dane
   variables:
     ON_DANE: "OFF"
@@ -34,15 +34,6 @@ clang_19_1_3_gcc_13_3_1:
 # Similar to shared RSC job, but use OpenMP task, turn off vectorization,
 # and lower optimization level to get correct results
 # https://github.com/LLNL/RAJA/pull/1712#issuecomment-2292006843
-oneapi_2023_2_1:
-  variables:
-    SPEC: "~shared +openmp +vectorization +tests +lowopttest cxxflags==-fp-model=precise %oneapi@=2023.2.1"
-  extends: .job_on_dane
-
-oneapi_2025_2_0:
-  variables:
-    SPEC: "~shared +openmp +vectorization +tests cxxflags==-fp-model=precise %oneapi@=2025.2.0"
-  extends: .job_on_dane
 
 ############
 # Extra jobs
@@ -74,4 +65,9 @@ gcc_12_1_1:
 clang_14_0_6_gcc_11_2_1_desul_atomics:
   variables:
     SPEC: " ~shared +openmp +tests +desul %clang-14-gcc-11"
+  extends: .job_on_dane
+
+oneapi_2025_2_0:
+  variables:
+    SPEC: "~shared +openmp +vectorization +tests cxxflags==-fp-model=precise %oneapi@=2025.2.0"
   extends: .job_on_dane

@@ -19,14 +19,6 @@
 
 ## NOTE: rocm 6.4.1 job is in the shared RSC set of jobs
 
-# Compiler error preventing a test to succeed.
-# https://github.com/LLNL/RAJA/pull/1712#issuecomment-2316335119
-cce_18_0_1:
-  variables:
-    SPEC: "${PROJECT_TIOGA_VARIANTS} %cce@=18.0.1 ${PROJECT_TIOGA_DEPS}"
-  extends: .job_on_tioga
-  allow_failure: true
-
 ## NOTE: cce 20.0.0 job is in the shared RSC set of jobs
 
 ############
