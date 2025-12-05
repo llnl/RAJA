@@ -22,15 +22,13 @@
 
 #include "RAJA/util/macros.hpp"
 
-
-
 #ifdef RAJA_ENABLE_OPENMP
 #include "RAJA/policy/openmp/policy.hpp"
 #endif
 
 #include "RAJA/policy/thread_builtin.hpp"
 
-#include "RAJA/policy/sequential/thread.hpp"
+#include "RAJA/policy/sequential/policy.hpp"
 
 namespace RAJA
 {

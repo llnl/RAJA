@@ -20,7 +20,6 @@
 
 #include "RAJA/config.hpp"
 
-#if 0
 #if defined(RAJA_OPENMP_ACTIVE)
 #include <omp.h>
 #endif
@@ -81,7 +80,5 @@ private:
 };
 
 }  // namespace RAJA
-
-#endif
 
 #endif  // closing endif for header file include guard

@@ -22,7 +22,7 @@
 
 #include "RAJA/util/macros.hpp"
 
-#include "RAJA/pattern/thread.hpp"
+#include "RAJA/policy/thread_auto.hpp"
 
 namespace RAJA
 {

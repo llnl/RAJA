@@ -21,13 +21,21 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_ENABLE_OPENMP)
-#include <omp.h>
+
+// SGS includes are mess cleanup
+#ifdef RAJA_ENABLE_OPENMP
+#include "RAJA/policy/openmp/policy.hpp"
 #endif
+
+#include "RAJA/policy/thread_builtin.hpp"
+#include "RAJA/policy/sequential/policy.hpp"
+#include "RAJA/policy/thread_auto.hpp"
+#include "RAJA/pattern/thread.hpp"
 
 namespace RAJA
 {
 
+// SGS remove this?
 /*!
 *************************************************************************
 *
@@ -35,16 +43,11 @@ namespace RAJA
 *
 *************************************************************************
 */
+template<typename ThreadPolicy = RAJA::active_auto_thread>  
 RAJA_INLINE
 int getMaxOMPThreadsCPU()
 {
-  int nthreads = 1;
-
-#if defined(RAJA_ENABLE_OPENMP)
-  nthreads = omp_get_max_threads();
-#endif
-
-  return nthreads;
+  return RAJA::get_max_threads<ThreadPolicy>();
 }
 
 }  // namespace RAJA
