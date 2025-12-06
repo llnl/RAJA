@@ -3,7 +3,7 @@
  *
  * \file
  *
- * \brief   RAJA header file defining OpenMP atomic operations.
+ * \brief   RAJA header file defining OpenMP thread operations.
  *
  ******************************************************************************
  */
@@ -15,8 +15,8 @@
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
-#ifndef RAJA_policy_openmp_atomic_HPP
-#define RAJA_policy_openmp_atomic_HPP
+#ifndef RAJA_policy_openmp_thread_HPP
+#define RAJA_policy_openmp_thread_HPP
 
 #include "RAJA/config.hpp"
 
@@ -29,17 +29,16 @@
 namespace RAJA
 {
 
-// Relies on builtin_atomic when OpenMP can't do the job
 RAJA_SUPPRESS_HD_WARN
 template<>
-RAJA_HOST_DEVICE RAJA_INLINE int get_max_threads(omp_atomic)
+RAJA_HOST_DEVICE RAJA_INLINE int get_max_threads(omp_thread)
 {
   return omp_get_max_threads();
 }
 
 RAJA_SUPPRESS_HD_WARN
 template<>
-RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(omp_atomic)
+RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(omp_thread)
 {
   return omp_get_thread_num();
 }

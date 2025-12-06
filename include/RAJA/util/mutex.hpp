@@ -28,6 +28,7 @@ namespace RAJA
 {
 
 #if defined(RAJA_OPENMP_ACTIVE)
+// SGS Is this needed anymore?
 namespace omp
 {
 

@@ -41,7 +41,7 @@ namespace RAJA
  * Fallbac to seq_thread, which performs non-thread operations
  * assumes there is no thread safety issues
  */
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 using active_auto_thread = RAJA::omp_thread;
 #else
 using active_auto_thread = RAJA::seq_thread;
