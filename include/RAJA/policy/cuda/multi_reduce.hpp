@@ -206,7 +206,10 @@ RAJA_DEVICE RAJA_INLINE void grid_multi_reduce_shmem_to_global_atomic(
 //
 
 //! MultiReduction data for Cuda Offload -- stores value, host pointer
-template<typename Combiner, typename T, typename tuning, typename ThreadPolicy = RAJA::active_auto_thread>
+template<typename Combiner,
+         typename T,
+         typename tuning,
+         typename ThreadPolicy = RAJA::active_auto_thread>
 struct MultiReduceGridAtomicHostInit_TallyData
 {
   //! setup permanent settings, allocate and initialize tally memory
@@ -321,7 +324,7 @@ private:
 
   static int get_tally_replication()
   {
-    int min_tally_replication = RAJA::get_max_threads<ThreadPolicy>();    
+    int min_tally_replication = RAJA::get_max_threads<ThreadPolicy>();
 
     struct
     {
@@ -409,7 +412,10 @@ protected:
 };
 
 //! MultiReduction data for Cuda Offload -- stores value, host pointer
-template<typename Combiner, typename T, typename tuning, typename ThreadPolicy = RAJA::active_auto_thread>
+template<typename Combiner,
+         typename T,
+         typename tuning,
+         typename ThreadPolicy = RAJA::active_auto_thread>
 struct MultiReduceGridAtomicHostInit_Data
     : MultiReduceGridAtomicHostInit_TallyData<Combiner, T, tuning>
 {
@@ -468,7 +474,10 @@ private:
 };
 
 //! MultiReduction data for Cuda Offload -- stores value, host pointer
-template<typename Combiner, typename T, typename tuning,  typename ThreadPolicy = RAJA::active_auto_thread>
+template<typename Combiner,
+         typename T,
+         typename tuning,
+         typename ThreadPolicy = RAJA::active_auto_thread>
 struct MultiReduceBlockThenGridAtomicHostInit_Data
     : MultiReduceGridAtomicHostInit_TallyData<Combiner, T, tuning>
 {

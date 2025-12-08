@@ -29,7 +29,7 @@ namespace RAJA
 /*!
  * \file
  * Thread operation functions in the namespace RAJA::thread
- * 
+ *
  * The dispatch of all of these is:
  *
  * int get_thread_num<Policy>()      -- User facing API
@@ -61,7 +61,7 @@ namespace RAJA
  */
 
 /*!
- * @brief Get maximum number of threads 
+ * @brief Get maximum number of threads
 
  * This is based on OpenMP threading model. This value is also an
  * upper bound on the number of threads that could be used to form a
@@ -78,12 +78,11 @@ RAJA_INLINE RAJA_HOST_DEVICE int get_max_threads()
   return RAJA::get_max_threads(Policy {});
 }
 
-
 /*!
  * @brief Get current thread number
- * This is based on the OpenMP threading model.  Within a parallel team executing a parallel region 
- * the threads are numbered 0-N.   
- * Returns 0 if called in sequential part of a program or OMP is not active
+ * This is based on the OpenMP threading model.  Within a parallel team
+ * executing a parallel region the threads are numbered 0-N. Returns 0 if called
+ * in sequential part of a program or OMP is not active
  * @return Current thread number
  */
 RAJA_SUPPRESS_HD_WARN

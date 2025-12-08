@@ -42,7 +42,7 @@ RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(omp_thread)
 {
   return omp_get_thread_num();
 }
-  
+
 }  // namespace RAJA
 
 #endif  // RAJA_ENABLE_OPENMP
