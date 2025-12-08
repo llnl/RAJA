@@ -38,7 +38,7 @@ namespace RAJA
  *
  * If OpenMP is active we always use the omp_thread.
  *
- * Fallbac to seq_thread, which performs non-thread operations
+ * Fallback to seq_thread, which performs non-thread operations
  * assumes there is no thread safety issues
  */
 #if defined(RAJA_OPENMP_ACTIVE)
