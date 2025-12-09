@@ -24,7 +24,7 @@
 
 #include "RAJA/policy/thread_builtin.hpp"
 
-#ifdef RAJA_ENABLE_OPENMP
+#ifdef RAJA_OPENMP_ACTIVE
 #include "RAJA/policy/openmp/policy.hpp"
 #endif
 

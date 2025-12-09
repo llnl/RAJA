@@ -20,7 +20,7 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 
 #include "RAJA/policy/openmp/policy.hpp"
 

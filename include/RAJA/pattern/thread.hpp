@@ -39,24 +39,24 @@ namespace RAJA
  * int get_thread_num(Policy{})    -- Policy specific implementation
  *
  *
- * With the exception of the auto_atomic policy which then calls the
+ * With the exception of the auto_thread policy which then calls the
  * "appropriate" policy implementation.
  *
  *
  * Current supported policies include:
  *
- *   auto_atomic       -- Attempts to do "the right thing"
+ *   auto_thread       -- Attempts to do "the right thing"
  *
- *   omp_atomic        -- Available (and default) when OpenMP is active
+ *   omp_thread        -- Available (and default) when OpenMP is active
  *                        these are safe inside and outside of OMP parallel
  *                        regions
  *
- *   seq_atomic        -- Non-atomic, does an unprotected (raw) operation
+ *   seq_thread        -- Non-thread
  *
  *
  * The implementation code lives in:
- * RAJA/policy/atomic_auto.hpp     -- for auto_thread
- * RAJA/policy/XXX/atomic.hpp      -- for omp_atomic
+ * RAJA/policy/thread_auto.hpp     -- for auto_thread
+ * RAJA/policy/XXX/thread.hpp      -- for omp_thread
  *
  */
 
