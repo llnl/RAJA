@@ -650,7 +650,7 @@ public:
 
   ~PinnedTally() { free_list(); }
 
-  std:: ::mutex m_mutex;
+  std::mutex m_mutex;
 
 private:
   ResourceNode* resource_list;
