@@ -47,6 +47,6 @@ using active_auto_thread = RAJA::omp_thread;
 using active_auto_thread = RAJA::seq_thread;
 #endif
 
-}
+}  // namespace RAJA
 
 #endif

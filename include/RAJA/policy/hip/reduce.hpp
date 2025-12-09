@@ -1087,7 +1087,7 @@ public:
     {
       if (val.value != val.identity)
       {
-	std::lock_guard<std::mutex> lock(tally_or_val_ptr.list->m_mutex);
+        std::lock_guard<std::mutex> lock(tally_or_val_ptr.list->m_mutex);
         parent->combine(val.value);
       }
     }

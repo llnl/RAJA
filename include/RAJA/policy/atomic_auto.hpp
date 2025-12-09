@@ -41,17 +41,17 @@ namespace RAJA
  * because we assume there is no thread safety issues (no parallel model)
  */
 #if defined(__CUDA_ARCH__) && defined(RAJA_CUDA_ACTIVE)
-  using auto_atomic = RAJA::cuda_atomic;
+using auto_atomic = RAJA::cuda_atomic;
 #elif defined(__HIP_DEVICE_COMPILE__) && defined(RAJA_HIP_ACTIVE)
-  using auto_atomic = RAJA::hip_atomic;
+using auto_atomic = RAJA::hip_atomic;
 #elif defined(__SYCL_DEVICE_ONLY__)
-  using auto_atomic = RAJA::sycl_atomic;
+using auto_atomic = RAJA::sycl_atomic;
 #elif defined(RAJA_OPENMP_ACTIVE)
-  using auto_atomic = RAJA::omp_atomic;
+using auto_atomic = RAJA::omp_atomic;
 #else
-  using auto_atomic = RAJA::seq_atomic;
+using auto_atomic = RAJA::seq_atomic;
 #endif
 
-}
+}  // namespace RAJA
 
 #endif
