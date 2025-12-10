@@ -56,7 +56,7 @@ struct syclInfo
 
 extern syclInfo g_status;
 
-extern syclInfo tl_status;
+thread_local extern syclInfo tl_status;
 
 extern std::unordered_map<::sycl::queue, bool> g_queue_info_map;
 
