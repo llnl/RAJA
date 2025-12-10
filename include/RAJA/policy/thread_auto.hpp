@@ -33,6 +33,8 @@
 namespace RAJA
 {
 
+namespace detail
+{
 /*!
  * Provides priority between thread policies that should do the "right thing"
  *
@@ -46,6 +48,8 @@ using active_auto_thread = RAJA::omp_thread;
 #else
 using active_auto_thread = RAJA::seq_thread;
 #endif
+
+}  // namespace detail
 
 }  // namespace RAJA
 

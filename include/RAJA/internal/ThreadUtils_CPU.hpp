@@ -35,7 +35,7 @@ namespace RAJA
 *
 *************************************************************************
 */
-template<typename ThreadPolicy = RAJA::active_auto_thread>
+template<typename ThreadPolicy = RAJA::detail::active_auto_thread>
 RAJA_INLINE int getMaxOMPThreadsCPU()
 {
   return RAJA::get_max_threads<ThreadPolicy>();
