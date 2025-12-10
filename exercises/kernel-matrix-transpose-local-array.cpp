@@ -155,11 +155,11 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
         for (int ty = 0; ty < TILE_DIM; ++ty) {
 
           // Tranpose tile offset
-          int col_t = by * TILE_DIM + tx;  // Matrix column index
-          int row_t = bx * TILE_DIM + ty;  // Matrix row index
+          int col = by * TILE_DIM + tx;  // Matrix column index
+          int row = bx * TILE_DIM + ty;  // Matrix row index
 
           // Bounds check
-          if (row_t < N_c && col_t < N_r) {
+          if (row < N_c && col < N_r) {
             Atview(col, row) = Tile[ty][tx];
           }
         }
