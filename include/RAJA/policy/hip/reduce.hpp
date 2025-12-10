@@ -33,7 +33,6 @@
 #include "RAJA/util/SoAArray.hpp"
 #include "RAJA/util/SoAPtr.hpp"
 #include "RAJA/util/basic_mempool.hpp"
-#include "RAJA/util/mutex.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA/util/reduce.hpp"
 

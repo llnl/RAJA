@@ -27,7 +27,6 @@
 #include <mutex>
 
 #include "RAJA/util/align.hpp"
-#include "RAJA/util/mutex.hpp"
 
 namespace RAJA
 {

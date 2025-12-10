@@ -34,7 +34,6 @@
 
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/math.hpp"
-#include "RAJA/util/mutex.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA/util/reduce.hpp"
 #include "RAJA/util/OffsetOperators.hpp"

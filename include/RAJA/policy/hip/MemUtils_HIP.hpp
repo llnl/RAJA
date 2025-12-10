@@ -31,7 +31,6 @@
 #include <unordered_map>
 
 #include "RAJA/util/basic_mempool.hpp"
-#include "RAJA/util/mutex.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/resource.hpp"

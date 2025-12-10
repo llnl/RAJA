@@ -27,17 +27,11 @@ namespace RAJA
 
 RAJA_SUPPRESS_HD_WARN
 template<typename AtomicPolicy>
-RAJA_HOST_DEVICE RAJA_INLINE int get_max_threads(AtomicPolicy)
-{
-  return 1;
-}
+RAJA_HOST_DEVICE RAJA_INLINE int get_max_threads(AtomicPolicy);
 
 RAJA_SUPPRESS_HD_WARN
 template<typename AtomicPolicy>
-RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(AtomicPolicy)
-{
-  return 0;
-}
+RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(AtomicPolicy);
 
 }  // namespace RAJA
 

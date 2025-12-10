@@ -22,6 +22,8 @@
 #include "RAJA/config.hpp"
 
 #include "RAJA/pattern/thread.hpp"
+#include "RAJA/policy/openmp/thread.hpp"
+#include "RAJA/policy/sequential/thread.hpp"
 
 namespace RAJA
 {
