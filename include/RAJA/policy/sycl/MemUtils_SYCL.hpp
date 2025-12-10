@@ -28,8 +28,10 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
+#include <mutex>
 #include <type_traits>
 #include <unordered_map>
+
 
 #include "RAJA/util/basic_mempool.hpp"
 #include "RAJA/util/types.hpp"

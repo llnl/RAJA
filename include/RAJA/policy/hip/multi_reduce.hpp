@@ -27,8 +27,10 @@
 
 #include <type_traits>
 #include <limits>
+#include <mutex>
 #include <utility>
 #include <vector>
+
 
 #include "hip/hip_runtime.h"
 

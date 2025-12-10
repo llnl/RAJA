@@ -26,6 +26,7 @@
 #if defined(RAJA_ENABLE_HIP)
 
 #include <type_traits>
+#include <mutex>
 
 #include <hip/hip_runtime.h>
 

@@ -26,6 +26,7 @@
 #if defined(RAJA_ENABLE_CUDA)
 
 #include <type_traits>
+#include <mutex>
 
 #include <cuda.h>
 

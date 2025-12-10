@@ -27,8 +27,10 @@
 
 #include <type_traits>
 #include <limits>
+#include <mutex>
 #include <utility>
 #include <vector>
+
 
 #include <cuda.h>
 
