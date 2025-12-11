@@ -31,7 +31,7 @@
 // Odd dependecy with atomics is breaking CI builds
 //#include "RAJA/util/View.hpp"
 
-#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_ENABLE_SYCL)
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_SYCL_ACTIVE)
 #define RAJA_TEAM_SHARED __shared__
 #else
 #define RAJA_TEAM_SHARED
@@ -185,7 +185,8 @@ public:
 
   void* shared_mem_ptr;
 
-#if defined(RAJA_ENABLE_SYCL)
+#if defined(RAJA_SYCL_ACTIVE)
+  // SGS ODR issue
   mutable ::sycl::nd_item<3>* itm;
 #endif
 
@@ -231,11 +232,12 @@ public:
   RAJA_HOST_DEVICE
   void teamSync()
   {
-#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && defined(RAJA_ENABLE_SYCL)
+    // SGS ODR Issue
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && defined(RAJA_SYCL_ACTIVE)
     itm->barrier(::sycl::access::fence_space::local_space);
 #endif
 
-#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_ENABLE_SYCL)
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_SYCL_ACTIVE)
     __syncthreads();
 #endif
   }

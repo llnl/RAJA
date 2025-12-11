@@ -31,6 +31,7 @@
 #include "RAJA/policy/sequential/multi_reduce.hpp"
 #include "RAJA/policy/sequential/scan.hpp"
 #include "RAJA/policy/sequential/sort.hpp"
+#include "RAJA/policy/sequential/thread.hpp"
 #include "RAJA/policy/sequential/launch.hpp"
 #include "RAJA/policy/sequential/WorkGroup.hpp"
 #include "RAJA/policy/sequential/params/reduce.hpp"
