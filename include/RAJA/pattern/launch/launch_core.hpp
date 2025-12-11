@@ -203,7 +203,7 @@ public:
 
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
   // Only enable this constructor if StoreDim3 is true
-  template<bool S = StoreDim3, typename std::enable_if<S, int>::type = 0>
+  template<bool S = StoreDim3, std::enable_if_t<S>* = nullptr>
   RAJA_HOST_DEVICE LaunchContextT(dim3 thread_id_, dim3 block_id_)
       : shared_mem_offset(0),
         shared_mem_ptr(nullptr),
