@@ -34,11 +34,11 @@
 #include "RAJA/policy/hip/launch.hpp"
 #endif
 
-#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_OPENMP_ACTIVE)
 #include "RAJA/policy/openmp/launch.hpp"
 #endif
 
-#if defined(RAJA_ENABLE_SYCL)
+#if defined(RAJA_SYCL_ACTIVE)
 #include "RAJA/policy/sycl/launch.hpp"
 #endif
 

@@ -247,6 +247,9 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads, storeDim3>
   to be more performant.
 */
 
+namespace expt
+{
+
 template<named_dim DIM>
 struct hip_ctx_thread_loop;
 
@@ -254,8 +257,14 @@ using hip_ctx_thread_loop_x = hip_ctx_thread_loop<named_dim::x>;
 using hip_ctx_thread_loop_y = hip_ctx_thread_loop<named_dim::y>;
 using hip_ctx_thread_loop_z = hip_ctx_thread_loop<named_dim::z>;
 
+}
+
+/*
+   Loop exec methods will have to be reworked to be hasDim3 aware
+*/
+
 template<typename SEGMENT, named_dim DIM>
-struct LoopExecute<hip_ctx_thread_loop<DIM>, SEGMENT>
+struct LoopExecute<expt::hip_ctx_thread_loop<DIM>, SEGMENT>
 {
 
 template<typename BODY>
@@ -264,20 +273,14 @@ template<typename BODY>
                                            BODY const& body)
   {
 
-  //static_assert(hasDim3 == true, "Must use device policy that stored dim3 info");
-  
     const int len         = segment.end() - segment.begin();
     constexpr int int_dim = static_cast<int>(DIM);
 
-    //if constexpr (hasDim3) {
-    
       for (int i = ::RAJA::internal::HipDimHelper<DIM>::get(ctx.thread_id);
            i < len; i += ::RAJA::internal::HipDimHelper<DIM>::get(ctx.block_dim))
       {
         body(*(segment.begin() + i));
       }
-      //}
-
   }
 };
 

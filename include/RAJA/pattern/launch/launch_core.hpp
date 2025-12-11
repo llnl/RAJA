@@ -31,7 +31,7 @@
 // Odd dependecy with atomics is breaking CI builds
 //#include "RAJA/util/View.hpp"
 
-#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_ENABLE_SYCL)
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_SYCL_ACTIVE)
 #define RAJA_TEAM_SHARED __shared__
 #else
 #define RAJA_TEAM_SHARED
@@ -192,14 +192,8 @@ public:
   size_t shared_mem_offset;
   void* shared_mem_ptr;
 
-/*
-#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-  const dim3 thread_id;
-  const dim3 block_dim;
-#endif
-*/
-
-#if defined(RAJA_ENABLE_SYCL)
+#if defined(RAJA_SYCL_ACTIVE)
+  // SGS ODR issue
   mutable ::sycl::nd_item<3>* itm;
 #endif
 
@@ -223,18 +217,6 @@ public:
   : shared_mem_offset(0),
     shared_mem_ptr(nullptr)
   {}
-
-/*
-#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-  RAJA_HOST_DEVICE LaunchContextT(dim3 thread_id_, dim3 block_id_)
-      : shared_mem_offset(0),
-        shared_mem_ptr(nullptr),
-        thread_id {thread_id_},
-        block_dim {block_id_}
-  {}
-#endif
-*/
-
 
   // TODO handle alignment
   template<typename T>
@@ -273,48 +255,19 @@ public:
   RAJA_HOST_DEVICE
   void teamSync()
   {
-#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && defined(RAJA_ENABLE_SYCL)
+    // SGS ODR Issue
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && defined(RAJA_SYCL_ACTIVE)
     itm->barrier(::sycl::access::fence_space::local_space);
 #endif
 
-#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_ENABLE_SYCL)
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_SYCL_ACTIVE)
     __syncthreads();
 #endif
   }
 };
 
+// Preserve backwards compatibility
 using LaunchContext = LaunchContextT<false>;
-
-/*
-template<bool StoreDim3>
-class LaunchContextT : public LaunchContext
-{
-
-public:
-
-#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-  // If StoreDim3 is true, store by value; else, don't store
-  typename std::conditional<StoreDim3, dim3, void*>::type thread_id;
-  typename std::conditional<StoreDim3, dim3, void*>::type block_dim;
-#endif
-
-  // Only enable this constructor if StoreDim3 is true
-  template <bool S = StoreDim3, typename std::enable_if<S, int>::type = 0>
-  RAJA_HOST_DEVICE LaunchContextT(dim3 thread_id_, dim3 block_id_)
-  : LaunchContext(),
-    thread_id(thread_id_),
-    block_dim(block_id_)
-  {}
-
-  // Only enable this constructor if StoreDim3 is false
-  template <bool S = StoreDim3, typename std::enable_if<!S, int>::type = 0>
-  RAJA_HOST_DEVICE LaunchContextT(dim3 thread_id_, dim3 block_id_)
-  : LaunchContext()
-  {}
-
-};
-*/
-
 
 template<typename LAUNCH_POLICY>
 struct LaunchExecute;

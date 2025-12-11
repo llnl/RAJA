@@ -251,15 +251,20 @@ struct LaunchExecute<
   to be more performat.
 */
 
-template<named_dim DIM>
-struct hip_ctx_thread_loop;
+namespace expt
+{
 
-using hip_ctx_thread_loop_x = hip_ctx_thread_loop<named_dim::x>;
-using hip_ctx_thread_loop_y = hip_ctx_thread_loop<named_dim::y>;
-using hip_ctx_thread_loop_z = hip_ctx_thread_loop<named_dim::z>;
+template<named_dim DIM>
+struct cuda_ctx_thread_loop;
+
+using cuda_ctx_thread_loop_x = cuda_ctx_thread_loop<named_dim::x>;
+using cuda_ctx_thread_loop_y = cuda_ctx_thread_loop<named_dim::y>;
+using cuda_ctx_thread_loop_z = cuda_ctx_thread_loop<named_dim::z>;
+
+}
 
 template<typename SEGMENT, named_dim DIM>
-struct LoopExecute<hip_ctx_thread_loop<DIM>, SEGMENT>
+struct LoopExecute<expt:cuda_ctx_thread_loop<DIM>, SEGMENT>
 {
 
   template<typename BODY>
@@ -271,8 +276,8 @@ struct LoopExecute<hip_ctx_thread_loop<DIM>, SEGMENT>
     const int len         = segment.end() - segment.begin();
     constexpr int int_dim = static_cast<int>(DIM);
 
-    for (int i = ::RAJA::internal::HipDimHelper<DIM>::get(ctx.thread_id);
-         i < len; i += ::RAJA::internal::HipDimHelper<DIM>::get(ctx.block_dim))
+    for (int i = ::RAJA::internal::CudaDimHelper<DIM>::get(ctx.thread_id);
+         i < len; i += ::RAJA::internal::CudaDimHelper<DIM>::get(ctx.block_dim))
     {
       body(*(segment.begin() + i));
     }
