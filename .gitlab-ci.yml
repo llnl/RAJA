@@ -61,6 +61,8 @@ variables:
 # test".  Add protected branches here. See default value in
 # preliminary-ignore-draft-pr.yml.
   ALWAYS_RUN_PATTERN: "^develop$|^main$|^v[0-9.]*-RC$"
+# Force matrix ON: overrides value set in UI.
+  ON_MATRIX: "ON"
 
 # We organize the build-and-test stage with sub-pipelines. Each sub-pipeline
 # corresponds to a test batch on a given machine.

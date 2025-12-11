@@ -17,7 +17,13 @@
 # project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
 # when possible so that the comparison with the original job is easier.
 
-## clang 18.1.1 + CUDA 12.6.0 job is in the shared RSC set of jobs 
+## clang 18.1.1 + CUDA 12.6.0 job is in the shared RSC set of jobs
+# Overridden to allow failure
+clang_18_1_1_cuda_12_6_0:
+  variables:
+    SPEC: "${PROJECT_MATRIX_VARIANTS} %llvm@=18.1.8 ^cuda@12.6.0+allow-unsupported-compilers ${PROJECT_MATRIX_DEPS}"
+  extends: .job_on_matrix
+  allow_failure: true
 
 ############
 # Extra jobs
