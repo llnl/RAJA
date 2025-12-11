@@ -20,9 +20,9 @@
 
 #include "RAJA/config.hpp"
 
-#include "RAJA/policy/thread_auto.hpp"
-
 #include "RAJA/util/macros.hpp"
+
+#include "RAJA/policy/thread_auto.hpp"
 
 namespace RAJA
 {

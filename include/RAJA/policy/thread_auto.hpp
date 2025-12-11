@@ -22,8 +22,6 @@
 
 #include "RAJA/util/macros.hpp"
 
-#include "RAJA/policy/thread_builtin.hpp"
-
 #ifdef RAJA_OPENMP_ACTIVE
 #include "RAJA/policy/openmp/policy.hpp"
 #endif
@@ -50,6 +48,14 @@ using active_auto_thread = RAJA::seq_thread;
 #endif
 
 }  // namespace detail
+
+RAJA_SUPPRESS_HD_WARN
+template<typename AtomicPolicy>
+RAJA_HOST_DEVICE RAJA_INLINE int get_max_threads(AtomicPolicy);
+
+RAJA_SUPPRESS_HD_WARN
+template<typename AtomicPolicy>
+RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(AtomicPolicy);
 
 }  // namespace RAJA
 

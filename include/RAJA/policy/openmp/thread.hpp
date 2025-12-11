@@ -22,9 +22,9 @@
 
 #if defined(RAJA_OPENMP_ACTIVE)
 
-#include "RAJA/policy/openmp/policy.hpp"
-
 #include "RAJA/util/macros.hpp"
+
+#include "RAJA/policy/thread_auto.hpp"
 
 namespace RAJA
 {
