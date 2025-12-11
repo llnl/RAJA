@@ -176,37 +176,65 @@ private:
   Threads apply(Threads const& a) { return (threads = a); }
 };
 
-class LaunchContext
+template<bool StoreDim3=false>
+class LaunchContextT
 {
 public:
+
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+  // If StoreDim3 is true, store by value; else, don't store
+  typename std::conditional<StoreDim3, dim3, void*>::type thread_id;
+  typename std::conditional<StoreDim3, dim3, void*>::type block_dim;
+#endif
+
   // Bump style allocator used to
   // get memory from the pool
   size_t shared_mem_offset;
-
   void* shared_mem_ptr;
 
+/*
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
   const dim3 thread_id;
   const dim3 block_dim;
 #endif
+*/
 
 #if defined(RAJA_ENABLE_SYCL)
   mutable ::sycl::nd_item<3>* itm;
 #endif
 
-  RAJA_HOST_DEVICE LaunchContext()
+  RAJA_HOST_DEVICE LaunchContextT()
       : shared_mem_offset(0),
         shared_mem_ptr(nullptr)
   {}
 
+  // Only enable this constructor if StoreDim3 is true
+  template <bool S = StoreDim3, typename std::enable_if<S, int>::type = 0>
+  RAJA_HOST_DEVICE LaunchContextT(dim3 thread_id_, dim3 block_id_)
+  : shared_mem_offset(0),
+    shared_mem_ptr(nullptr),
+    thread_id(thread_id_),
+    block_dim(block_id_)
+  {}
+
+  // Only enable this constructor if StoreDim3 is false
+  template <bool S = StoreDim3, typename std::enable_if<!S, int>::type = 0>
+  RAJA_HOST_DEVICE LaunchContextT(dim3 thread_id_, dim3 block_id_)
+  : shared_mem_offset(0),
+    shared_mem_ptr(nullptr)
+  {}
+
+/*
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-  RAJA_HOST_DEVICE LaunchContext(dim3 thread_id_, dim3 block_id_)
+  RAJA_HOST_DEVICE LaunchContextT(dim3 thread_id_, dim3 block_id_)
       : shared_mem_offset(0),
         shared_mem_ptr(nullptr),
         thread_id {thread_id_},
         block_dim {block_id_}
   {}
 #endif
+*/
+
 
   // TODO handle alignment
   template<typename T>
@@ -254,6 +282,39 @@ public:
 #endif
   }
 };
+
+using LaunchContext = LaunchContextT<false>;
+
+/*
+template<bool StoreDim3>
+class LaunchContextT : public LaunchContext
+{
+
+public:
+
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+  // If StoreDim3 is true, store by value; else, don't store
+  typename std::conditional<StoreDim3, dim3, void*>::type thread_id;
+  typename std::conditional<StoreDim3, dim3, void*>::type block_dim;
+#endif
+
+  // Only enable this constructor if StoreDim3 is true
+  template <bool S = StoreDim3, typename std::enable_if<S, int>::type = 0>
+  RAJA_HOST_DEVICE LaunchContextT(dim3 thread_id_, dim3 block_id_)
+  : LaunchContext(),
+    thread_id(thread_id_),
+    block_dim(block_id_)
+  {}
+
+  // Only enable this constructor if StoreDim3 is false
+  template <bool S = StoreDim3, typename std::enable_if<!S, int>::type = 0>
+  RAJA_HOST_DEVICE LaunchContextT(dim3 thread_id_, dim3 block_id_)
+  : LaunchContext()
+  {}
+
+};
+*/
+
 
 template<typename LAUNCH_POLICY>
 struct LaunchExecute;
@@ -478,6 +539,7 @@ struct LoopExecute;
 template<typename POLICY, typename SEGMENT>
 struct LoopICountExecute;
 
+
 RAJA_SUPPRESS_HD_WARN
 template<typename POLICY_LIST,
          typename CONTEXT,
@@ -490,6 +552,34 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
 
   LoopExecute<loop_policy<POLICY_LIST>, SEGMENT>::exec(ctx, segment, body);
 }
+
+
+/*
+template<typename POLICY_LIST, typename SEGMENT, typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void loop(LaunchContext const& ctx, SEGMENT const& segment, BODY const& body)
+{
+  LoopExecute<loop_policy<POLICY_LIST>, SEGMENT>::template exec<BODY>(ctx, segment, body);
+}
+*/
+
+/*
+template<typename POLICY_LIST, typename SEGMENT, typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void loop(LaunchContextT<true> const& ctx, SEGMENT const& segment, BODY const& body)
+{
+  LoopExecute<loop_policy<POLICY_LIST>, SEGMENT>::template exec<BODY>(ctx, segment, body);
+}
+*/
+
+
+/*
+// Overload for other contexts
+template<typename POLICY_LIST, typename CONTEXT, typename SEGMENT, typename BODY>
+std::enable_if_t<!is_launch_context<CONTEXT>::value>
+loop(CONTEXT const& ctx, SEGMENT const& segment, BODY const& body)
+{
+    LoopExecute<loop_policy<POLICY_LIST>, SEGMENT>::template exec<BODY>(ctx, segment, body);
+}
+*/
 
 template<typename POLICY_LIST,
          typename CONTEXT,

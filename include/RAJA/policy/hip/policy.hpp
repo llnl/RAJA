@@ -358,7 +358,7 @@ struct hip_exec : public RAJA::make_policy_pattern_launch_platform_t<
   using LaunchConcretizer = _LaunchConcretizer;
 };
 
-template<bool Async, int num_threads = named_usage::unspecified>
+template<bool Async, int num_threads = named_usage::unspecified, bool storeDim3 = false>
 struct hip_launch_t : public RAJA::make_policy_pattern_launch_platform_t<
                           RAJA::Policy::hip,
                           RAJA::Pattern::region,

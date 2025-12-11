@@ -28,11 +28,11 @@
 namespace RAJA
 {
 
-template<typename BODY, typename ReduceParams>
+template<typename BODY, bool storeDim3, typename ReduceParams>
 __global__ void launch_new_reduce_global_fcn(const BODY body_in,
                                              ReduceParams reduce_params)
 {
-  LaunchContext ctx(threadIdx, blockDim);
+  LaunchContextT<storeDim3> ctx(threadIdx, blockDim);
 
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
@@ -49,9 +49,9 @@ __global__ void launch_new_reduce_global_fcn(const BODY body_in,
       RAJA::hip_flatten_global_xyz_direct {}, reduce_params);
 }
 
-template<bool async>
+template<bool async, bool storeDim3>
 struct LaunchExecute<
-    RAJA::policy::hip::hip_launch_t<async, named_usage::unspecified>>
+  RAJA::policy::hip::hip_launch_t<async, named_usage::unspecified, storeDim3>>
 {
 
   template<typename BODY_IN, typename ReduceParams>
@@ -69,7 +69,7 @@ struct LaunchExecute<
     EXEC_POL pol {};
 
     auto func = reinterpret_cast<const void*>(
-        &launch_new_reduce_global_fcn<BODY, camp::decay<ReduceParams>>);
+      &launch_new_reduce_global_fcn<BODY, storeDim3, camp::decay<ReduceParams>>);
 
     resources::Hip hip_res = res.get<RAJA::resources::Hip>();
 
@@ -132,12 +132,13 @@ struct LaunchExecute<
   }
 };
 
-template<typename BODY, int num_threads, typename ReduceParams>
+template<typename BODY, int num_threads, bool storeDim3, typename ReduceParams>
 __launch_bounds__(num_threads, 1) __global__
     void launch_new_reduce_global_fcn_fixed(const BODY body_in,
                                             ReduceParams reduce_params)
 {
-  LaunchContext ctx(threadIdx, blockDim);
+
+  LaunchContextT<storeDim3> ctx(threadIdx, blockDim);
 
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
@@ -152,10 +153,11 @@ __launch_bounds__(num_threads, 1) __global__
   // Using a flatten global policy as we may use all dimensions
   RAJA::expt::ParamMultiplexer::parampack_combine(
       RAJA::hip_flatten_global_xyz_direct {}, reduce_params);
+
 }
 
-template<bool async, int nthreads>
-struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
+template<bool async, int nthreads, bool storeDim3>
+struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads, storeDim3>>
 {
 
   template<typename BODY_IN, typename ReduceParams>
@@ -175,7 +177,7 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
     EXEC_POL pol {};
 
     auto func = reinterpret_cast<const void*>(
-        &launch_new_reduce_global_fcn_fixed<BODY, nthreads,
+    &launch_new_reduce_global_fcn_fixed<BODY, nthreads, storeDim3,
                                             camp::decay<ReduceParams>>);
 
     resources::Hip hip_res = res.get<RAJA::resources::Hip>();
@@ -256,20 +258,26 @@ template<typename SEGMENT, named_dim DIM>
 struct LoopExecute<hip_ctx_thread_loop<DIM>, SEGMENT>
 {
 
-  template<typename BODY>
-  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContextT<true> const& ctx,
                                            SEGMENT const& segment,
                                            BODY const& body)
   {
 
+  //static_assert(hasDim3 == true, "Must use device policy that stored dim3 info");
+  
     const int len         = segment.end() - segment.begin();
     constexpr int int_dim = static_cast<int>(DIM);
 
-    for (int i = ::RAJA::internal::HipDimHelper<DIM>::get(ctx.thread_id);
-         i < len; i += ::RAJA::internal::HipDimHelper<DIM>::get(ctx.block_dim))
-    {
-      body(*(segment.begin() + i));
-    }
+    //if constexpr (hasDim3) {
+    
+      for (int i = ::RAJA::internal::HipDimHelper<DIM>::get(ctx.thread_id);
+           i < len; i += ::RAJA::internal::HipDimHelper<DIM>::get(ctx.block_dim))
+      {
+        body(*(segment.begin() + i));
+      }
+      //}
+
   }
 };
 
@@ -287,9 +295,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+template<typename BODY, bool hasDim3> //need to finish
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -311,9 +319,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -341,9 +349,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -369,9 +377,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -397,9 +405,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -433,9 +441,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -469,9 +477,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+    LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -499,9 +507,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -544,9 +552,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -595,9 +603,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -619,9 +627,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -649,9 +657,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -677,9 +685,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -705,9 +713,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -741,9 +749,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -777,9 +785,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -807,9 +815,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -852,9 +860,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -916,9 +924,9 @@ struct LoopExecute<RAJA::policy::hip::hip_flatten_indexer<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -948,9 +956,9 @@ struct LoopExecute<RAJA::policy::hip::hip_flatten_indexer<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -990,9 +998,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -1027,9 +1035,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -1078,9 +1086,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -1115,9 +1123,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -1153,9 +1161,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
@@ -1179,9 +1187,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
@@ -1214,9 +1222,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
@@ -1249,9 +1257,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
@@ -1279,9 +1287,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
@@ -1320,9 +1328,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
@@ -1363,9 +1371,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
@@ -1396,9 +1404,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
@@ -1446,9 +1454,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
@@ -1504,9 +1512,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
@@ -1530,9 +1538,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
@@ -1566,9 +1574,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
@@ -1602,9 +1610,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
@@ -1632,9 +1640,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
@@ -1674,9 +1682,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
@@ -1718,9 +1726,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
@@ -1751,9 +1759,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
@@ -1805,9 +1813,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename TILE_T, typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
