@@ -51,7 +51,7 @@ __global__ void launch_new_reduce_global_fcn(const BODY body_in,
 
 template<bool async, bool storeDim3>
 struct LaunchExecute<
-  RAJA::policy::hip::hip_launch_t<async, named_usage::unspecified, storeDim3>>
+    RAJA::policy::hip::hip_launch_t<async, named_usage::unspecified, storeDim3>>
 {
 
   template<typename BODY_IN, typename ReduceParams>
@@ -69,7 +69,8 @@ struct LaunchExecute<
     EXEC_POL pol {};
 
     auto func = reinterpret_cast<const void*>(
-      &launch_new_reduce_global_fcn<BODY, storeDim3, camp::decay<ReduceParams>>);
+        &launch_new_reduce_global_fcn<BODY, storeDim3,
+                                      camp::decay<ReduceParams>>);
 
     resources::Hip hip_res = res.get<RAJA::resources::Hip>();
 
@@ -153,11 +154,11 @@ __launch_bounds__(num_threads, 1) __global__
   // Using a flatten global policy as we may use all dimensions
   RAJA::expt::ParamMultiplexer::parampack_combine(
       RAJA::hip_flatten_global_xyz_direct {}, reduce_params);
-
 }
 
 template<bool async, int nthreads, bool storeDim3>
-struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads, storeDim3>>
+struct LaunchExecute<
+    RAJA::policy::hip::hip_launch_t<async, nthreads, storeDim3>>
 {
 
   template<typename BODY_IN, typename ReduceParams>
@@ -177,7 +178,7 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads, storeDim3>
     EXEC_POL pol {};
 
     auto func = reinterpret_cast<const void*>(
-    &launch_new_reduce_global_fcn_fixed<BODY, nthreads, storeDim3,
+        &launch_new_reduce_global_fcn_fixed<BODY, nthreads, storeDim3,
                                             camp::decay<ReduceParams>>);
 
     resources::Hip hip_res = res.get<RAJA::resources::Hip>();
@@ -257,7 +258,7 @@ using hip_ctx_thread_loop_x = hip_ctx_thread_loop<named_dim::x>;
 using hip_ctx_thread_loop_y = hip_ctx_thread_loop<named_dim::y>;
 using hip_ctx_thread_loop_z = hip_ctx_thread_loop<named_dim::z>;
 
-}
+}  // namespace expt
 
 /*
    Loop exec methods will have to be reworked to be hasDim3 aware
@@ -267,7 +268,7 @@ template<typename SEGMENT, named_dim DIM>
 struct LoopExecute<expt::hip_ctx_thread_loop<DIM>, SEGMENT>
 {
 
-template<typename BODY>
+  template<typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(LaunchContextT<true> const& ctx,
                                            SEGMENT const& segment,
                                            BODY const& body)
@@ -276,11 +277,11 @@ template<typename BODY>
     const int len         = segment.end() - segment.begin();
     constexpr int int_dim = static_cast<int>(DIM);
 
-      for (int i = ::RAJA::internal::HipDimHelper<DIM>::get(ctx.thread_id);
-           i < len; i += ::RAJA::internal::HipDimHelper<DIM>::get(ctx.block_dim))
-      {
-        body(*(segment.begin() + i));
-      }
+    for (int i = ::RAJA::internal::HipDimHelper<DIM>::get(ctx.thread_id);
+         i < len; i += ::RAJA::internal::HipDimHelper<DIM>::get(ctx.block_dim))
+    {
+      body(*(segment.begin() + i));
+    }
   }
 };
 
@@ -298,7 +299,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-template<typename BODY, bool hasDim3> //need to finish
+  template<typename BODY, bool hasDim3>  // need to finish
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
@@ -482,7 +483,7 @@ struct LoopExecute<
 
   template<typename BODY, bool hasDim3>
   static RAJA_INLINE RAJA_DEVICE void exec(
-    LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<hasDim3> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {

@@ -261,10 +261,10 @@ using cuda_ctx_thread_loop_x = cuda_ctx_thread_loop<named_dim::x>;
 using cuda_ctx_thread_loop_y = cuda_ctx_thread_loop<named_dim::y>;
 using cuda_ctx_thread_loop_z = cuda_ctx_thread_loop<named_dim::z>;
 
-}
+}  // namespace expt
 
 template<typename SEGMENT, named_dim DIM>
-struct LoopExecute<expt:cuda_ctx_thread_loop<DIM>, SEGMENT>
+struct LoopExecute<expt : cuda_ctx_thread_loop<DIM>, SEGMENT>
 {
 
   template<typename BODY>
