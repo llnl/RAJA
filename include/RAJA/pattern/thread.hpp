@@ -71,7 +71,6 @@ namespace RAJA
  * Returns 1 if OMP is not active.
  * @return Maximum number of threads
  */
-RAJA_SUPPRESS_HD_WARN
 template<typename Policy>
 RAJA_INLINE RAJA_HOST_DEVICE int get_max_threads()
 {
@@ -85,7 +84,6 @@ RAJA_INLINE RAJA_HOST_DEVICE int get_max_threads()
  * in sequential part of a program or OMP is not active
  * @return Current thread number
  */
-RAJA_SUPPRESS_HD_WARN
 template<typename Policy>
 RAJA_INLINE RAJA_HOST_DEVICE int get_thread_num()
 {
