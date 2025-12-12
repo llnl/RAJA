@@ -29,6 +29,7 @@
 #include "RAJA/policy/sequential/policy.hpp"
 
 namespace RAJA
+{
 
 namespace detail
 {
