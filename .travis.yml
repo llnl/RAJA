@@ -34,7 +34,7 @@ matrix:
     env:
     - COMPILER=/opt/intel/bin/icpc
     - IMG=icc18
-    - CMAKE_EXTRA_FLAGS="-DRAJA_ENABLE_FORCEINLINE_RECURSIVE=Off -DRAJA_ENABLE_TBB=On -DBLT_CXX_STD=c++17"
+    - CMAKE_EXTRA_FLAGS="-DRAJA_ENABLE_FORCEINLINE_RECURSIVE=Off -DRAJA_ENABLE_TBB=On -DBLT_CXX_STD=c++20"
   - compiler: nvcc10.2
     env:
     - COMPILER=g++

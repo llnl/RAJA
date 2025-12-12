@@ -43,7 +43,7 @@ module load cmake/3.25.2
 cmake \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_CXX_COMPILER=/usr/tce/packages/gcc/gcc-${COMP_GCC_VER}/bin/g++ \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -C ../host-configs/lc-builds/toss4/nvcc_gcc_X.cmake \
   -DENABLE_CLANGFORMAT=Off \
   -DENABLE_OPENMP=On \

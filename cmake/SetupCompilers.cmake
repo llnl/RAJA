@@ -59,7 +59,7 @@ endif()
 # end RAJA_ENABLE_CUDA section
 
 if (RAJA_ENABLE_HIP)
-  set(RAJA_HIPCC_STD_FLAG -std=c++17)
+  set(RAJA_HIPCC_STD_FLAG -std=c++20)
   if (NOT RAJA_HOST_CONFIG_LOADED)
     #list(APPEND RAJA_EXTRA_HIPCC_FLAGS)
 

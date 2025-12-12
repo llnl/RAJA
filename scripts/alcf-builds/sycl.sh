@@ -35,7 +35,7 @@ cmake \
   -DRAJA_ENABLE_SYCL=On \
   -DCMAKE_LINKER=clang++ \
   -DCMAKE_CXX_STANDARD=17 \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -DENABLE_TESTS=On \
   -DENABLE_EXAMPLES=On \
   "$@" \

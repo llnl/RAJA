@@ -47,7 +47,7 @@ reductions, scans, atomic operations, sorts, data layouts, views, and loop
 iteration spaces, as well as compile-time loop transformations. Features
 are continually growing as new use cases arise due to expanding user adoption.
 
-RAJA uses standard C++17 -- C++ is the programming language model of choice
+RAJA uses standard C++20 -- C++ is the programming language model of choice
 for many HPC applications. RAJA requirements and design are rooted in a 
 decades of developer experience working on production mesh-based 
 multiphysics applications. An important RAJA requirement is that
