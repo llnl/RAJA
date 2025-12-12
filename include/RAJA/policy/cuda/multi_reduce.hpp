@@ -27,14 +27,15 @@
 
 #include <type_traits>
 #include <limits>
+#include <mutex>
 #include <utility>
 #include <vector>
+
 
 #include <cuda.h>
 
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/math.hpp"
-#include "RAJA/util/mutex.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA/util/reduce.hpp"
 #include "RAJA/util/OffsetOperators.hpp"
@@ -50,6 +51,8 @@
 #else
 #include "RAJA/policy/cuda/atomic.hpp"
 #endif
+
+#include "RAJA/pattern/thread.hpp"
 
 #include "RAJA/policy/cuda/policy.hpp"
 #include "RAJA/policy/cuda/raja_cudaerrchk.hpp"
@@ -204,7 +207,10 @@ RAJA_DEVICE RAJA_INLINE void grid_multi_reduce_shmem_to_global_atomic(
 //
 
 //! MultiReduction data for Cuda Offload -- stores value, host pointer
-template<typename Combiner, typename T, typename tuning>
+template<typename Combiner,
+         typename T,
+         typename tuning,
+         typename ThreadPolicy = RAJA::detail::active_auto_thread>
 struct MultiReduceGridAtomicHostInit_TallyData
 {
   //! setup permanent settings, allocate and initialize tally memory
@@ -319,10 +325,7 @@ private:
 
   static int get_tally_replication()
   {
-    int min_tally_replication = 1;
-#if defined(RAJA_ENABLE_OPENMP)
-    min_tally_replication = omp_get_max_threads();
-#endif
+    int min_tally_replication = RAJA::get_max_threads<ThreadPolicy>();
 
     struct
     {
@@ -410,7 +413,10 @@ protected:
 };
 
 //! MultiReduction data for Cuda Offload -- stores value, host pointer
-template<typename Combiner, typename T, typename tuning>
+template<typename Combiner,
+         typename T,
+         typename tuning,
+         typename ThreadPolicy = RAJA::detail::active_auto_thread>
 struct MultiReduceGridAtomicHostInit_Data
     : MultiReduceGridAtomicHostInit_TallyData<Combiner, T, tuning>
 {
@@ -451,10 +457,7 @@ struct MultiReduceGridAtomicHostInit_Data
   //! combine value on host, combine a value into the tally
   void combine_host(int bin, T value)
   {
-    int tally_rep = 0;
-#if defined(RAJA_ENABLE_OPENMP)
-    tally_rep = omp_get_thread_num();
-#endif
+    int tally_rep = RAJA::get_thread_num<ThreadPolicy>();
     int tally_offset =
         GetTallyOffset {}(bin, m_tally_bins, tally_rep, m_tally_replication);
     Combiner {}(m_tally_mem[tally_offset], value);
@@ -472,7 +475,10 @@ private:
 };
 
 //! MultiReduction data for Cuda Offload -- stores value, host pointer
-template<typename Combiner, typename T, typename tuning>
+template<typename Combiner,
+         typename T,
+         typename tuning,
+         typename ThreadPolicy = RAJA::detail::active_auto_thread>
 struct MultiReduceBlockThenGridAtomicHostInit_Data
     : MultiReduceGridAtomicHostInit_TallyData<Combiner, T, tuning>
 {
@@ -597,10 +603,7 @@ struct MultiReduceBlockThenGridAtomicHostInit_Data
   //! combine value on host, combine a value into the tally
   void combine_host(int bin, T value)
   {
-    int tally_rep = 0;
-#if defined(RAJA_ENABLE_OPENMP)
-    tally_rep = omp_get_thread_num();
-#endif
+    int tally_rep = RAJA::get_thread_num<ThreadPolicy>();
     int tally_offset =
         GetTallyOffset {}(bin, m_tally_bins, tally_rep, m_tally_replication);
     Combiner {}(m_tally_mem[tally_offset], value);

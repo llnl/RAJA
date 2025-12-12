@@ -343,6 +343,8 @@ struct omp_atomic
 
 #endif
 
+struct omp_thread
+{};
 
 template<RAJA::omp::multi_reduce_algorithm algorithm>
 using omp_multi_reduce_tuning =
@@ -384,6 +386,11 @@ using omp_multi_reduce = omp_multi_reduce_unordered;
 /// Type alias for atomics
 ///
 using policy::omp::omp_atomic;
+
+///
+/// Type alias for thread
+///
+using policy::omp::omp_thread;
 
 ///
 /// Type aliases to simplify common omp parallel for loop execution
