@@ -26,15 +26,12 @@
 
 namespace RAJA
 {
-
-RAJA_SUPPRESS_HD_WARN
 template<>
 RAJA_HOST_DEVICE RAJA_INLINE int get_max_threads(seq_thread)
 {
   return 1;
 }
 
-RAJA_SUPPRESS_HD_WARN
 template<>
 RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(seq_thread)
 {
