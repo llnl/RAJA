@@ -192,92 +192,107 @@ Building the Compiler
    that the head of the SYCL branch will fail to build. In the event that it
    does not build, try checking out an earlier commit. On the Intel/LLVM GitHub
    page, one can see which of their commits builds by checking the status
-   badge next to each commit. Look for a commit that passes. 
+   badge next to each commit. Look for a commit that passes.
 
-#. Load the module of the version of GCC headers that you want to use. For example, we typically use the system default, which on corona is gcc/10.3.1-magic::
 
-    module load gcc/10.3.1-magic
+#. On LC machines, it is following the good neighbor policy to do your build on a compute node.
 
-#. Load the module of the version of ROCm that you want to use. For example::
+   Use an appropriate bank to get an interactive node, e.g on Corona::
 
-    module load rocm/5.7.1 
+    flux alloc -t 60 -N 1 --bank=wbronze
 
+#. Load the module of the version of GCC headers that you want to use. We typically use the system default, which on corona at time of writing is gcc/10.3.1-magic::
+
+    GCC_VERSION=10.3.1
+    module load gcc/${GCC_VERSION}-magic
+
+#. Load the module of the version of ROCm that you want to use::
+    ROCM_VERSION=6.4.2
+    module load rocm/${ROCM_VERSION}
+
+#. Load Python module you want to use.  At time of writing, the LLVM configure requires at least version 3.7. we use Corona default::
+    PYTHON_VERSION=3.9.12
+    module load python/${PYTHON_VERSION}
+    
 #. Clone the SYCL branch of Intel's LLVM compiler::
 
     git clone https://github.com/intel/llvm -b sycl
 
-#. cd into the LLVM folder:: 
-    
-    cd llvm
+#. cd into the LLVM folder and extract the GIT SHA for naming the install directories.  The install directory uses the naming convention ``clang_sycl_<git sha>_hip_gcc<version>_rocm<version>``::
 
-   In the event that the head of the sycl branch does not build, run
-   ``git checkout <git sha>`` to checkout a version that does build.
+    cd llvm
+    GIT_SHA=$(git rev-parse --short=12 HEAD)
+    INSTALL_PREFIX=/usr/workspace/raja-dev/clang_sycl_${GIT_SHA}_hip_gcc${GCC_VERSION}_rocm${ROCM_VERSION}
 
 #. Build the compiler. 
 
-   Note that in this example, we are using rocm5.7.1, but one can change the
-   version they wish to use simply by changing the paths in the configure step
-
    a. Configure
-
-     .. code-block:: bash 
-
-        srun -n1 /usr/bin/python3 buildbot/configure.py --hip -o buildrocm5.7.1 \
-        --cmake-gen "Unix Makefiles" \
-        --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=/opt/rocm-5.7.1 \
-        --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_INCLUDE_DIR=/opt/rocm-5.7.1/include \
-        --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_LIB_DIR=/opt/rocm-5.7.1/lib \
-        --cmake-opt=-DSYCL_BUILD_PI_HIP_INCLUDE_DIR=/opt/rocm-5.7.1/include \
-        --cmake-opt=-DSYCL_BUILD_PI_HIP_HSA_INCLUDE_DIR=/opt/rocm-5.7.1/hsa/include/hsa \
-        --cmake-opt=-DSYCL_BUILD_PI_HIP_LIB_DIR=/opt/rocm-5.7.1/lib \
-        --cmake-opt=-DUR_HIP_ROCM_DIR=/opt/rocm-5.7.1 \
-        --cmake-opt=-DUR_HIP_INCLUDE_DIR=/opt/rocm-5.7.1/include \
-        --cmake-opt=-DUR_HIP_HSA_INCLUDE_DIR=/opt/rocm-5.7.1/hsa/include/hsa \
-        --cmake-opt=-DUR_HIP_LIB_DIR=/opt/rocm-5.7.1/lib
-
-   b. Build
 
      .. code-block:: bash
 
-      srun -n1 /usr/bin/python3 buildbot/compile.py -o buildrocm5.7.1
+     python3 buildbot/configure.py --hip -o buildrocm${ROCM_VERSION} \
+     --cmake-gen "Unix Makefiles" \
+     --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=/opt/rocm-${ROCM_VERSION} \
+     --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_INCLUDE_DIR=/opt/rocm-${ROCM_VERSION}/include \
+     --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_LIB_DIR=/opt/rocm-${ROCM_VERSION}/lib \
+     --cmake-opt=-DSYCL_BUILD_PI_HIP_INCLUDE_DIR=/opt/rocm-${ROCM_VERSION}/include \
+     --cmake-opt=-DSYCL_BUILD_PI_HIP_HSA_INCLUDE_DIR=/opt/rocm-${ROCM_VERSION}/hsa/include/hsa \
+     --cmake-opt=-DSYCL_BUILD_PI_HIP_LIB_DIR=/opt/rocm-${ROCM_VERSION}/lib \
+     --cmake-opt=-DUR_HIP_ROCM_DIR=/opt/rocm-${ROCM_VERSION} \
+     --cmake-opt=-DUR_HIP_INCLUDE_DIR=/opt/rocm-${ROCM_VERSION}/include \
+     --cmake-opt=-DUR_HIP_HSA_INCLUDE_DIR=/opt/rocm-${ROCM_VERSION}/hsa/include/hsa \
+     --cmake-opt=-DUR_HIP_LIB_DIR=/opt/rocm-${ROCM_VERSION}/lib 
+
+   #. Build::
+
+      python buildbot/compile.py -o buildrocm${ROCM_VERSION}		     
+
+   #. Install::
+	
+      cp -rp buildrocm${ROCM_VERSION}/install ${INSTALL_PREFIX}
+      cd ..
+
+#. Set the permissions of the folder, and everything in it to 750::
+
+      chmod 750 ${INSTALL_PREFIX} -R  
+
+#. Change the group of the folder and everything in it to raja-dev::
+
+      chgrp raja-dev ${INSTALL_PREFIX} -R
 
 #. Test the compiler
 
    Follow the steps in the `Using the compiler`_ section to test the installation
 
-#. Install
-
-  a. The build step will install the compiler in the folder ``buildrocm<version>/install``. Copy this folder to the ``/usr/workspace/raja-dev/`` directory using the naming scheme ``clang_sycl_<git sha>_hip_gcc<version>_rocm<version>``
-
-  #. Set the permissions of the folder, and everything in it to 750::
-
-      chmod 750 /usr/workspace/raja-dev/<foldername>/ -R  
-
-  #. Change the group of the folder and everything in it to raja-dev::
-
-      chgrp raja-dev /usr/workspace/raja-dev/<foldername>/ -R  
-
-
 Using the compiler
 ^^^^^^^^^^^^^^^^^^
 
-#. Load the version of rocm that you used when building the compiler, for example::
+#. Load the version of ROCm that you used when building the compiler, for example::
 
-    module load rocm/5.7.1
+    ROCM_VERSION=6.4.2 
+    module load rocm/${ROCM_VERSION}
 
 #. Navigate to the root of your local RAJA checkout space::
 
     cd /path/to/raja
 
+#. Determine where you installed the compiler.
+
+   This is the ``INSTALL_PREFIX`` used above.  For example::
+
+    SYCL_INSTALL_PREFIX=/usr/workspace/raja-dev/clang_sycl_16b7bcb09915_hip_gcc10.3.1_rocm6.4.2
+
 #. Run the test config script::
 
-    ./scripts/lc-builds/corona_sycl.sh /usr/workspace/raja-dev/clang_sycl_2f03ef85fee5_hip_gcc10.3.1_rocm5.7.1
+    ./scripts/lc-builds/corona_sycl.sh ${SYCL_INSTALL_PREFIX}
 
-   Note that at the time of writing, the newest compiler we had built was at ``clang_sycl_2f03ef85fee5_hip_gcc10.3.1_rocm5.7.1``
+#. As indicated in the output of the ``corona_sycl.sh`` script the SYCL compiler libraries need to be on the ``LD_LIBRARY_PATH``::
+   
+    export LD_LIBRARY_PATH=${SYCL_INSTALL_PREFIX}/lib:${SYCL_INSTALL_PREFIX}/lib64:$LD_LIBRARY_PATH    
 
 #. cd into the generated build directory::
 
-    cd {build directory}
+    cd build_corona-sycl_${USER}
 
 #. Build the code and run the RAJA tests::
 

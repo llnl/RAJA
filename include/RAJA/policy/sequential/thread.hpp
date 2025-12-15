@@ -3,7 +3,7 @@
  *
  * \file
  *
- * \brief   RAJA header file for handling different SYCL header include paths
+ * \brief   RAJA header file defining sequential thread operations.
  *
  ******************************************************************************
  */
@@ -15,17 +15,30 @@
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
-#ifndef RAJA_util_sycl_compat_HPP
-#define RAJA_util_sycl_compat_HPP
+#ifndef RAJA_policy_sequential_thread_HPP
+#define RAJA_policy_sequential_thread_HPP
 
-#if defined(RAJA_SYCL_ACTIVE)
-#if (__INTEL_CLANG_COMPILER && __INTEL_CLANG_COMPILER < 20230000)
-// older version, use legacy header locations
-#include <CL/sycl.hpp>
-#else
-// SYCL 2020 standard header
-#include <sycl/sycl.hpp>
-#endif
-#endif
+#include "RAJA/config.hpp"
 
-#endif  // RAJA_util_sycl_compat_HPP
+#include "RAJA/util/macros.hpp"
+
+#include "RAJA/policy/thread_auto.hpp"
+
+namespace RAJA
+{
+template<>
+RAJA_HOST_DEVICE RAJA_INLINE int get_max_threads(seq_thread)
+{
+  return 1;
+}
+
+template<>
+RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(seq_thread)
+{
+  return 0;
+}
+
+}  // namespace RAJA
+
+
+#endif  // guard
