@@ -49,11 +49,9 @@ using active_auto_thread = RAJA::seq_thread;
 
 }  // namespace detail
 
-RAJA_SUPPRESS_HD_WARN
 template<typename AtomicPolicy>
 RAJA_HOST_DEVICE RAJA_INLINE int get_max_threads(AtomicPolicy);
 
-RAJA_SUPPRESS_HD_WARN
 template<typename AtomicPolicy>
 RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(AtomicPolicy);
 
