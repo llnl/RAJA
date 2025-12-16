@@ -169,14 +169,14 @@ GitLab CI Testing Files (specific to LC CZ)
 The following figure shows directories and files in the RAJA project that 
 support LC GitLab CI testing. 
 
-.. figure:: ./figures/RAJA-Gitlab-Files.png
+.. figure:: ./figures/RAJA-GitLab-Files.png
 
    The figure shows directories and files in the RAJA repo that support GitLab
-   CI testing. Files in blue are specific to the CI while those in red relates
+   CI testing. Files in blue are specific to CI while those in red relate
    to the build (Spack) environment description. The ``build_and_test.sh``
-   scripts stands at the interface between CI and Spack. ``uberenv`` and
-   ``radiuss-spack-configs`` are both Git submodules that are shared and
-   maintained with other projects.
+   scripts drives the configuration, compilation, and testing processes in
+   GitLab. ``uberenv`` and ``radiuss-spack-configs`` are both Git submodules
+   that are shared and maintained with other projects.
 
 Briefly, these files play the following roles in GitLab CI testing:
 
@@ -199,16 +199,17 @@ Briefly, these files play the following roles in GitLab CI testing:
     * ``.gitlab/custom-variables.yml`` - Machine-specific allocation variables
       and build configurations, created and customized by the project based on
       templates from RADIUSS Shared CI.
-  * In particular, `RAJA/.gitlab/jobs
+
+  * The `RAJA/.gitlab/jobs
     <https://github.com/LLNL/RAJA/tree/develop/.gitlab/jobs>`_ directory
-    contains the files defining RAJA specific jobs per machine. This file is
+    contains files defining RAJA specific jobs per machine. These files are
     appended to the list of shared CI jobs provided by `RADIUSS Spack Configs
-    <https://github.com/LLNL/radiuss-spack-configs>`_. Each job ultimately consists
-    in one Spack spec.
+    <https://github.com/LLNL/radiuss-spack-configs>`_. Each job ultimately
+    corresponds to one Spack spec.
   * The `RAJA/scripts/gitlab/build_and_test.sh
     <https://github.com/LLNL/RAJA/tree/develop/scripts/gitlab/build_and_test.sh>`_
-    contains commands that are run during the RAJA build and test process. It is
-    set in the CI using the ``JOB_CMD`` variable.
+    script contains commands that are run during the RAJA build and test
+    process. It is set in the CI using the ``JOB_CMD`` variable.
 
 In the following sections, we discuss how these files are used in the 
 steps of the RAJA GitLab CI testing process summarized above.
