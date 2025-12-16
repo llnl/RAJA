@@ -126,8 +126,9 @@ collaboratively with other projects. These include
 
   * `RADIUSS Shared CI <https://github.com/LLNL/radiuss-shared-ci>`_,
     a centralized framework for software testing with GitLab CI on LC
-    machines. The project is developed on GitHub and is mirrored to the LC 
-    CZ GitLab instance.
+    machines. The project is developed on GitHub and is mirrored to the LC
+    CZ GitLab instance. As of v2025.12.0, RADIUSS Shared CI provides
+    reusable GitLab CI Components (requires GitLab 17.0+).
   * `Spack <https://github.com/spack/spack>`_, a multi-platform package 
     manager that builds and installs HPC software stacks.
   * `Uberenv <https://github.com/LLNL/uberenv>`_, a Python script
@@ -142,9 +143,14 @@ collaboratively with other projects. These include
     they relate to the Spack configuration. RADIUSS Spack Configs is a
     submodule in RAJA that lives in ``RAJA/scripts/radiuss-spack-configs/``.
 
-The relationships among these dependencies in a project that uses them is 
+The relationships among these dependencies in a project that uses them is
 described in the `RADIUSS Shared CI User Guide <https://radiuss-shared-ci.readthedocs.io/en/woptim-isolate-jobs/sphinx/user_guide/how_to.html#leverage-spack>`_ along with information about
 how the framework works and how to set up a project to use it.
+
+.. note:: For detailed information about the GitLab CI Components architecture
+   and migration from the traditional include-based configuration, see the
+   `RADIUSS Shared CI Components Migration Guide
+   <https://radiuss-shared-ci.readthedocs.io/en/latest/sphinx/user_guide/components_migration.html>`_.
 
 .. important:: The RAJA Spack package is maintained in the `RADIUSS Spack
    Configs <https://github.com/LLNL/radiuss-spack-configs>`_ project. After
@@ -226,11 +232,49 @@ The available components include:
     ``corona-pipeline``, ``tioga-pipeline``, ``tuolumne-pipeline``,
     ``lassen-pipeline``) - Define the build and test workflows for each machine
 
+.. note:: **Component Versioning:** Components are versioned using the
+   ``@<version>`` syntax (e.g., ``@v2025.12.0``). RAJA currently uses
+   ``@v2025.12.0``. When updating to a new version of RADIUSS Shared CI
+   components, all component references in ``.gitlab-ci.yml`` should be
+   updated to use the same version to ensure consistency. Version numbers
+   follow the ``v<YEAR>.<MONTH>.<PATCH>`` format.
+
 Machine pipelines are defined inline in the ``.gitlab-ci.yml`` file using
 trigger syntax with component includes. Each project creates and customizes
 ``.gitlab/custom-variables.yml`` locally (based on templates from RADIUSS
 Shared CI) to define allocation settings for each machine, and
-``.gitlab/custom-jobs.yml`` to define job-specific templates and behaviors
+``.gitlab/custom-jobs.yml`` to define job-specific templates and behaviors.
+
+Component Inputs
+""""""""""""""""
+
+Components accept inputs that configure their behavior. The main inputs used are:
+
+**Base Pipeline Component:**
+  * ``github_project_name`` - The GitHub project name (e.g., "RAJA")
+  * ``github_project_org`` - The GitHub organization (e.g., "LLNL")
+  * ``github_token`` - Token for GitHub API access (typically ``$GITHUB_TOKEN``)
+
+**Draft PR Filter Component:**
+  * ``github_token``, ``github_project_name``, ``github_project_org`` - Same as above
+  * ``always_run_pattern`` - Regex pattern for branches that should always run
+    (e.g., ``"^develop$|^main$|^v[0-9.]*-RC$"``)
+
+**Machine Pipeline Components** (dane, matrix, corona, tioga, tuolumne, lassen):
+  * ``job_cmd`` - The command to run for each job (e.g., ``"./scripts/gitlab/build_and_test.sh"``)
+  * ``shared_alloc`` - Scheduler allocation for the shared allocation job
+    (e.g., ``"--exclusive --time=120 --nodes=1"`` for SLURM)
+  * ``job_alloc`` - Scheduler allocation for individual jobs within the shared allocation
+    (e.g., ``"--nodes=1"`` for SLURM)
+  * ``github_project_name``, ``github_project_org`` - For status reporting
+
+Allocation settings are defined in ``.gitlab/custom-variables.yml`` and vary by
+machine and scheduler type (SLURM for dane/matrix, flux for corona/tioga/tuolumne,
+LSF for lassen). For example::
+
+  # Dane (SLURM) allocation settings
+  DANE_SHARED_ALLOC: "--exclusive --reservation=ci --time=120 --nodes=1"
+  DANE_JOB_ALLOC: "--reservation=ci --nodes=1"
 
 Each job that is run is defined by a Spack spec in one of two places, depending
 on whether it is *shared* with other projects or it is specific to RAJA. The
