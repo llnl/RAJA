@@ -52,7 +52,6 @@ forall_impl(resources::Omp omp_res,
   if constexpr (!is_forall_param_empty)
   {
     RAJA::expt::ParamMultiplexer::parampack_init(p, f_params);
-    RAJA_OMP_DECLARE_REDUCTION_COMBINE;
   }
 
   using Body = typename std::remove_reference<decltype(loop_body)>::type;
@@ -93,6 +92,7 @@ forall_impl(resources::Omp omp_res,
   }
   else
   {
+    RAJA_OMP_DECLARE_REDUCTION_COMBINE
 #pragma omp target teams distribute parallel for num_teams(numteams)           \
     schedule(static, 1) map(to                                                 \
                             : body, begin_it) reduction(combine                \
@@ -125,7 +125,6 @@ forall_impl(resources::Omp omp_res,
   if constexpr (!is_forall_param_empty)
   {
     RAJA::expt::ParamMultiplexer::parampack_init(p, f_params);
-    RAJA_OMP_DECLARE_REDUCTION_COMBINE;
   }
 
   using Body = typename std::remove_reference<decltype(loop_body)>::type;
@@ -135,6 +134,7 @@ forall_impl(resources::Omp omp_res,
 
   if constexpr (!is_forall_param_empty)
   {
+    RAJA_OMP_DECLARE_REDUCTION_COMBINE;
 #pragma omp target teams distribute parallel for schedule(static, 1)           \
     firstprivate(body, begin_it) reduction(combine                             \
                                            : f_params)
