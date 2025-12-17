@@ -111,3 +111,11 @@ WORKDIR /home/raja/workspace/build
 RUN cmake -DCMAKE_CXX_COMPILER=/opt/rocm-6.4.3/bin/amdclang++ -DROCM_PATH=/opt/rocm-6.4.3 -DCMAKE_BUILD_TYPE=Release -DENABLE_HIP=On -DRAJA_ENABLE_DESUL_ATOMICS=On -DRAJA_ENABLE_WARNINGS_AS_ERRORS=Off -DBLT_CXX_STD=c++17 .. && \
     make -j 16 &&\
     make clean 
+
+FROM ghcr.io/llnl/radiuss:cuda-13-0-ubuntu-24.04 AS cuda13
+ENV GTEST_COLOR=1
+COPY . /home/raja/workspace
+WORKDIR /home/raja/workspace/build
+RUN cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_BUILD_TYPE=Release -DENABLE_CUDA=On -DBLT_CXX_STD=c++17 -DCMAKE_CUDA_ARCHITECTURES=90 .. && \
+    make -j 16 &&\
+    make clean 
