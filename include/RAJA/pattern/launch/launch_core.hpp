@@ -254,10 +254,9 @@ public:
   dim3 thread_id;
   dim3 block_dim;
 
-  RAJA_HOST_DEVICE
   LaunchContextT() : LaunchContextBase(), thread_id(), block_dim() {}
 
-  RAJA_HOST_DEVICE
+  RAJA_DEVICE
   LaunchContextT(dim3 thread, dim3 block)
       : LaunchContextBase(),
         thread_id(thread),
