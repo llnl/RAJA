@@ -3,7 +3,7 @@
  *
  * \file
  *
- * \brief   RAJA header file containing the core components of RAJA::launch
+ * \brief   RAJA header file containing template types of RAJA::LaunchContextT
  *
  ******************************************************************************
  */
