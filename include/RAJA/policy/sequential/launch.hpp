@@ -36,8 +36,8 @@ struct LaunchExecute<RAJA::null_launch_t>
   }
 };
 
-template<>
-struct LaunchExecute<RAJA::seq_launch_t>
+template<typename LaunchContextPolicy>
+struct LaunchExecute<RAJA::seq_launch_typed<LaunchContextPolicy>>
 {
 
   template<typename BODY, typename ReduceParams>
@@ -51,7 +51,7 @@ struct LaunchExecute<RAJA::seq_launch_t>
        ReduceParams& RAJA_UNUSED_ARG(ReduceParams))
   {
 
-    LaunchContext ctx;
+    LaunchContextT<LaunchContextPolicy> ctx;
 
     char* kernel_local_mem = new char[params.shared_mem_size];
     ctx.shared_mem_ptr     = kernel_local_mem;
@@ -80,7 +80,7 @@ struct LaunchExecute<RAJA::seq_launch_t>
 
     expt::ParamMultiplexer::parampack_init(pol, launch_reducers);
 
-    LaunchContext ctx;
+    LaunchContextT<LaunchContextPolicy> ctx;
     char* kernel_local_mem = new char[launch_params.shared_mem_size];
     ctx.shared_mem_ptr     = kernel_local_mem;
 

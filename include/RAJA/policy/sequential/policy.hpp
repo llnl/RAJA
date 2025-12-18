@@ -18,6 +18,8 @@
 #ifndef policy_sequential_HPP
 #define policy_sequential_HPP
 
+#include "RAJA/pattern/launch/launch_context_policy.hpp"
+
 #include "RAJA/policy/PolicyBase.hpp"
 
 namespace RAJA
@@ -63,10 +65,12 @@ struct seq_region : make_policy_pattern_launch_platform_t<Policy::sequential,
                                                           Platform::host>
 {};
 
-struct seq_launch_t : make_policy_pattern_launch_platform_t<Policy::sequential,
-                                                            Pattern::region,
-                                                            Launch::sync,
-                                                            Platform::host>
+template<typename LaunchContextPolicy = LaunchContextDefaultPolicy>
+struct seq_launch_typed
+    : make_policy_pattern_launch_platform_t<Policy::sequential,
+                                            Pattern::region,
+                                            Launch::sync,
+                                            Platform::host>
 {};
 
 struct seq_exec : make_policy_pattern_launch_platform_t<Policy::sequential,
@@ -145,7 +149,11 @@ using seq_multi_reduce = seq_multi_reduce_left_fold;
 
 using policy::sequential::seq_atomic;
 using policy::sequential::seq_exec;
-using policy::sequential::seq_launch_t;
+
+template<typename LaunchContextPolicy = LaunchContextDefaultPolicy>
+using seq_launch_typed =
+    policy::sequential::seq_launch_typed<LaunchContextPolicy>;
+using seq_launch_t = seq_launch_typed<LaunchContextDefaultPolicy>;
 using policy::sequential::seq_multi_reduce;
 using policy::sequential::seq_reduce;
 using policy::sequential::seq_region;
