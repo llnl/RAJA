@@ -26,7 +26,6 @@
 #include "hip/hip_runtime.h"
 
 #include "RAJA/pattern/reduce.hpp"
-#include "RAJA/pattern/launch/launch_context_policy.hpp"
 
 #include "RAJA/policy/PolicyBase.hpp"
 #include "RAJA/policy/sequential/policy.hpp"
@@ -359,9 +358,7 @@ struct hip_exec : public RAJA::make_policy_pattern_launch_platform_t<
   using LaunchConcretizer = _LaunchConcretizer;
 };
 
-template<bool Async,
-         int num_threads              = named_usage::unspecified,
-         typename LaunchContextPolicy = LaunchContextDefaultPolicy>
+template<bool Async, int num_threads = named_usage::unspecified>
 struct hip_launch_t : public RAJA::make_policy_pattern_launch_platform_t<
                           RAJA::Policy::hip,
                           RAJA::Pattern::region,
