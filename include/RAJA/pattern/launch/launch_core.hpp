@@ -246,6 +246,7 @@ using LaunchContextBase::LaunchContextBase;
 // Preserve backwards compatibility
 using LaunchContext = LaunchContextT<LaunchContextDefaultPolicy>;
 
+#if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
 template <>
 class LaunchContextT<LaunchContextDim3Policy> : public LaunchContextBase
 {
@@ -271,6 +272,7 @@ public:
   {}
 
 };
+#endif
 
 template<typename LAUNCH_POLICY>
 struct LaunchExecute;
@@ -507,38 +509,6 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
 
   LoopExecute<loop_policy<POLICY_LIST>, SEGMENT>::exec(ctx, segment, body);
 }
-
-/*
-template<typename POLICY_LIST, typename SEGMENT, typename BODY>
-RAJA_HOST_DEVICE RAJA_INLINE void loop(LaunchContext const& ctx, SEGMENT const&
-segment, BODY const& body)
-{
-  LoopExecute<loop_policy<POLICY_LIST>, SEGMENT>::template exec<BODY>(ctx,
-segment, body);
-}
-*/
-
-/*
-template<typename POLICY_LIST, typename SEGMENT, typename BODY>
-RAJA_HOST_DEVICE RAJA_INLINE void loop(LaunchContextT<true> const& ctx, SEGMENT
-const& segment, BODY const& body)
-{
-  LoopExecute<loop_policy<POLICY_LIST>, SEGMENT>::template exec<BODY>(ctx,
-segment, body);
-}
-*/
-
-
-/*
-// Overload for other contexts
-template<typename POLICY_LIST, typename CONTEXT, typename SEGMENT, typename
-BODY> std::enable_if_t<!is_launch_context<CONTEXT>::value> loop(CONTEXT const&
-ctx, SEGMENT const& segment, BODY const& body)
-{
-    LoopExecute<loop_policy<POLICY_LIST>, SEGMENT>::template exec<BODY>(ctx,
-segment, body);
-}
-*/
 
 template<typename POLICY_LIST,
          typename CONTEXT,
