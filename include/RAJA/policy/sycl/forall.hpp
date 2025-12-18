@@ -103,7 +103,8 @@ forall_impl(resources::Sycl& sycl_res,
   using Iterator = camp::decay<decltype(std::begin(iter))>;
   using IndexType =
       camp::decay<decltype(std::distance(std::begin(iter), std::end(iter)))>;
-  using EXEC_POL = camp::decay<decltype(pol)>;
+  using EXEC_POL  = camp::decay<decltype(pol)>;
+  using LOOP_BODY = camp::decay<LoopBody>;
   // Deduce at compile time if lbody is trivially constructible and if user
   // has supplied parameters.  These will be used to determine which sycl launch
   // to configure below.
@@ -132,8 +133,8 @@ forall_impl(resources::Sycl& sycl_res,
   sycl_dim_t gridSize = impl::getGridDim(static_cast<size_t>(len), BlockSize);
 
   ::sycl::queue* q  = sycl_res.get_queue();
-  LoopBody* lbody   = &loop_body;
-  Iterator* d_begin = &begin;
+  LOOP_BODY* lbody  = nullptr;
+  Iterator* d_begin = nullptr;
 
   if constexpr (!is_parampack_empty)
   {
@@ -146,19 +147,17 @@ forall_impl(resources::Sycl& sycl_res,
     // Kernel body is nontrivially copyable, create space on device and copy to
     // Workaround until "is_device_copyable" is supported
     //
-    lbody = (LoopBody*)::sycl::malloc_device(sizeof(LoopBody), *q);
-    q->memcpy(lbody, &loop_body, sizeof(LoopBody)).wait();
+    lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LoopBody), *q);
+    q->memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
 
     d_begin = (Iterator*)::sycl::malloc_device(sizeof(Iterator), *q);
     q->memcpy(d_begin, &begin, sizeof(Iterator)).wait();
   }
 
-
   // Both the parallel_for call, combinations, and resolution are all
   // unique to the parameter case, so we make a constexpr branch here
   if constexpr (!is_parampack_empty)
   {
-
     auto combiner = [](ForallParam x, ForallParam y) {
       RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, x, y);
       return x;
@@ -176,7 +175,14 @@ forall_impl(resources::Sycl& sycl_res,
                        IndexType ii = it.get_id(0);
                        if (ii < len)
                        {
-                         RAJA::expt::invoke_body(fp, loop_body, (*d_begin)[ii]);
+                         if constexpr (is_lbody_trivially_copyable)
+                         {
+                           RAJA::expt::invoke_body(fp, loop_body, begin[ii]);
+                         }
+                         else
+                         {
+                           RAJA::expt::invoke_body(fp, *lbody, (*d_begin)[ii]);
+                         }
                        }
                        red.combine(fp);
                      });
@@ -184,9 +190,10 @@ forall_impl(resources::Sycl& sycl_res,
 
     q->wait();
     RAJA::expt::ParamMultiplexer::parampack_combine(pol, f_params, *res);
-    RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params);
     ::sycl::free(res, *q);
+    RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params);
   }
+  // Note: separate branches
   else
   {
     q->submit([&](::sycl::handler& h) {
@@ -195,7 +202,14 @@ forall_impl(resources::Sycl& sycl_res,
                        IndexType ii = it.get_global_id(0);
                        if (ii < len)
                        {
-                         loop_body((*d_begin)[ii]);
+                         if constexpr (is_lbody_trivially_copyable)
+                         {
+                           loop_body(begin[ii]);
+                         }
+                         else
+                         {
+                           (*lbody)((*d_begin)[ii]);
+                         }
                        }
                      });
     });
@@ -205,12 +219,13 @@ forall_impl(resources::Sycl& sycl_res,
       q->wait();
     }
   }
-  ::sycl::free(d_begin, *q);
+
 
   // If we had to allocate device memory, free it
   if constexpr (!is_lbody_trivially_copyable)
   {
     ::sycl::free(lbody, *q);
+    ::sycl::free(d_begin, *q);
   }
 
 
