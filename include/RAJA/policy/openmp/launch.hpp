@@ -25,7 +25,7 @@ namespace RAJA
 {
 
 template<typename LaunchContextPolicy>
-struct LaunchExecute<RAJA::policy::omp::omp_launch_typed<LaunchContextPolicy>>
+struct LaunchExecute<RAJA::omp_launch_typed<LaunchContextPolicy>>
 {
 
   template<typename ReduceParams, typename BODY>
