@@ -236,41 +236,33 @@ template<>
 class LaunchContextT<LaunchContextDefaultPolicy> : public LaunchContextBase
 {
 public:
+  static constexpr bool hasDim3 = false;
 
-static constexpr bool hasDim3 = false;
-
-using LaunchContextBase::LaunchContextBase;
-
+  using LaunchContextBase::LaunchContextBase;
 };
 
 // Preserve backwards compatibility
 using LaunchContext = LaunchContextT<LaunchContextDefaultPolicy>;
 
 #if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
-template <>
+template<>
 class LaunchContextT<LaunchContextDim3Policy> : public LaunchContextBase
 {
 public:
-
   static constexpr bool hasDim3 = true;
 
   dim3 thread_id;
   dim3 block_dim;
 
   RAJA_HOST_DEVICE
-  LaunchContextT()
-     : LaunchContextBase()
-    , thread_id()
-    , block_dim()
-  {}
+  LaunchContextT() : LaunchContextBase(), thread_id(), block_dim() {}
 
   RAJA_HOST_DEVICE
   LaunchContextT(dim3 thread, dim3 block)
-    : LaunchContextBase()
-    , thread_id(thread)
-    , block_dim(block)
+      : LaunchContextBase(),
+        thread_id(thread),
+        block_dim(block)
   {}
-
 };
 #endif
 

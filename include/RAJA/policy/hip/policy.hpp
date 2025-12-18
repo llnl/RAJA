@@ -360,8 +360,8 @@ struct hip_exec : public RAJA::make_policy_pattern_launch_platform_t<
 };
 
 template<bool Async,
-         int num_threads = named_usage::unspecified,
-         typename LaunchContextPolicy  = LaunchContextDefaultPolicy>
+         int num_threads              = named_usage::unspecified,
+         typename LaunchContextPolicy = LaunchContextDefaultPolicy>
 struct hip_launch_t : public RAJA::make_policy_pattern_launch_platform_t<
                           RAJA::Policy::hip,
                           RAJA::Pattern::region,

@@ -362,9 +362,9 @@ struct cuda_exec_explicit : public RAJA::make_policy_pattern_launch_platform_t<
 };
 
 template<bool Async,
-         int num_threads      = named_usage::unspecified,
-         size_t BLOCKS_PER_SM = policy::cuda::MIN_BLOCKS_PER_SM,
-         typename LaunchContextPolicy  = LaunchContextDefaultPolicy>
+         int num_threads              = named_usage::unspecified,
+         size_t BLOCKS_PER_SM         = policy::cuda::MIN_BLOCKS_PER_SM,
+         typename LaunchContextPolicy = LaunchContextDefaultPolicy>
 struct cuda_launch_explicit_t
     : public RAJA::make_policy_pattern_launch_platform_t<
           RAJA::Policy::cuda,
@@ -1727,15 +1727,16 @@ using policy::cuda::cuda_synchronize;
 
 // policies usable with launch
 template<bool Async,
-         int num_threads      = named_usage::unspecified,
-         size_t BLOCKS_PER_SM = policy::cuda::MIN_BLOCKS_PER_SM,
-         typename LaunchContextPolicy  = LaunchContextDefaultPolicy>
+         int num_threads              = named_usage::unspecified,
+         size_t BLOCKS_PER_SM         = policy::cuda::MIN_BLOCKS_PER_SM,
+         typename LaunchContextPolicy = LaunchContextDefaultPolicy>
 using cuda_launch_explicit_t =
     policy::cuda::cuda_launch_explicit_t<Async, num_threads, BLOCKS_PER_SM>;
 
 // CUDA will emit warnings if we specify BLOCKS_PER_SM but not num of threads
-template<bool Async, int num_threads = named_usage::unspecified,
-         typename LaunchContextPolicy  = LaunchContextDefaultPolicy>
+template<bool Async,
+         int num_threads              = named_usage::unspecified,
+         typename LaunchContextPolicy = LaunchContextDefaultPolicy>
 using cuda_launch_t =
     policy::cuda::cuda_launch_explicit_t<Async,
                                          num_threads,

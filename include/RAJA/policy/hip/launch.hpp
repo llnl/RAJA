@@ -40,11 +40,14 @@ __global__ void launch_new_reduce_global_fcn(const BODY body_in,
   // Set pointer to shared memory
   extern __shared__ char raja_shmem_ptr[];
 
-  if constexpr(LaunchContextT<LaunchContextPolicy>::hasDim3) {
+  if constexpr (LaunchContextT<LaunchContextPolicy>::hasDim3)
+  {
     LaunchContextT<LaunchContextPolicy> ctx(threadIdx, blockDim);
     ctx.shared_mem_ptr = raja_shmem_ptr;
     RAJA::expt::invoke_body(reduce_params, body, ctx);
-  } else {
+  }
+  else
+  {
     LaunchContextT<LaunchContextPolicy> ctx;
     ctx.shared_mem_ptr = raja_shmem_ptr;
     RAJA::expt::invoke_body(reduce_params, body, ctx);
@@ -56,8 +59,9 @@ __global__ void launch_new_reduce_global_fcn(const BODY body_in,
 }
 
 template<bool async, typename LaunchContextPolicy>
-struct LaunchExecute<
-    RAJA::policy::hip::hip_launch_t<async, named_usage::unspecified, LaunchContextPolicy>>
+struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async,
+                                                     named_usage::unspecified,
+                                                     LaunchContextPolicy>>
 {
 
   template<typename BODY_IN, typename ReduceParams>
@@ -139,7 +143,10 @@ struct LaunchExecute<
   }
 };
 
-template<typename BODY, int num_threads, typename LaunchContextPolicy, typename ReduceParams>
+template<typename BODY,
+         int num_threads,
+         typename LaunchContextPolicy,
+         typename ReduceParams>
 __launch_bounds__(num_threads, 1) __global__
     void launch_new_reduce_global_fcn_fixed(const BODY body_in,
                                             ReduceParams reduce_params)
@@ -152,11 +159,14 @@ __launch_bounds__(num_threads, 1) __global__
   // Set pointer to shared memory
   extern __shared__ char raja_shmem_ptr[];
 
-  if constexpr(LaunchContextT<LaunchContextPolicy>::hasDim3) {
+  if constexpr (LaunchContextT<LaunchContextPolicy>::hasDim3)
+  {
     LaunchContextT<LaunchContextPolicy> ctx(threadIdx, blockDim);
     ctx.shared_mem_ptr = raja_shmem_ptr;
     RAJA::expt::invoke_body(reduce_params, body, ctx);
-  } else {
+  }
+  else
+  {
     LaunchContextT<LaunchContextPolicy> ctx;
     ctx.shared_mem_ptr = raja_shmem_ptr;
     RAJA::expt::invoke_body(reduce_params, body, ctx);
@@ -280,9 +290,10 @@ struct LoopExecute<expt::hip_ctx_thread_loop<DIM>, SEGMENT>
 {
 
   template<typename BODY>
-  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContextT<LaunchContextDim3Policy> const& ctx,
-                                           SEGMENT const& segment,
-                                           BODY const& body)
+  static RAJA_INLINE RAJA_DEVICE void exec(
+      LaunchContextT<LaunchContextDim3Policy> const& ctx,
+      SEGMENT const& segment,
+      BODY const& body)
   {
 
     const int len         = segment.end() - segment.begin();
