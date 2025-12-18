@@ -113,9 +113,9 @@ struct LoopExecute<seq_exec, SEGMENT>
     }
   }
 
-  template<typename BODY>
+  template<typename BODY, typename LaunchContextPolicy>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -127,9 +127,9 @@ struct LoopExecute<seq_exec, SEGMENT>
     }
   }
 
-  template<typename BODY>
+  template<typename BODY, typename LaunchContextPolicy>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -149,9 +149,9 @@ struct LoopExecute<seq_exec, SEGMENT>
     }
   }
 
-  template<typename BODY>
+  template<typename BODY, typename LaunchContextPolicy>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -181,9 +181,9 @@ template<typename SEGMENT>
 struct LoopICountExecute<seq_exec, SEGMENT>
 {
 
-  template<typename BODY>
+  template<typename BODY, typename LaunchContextPolicy>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -194,9 +194,9 @@ struct LoopICountExecute<seq_exec, SEGMENT>
     }
   }
 
-  template<typename BODY>
+  template<typename BODY, typename LaunchContextPolicy>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -216,9 +216,9 @@ struct LoopICountExecute<seq_exec, SEGMENT>
     }
   }
 
-  template<typename BODY>
+  template<typename BODY, typename LaunchContextPolicy>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -250,9 +250,9 @@ template<typename SEGMENT>
 struct TileExecute<seq_exec, SEGMENT>
 {
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_HOST_DEVICE RAJA_INLINE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
@@ -271,9 +271,9 @@ template<typename SEGMENT>
 struct TileTCountExecute<seq_exec, SEGMENT>
 {
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_HOST_DEVICE RAJA_INLINE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
