@@ -36,7 +36,8 @@
  */
 using launch_policy = RAJA::LaunchPolicy<
 #if defined(RAJA_ENABLE_OPENMP)
-    RAJA::omp_launch_t
+RAJA::omp_launch_typed<RAJA::LaunchContextDim3Policy>
+//RAJA::seq_launch_typed<RAJA::LaunchContextDim3Policy>
 #else
     RAJA::seq_launch_t
 #endif
@@ -46,7 +47,7 @@ using launch_policy = RAJA::LaunchPolicy<
 #endif
 #if defined(RAJA_ENABLE_HIP)
     ,
-    RAJA::hip_launch_t<false>
+    RAJA::hip_launch_t<false, RAJA::named_usage::unspecified, RAJA::LaunchContextDim3Policy>
 #endif
     >;
 
@@ -153,7 +154,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
     RAJA::launch<launch_policy>
       (select_cpu_or_gpu,
        RAJA::LaunchParams(RAJA::Teams(N_tri), RAJA::Threads(N_tri)),
-       [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx) {
+      [=] RAJA_HOST_DEVICE(RAJA::LaunchContextT<RAJA::LaunchContextDim3Policy> ctx) {
 
          RAJA::loop<teams_x>(ctx, RAJA::RangeSegment(0, N_tri), [&](int r) {
 
