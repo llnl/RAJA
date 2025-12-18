@@ -20,6 +20,7 @@
 
 #include "RAJA/config.hpp"
 #include "RAJA/internal/get_platform.hpp"
+#include "RAJA/pattern/launch/launch_context_policy.hpp"
 #include "RAJA/util/StaticLayout.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/plugins.hpp"
@@ -176,16 +177,9 @@ private:
   Threads apply(Threads const& a) { return (threads = a); }
 };
 
-template<bool StoreDim3 = false>
-class LaunchContextT
+class LaunchContextBase
 {
 public:
-#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-  // If StoreDim3 is true, store by value; else, don't store
-  typename std::conditional<StoreDim3, dim3, void*>::type thread_id;
-  typename std::conditional<StoreDim3, dim3, void*>::type block_dim;
-#endif
-
   // Bump style allocator used to
   // get memory from the pool
   size_t shared_mem_offset;
@@ -196,28 +190,10 @@ public:
   mutable ::sycl::nd_item<3>* itm;
 #endif
 
-  RAJA_HOST_DEVICE LaunchContextT()
+  RAJA_HOST_DEVICE LaunchContextBase()
       : shared_mem_offset(0),
         shared_mem_ptr(nullptr)
   {}
-
-#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-  // Only enable this constructor if StoreDim3 is true
-  template<bool S = StoreDim3, typename std::enable_if<S, int>::type = 0>
-  RAJA_HOST_DEVICE LaunchContextT(dim3 thread_id_, dim3 block_id_)
-      : shared_mem_offset(0),
-        shared_mem_ptr(nullptr),
-        thread_id(thread_id_),
-        block_dim(block_id_)
-  {}
-
-  // Only enable this constructor if StoreDim3 is false
-  template<bool S = StoreDim3, typename std::enable_if<!S, int>::type = 0>
-  RAJA_HOST_DEVICE LaunchContextT(dim3 thread_id_, dim3 block_id_)
-      : shared_mem_offset(0),
-        shared_mem_ptr(nullptr)
-  {}
-#endif
 
   // TODO handle alignment
   template<typename T>
@@ -232,20 +208,6 @@ public:
     // convert to desired type
     return static_cast<T*>(mem_ptr);
   }
-
-  /*
-  //Odd dependecy with atomics is breaking CI builds
-  template<typename T, size_t DIM, typename IDX_T=RAJA::Index_type, ptrdiff_t
-  z_stride=DIM-1, typename arg, typename... args> RAJA_HOST_DEVICE auto
-  getSharedMemoryView(size_t bytes, arg idx, args... idxs)
-  {
-    T * mem_ptr = &((T*) shared_mem_ptr)[shared_mem_offset];
-
-    shared_mem_offset += bytes*sizeof(T);
-    return RAJA::View<T, RAJA::Layout<DIM, IDX_T, z_stride>>(mem_ptr, idx,
-  idxs...);
-  }
-  */
 
   RAJA_HOST_DEVICE void releaseSharedMemory()
   {
@@ -267,8 +229,48 @@ public:
   }
 };
 
+template<typename LaunchContextPolicy>
+class LaunchContextT;
+
+template<>
+class LaunchContextT<LaunchContextDefaultPolicy> : public LaunchContextBase
+{
+public:
+
+static constexpr bool hasDim3 = false;
+
+using LaunchContextBase::LaunchContextBase;
+
+};
+
 // Preserve backwards compatibility
-using LaunchContext = LaunchContextT<false>;
+using LaunchContext = LaunchContextT<LaunchContextDefaultPolicy>;
+
+template <>
+class LaunchContextT<LaunchContextDim3Policy> : public LaunchContextBase
+{
+public:
+
+  static constexpr bool hasDim3 = true;
+
+  dim3 thread_id;
+  dim3 block_dim;
+
+  RAJA_HOST_DEVICE
+  LaunchContextT()
+     : LaunchContextBase()
+    , thread_id()
+    , block_dim()
+  {}
+
+  RAJA_HOST_DEVICE
+  LaunchContextT(dim3 thread, dim3 block)
+    : LaunchContextBase()
+    , thread_id(thread)
+    , block_dim(block)
+  {}
+
+};
 
 template<typename LAUNCH_POLICY>
 struct LaunchExecute;
