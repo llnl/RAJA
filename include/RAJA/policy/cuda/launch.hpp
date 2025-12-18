@@ -28,33 +28,39 @@
 namespace RAJA
 {
 
-template<typename BODY, typename ReduceParams>
+template<typename BODY, typename LaunchContextPolicy, typename ReduceParams>
 __global__ void launch_new_reduce_global_fcn(const RAJA_CUDA_GRID_CONSTANT BODY
                                                  body_in,
                                              ReduceParams reduce_params)
 {
-  LaunchContext ctx(threadIdx, blockDim);
-
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
   auto& body      = privatizer.get_priv();
 
   // Set pointer to shared memory
   extern __shared__ char raja_shmem_ptr[];
-  ctx.shared_mem_ptr = raja_shmem_ptr;
 
-  RAJA::expt::invoke_body(reduce_params, body, ctx);
+  if constexpr(LaunchContextT<LaunchContextPolicy>::hasDim3) {
+    LaunchContextT<LaunchContextPolicy> ctx(threadIdx, blockDim);
+    ctx.shared_mem_ptr = raja_shmem_ptr;
+    RAJA::expt::invoke_body(reduce_params, body, ctx);
+  } else {
+    LaunchContextT<LaunchContextPolicy> ctx;
+    ctx.shared_mem_ptr = raja_shmem_ptr;
+    RAJA::expt::invoke_body(reduce_params, body, ctx);
+  }
 
   // Using a flatten global policy as we may use all dimensions
   RAJA::expt::ParamMultiplexer::parampack_combine(
       RAJA::cuda_flatten_global_xyz_direct {}, reduce_params);
 }
 
-template<bool async>
+template<bool async, typename LaunchContextPolicy>
 struct LaunchExecute<
     RAJA::policy::cuda::cuda_launch_explicit_t<async,
                                                named_usage::unspecified,
-                                               named_usage::unspecified>>
+                                               named_usage::unspecified,
+                                               LaunchContextPolicy>>
 {
 
   template<typename BODY_IN, typename ReduceParams>
@@ -72,7 +78,7 @@ struct LaunchExecute<
     EXEC_POL pol {};
 
     auto func = reinterpret_cast<const void*>(
-        &launch_new_reduce_global_fcn<BODY, camp::decay<ReduceParams>>);
+      &launch_new_reduce_global_fcn<BODY, LaunchContextPolicy, camp::decay<ReduceParams>>);
 
     resources::Cuda cuda_res = res.get<RAJA::resources::Cuda>();
 
@@ -137,13 +143,13 @@ struct LaunchExecute<
 template<typename BODY,
          int num_threads,
          size_t BLOCKS_PER_SM,
+         typename LaunchContextPolicy,
          typename ReduceParams>
 __launch_bounds__(num_threads, BLOCKS_PER_SM) __global__
     void launch_new_reduce_global_fcn_fixed(const RAJA_CUDA_GRID_CONSTANT BODY
                                                 body_in,
                                             ReduceParams reduce_params)
 {
-  LaunchContext ctx(threadIdx, blockDim);
 
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
@@ -151,18 +157,25 @@ __launch_bounds__(num_threads, BLOCKS_PER_SM) __global__
 
   // Set pointer to shared memory
   extern __shared__ char raja_shmem_ptr[];
-  ctx.shared_mem_ptr = raja_shmem_ptr;
 
+  if constexpr(LaunchContextT<LaunchContextPolicy>::hasDim3) {
+    LaunchContextT<LaunchContextPolicy> ctx(threadIdx, blockDim);
+   ctx.shared_mem_ptr = raja_shmem_ptr;
   RAJA::expt::invoke_body(reduce_params, body, ctx);
+    } else {
+    LaunchContextT<LaunchContextPolicy> ctx;
+   ctx.shared_mem_ptr = raja_shmem_ptr;
+  RAJA::expt::invoke_body(reduce_params, body, ctx);
+  }
 
   // Using a flatten global policy as we may use all dimensions
   RAJA::expt::ParamMultiplexer::parampack_combine(
       RAJA::cuda_flatten_global_xyz_direct {}, reduce_params);
 }
 
-template<bool async, int nthreads, size_t BLOCKS_PER_SM>
+template<bool async, int nthreads, size_t BLOCKS_PER_SM, typename LaunchContextPolicy>
 struct LaunchExecute<
-    RAJA::policy::cuda::cuda_launch_explicit_t<async, nthreads, BLOCKS_PER_SM>>
+  RAJA::policy::cuda::cuda_launch_explicit_t<async, nthreads, BLOCKS_PER_SM, LaunchContextPolicy>>
 {
 
   template<typename BODY_IN, typename ReduceParams>
@@ -178,11 +191,11 @@ struct LaunchExecute<
     // Use a generic block size policy here to match that used in
     // parampack_combine
     using EXEC_POL = RAJA::policy::cuda::cuda_launch_explicit_t<
-        async, named_usage::unspecified, named_usage::unspecified>;
+      async, named_usage::unspecified, named_usage::unspecified>;
     EXEC_POL pol {};
 
     auto func = reinterpret_cast<const void*>(
-        &launch_new_reduce_global_fcn_fixed<BODY, nthreads, BLOCKS_PER_SM,
+      &launch_new_reduce_global_fcn_fixed<BODY, nthreads, BLOCKS_PER_SM, LaunchContextPolicy,
                                             camp::decay<ReduceParams>>);
 
     resources::Cuda cuda_res = res.get<RAJA::resources::Cuda>();
@@ -264,11 +277,11 @@ using cuda_ctx_thread_loop_z = cuda_ctx_thread_loop<named_dim::z>;
 }  // namespace expt
 
 template<typename SEGMENT, named_dim DIM>
-struct LoopExecute<expt : cuda_ctx_thread_loop<DIM>, SEGMENT>
+struct LoopExecute<expt::cuda_ctx_thread_loop<DIM>, SEGMENT>
 {
 
   template<typename BODY>
-  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContextT<LaunchContextDim3Policy> const& ctx,
                                            SEGMENT const& segment,
                                            BODY const& body)
   {
