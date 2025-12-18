@@ -59,8 +59,28 @@ struct function_traits<R(C::*)(Args...)>
     : function_traits<R(*)(Args...)> {};
 
 // Convenience alias for lambdas and other callable objects
-template <typename Lambda>
-using lambda_traits = function_traits<decltype(&Lambda::operator())>;
+
+//add a conditional if a function pointer is provided
+//is pointer a type just pass it through otherwise do give me the operator
+//static error if not a function type
+
+//template <typename Lambda>
+//using lambda_traits = function_traits<decltype(&Lambda::operator())>;
+
+// Helper to strip cv/ref from a type
+template <typename T>
+using decay_t = typename std::decay<T>::type;
+
+// Convenience alias for callable entities:
+//  - If T is a function pointer, use function_traits<T> directly
+//  - Otherwise, assume it is a callable object and use &T::operator()
+template <typename T>
+using lambda_traits =
+    std::conditional_t<
+        std::is_pointer<decay_t<T>>::value,
+        function_traits<decay_t<T>>,
+        function_traits<decltype(&decay_t<T>::operator())>
+    >;
 
 }
 
