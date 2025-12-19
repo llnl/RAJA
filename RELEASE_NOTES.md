@@ -34,6 +34,7 @@ Notable changes include:
     * Updated Camp submodule to v2025.12.0 release.
     * Improved CMake support for configuring with Caliper and fix issue reported
       by a user.
+    * Bump minimum CMake version required to 3.24.
 
   * Bug fixes/improvements:
     * Fix compilation failue when a downstream library or applications is
