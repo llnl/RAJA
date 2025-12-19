@@ -40,8 +40,8 @@ __global__ void launch_new_reduce_global_fcn(const BODY body_in,
   // Set pointer to shared memory
   extern __shared__ char raja_shmem_ptr[];
 
-  using traits = detail::lambda_traits<decltype(body_in)>;
-  using LaunchContextType = typename traits::template arg<0>::type;
+  using LaunchContextType =
+      typename RAJA::detail::launch_context_type<BODY>::type;
 
   if constexpr (LaunchContextType::hasDim3)
   {
@@ -62,9 +62,8 @@ __global__ void launch_new_reduce_global_fcn(const BODY body_in,
 }
 
 template<bool async>
-struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async,
-                                                     named_usage::unspecified
-                                                     >>
+struct LaunchExecute<
+    RAJA::policy::hip::hip_launch_t<async, named_usage::unspecified>>
 {
 
   template<typename BODY_IN, typename ReduceParams>
@@ -82,8 +81,7 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async,
     EXEC_POL pol {};
 
     auto func = reinterpret_cast<const void*>(
-        &launch_new_reduce_global_fcn<BODY,
-                                      camp::decay<ReduceParams>>);
+        &launch_new_reduce_global_fcn<BODY, camp::decay<ReduceParams>>);
 
     resources::Hip hip_res = res.get<RAJA::resources::Hip>();
 
@@ -146,9 +144,7 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async,
   }
 };
 
-template<typename BODY,
-         int num_threads,
-         typename ReduceParams>
+template<typename BODY, int num_threads, typename ReduceParams>
 __launch_bounds__(num_threads, 1) __global__
     void launch_new_reduce_global_fcn_fixed(const BODY body_in,
                                             ReduceParams reduce_params)
@@ -161,8 +157,8 @@ __launch_bounds__(num_threads, 1) __global__
   // Set pointer to shared memory
   extern __shared__ char raja_shmem_ptr[];
 
-  using traits = detail::lambda_traits<decltype(body_in)>;
-  using LaunchContextType = typename traits::template arg<0>::type;
+  using LaunchContextType =
+      typename RAJA::detail::launch_context_type<BODY>::type;
 
   if constexpr (LaunchContextType::hasDim3)
   {
@@ -183,8 +179,7 @@ __launch_bounds__(num_threads, 1) __global__
 }
 
 template<bool async, int nthreads>
-struct LaunchExecute<
-    RAJA::policy::hip::hip_launch_t<async, nthreads>>
+struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
 {
 
   template<typename BODY_IN, typename ReduceParams>

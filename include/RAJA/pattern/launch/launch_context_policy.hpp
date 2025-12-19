@@ -21,6 +21,9 @@
 namespace RAJA
 {
 
+template<typename LaunchContextPolicy>
+class LaunchContextT;
+
 class LaunchContextDefaultPolicy;
 
 #if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
@@ -30,59 +33,80 @@ class LaunchContextDim3Policy;
 namespace detail
 {
 
-// Primary template
+
+template < typename T, typename = void >
+struct has_single_call_operator : std::false_type {};
+
+template < typename T >
+struct has_single_call_operator<T, std::enable_if_t<!std::is_same_v<
+    decltype(&std::decay_t<T>::operator()), void>>> : std::true_type {};
+
+
 template <typename T>
-struct function_traits;
+struct function_traits{};
 
-// Specialization for plain function pointers
 template <typename R, typename... Args>
-struct function_traits<R(*)(Args...)> {
-    using result_type = R;
-    static constexpr std::size_t arity = sizeof...(Args);
+struct function_traits<R(Args...)> {
+  using result_type = R;
+  static constexpr std::size_t arity = sizeof...(Args);
 
-    template <std::size_t N>
-    struct arg {
-        static_assert(N < arity, "argument index out of range");
-        using type = typename std::tuple_element<N, std::tuple<Args...>>::type;
-    };
+  template <std::size_t N>
+  struct arg {
+    static_assert(N < arity, "argument index out of range");
+    using type = typename std::tuple_element<N, std::tuple<Args...>>::type;
+  };
 };
 
-// Specialization for const member function pointers,
-// which is what a non-mutable lambda's operator() usually is.
+template <typename R, typename... Args>
+struct function_traits<R(*)(Args...)> : function_traits<R(Args...)> {};
+
+template <typename R, typename... Args>
+struct function_traits<R(&)(Args...)> : function_traits<R(Args...)> {};
+
 template <typename C, typename R, typename... Args>
 struct function_traits<R(C::*)(Args...) const>
-    : function_traits<R(*)(Args...)> {};
+    : function_traits<R(Args...)> {
+  using functional_type = C;
+};
 
-// Optional: handle mutable lambdas (non-const operator())
 template <typename C, typename R, typename... Args>
 struct function_traits<R(C::*)(Args...)>
-    : function_traits<R(*)(Args...)> {};
+    : function_traits<R(Args...)> {
+  using functional_type = C;
+};
 
-// Convenience alias for lambdas and other callable objects
 
-//add a conditional if a function pointer is provided
-//is pointer a type just pass it through otherwise do give me the operator
-//static error if not a function type
+template <typename T, bool hasCallOp = has_single_call_operator<std::decay_t<T>>::value>
+struct functional_traits : function_traits<std::decay_t<T>> {};
 
-//template <typename Lambda>
-//using lambda_traits = function_traits<decltype(&Lambda::operator())>;
-
-// Helper to strip cv/ref from a type
 template <typename T>
-using decay_t = typename std::decay<T>::type;
+struct functional_traits<T, true> : function_traits<decltype(&std::decay_t<T>::operator())> {};
 
-// Convenience alias for callable entities:
-//  - If T is a function pointer, use function_traits<T> directly
-//  - Otherwise, assume it is a callable object and use &T::operator()
+
+template <typename T, typename = void>
+struct has_arg0 : std::false_type {};
+
 template <typename T>
-using lambda_traits =
-    std::conditional_t<
-        std::is_pointer<decay_t<T>>::value,
-        function_traits<decay_t<T>>,
-        function_traits<decltype(&decay_t<T>::operator())>
-    >;
+struct has_arg0<
+  T,
+  typename std::enable_if_t<
+    !std::is_same_v<typename functional_traits<T>::template arg<0>::type, void>
+  >
+> : std::true_type {};
 
-}
+
+template <typename T, bool HasArg0 = has_arg0<T>::value>
+struct launch_context_type {
+  using type = LaunchContextT<LaunchContextDefaultPolicy>;
+};
+
+template <typename T>
+struct launch_context_type<T, true> {
+  using type = typename functional_traits<T>::template arg<0>::type;
+};
+
+
+} // namespace detail
 
 }  // namespace RAJA
 #endif

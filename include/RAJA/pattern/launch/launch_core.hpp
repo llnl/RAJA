@@ -229,9 +229,6 @@ public:
   }
 };
 
-template<typename LaunchContextPolicy>
-class LaunchContextT;
-
 template<>
 class LaunchContextT<LaunchContextDefaultPolicy> : public LaunchContextBase
 {
