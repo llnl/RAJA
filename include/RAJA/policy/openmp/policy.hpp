@@ -20,8 +20,6 @@
 
 #include <type_traits>
 
-#include "RAJA/pattern/launch/launch_context_policy.hpp"
-
 #include "RAJA/policy/PolicyBase.hpp"
 
 // Rely on builtin_atomic when OpenMP can't do the job
@@ -140,12 +138,10 @@ struct omp_parallel_region
 ///
 ///  Struct supporting OpenMP parallel region for Teams
 ///
-template<typename LaunchContextPolicy = LaunchContextDefaultPolicy>
-struct omp_launch_typed
-    : make_policy_pattern_launch_platform_t<Policy::openmp,
-                                            Pattern::region,
-                                            Launch::undefined,
-                                            Platform::host>
+struct omp_launch_t : make_policy_pattern_launch_platform_t<Policy::openmp,
+                                                            Pattern::region,
+                                                            Launch::undefined,
+                                                            Platform::host>
 {};
 
 ///
@@ -460,11 +456,7 @@ using policy::omp::omp_for_runtime_exec;
 ///
 /// Type aliases for omp parallel region
 ///
-template<typename LaunchContextPolicy = LaunchContextDefaultPolicy>
-using omp_launch_typed = policy::omp::omp_launch_typed<LaunchContextPolicy>;
-using omp_launch_t     = omp_launch_typed<LaunchContextDefaultPolicy>;
-
-// using policy::omp::omp_launch_t;
+using policy::omp::omp_launch_t;
 using policy::omp::omp_parallel_region;
 
 ///

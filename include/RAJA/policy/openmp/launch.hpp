@@ -24,8 +24,8 @@
 namespace RAJA
 {
 
-template<typename LaunchContextPolicy>
-struct LaunchExecute<RAJA::omp_launch_typed<LaunchContextPolicy>>
+template<>
+struct LaunchExecute<RAJA::omp_launch_t>
 {
 
   template<typename ReduceParams, typename BODY>
@@ -44,14 +44,17 @@ struct LaunchExecute<RAJA::omp_launch_typed<LaunchContextPolicy>>
     EXEC_POL pol {};
     using BodyType = decltype(thread_privatize(body));
 
+    using LaunchContextType =
+        typename RAJA::detail::launch_context_type<BODY>::type;
+
     auto parallel_section = [&](ReduceParams& f_params, auto func) {
-      LaunchContextT<LaunchContextPolicy> ctx;
+      LaunchContextType ctx;
+
       auto loop_body = thread_privatize(body);
-      static_assert(
-          std::is_invocable<decltype(func), ReduceParams&, BodyType&,
-                            LaunchContextT<LaunchContextPolicy>&>::value,
-          "Internal RAJA error: Check the parallel kernel passed to "
-          "OpenMP Parallel section in openmp/launch.hpp");
+      static_assert(std::is_invocable<decltype(func), ReduceParams&, BodyType&,
+                                      LaunchContextType&>::value,
+                    "Internal RAJA error: Check the parallel kernel passed to "
+                    "OpenMP Parallel section in openmp/launch.hpp");
 
       ctx.shared_mem_ptr = (char*)malloc(launch_params.shared_mem_size);
 
@@ -74,7 +77,7 @@ struct LaunchExecute<RAJA::omp_launch_typed<LaunchContextPolicy>>
         // pragma so that the reduction parameter pack it operates on is the
         // version tracked by the combine OpenMP syntax
         auto parallel_kernel = [&](ReduceParams& f_params, BodyType& body,
-                                   LaunchContextT<LaunchContextPolicy>& ctx) {
+                                   LaunchContextType& ctx) {
           expt::invoke_body(f_params, body.get_priv(), ctx);
         };
         parallel_section(f_params, parallel_kernel);
@@ -84,7 +87,7 @@ struct LaunchExecute<RAJA::omp_launch_typed<LaunchContextPolicy>>
     {
       RAJA::region<RAJA::omp_parallel_region>([&]() {
         auto parallel_kernel = [&](ReduceParams&, BodyType& body,
-                                   LaunchContextT<LaunchContextPolicy>& ctx) {
+                                   LaunchContextType& ctx) {
           body.get_priv()(ctx);
         };
         parallel_section(f_params, parallel_kernel);
