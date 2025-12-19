@@ -279,6 +279,24 @@ using hip_ctx_thread_loop_x = hip_ctx_thread_loop<named_dim::x>;
 using hip_ctx_thread_loop_y = hip_ctx_thread_loop<named_dim::y>;
 using hip_ctx_thread_loop_z = hip_ctx_thread_loop<named_dim::z>;
 
+template<named_dim DIM, typename Dim3Like>
+RAJA_INLINE RAJA_DEVICE int get_dim(Dim3Like const& d)
+{
+  if constexpr (DIM == named_dim::x)
+  {
+    return d.x;
+  }
+  else if constexpr (DIM == named_dim::y)
+  {
+    return d.y;
+  }
+  else
+  {
+    static_assert(DIM == named_dim::z, "Unsupported named_dim");
+    return d.z;
+  }
+}
+
 }  // namespace expt
 
 /*
@@ -299,8 +317,10 @@ struct LoopExecute<expt::hip_ctx_thread_loop<DIM>, SEGMENT>
     const int len         = segment.end() - segment.begin();
     constexpr int int_dim = static_cast<int>(DIM);
 
-    for (int i = ::RAJA::internal::HipDimHelper<DIM>::get(ctx.thread_id);
-         i < len; i += ::RAJA::internal::HipDimHelper<DIM>::get(ctx.block_dim))
+    const int thread_idx = expt::get_dim<DIM>(ctx.thread_id);
+    const int stride     = expt::get_dim<DIM>(ctx.block_dim);
+
+    for (int i = thread_idx; i < len; i += stride)
     {
       body(*(segment.begin() + i));
     }
