@@ -20,7 +20,7 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
-Version 2025.12.0 -- Release date 2025-12-dd
+Version 2025.12.0 -- Release date 2025-12-10
 ============================================
 
 This release contains mostly improvements to code robustness and testing, 
