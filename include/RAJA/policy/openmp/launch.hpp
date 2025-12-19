@@ -104,7 +104,7 @@ template<typename SEGMENT>
 struct LoopExecute<omp_parallel_for_exec, SEGMENT>
 {
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
@@ -124,7 +124,7 @@ struct LoopExecute<omp_parallel_for_exec, SEGMENT>
     });
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -152,7 +152,7 @@ struct LoopExecute<omp_parallel_for_exec, SEGMENT>
     });
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -190,7 +190,7 @@ template<typename SEGMENT>
 struct LoopExecute<omp_for_exec, SEGMENT>
 {
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
@@ -206,7 +206,7 @@ struct LoopExecute<omp_for_exec, SEGMENT>
     }
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -228,7 +228,7 @@ struct LoopExecute<omp_for_exec, SEGMENT>
     }
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -263,7 +263,7 @@ template<typename SEGMENT>
 struct LoopICountExecute<omp_for_exec, SEGMENT>
 {
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
@@ -279,7 +279,7 @@ struct LoopICountExecute<omp_for_exec, SEGMENT>
     }
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -301,7 +301,7 @@ struct LoopICountExecute<omp_for_exec, SEGMENT>
     }
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -336,7 +336,7 @@ template<typename SEGMENT>
 struct LoopExecute<omp_parallel_nested_for_exec, SEGMENT>
 {
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -364,7 +364,7 @@ struct LoopExecute<omp_parallel_nested_for_exec, SEGMENT>
     });
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -403,7 +403,7 @@ template<typename SEGMENT>
 struct LoopICountExecute<omp_parallel_nested_for_exec, SEGMENT>
 {
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -431,7 +431,7 @@ struct LoopICountExecute<omp_parallel_nested_for_exec, SEGMENT>
     });
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -469,7 +469,7 @@ template<typename SEGMENT>
 struct TileExecute<omp_parallel_for_exec, SEGMENT>
 {
 
-  template<typename BODY, typename TILE_T, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY, typename TILE_T>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,
@@ -496,7 +496,7 @@ template<typename SEGMENT>
 struct TileTCountExecute<omp_parallel_for_exec, SEGMENT>
 {
 
-  template<typename BODY, typename TILE_T, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY, typename TILE_T>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,
@@ -525,7 +525,7 @@ template<typename SEGMENT>
 struct TileExecute<omp_for_exec, SEGMENT>
 {
 
-  template<typename BODY, typename TILE_T, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY, typename TILE_T>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,
@@ -546,7 +546,7 @@ template<typename SEGMENT>
 struct TileTCountExecute<omp_for_exec, SEGMENT>
 {
 
-  template<typename BODY, typename TILE_T, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY, typename TILE_T>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       TILE_T tile_size,

@@ -119,7 +119,7 @@ struct LoopExecute<seq_exec, SEGMENT>
     }
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
@@ -133,7 +133,7 @@ struct LoopExecute<seq_exec, SEGMENT>
     }
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -155,7 +155,7 @@ struct LoopExecute<seq_exec, SEGMENT>
     }
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -187,7 +187,7 @@ template<typename SEGMENT>
 struct LoopICountExecute<seq_exec, SEGMENT>
 {
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
@@ -200,7 +200,7 @@ struct LoopICountExecute<seq_exec, SEGMENT>
     }
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
@@ -222,7 +222,7 @@ struct LoopICountExecute<seq_exec, SEGMENT>
     }
   }
 
-  template<typename BODY, typename LaunchContextPolicy>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment0,
