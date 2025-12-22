@@ -110,14 +110,6 @@ static_assert(RAJA_HAS_SOME_CXX14,
 /*!
  ******************************************************************************
  *
- * \brief Enable/disable exploratory fault tolerance mechanism.
- *
- ******************************************************************************
- */
-#cmakedefine RAJA_ENABLE_ITERATOR_OVERFLOW_DEBUG
-/*!
- ******************************************************************************
- *
  * \brief Default RAJA floating point scalar and pointer options.
  *
  ******************************************************************************

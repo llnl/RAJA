@@ -23,9 +23,6 @@ endif()
 #set(RAJA_USE_RESTRICT_ALIGNED_PTR OFF)
 #set(RAJA_USE_PTR_CLASS OFF)
 
-## Fault tolerance options
-option(RAJA_ENABLE_ITERATOR_OVERFLOW_DEBUG "Enable Overflow checking during Iterator operations" OFF)
-
 ## Timer options
 set(RAJA_TIMER "chrono" CACHE STRING
     "Select a timer backend")
