@@ -17,7 +17,7 @@
 # project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
 # So that the comparison with the original job is easier.
 
-## cce 19.0.0 job is in the shared RSC set of jobs
+## cce 20.0.0 job is in the shared RSC set of jobs
 
 ## rocm 6.4.1 job is in the shared RSC set of jobs
 
@@ -27,11 +27,6 @@
 # We do not recommend using ${PROJECT_<MACHINE>_VARIANTS} and
 # ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
 # describe the spec here.
-
-cce_20_0_0:
-  variables:
-    SPEC: "~shared +openmp +vectorization +tests %cce@=20.0.0"
-  extends: .job_on_tuolumne
 
 rocmcc_6_4_1_hip_desul_atomics:
   variables:
