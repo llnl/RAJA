@@ -378,7 +378,6 @@ struct WorkRunner<
         RAJA::hip::launch((const void*)func, gridSize, blockSize, func_args,
                           shmem, r, Async);
       }
-
     }
 
     return run_storage;

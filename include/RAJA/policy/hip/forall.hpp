@@ -36,8 +36,6 @@
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 
-#include "RAJA/internal/fault_tolerance.hpp"
-
 #include "RAJA/policy/hip/MemUtils_HIP.hpp"
 #include "RAJA/policy/hip/policy.hpp"
 #include "RAJA/policy/hip/raja_hiperrchk.hpp"
@@ -579,7 +577,6 @@ forall_impl(resources::Hip hip_res,
       RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params,
                                                       launch_info);
     }
-
   }
 
   return resources::EventProxy<resources::Hip>(hip_res);

@@ -38,8 +38,6 @@
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 
-#include "RAJA/internal/fault_tolerance.hpp"
-
 #include "RAJA/policy/sycl/MemUtils_SYCL.hpp"
 #include "RAJA/policy/sycl/policy.hpp"
 
@@ -200,7 +198,7 @@ forall_impl(resources::Sycl& sycl_res,
     LOOP_BODY* lbody;
     Iterator* beg;
 
-        //
+    //
     // Setup shared memory buffers
     // Kernel body is nontrivially copyable, create space on device and copy to
     // Workaround until "is_device_copyable" is supported
@@ -226,8 +224,7 @@ forall_impl(resources::Sycl& sycl_res,
     // Free our device memory
     ::sycl::free(lbody, *q);
     ::sycl::free(beg, *q);
-
-      }
+  }
 
   return resources::EventProxy<resources::Sycl>(sycl_res);
 }
@@ -365,7 +362,7 @@ forall_impl(resources::Sycl& sycl_res,
     //
     LOOP_BODY* lbody;
     Iterator* beg;
-        //
+    //
     // Setup shared memory buffers
     // Kernel body is nontrivially copyable, create space on device and copy to
     // Workaround until "is_device_copyable" is supported
@@ -398,8 +395,7 @@ forall_impl(resources::Sycl& sycl_res,
     ::sycl::free(res, *q);
     ::sycl::free(lbody, *q);
     ::sycl::free(beg, *q);
-
-      }
+  }
   RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params);
 
   return resources::EventProxy<resources::Sycl>(sycl_res);

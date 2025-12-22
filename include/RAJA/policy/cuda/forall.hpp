@@ -35,8 +35,6 @@
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 
-#include "RAJA/internal/fault_tolerance.hpp"
-
 #include "RAJA/policy/cuda/MemUtils_CUDA.hpp"
 #include "RAJA/policy/cuda/policy.hpp"
 #include "RAJA/policy/cuda/raja_cudaerrchk.hpp"
@@ -597,7 +595,6 @@ forall_impl(resources::Cuda cuda_res,
       RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params,
                                                       launch_info);
     }
-
   }
 
   return resources::EventProxy<resources::Cuda>(cuda_res);

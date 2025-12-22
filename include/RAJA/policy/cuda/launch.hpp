@@ -125,7 +125,6 @@ struct LaunchExecute<
         RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers,
                                                         launch_info);
       }
-
     }
 
     return resources::EventProxy<resources::Resource>(res);
@@ -234,7 +233,6 @@ struct LaunchExecute<
         RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers,
                                                         launch_info);
       }
-
     }
 
     return resources::EventProxy<resources::Resource>(res);

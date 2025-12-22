@@ -123,7 +123,6 @@ struct LaunchExecute<
         RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers,
                                                         launch_info);
       }
-
     }
 
     return resources::EventProxy<resources::Resource>(res);
@@ -228,7 +227,6 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
         RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers,
                                                         launch_info);
       }
-
     }
 
     return resources::EventProxy<resources::Resource>(res);

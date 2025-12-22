@@ -92,7 +92,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
       {
         q->wait();
       }
-
     }
 
     return resources::EventProxy<resources::Resource>(res);
@@ -181,7 +180,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
       RAJA::expt::ParamMultiplexer::parampack_combine(pol, launch_reducers,
                                                       *res);
       ::sycl::free(res, *q);
-
     }
 
     RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);
@@ -256,7 +254,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
        }).wait();  // Need to wait for completion to free memory
 
       ::sycl::free(lbody, *q);
-
     }
 
     return resources::EventProxy<resources::Resource>(res);
@@ -354,7 +351,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
                                                       *res);
       ::sycl::free(res, *q);
       ::sycl::free(lbody, *q);
-
     }
 
     RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);

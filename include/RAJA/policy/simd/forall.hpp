@@ -33,8 +33,6 @@
 
 #include "RAJA/util/types.hpp"
 
-#include "RAJA/internal/fault_tolerance.hpp"
-
 #include "RAJA/policy/simd/policy.hpp"
 
 #include "RAJA/pattern/params/forall.hpp"
