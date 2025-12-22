@@ -20,6 +20,31 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
+Version 2025.12.0 -- Release date 2025-12-19
+============================================
+
+This release contains mostly improvements to code robustness and testing, 
+including evolving internal code implementations to use C++17.
+
+Notable changes include:
+
+  * New features / API changes:
+
+  * Build changes/improvements:
+    * Update Camp submodule to v2025.12.0 release.
+    * Improve CMake support for configuring with Caliper and fix issue reported
+      by a user.
+    * Bump minimum CMake version required to 3.24.
+
+  * Bug fixes/improvements:
+    * Fix compilation failue when a downstream library or applications is
+      built without OpenMP enabled when RAJA was built with OpenMP enabled.
+      There may still be some corner cases that violate C++ ODR that we have not
+      resolved and are not being exposed by users.
+    * Various internal code cleanups, simplifications, and improvements using
+      C++17 features, with an eye toward C++20.
+
+
 Version 2025.09.1 -- Release date 2025-10-01
 ============================================
 

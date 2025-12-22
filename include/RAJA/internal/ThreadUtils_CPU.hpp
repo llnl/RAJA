@@ -21,9 +21,9 @@
 
 #include "RAJA/config.hpp"
 
-#if defined(RAJA_ENABLE_OPENMP)
-#include <omp.h>
-#endif
+#include "RAJA/pattern/thread.hpp"
+#include "RAJA/policy/openmp/thread.hpp"
+#include "RAJA/policy/sequential/thread.hpp"
 
 namespace RAJA
 {
@@ -35,16 +35,10 @@ namespace RAJA
 *
 *************************************************************************
 */
-RAJA_INLINE
-int getMaxOMPThreadsCPU()
+template<typename ThreadPolicy = RAJA::detail::active_auto_thread>
+RAJA_INLINE int getMaxOMPThreadsCPU()
 {
-  int nthreads = 1;
-
-#if defined(RAJA_ENABLE_OPENMP)
-  nthreads = omp_get_max_threads();
-#endif
-
-  return nthreads;
+  return RAJA::get_max_threads<ThreadPolicy>();
 }
 
 }  // namespace RAJA

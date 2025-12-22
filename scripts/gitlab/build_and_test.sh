@@ -190,7 +190,7 @@ then
     timed_message "Cleaning working directory"
 
     # Map CPU core allocations
-    declare -A core_counts=(["lassen"]=40 ["poodle"]=28 ["dane"]=28 ["corona"]=32 ["rzansel"]=48 ["tioga"]=32 ["tuolumne"]=48)
+    declare -A core_counts=(["lassen"]=40 ["poodle"]=28 ["dane"]=28 ["matrix"]=28 ["corona"]=32 ["rzansel"]=48 ["tioga"]=32 ["tuolumne"]=48)
 
     # If building, then delete everything first
     # NOTE: 'cmake --build . -j core_counts' attempts to reduce individual build resources.
@@ -204,7 +204,7 @@ then
     # Shared allocation: Allows build_and_test.sh to run within a sub-allocation (see CI config).
     # Use /dev/shm: Prevent MPI tests from running on a node where the build dir doesn't exist.
     cmake_options=""
-    if [[ "${truehostname}" == "poodle" || "${truehostname}" == "dane" ]]
+    if [[ "${truehostname}" == "poodle" || "${truehostname}" == "dane" || "${truehostname}" == "matrix" ]]
     then
         cmake_options="-DBLT_MPI_COMMAND_APPEND:STRING=--overlap"
     fi
@@ -257,24 +257,19 @@ then
         echo "[Error]: Failure(s) while running CTest" && exit 1
     fi
 
-    if grep -q -i "ENABLE_HIP.*ON" ${hostconfig_path}
+    if [[ ! -d ${install_dir} ]]
     then
-        echo "[Warning]: Not testing install with HIP"
-    else
-        if [[ ! -d ${install_dir} ]]
-        then
-            echo "[Error]: Install directory not found : ${install_dir}" && exit 1
-        fi
+        echo "[Error]: Install directory not found : ${install_dir}" && exit 1
+    fi
 
-        cd ${install_dir}/examples/RAJA/using-with-cmake
-        mkdir build && cd build
-        if ! $cmake_exe -C ../host-config.cmake ..; then
-            echo "[Error]: Running $cmake_exe for using-with-cmake test" && exit 1
-        fi
+    cd ${install_dir}/examples/RAJA/using-with-cmake
+    mkdir build && cd build
+    if ! $cmake_exe -C ../host-config.cmake ..; then
+        echo "[Error]: Running $cmake_exe for using-with-cmake test" && exit 1
+    fi
 
-        if ! make; then
-            echo "[Error]: Running make for using-with-cmake test" && exit 1
-        fi
+    if ! make; then
+        echo "[Error]: Running make for using-with-cmake test" && exit 1
     fi
 
     timed_message "RAJA tests completed"

@@ -42,10 +42,7 @@ namespace detail
 syclInfo g_status;
 
 //! State of the host code in this thread
-syclInfo tl_status;
-#if defined(RAJA_ENABLE_OPENMP)
-#pragma omp threadprivate(tl_status)
-#endif
+thread_local syclInfo tl_status;
 
 //! State of raja sycl queue synchronization for sycl reducer objects
 std::unordered_map<::sycl::queue, bool> g_queue_info_map {
