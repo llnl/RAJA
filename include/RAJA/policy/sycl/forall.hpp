@@ -200,8 +200,7 @@ forall_impl(resources::Sycl& sycl_res,
     LOOP_BODY* lbody;
     Iterator* beg;
 
-    RAJA_FT_BEGIN;
-    //
+        //
     // Setup shared memory buffers
     // Kernel body is nontrivially copyable, create space on device and copy to
     // Workaround until "is_device_copyable" is supported
@@ -228,8 +227,7 @@ forall_impl(resources::Sycl& sycl_res,
     ::sycl::free(lbody, *q);
     ::sycl::free(beg, *q);
 
-    RAJA_FT_END;
-  }
+      }
 
   return resources::EventProxy<resources::Sycl>(sycl_res);
 }
@@ -367,8 +365,7 @@ forall_impl(resources::Sycl& sycl_res,
     //
     LOOP_BODY* lbody;
     Iterator* beg;
-    RAJA_FT_BEGIN;
-    //
+        //
     // Setup shared memory buffers
     // Kernel body is nontrivially copyable, create space on device and copy to
     // Workaround until "is_device_copyable" is supported
@@ -402,8 +399,7 @@ forall_impl(resources::Sycl& sycl_res,
     ::sycl::free(lbody, *q);
     ::sycl::free(beg, *q);
 
-    RAJA_FT_END;
-  }
+      }
   RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params);
 
   return resources::EventProxy<resources::Sycl>(sycl_res);

@@ -570,7 +570,6 @@ forall_impl(resources::Cuda cuda_res,
     internal::CudaDims dims(1);
     DimensionCalculator::set_dimensions(dims, len, func, shmem);
 
-    RAJA_FT_BEGIN;
 
     RAJA::cuda::detail::cudaInfo launch_info;
     launch_info.gridDim  = dims.blocks;
@@ -599,7 +598,6 @@ forall_impl(resources::Cuda cuda_res,
                                                       launch_info);
     }
 
-    RAJA_FT_END;
   }
 
   return resources::EventProxy<resources::Cuda>(cuda_res);

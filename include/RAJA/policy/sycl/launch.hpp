@@ -70,7 +70,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
         params.teams.value[1] > zero && params.teams.value[2] > zero)
     {
 
-      RAJA_FT_BEGIN;
 
       q->submit([&](::sycl::handler& h) {
         auto s_vec = ::sycl::local_accessor<char, 1>(params.shared_mem_size, h);
@@ -94,7 +93,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
         q->wait();
       }
 
-      RAJA_FT_END;
     }
 
     return resources::EventProxy<resources::Resource>(res);
@@ -152,7 +150,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
         return x;
       };
 
-      RAJA_FT_BEGIN;
 
       ReduceParams* res = ::sycl::malloc_shared<ReduceParams>(1, *q);
       RAJA::expt::ParamMultiplexer::parampack_init(pol, *res);
@@ -185,7 +182,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
                                                       *res);
       ::sycl::free(res, *q);
 
-      RAJA_FT_END;
     }
 
     RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);
@@ -231,7 +227,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
         params.teams.value[1] > zero && params.teams.value[2] > zero)
     {
 
-      RAJA_FT_BEGIN;
 
       //
       // Kernel body is nontrivially copyable, create space on device and copy
@@ -262,7 +257,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
 
       ::sycl::free(lbody, *q);
 
-      RAJA_FT_END;
     }
 
     return resources::EventProxy<resources::Resource>(res);
@@ -319,7 +313,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
         return x;
       };
 
-      RAJA_FT_BEGIN;
 
       //
       // Kernel body is nontrivially copyable, create space on device and copy
@@ -362,7 +355,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
       ::sycl::free(res, *q);
       ::sycl::free(lbody, *q);
 
-      RAJA_FT_END;
     }
 
     RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);

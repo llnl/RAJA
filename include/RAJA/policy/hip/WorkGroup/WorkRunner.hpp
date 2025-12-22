@@ -364,7 +364,6 @@ struct WorkRunner<
                                         block_size),
           static_cast<hip_dim_member_t>(num_loops), 1};
 
-      RAJA_FT_BEGIN;
 
       //
       // Setup shared memory buffers
@@ -380,7 +379,6 @@ struct WorkRunner<
                           shmem, r, Async);
       }
 
-      RAJA_FT_END;
     }
 
     return run_storage;

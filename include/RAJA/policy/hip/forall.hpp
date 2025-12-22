@@ -552,7 +552,6 @@ forall_impl(resources::Hip hip_res,
     internal::HipDims dims(1);
     DimensionCalculator::set_dimensions(dims, len, func, shmem);
 
-    RAJA_FT_BEGIN;
 
     RAJA::hip::detail::hipInfo launch_info;
     launch_info.gridDim  = dims.blocks;
@@ -581,7 +580,6 @@ forall_impl(resources::Hip hip_res,
                                                       launch_info);
     }
 
-    RAJA_FT_END;
   }
 
   return resources::EventProxy<resources::Hip>(hip_res);
