@@ -20,6 +20,21 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
+Version 2025.MM.PP -- Release date 2025-mm-dd
+=============================================
+
+This release contains ...
+
+Notable changes include:
+
+  * New features / API changes:
+
+  * Build changes/improvements:
+    * Bump minimum CMake version required to 3.24.
+
+  * Bug fixes/improvements:
+
+
 Version 2025.12.0 -- Release date 2025-12-19
 ============================================
 
@@ -34,7 +49,6 @@ Notable changes include:
     * Update Camp submodule to v2025.12.0 release.
     * Improve CMake support for configuring with Caliper and fix issue reported
       by a user.
-    * Bump minimum CMake version required to 3.24.
 
   * Bug fixes/improvements:
     * Fix compilation failue when a downstream library or applications is
