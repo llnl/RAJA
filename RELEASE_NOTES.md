@@ -14,6 +14,7 @@ This release contains ...
 Notable changes include:
 
   * New features / API changes:
+    * Add check to verify release notes have been updated for a PR.
 
   * Build changes/improvements:
 
