@@ -84,168 +84,15 @@ RAJA_INLINE
 ////////////////////////////////////////////////////////////////////////
 //
 
-template<typename Iterable,
-         typename LoopBody,
-         size_t BlockSize,
-         bool Async,
-         typename ForallParam,
-         typename std::enable_if<std::is_trivially_copyable<LoopBody> {},
-                                 bool>::type = true>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Sycl>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>,
-    RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>>
-forall_impl(resources::Sycl& sycl_res,
-            sycl_exec<BlockSize, Async>,
-            Iterable&& iter,
-            LoopBody&& loop_body,
-            ForallParam)
-{
-
-  using Iterator = camp::decay<decltype(std::begin(iter))>;
-  using IndexType =
-      camp::decay<decltype(std::distance(std::begin(iter), std::end(iter)))>;
-
-  //
-  // Compute the requested iteration space size
-  //
-  Iterator begin = std::begin(iter);
-  Iterator end   = std::end(iter);
-  IndexType len  = std::distance(begin, end);
-
-  // Only launch kernel if we have something to iterate over
-  if (len > 0 && BlockSize > 0)
-  {
-    // Note: We could fix an incorrect workgroup size.
-    //       It would change what was specified.
-    //       For now, leave the device compiler to error with invalid WG size.
-
-    //
-    // Compute the number of blocks
-    //
-    sycl_dim_t blockSize {BlockSize};
-    sycl_dim_t gridSize = impl::getGridDim(static_cast<size_t>(len), BlockSize);
-
-    ::sycl::queue* q = sycl_res.get_queue();
-
-    q->submit([&](::sycl::handler& h) {
-      h.parallel_for(::sycl::nd_range<1> {gridSize, blockSize},
-                     [=](::sycl::nd_item<1> it) {
-                       IndexType ii = it.get_global_id(0);
-                       if (ii < len)
-                       {
-                         loop_body(begin[ii]);
-                       }
-                     });
-    });
-
-    if (!Async)
-    {
-      q->wait();
-    }
-  }
-
-  return resources::EventProxy<resources::Sycl>(sycl_res);
-}
-
-//
-// Define if parampack is empty, avoids ambigous definitions.
-//
 
 template<typename Iterable,
          typename LoopBody,
          size_t BlockSize,
          bool Async,
-         typename ForallParam,
-         typename std::enable_if<!std::is_trivially_copyable<LoopBody> {},
-                                 bool>::type = true>
+         typename ForallParam>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<resources::Sycl>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>,
-    RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>>
-forall_impl(resources::Sycl& sycl_res,
-            sycl_exec<BlockSize, Async>,
-            Iterable&& iter,
-            LoopBody&& loop_body,
-            ForallParam)
-{
-  using Iterator  = camp::decay<decltype(std::begin(iter))>;
-  using LOOP_BODY = camp::decay<LoopBody>;
-  using IndexType =
-      camp::decay<decltype(std::distance(std::begin(iter), std::end(iter)))>;
-
-  //
-  // Compute the requested iteration space size
-  //
-  Iterator begin = std::begin(iter);
-  Iterator end   = std::end(iter);
-  IndexType len  = std::distance(begin, end);
-
-  // Only launch kernel if we have something to iterate over
-  if (len > 0 && BlockSize > 0)
-  {
-
-    // Note: We could fix an incorrect workgroup size.
-    //       It would change what was specified.
-    //       For now, leave the device compiler to error with invalid WG size.
-
-    //
-    // Compute the number of blocks
-    //
-    sycl_dim_t blockSize {BlockSize};
-    sycl_dim_t gridSize = impl::getGridDim(static_cast<size_t>(len), BlockSize);
-
-    ::sycl::queue* q = sycl_res.get_queue();
-
-    LOOP_BODY* lbody;
-    Iterator* beg;
-
-    RAJA_FT_BEGIN;
-    //
-    // Setup shared memory buffers
-    // Kernel body is nontrivially copyable, create space on device and copy to
-    // Workaround until "is_device_copyable" is supported
-    //
-    lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LOOP_BODY), *q);
-    q->memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
-
-    beg = (Iterator*)::sycl::malloc_device(sizeof(Iterator), *q);
-    q->memcpy(beg, &begin, sizeof(Iterator)).wait();
-
-    q->submit([&](::sycl::handler& h) {
-       h.parallel_for(::sycl::nd_range<1> {gridSize, blockSize},
-                      [=](::sycl::nd_item<1> it) {
-                        Index_type ii = it.get_global_id(0);
-
-                        if (ii < len)
-                        {
-                          (*lbody)((*beg)[ii]);
-                        }
-                      });
-     }).wait();  // Need to wait for completion to free memory
-
-    // Free our device memory
-    ::sycl::free(lbody, *q);
-    ::sycl::free(beg, *q);
-
-    RAJA_FT_END;
-  }
-
-  return resources::EventProxy<resources::Sycl>(sycl_res);
-}
-
-template<typename Iterable,
-         typename LoopBody,
-         size_t BlockSize,
-         bool Async,
-         typename ForallParam,
-         typename std::enable_if<std::is_trivially_copyable<LoopBody> {},
-                                 bool>::type = true>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Sycl>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>,
-    concepts::negate<
-        RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>>>
+    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>>
 forall_impl(resources::Sycl& sycl_res,
             sycl_exec<BlockSize, Async> const& pol,
             Iterable&& iter,
@@ -256,7 +103,15 @@ forall_impl(resources::Sycl& sycl_res,
   using Iterator = camp::decay<decltype(std::begin(iter))>;
   using IndexType =
       camp::decay<decltype(std::distance(std::begin(iter), std::end(iter)))>;
-  using EXEC_POL = camp::decay<decltype(pol)>;
+  using EXEC_POL  = camp::decay<decltype(pol)>;
+  using LOOP_BODY = camp::decay<LoopBody>;
+  // Deduce at compile time if lbody is trivially constructible and if user
+  // has supplied parameters.  These will be used to determine which sycl launch
+  // to configure below.
+  constexpr bool is_parampack_empty =
+      RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;
+  constexpr bool is_lbody_trivially_copyable =
+      std::is_trivially_copyable<LoopBody>::value;
 
   //
   // Compute the requested iteration space size
@@ -265,21 +120,44 @@ forall_impl(resources::Sycl& sycl_res,
   Iterator end   = std::end(iter);
   IndexType len  = std::distance(begin, end);
 
-  RAJA::expt::ParamMultiplexer::parampack_init(pol, f_params);
-
-  // Only launch kernel if we have something to iterate over
-  if (len > 0 && BlockSize > 0)
+  // Return immediately if there is no work to be done
+  if (len <= 0 || BlockSize <= 0)
   {
+    return resources::EventProxy<resources::Sycl>(sycl_res);
+  }
 
+  //
+  // Compute the number of blocks
+  //
+  sycl_dim_t blockSize {BlockSize};
+  sycl_dim_t gridSize = impl::getGridDim(static_cast<size_t>(len), BlockSize);
+
+  ::sycl::queue* q  = sycl_res.get_queue();
+  LOOP_BODY* lbody  = nullptr;
+  Iterator* d_begin = nullptr;
+
+  if constexpr (!is_parampack_empty)
+  {
+    RAJA::expt::ParamMultiplexer::parampack_init(pol, f_params);
+  }
+  if constexpr (!is_lbody_trivially_copyable)
+  {
     //
-    // Compute the number of blocks
+    // Setup shared memory buffers
+    // Kernel body is nontrivially copyable, create space on device and copy to
+    // Workaround until "is_device_copyable" is supported
     //
-    sycl_dim_t blockSize {BlockSize};
-    sycl_dim_t gridSize = impl::getGridDim(static_cast<size_t>(len), BlockSize);
-    RAJA_UNUSED_VAR(gridSize);
+    lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LoopBody), *q);
+    q->memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
 
-    ::sycl::queue* q = sycl_res.get_queue();
+    d_begin = (Iterator*)::sycl::malloc_device(sizeof(Iterator), *q);
+    q->memcpy(d_begin, &begin, sizeof(Iterator)).wait();
+  }
 
+  // Both the parallel_for call, combinations, and resolution are all
+  // unique to the parameter case, so we make a constexpr branch here
+  if constexpr (!is_parampack_empty)
+  {
     auto combiner = [](ForallParam x, ForallParam y) {
       RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, x, y);
       return x;
@@ -297,7 +175,14 @@ forall_impl(resources::Sycl& sycl_res,
                        IndexType ii = it.get_id(0);
                        if (ii < len)
                        {
-                         RAJA::expt::invoke_body(fp, loop_body, begin[ii]);
+                         if constexpr (is_lbody_trivially_copyable)
+                         {
+                           RAJA::expt::invoke_body(fp, loop_body, begin[ii]);
+                         }
+                         else
+                         {
+                           RAJA::expt::invoke_body(fp, *lbody, (*d_begin)[ii]);
+                         }
                        }
                        red.combine(fp);
                      });
@@ -306,105 +191,43 @@ forall_impl(resources::Sycl& sycl_res,
     q->wait();
     RAJA::expt::ParamMultiplexer::parampack_combine(pol, f_params, *res);
     ::sycl::free(res, *q);
+    RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params);
   }
-  RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params);
-
-  return resources::EventProxy<resources::Sycl>(sycl_res);
-}
-
-template<typename Iterable,
-         typename LoopBody,
-         size_t BlockSize,
-         bool Async,
-         typename ForallParam,
-         typename std::enable_if<!std::is_trivially_copyable<LoopBody> {},
-                                 bool>::type = true>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Sycl>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>,
-    concepts::negate<
-        RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>>>
-forall_impl(resources::Sycl& sycl_res,
-            sycl_exec<BlockSize, Async> const& pol,
-            Iterable&& iter,
-            LoopBody&& loop_body,
-            ForallParam f_params)
-
-{
-  using Iterator  = camp::decay<decltype(std::begin(iter))>;
-  using LOOP_BODY = camp::decay<LoopBody>;
-  using IndexType =
-      camp::decay<decltype(std::distance(std::begin(iter), std::end(iter)))>;
-  using EXEC_POL = camp::decay<decltype(pol)>;
-
-  //
-  // Compute the requested iteration space size
-  //
-  Iterator begin = std::begin(iter);
-  Iterator end   = std::end(iter);
-  IndexType len  = std::distance(begin, end);
-
-  RAJA::expt::ParamMultiplexer::parampack_init(pol, f_params);
-
-  // Only launch kernel if we have something to iterate over
-  if (len > 0 && BlockSize > 0)
+  // Note: separate branches
+  else
   {
-    //
-    // Compute the number of blocks
-    //
-    sycl_dim_t blockSize {BlockSize};
-    sycl_dim_t gridSize = impl::getGridDim(static_cast<size_t>(len), BlockSize);
-    RAJA_UNUSED_VAR(gridSize);
-
-    ::sycl::queue* q = sycl_res.get_queue();
-
-    auto combiner = [](ForallParam x, ForallParam y) {
-      RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, x, y);
-      return x;
-    };
-
-    // START
-    //
-    LOOP_BODY* lbody;
-    Iterator* beg;
-    RAJA_FT_BEGIN;
-    //
-    // Setup shared memory buffers
-    // Kernel body is nontrivially copyable, create space on device and copy to
-    // Workaround until "is_device_copyable" is supported
-    //
-    lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LOOP_BODY), *q);
-    q->memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
-
-    beg = (Iterator*)::sycl::malloc_device(sizeof(Iterator), *q);
-    q->memcpy(beg, &begin, sizeof(Iterator)).wait();
-
-    ForallParam* res = ::sycl::malloc_shared<ForallParam>(1, *q);
-    RAJA::expt::ParamMultiplexer::parampack_init(pol, *res);
-    auto reduction = ::sycl::reduction(res, f_params, combiner);
-
     q->submit([&](::sycl::handler& h) {
-       h.parallel_for(::sycl::range<1>(len), reduction,
-                      [=](::sycl::item<1> it, auto& red) {
-                        Index_type ii = it.get_id(0);
-                        ForallParam fp;
-                        RAJA::expt::ParamMultiplexer::parampack_init(pol, fp);
-                        if (ii < len)
-                        {
-                          RAJA::expt::invoke_body(fp, *lbody, (*beg)[ii]);
-                        }
-                        red.combine(fp);
-                      });
-     }).wait();  // Need to wait for completion to free memory
-    RAJA::expt::ParamMultiplexer::parampack_combine(pol, f_params, *res);
-    // Free our device memory
-    ::sycl::free(res, *q);
-    ::sycl::free(lbody, *q);
-    ::sycl::free(beg, *q);
+      h.parallel_for(::sycl::nd_range<1> {gridSize, blockSize},
+                     [=](::sycl::nd_item<1> it) {
+                       IndexType ii = it.get_global_id(0);
+                       if (ii < len)
+                       {
+                         if constexpr (is_lbody_trivially_copyable)
+                         {
+                           loop_body(begin[ii]);
+                         }
+                         else
+                         {
+                           (*lbody)((*d_begin)[ii]);
+                         }
+                       }
+                     });
+    });
 
-    RAJA_FT_END;
+    if (!Async)
+    {
+      q->wait();
+    }
   }
-  RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params);
+
+
+  // If we had to allocate device memory, free it
+  if constexpr (!is_lbody_trivially_copyable)
+  {
+    ::sycl::free(lbody, *q);
+    ::sycl::free(d_begin, *q);
+  }
+
 
   return resources::EventProxy<resources::Sycl>(sycl_res);
 }
