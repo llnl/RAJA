@@ -37,14 +37,45 @@
 
 
 // tag classes to differentiate reduce by attributes and apply correct testing
-struct left_fold_reduce_tag { };
-struct unordered_reduce_tag { };
+struct left_fold_reduce_tag
+{
+  static constexpr const char* name() { return "left fold reduce"; }
+};
+struct unordered_reduce_tag
+{
+  static constexpr const char* name() { return "unordered reduce"; }
+};
 
-struct reduce_interface_tag { };
+struct sum_interface_tag
+{
+  static constexpr const char* name() { return "sum interface"; }
+};
+struct reduce_interface_tag
+{
+  static constexpr const char* name() { return "reduce interface"; }
+};
 
-struct reduce_default_interface_tag { };
-struct reduce_init_interface_tag { };
-struct reduce_init_op_interface_tag { };
+struct any_types_tag {
+  template < typename >
+  static constexpr bool matches() { return true; }
+};
+struct floating_point_types_tag {
+  template < typename T >
+  static constexpr bool matches() { return std::is_floating_point_v<T>; }
+};
+
+struct reduce_default_interface_tag
+{
+  static constexpr const char* name() { return "called with ()"; }
+};
+struct reduce_init_interface_tag
+{
+  static constexpr const char* name() { return "called with (init)"; }
+};
+struct reduce_init_op_interface_tag
+{
+  static constexpr const char* name() { return "called with (init, op)"; }
+};
 
 
 // synchronize based on a RAJA execution policy
@@ -85,10 +116,7 @@ struct PolicySynchronize<RAJA::hip_exec<BLOCK_SIZE, Async>>
 template <typename Res,
           typename interface_tag,
           typename ValType>
-struct ReduceData;
-
-template <typename Res, typename ValType>
-struct ReduceData<Res, reduce_interface_tag, ValType>
+struct ReduceData
 {
   ValType* values = nullptr;
   ValType* reduced_value = nullptr;
@@ -133,50 +161,69 @@ struct ReduceData<Res, reduce_interface_tag, ValType>
 
 template <typename Res,
           typename T,
+          typename InterfaceTag,
           typename BinaryOp,
           typename Reducer>
-void doReduce(ReduceData<Res, reduce_interface_tag, T> & data,
+bool doReduce(ReduceData<Res, InterfaceTag, T> & data,
             RAJA::Index_type N,
             T,
             BinaryOp,
-            Reducer reducer, reduce_interface_tag, reduce_default_interface_tag)
+            Reducer reducer, InterfaceTag, reduce_default_interface_tag)
 {
   data.copy_data(N);
   data.resource().wait();
   reducer(data.reduced_value, RAJA::make_span(data.values, N));
   reducer.synchronize();
+  return true;
 }
 
 template <typename Res,
           typename T,
+          typename InterfaceTag,
           typename BinaryOp,
           typename Reducer>
-void doReduce(ReduceData<Res, reduce_interface_tag, T> & data,
-            RAJA::Index_type N,
-            T init,
-            BinaryOp,
-            Reducer reducer, reduce_interface_tag, reduce_init_interface_tag)
+bool doReduce(ReduceData<Res, InterfaceTag, T> & data,
+              RAJA::Index_type N,
+              T init,
+              BinaryOp,
+              Reducer reducer, InterfaceTag, reduce_init_interface_tag)
 {
   data.copy_data(N);
   data.resource().wait();
   reducer(data.reduced_value, RAJA::make_span(data.values, N), init);
   reducer.synchronize();
+  return true;
 }
 
 template <typename Res,
           typename T,
           typename BinaryOp,
           typename Reducer>
-void doReduce(ReduceData<Res, reduce_interface_tag, T> & data,
-            RAJA::Index_type N,
-            T init,
-            BinaryOp op,
-            Reducer reducer, reduce_interface_tag, reduce_init_op_interface_tag)
+bool doReduce(ReduceData<Res, sum_interface_tag, T> &,
+              RAJA::Index_type,
+              T,
+              BinaryOp,
+              Reducer, sum_interface_tag, reduce_init_op_interface_tag)
+{
+  // can't do this with the sum interface
+  return false;
+}
+
+template <typename Res,
+          typename T,
+          typename BinaryOp,
+          typename Reducer>
+bool doReduce(ReduceData<Res, reduce_interface_tag, T> & data,
+              RAJA::Index_type N,
+              T init,
+              BinaryOp op,
+              Reducer reducer, reduce_interface_tag, reduce_init_op_interface_tag)
 {
   data.copy_data(N);
   data.resource().wait();
   reducer(data.reduced_value, RAJA::make_span(data.values, N), init, op);
   reducer.synchronize();
+  return true;
 }
 
 
@@ -184,17 +231,22 @@ template <typename Res,
           typename T,
           typename BinaryOp,
           typename TestReducer,
-          typename BinaryOpInterface>
+          typename OrderTag,
+          typename DataInterfaceTag,
+          typename TestInterfaceTag>
 ::testing::AssertionResult testReduce(
     const char* test_name,
     const unsigned seed,
-    ReduceData<Res, reduce_interface_tag, T> & data,
+    ReduceData<Res, DataInterfaceTag, T> & data,
     RAJA::Index_type N,
     T init,
     BinaryOp op,
-    TestReducer test_reducer, left_fold_reduce_tag, reduce_interface_tag si, BinaryOpInterface ci)
+    TestReducer test_reducer, OrderTag, DataInterfaceTag di, TestInterfaceTag ti)
 {
-  doReduce(data, N, init, op, test_reducer, si, ci);
+  bool did_reduce = doReduce(data, N, init, op, test_reducer, di, ti);
+  if (!did_reduce) {
+    return ::testing::AssertionSuccess();
+  }
 
   T reduced_check_value = init;
   for (RAJA::Index_type i = 0; i < N; i++) {
@@ -203,39 +255,10 @@ template <typename Res,
 
   if (reduced_check_value != *data.reduced_value) {
     return ::testing::AssertionFailure()
-           << test_reducer.name() << " (left fold reduce) " << test_name
-           << " (with N " << N << " with seed " << seed << ")"
-           << " incorrect " << *data.reduced_value
-           << ", expected " << reduced_check_value;
-  }
-
-  return ::testing::AssertionSuccess();
-}
-
-template <typename Res,
-          typename T,
-          typename BinaryOp,
-          typename TestReducer,
-          typename BinaryOpInterface>
-::testing::AssertionResult testReduce(
-    const char* test_name,
-    const unsigned seed,
-    ReduceData<Res, reduce_interface_tag, T> & data,
-    RAJA::Index_type N,
-    T init,
-    BinaryOp op,
-    TestReducer test_reducer, unordered_reduce_tag, reduce_interface_tag si, BinaryOpInterface ci)
-{
-  doReduce(data, N, init, op, test_reducer, si, ci);
-
-  T reduced_check_value = init;
-  for (RAJA::Index_type i = 0; i < N; i++) {
-    reduced_check_value = op(std::move(reduced_check_value), data.values[i]);
-  }
-
-  if (reduced_check_value != *data.reduced_value) {
-    return ::testing::AssertionFailure()
-           << test_reducer.name() << " (unordered reduce) " << test_name
+           << test_reducer.name()
+           << " (" << OrderTag::name() << ")"
+           << " (" << TestInterfaceTag::name() << ")"
+           << " " << test_name
            << " (with N " << N << " with seed " << seed << ")"
            << " incorrect " << *data.reduced_value
            << ", expected " << reduced_check_value;
@@ -252,24 +275,26 @@ void testReducerInterfaces(unsigned seed, RAJA::Index_type MaxN, Reducer reducer
 {
   using reduce_category    = typename Reducer::reduce_category ;
   using interface_category = typename Reducer::reduce_interface ;
-  using no_init_operator   = reduce_default_interface_tag;
-  using init_no_operator   = reduce_init_interface_tag;
-  using init_operator      = reduce_init_op_interface_tag;
+  using types_category     = typename Reducer::reduce_types ;
 
-  std::mt19937 rng(seed);
-  RAJA::Index_type N = std::uniform_int_distribution<RAJA::Index_type>((MaxN+1)/2, MaxN)(rng);
-  std::uniform_int_distribution<RAJA::Index_type> dist(-N, N);
+  if constexpr(types_category::template matches<ValType>()) {
 
-  ReduceData<Res, interface_category, ValType> data(N, res, [&](){ return dist(rng); });
+    std::mt19937 rng(seed);
+    RAJA::Index_type N = std::uniform_int_distribution<RAJA::Index_type>((MaxN+1)/2, MaxN)(rng);
+    std::uniform_int_distribution<RAJA::Index_type> dist(-N, N);
 
-  ASSERT_TRUE(testReduce("default", seed, data, N, RAJA::operators::plus<ValType>::identity(), RAJA::operators::plus<ValType>{},
-      reducer, reduce_category{}, interface_category{}, no_init_operator{}));
-  ASSERT_TRUE(testReduce("init", seed, data, N, ValType(N), RAJA::operators::plus<ValType>{},
-      reducer, reduce_category{}, interface_category{}, init_no_operator{}));
-  ASSERT_TRUE(testReduce("minimum", seed, data, N, ValType(0), RAJA::operators::minimum<ValType>{},
-      reducer, reduce_category{}, interface_category{}, init_operator{}));
-  ASSERT_TRUE(testReduce("Maximum", seed, data, N, ValType(0), RAJA::operators::maximum<ValType>{},
-      reducer, reduce_category{}, interface_category{}, init_operator{}));
+    ReduceData<Res, interface_category, ValType> data(N, res, [&](){ return dist(rng); });
+
+    EXPECT_TRUE(testReduce("default", seed, data, N, RAJA::operators::plus<ValType>::identity(), RAJA::operators::plus<ValType>{},
+        reducer, reduce_category{}, interface_category{}, reduce_default_interface_tag{}));
+    EXPECT_TRUE(testReduce("init", seed, data, N, ValType(N), RAJA::operators::plus<ValType>{},
+        reducer, reduce_category{}, interface_category{}, reduce_init_interface_tag{}));
+    EXPECT_TRUE(testReduce("minimum", seed, data, N, ValType(0), RAJA::operators::minimum<ValType>{},
+        reducer, reduce_category{}, interface_category{}, reduce_init_op_interface_tag{}));
+    EXPECT_TRUE(testReduce("maximum", seed, data, N, ValType(0), RAJA::operators::maximum<ValType>{},
+        reducer, reduce_category{}, interface_category{}, reduce_init_op_interface_tag{}));
+
+  }
 }
 
 template <typename ValType,

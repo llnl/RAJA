@@ -91,6 +91,14 @@ struct LeftFoldReduce
     m_accumulated_value = m_op(std::move(m_accumulated_value), std::move(val));
   }
 
+  /*!
+      \brief combine a value into the reducer
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE void operator+=(T val)
+  {
+    combine(std::move(val));
+  }
+
 private:
   BinaryOp m_op;
   T m_accumulated_value;
@@ -214,6 +222,14 @@ struct BinaryTreeReduce
     ++m_count;
   }
 
+  /*!
+      \brief combine a value into the reducer
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE void operator+=(T val)
+  {
+    combine(std::move(val));
+  }
+
 private:
   BinaryOp m_op;
 
@@ -239,6 +255,80 @@ private:
     return reinterpret_cast<T*>(&m_tree_stack[level]);
 #endif
   }
+};
+
+/*!
+    \brief Reduce class that does a reduction with a left fold.
+*/
+template<typename T>
+struct KahanSum
+{
+  static_assert(std::is_floating_point_v<T>, "T must be a floating point type");
+
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit KahanSum(
+      T init = T()) noexcept
+      : m_accumulated_value(std::move(init)),
+        m_accumulated_carry(T())
+  {}
+
+  KahanSum(KahanSum const&)            = delete;
+  KahanSum& operator=(KahanSum const&) = delete;
+  KahanSum(KahanSum&&)                 = delete;
+  KahanSum& operator=(KahanSum&&)      = delete;
+
+  ~KahanSum() = default;
+
+  /*!
+      \brief reset the combined value of the reducer to the identity
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE void clear() noexcept
+  {
+    m_accumulated_value = T();
+    m_accumulated_carry = T();
+  }
+
+  /*!
+      \brief return the combined value and clear the reducer
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE T get_and_clear()
+  {
+    T accumulated_value = std::move(m_accumulated_value);
+
+    clear();
+
+    return accumulated_value;
+  }
+
+  /*!
+      \brief return the combined value
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE T get() { return m_accumulated_value; }
+
+  /*!
+      \brief combine a value into the reducer
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE void combine(T val)
+  {
+    // volatile used to prevent compiler optimizations that assume
+    // floating-point operations are associative
+    T y                 = val - m_accumulated_carry;
+    volatile T t        = m_accumulated_value + y;
+    volatile T z        = t - m_accumulated_value;
+    m_accumulated_carry = z - y;
+    m_accumulated_value = t;
+  }
+
+  /*!
+      \brief combine a value into the reducer
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE void operator+=(T val)
+  {
+    combine(std::move(val));
+  }
+
+private:
+  T m_accumulated_value;
+  T m_accumulated_carry;
 };
 
 template<typename T, typename BinaryOp>
@@ -281,6 +371,24 @@ binary_tree_reduce(Iter begin, Iter end, T init, BinaryOp op)
   using SizeType = std::make_unsigned_t<decltype(distance(begin, end))>;
   BinaryTreeReduce<T, BinaryOp, SizeType> reducer(std::move(init),
                                                   std::move(op));
+
+  for (; begin != end; ++begin)
+  {
+
+    reducer.combine(*begin);
+  }
+
+  return reducer.get_and_clear();
+}
+
+/*!
+    \brief Combine into a single value using a kahan sum using O(N) operations
+           and O(1) memory
+*/
+template<typename Iter, typename T>
+RAJA_HOST_DEVICE RAJA_INLINE T kahan_sum(Iter begin, Iter end, T init)
+{
+  KahanSum<T> reducer(std::move(init));
 
   for (; begin != end; ++begin)
   {
@@ -356,6 +464,22 @@ RAJA_HOST_DEVICE RAJA_INLINE
 
   return detail::binary_tree_reduce(begin(c), end(c), std::move(init),
                                     std::move(op));
+}
+
+/*!
+  \brief Accumulate given range to a single value
+  using a left fold algorithm in O(N) operations and O(1) extra memory
+    see https://en.cppreference.com/w/cpp/algorithm/accumulate
+*/
+template<typename Container, typename T = detail::ContainerVal<Container>>
+RAJA_HOST_DEVICE RAJA_INLINE concepts::
+    enable_if_t<T, type_traits::is_range<Container>, std::is_floating_point<T>>
+    kahan_sum(Container&& c, T init = T())
+{
+  using std::begin;
+  using std::end;
+
+  return detail::kahan_sum(begin(c), end(c), std::move(init));
 }
 
 /*!
