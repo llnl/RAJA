@@ -75,6 +75,10 @@
 #include "RAJA/policy/hip.hpp"
 #endif
 
+#if defined(RAJA_ENABLE_JIT)
+#include "proteus/JitInterface.hpp"
+#endif
+
 #if defined(RAJA_ENABLE_SYCL)
 #include "RAJA/policy/sycl.hpp"
 #endif

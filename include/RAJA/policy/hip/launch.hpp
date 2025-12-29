@@ -29,7 +29,7 @@ namespace RAJA
 {
 
 template<typename BODY, typename ReduceParams>
-__global__ void launch_new_reduce_global_fcn(const BODY body_in,
+__global__ RAJA_JIT_COMPILE void launch_new_reduce_global_fcn(const BODY body_in,
                                              ReduceParams reduce_params)
 {
   LaunchContext ctx;
@@ -92,7 +92,7 @@ struct LaunchExecute<
     if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
-
+      RAJA::register_lambda(body_in);
       RAJA_FT_BEGIN;
 
       size_t shared_mem_size = launch_params.shared_mem_size;
@@ -133,7 +133,7 @@ struct LaunchExecute<
 };
 
 template<typename BODY, int num_threads, typename ReduceParams>
-__launch_bounds__(num_threads, 1) __global__
+__launch_bounds__(num_threads, 1) __global__ RAJA_JIT_COMPILE
     void launch_new_reduce_global_fcn_fixed(const BODY body_in,
                                             ReduceParams reduce_params)
 {
@@ -210,7 +210,7 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
       launch_info.res          = hip_res;
 
       {
-
+        RAJA::register_lambda(body_in);
         RAJA::expt::ParamMultiplexer::parampack_init(pol, launch_reducers,
                                                      launch_info);
 
@@ -260,7 +260,7 @@ struct LoopExecute<
       BODY const& body)
   {
     const diff_t i = IndexMapper::template index<diff_t>();
-
+    RAJA::register_lambda(body);
     body(*(segment.begin() + i));
   }
 };

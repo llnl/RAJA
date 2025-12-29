@@ -224,4 +224,8 @@ inline void RAJA_ABORT_OR_THROW(const char* str)
 
 #endif
 
+#if defined RAJA_ENABLE_JIT
+#define RAJA_JIT_COMPILE(...) __attribute__((annotate("jit", __VA_ARGS__)))
+#endif
+
 #endif /* RAJA_INTERNAL_MACROS_HPP */
