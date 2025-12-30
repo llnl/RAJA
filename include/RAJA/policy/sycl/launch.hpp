@@ -31,14 +31,10 @@ namespace RAJA
 template<bool async>
 struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
 {
-
-  // If the launch lambda is trivially copyable
-  template<typename BODY_IN,
-           typename ReduceParams,
-           typename std::enable_if<std::is_trivially_copyable<BODY_IN> {},
-                                   bool>::type = true>
+  template<typename LoopBody, typename ReduceParams>
   static concepts::enable_if_t<
       resources::EventProxy<resources::Resource>,
+<<<<<<< HEAD
       RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
       RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>
   exec(RAJA::resources::Resource res,
@@ -108,18 +104,32 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
       RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
       concepts::negate<
           RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>>
+=======
+      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>>
+>>>>>>> develop
   exec(RAJA::resources::Resource res,
        const LaunchParams& launch_params,
-       BODY_IN&& body_in,
+       LoopBody&& loop_body,
        ReduceParams launch_reducers)
   {
-    using EXEC_POL = RAJA::sycl_launch_t<async, 0>;
+    using EXEC_POL  = RAJA::sycl_launch_t<async, 0>;
+    using LOOP_BODY = camp::decay<LoopBody>;
+    // Deduce at compile time if lbody is trivially constructible and if user
+    // has supplied parameters.  These will be used to determine which sycl
+    // launch to configure below.
+    constexpr bool is_parampack_empty =
+        RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>::value;
+    constexpr bool is_lbody_trivially_copyable =
+        std::is_trivially_copyable<LOOP_BODY>::value;
     EXEC_POL pol {};
 
     /*Get the queue from concrete resource */
     ::sycl::queue* q = res.get<camp::resources::Sycl>().get_queue();
 
-    RAJA::expt::ParamMultiplexer::parampack_init(pol, launch_reducers);
+    if constexpr (!is_parampack_empty)
+    {
+      RAJA::expt::ParamMultiplexer::parampack_init(pol, launch_reducers);
+    }
 
     //
     // Compute the number of blocks and threads
@@ -135,13 +145,14 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
 
     // Only launch kernel if we have something to iterate over
     constexpr int zero = 0;
-    if (launch_params.threads.value[0] > zero &&
-        launch_params.threads.value[1] > zero &&
-        launch_params.threads.value[2] > zero &&
-        launch_params.teams.value[0] > zero &&
-        launch_params.teams.value[1] > zero &&
-        launch_params.teams.value[2] > zero)
+    if (launch_params.threads.value[0] <= zero ||
+        launch_params.threads.value[1] <= zero ||
+        launch_params.threads.value[2] <= zero ||
+        launch_params.teams.value[0] <= zero ||
+        launch_params.teams.value[1] <= zero ||
+        launch_params.teams.value[2] <= zero)
     {
+<<<<<<< HEAD
 
 
       auto combiner = [](ReduceParams x, ReduceParams y) {
@@ -180,50 +191,23 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
       RAJA::expt::ParamMultiplexer::parampack_combine(pol, launch_reducers,
                                                       *res);
       ::sycl::free(res, *q);
+=======
+      return resources::EventProxy<resources::Resource>(res);
+>>>>>>> develop
     }
 
-    RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);
 
-    return resources::EventProxy<resources::Resource>(res);
-  }
+    RAJA_FT_BEGIN;
 
-  // If the launch lambda is not trivially copyable
-  template<typename BODY_IN,
-           typename ReduceParams,
-           typename std::enable_if<!std::is_trivially_copyable<BODY_IN> {},
-                                   bool>::type = true>
-  static concepts::enable_if_t<
-      resources::EventProxy<resources::Resource>,
-      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>
-  exec(RAJA::resources::Resource res,
-       const LaunchParams& params,
-       BODY_IN&& body_in,
-       ReduceParams& RAJA_UNUSED_ARG(launch_reducers))
-  {
-
-    /*Get the queue from concrete resource */
-    ::sycl::queue* q = res.get<camp::resources::Sycl>().get_queue();
-
+    using LOOP_BODY  = camp::decay<LoopBody>;
+    LOOP_BODY* lbody = nullptr;
     //
-    // Compute the number of blocks and threads
+    // Kernel body is nontrivially copyable, create space on device and copy
+    // to Workaround until "is_device_copyable" is supported
     //
-
-    const ::sycl::range<3> blockSize(params.threads.value[2],
-                                     params.threads.value[1],
-                                     params.threads.value[0]);
-
-    const ::sycl::range<3> gridSize(
-        params.threads.value[2] * params.teams.value[2],
-        params.threads.value[1] * params.teams.value[1],
-        params.threads.value[0] * params.teams.value[0]);
-
-    // Only launch kernel if we have something to iterate over
-    constexpr int zero = 0;
-    if (params.threads.value[0] > zero && params.threads.value[1] > zero &&
-        params.threads.value[2] > zero && params.teams.value[0] > zero &&
-        params.teams.value[1] > zero && params.teams.value[2] > zero)
+    if constexpr (!is_lbody_trivially_copyable)
     {
+<<<<<<< HEAD
 
 
       //
@@ -254,62 +238,21 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
        }).wait();  // Need to wait for completion to free memory
 
       ::sycl::free(lbody, *q);
+=======
+      lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LOOP_BODY), *q);
+      q->memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
+>>>>>>> develop
     }
-
-    return resources::EventProxy<resources::Resource>(res);
-  }
-
-  // If the launch lambda is not trivially copyable
-  template<typename BODY_IN,
-           typename ReduceParams,
-           typename std::enable_if<!std::is_trivially_copyable<BODY_IN> {},
-                                   bool>::type = true>
-  static concepts::enable_if_t<
-      resources::EventProxy<resources::Resource>,
-      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
-      concepts::negate<
-          RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>>
-  exec(RAJA::resources::Resource res,
-       const LaunchParams& launch_params,
-       BODY_IN&& body_in,
-       ReduceParams launch_reducers)
-  {
-    using EXEC_POL = RAJA::sycl_launch_t<async, 0>;
-    EXEC_POL pol {};
-
-    /*Get the queue from concrete resource */
-    ::sycl::queue* q = res.get<camp::resources::Sycl>().get_queue();
-
-    RAJA::expt::ParamMultiplexer::parampack_init(pol, launch_reducers);
-
-    //
-    // Compute the number of blocks and threads
-    //
-    const ::sycl::range<3> blockSize(launch_params.threads.value[2],
-                                     launch_params.threads.value[1],
-                                     launch_params.threads.value[0]);
-
-    const ::sycl::range<3> gridSize(
-        launch_params.threads.value[2] * launch_params.teams.value[2],
-        launch_params.threads.value[1] * launch_params.teams.value[1],
-        launch_params.threads.value[0] * launch_params.teams.value[0]);
-
-    // Only launch kernel if we have something to iterate over
-    constexpr int zero = 0;
-    if (launch_params.threads.value[0] > zero &&
-        launch_params.threads.value[1] > zero &&
-        launch_params.threads.value[2] > zero &&
-        launch_params.teams.value[0] > zero &&
-        launch_params.teams.value[1] > zero &&
-        launch_params.teams.value[2] > zero)
+    // Both the parallel_for call, combinations, and resolution are all
+    // unique to the parameter case, so we make a constexpr branch here
+    if constexpr (!is_parampack_empty)
     {
-
-
       auto combiner = [](ReduceParams x, ReduceParams y) {
         RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, x, y);
         return x;
       };
 
+<<<<<<< HEAD
 
       //
       // Kernel body is nontrivially copyable, create space on device and copy
@@ -320,6 +263,8 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
       lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LOOP_BODY), *q);
       q->memcpy(lbody, &body_in, sizeof(LOOP_BODY)).wait();
 
+=======
+>>>>>>> develop
       ReduceParams* res = ::sycl::malloc_shared<ReduceParams>(1, *q);
       RAJA::expt::ParamMultiplexer::parampack_init(pol, *res);
       auto reduction = ::sycl::reduction(res, launch_reducers, combiner);
@@ -340,8 +285,14 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
 
                ReduceParams fp;
                RAJA::expt::ParamMultiplexer::parampack_init(pol, fp);
-
-               RAJA::expt::invoke_body(fp, *lbody, ctx);
+               if constexpr (is_lbody_trivially_copyable)
+               {
+                 RAJA::expt::invoke_body(fp, loop_body, ctx);
+               }
+               else
+               {
+                 RAJA::expt::invoke_body(fp, *lbody, ctx);
+               }
 
                red.combine(fp);
              });
@@ -351,9 +302,44 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
                                                       *res);
       ::sycl::free(res, *q);
       ::sycl::free(lbody, *q);
+<<<<<<< HEAD
+=======
+      RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);
     }
+    else
+    {
+      q->submit([&](::sycl::handler& h) {
+        auto s_vec =
+            ::sycl::local_accessor<char, 1>(launch_params.shared_mem_size, h);
 
-    RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);
+        h.parallel_for(
+            ::sycl::nd_range<3>(gridSize, blockSize),
+            [=](::sycl::nd_item<3> itm) {
+              LaunchContext ctx;
+              ctx.itm = &itm;
+
+              // Point to shared memory
+              ctx.shared_mem_ptr =
+                  s_vec.get_multi_ptr<::sycl::access::decorated::yes>().get();
+              if constexpr (is_lbody_trivially_copyable)
+              {
+                loop_body(ctx);
+              }
+              else
+              {
+                (*lbody)(ctx);
+              }
+            });
+      });
+
+      if (!async)
+      {
+        q->wait();
+      }
+>>>>>>> develop
+    }
+    RAJA_FT_END;
+
 
     return resources::EventProxy<resources::Resource>(res);
   }

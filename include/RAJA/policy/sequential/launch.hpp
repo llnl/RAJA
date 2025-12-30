@@ -39,37 +39,10 @@ struct LaunchExecute<RAJA::null_launch_t>
 template<>
 struct LaunchExecute<RAJA::seq_launch_t>
 {
-
   template<typename BODY, typename ReduceParams>
   static concepts::enable_if_t<
       resources::EventProxy<resources::Resource>,
-      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>
-  exec(RAJA::resources::Resource res,
-       LaunchParams const& params,
-       BODY const& body,
-       ReduceParams& RAJA_UNUSED_ARG(ReduceParams))
-  {
-
-    LaunchContext ctx;
-
-    char* kernel_local_mem = new char[params.shared_mem_size];
-    ctx.shared_mem_ptr     = kernel_local_mem;
-
-    body(ctx);
-
-    delete[] kernel_local_mem;
-    ctx.shared_mem_ptr = nullptr;
-
-    return resources::EventProxy<resources::Resource>(res);
-  }
-
-  template<typename BODY, typename ReduceParams>
-  static concepts::enable_if_t<
-      resources::EventProxy<resources::Resource>,
-      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
-      concepts::negate<
-          RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>>
+      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>>
   exec(RAJA::resources::Resource res,
        LaunchParams const& launch_params,
        BODY const& body,
@@ -77,19 +50,32 @@ struct LaunchExecute<RAJA::seq_launch_t>
   {
     using EXEC_POL = RAJA::seq_exec;
     EXEC_POL pol {};
-
-    expt::ParamMultiplexer::parampack_init(pol, launch_reducers);
+    constexpr bool is_parampack_empty =
+        RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>::value;
+    if constexpr (!is_parampack_empty)
+    {
+      expt::ParamMultiplexer::parampack_init(pol, launch_reducers);
+    }
 
     LaunchContext ctx;
     char* kernel_local_mem = new char[launch_params.shared_mem_size];
     ctx.shared_mem_ptr     = kernel_local_mem;
 
-    expt::invoke_body(launch_reducers, body, ctx);
+    if constexpr (!is_parampack_empty)
+    {
+      expt::invoke_body(launch_reducers, body, ctx);
+    }
+    else
+    {
+      body(ctx);
+    }
 
     delete[] kernel_local_mem;
     ctx.shared_mem_ptr = nullptr;
-
-    expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);
+    if constexpr (!is_parampack_empty)
+    {
+      expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);
+    }
 
     return resources::EventProxy<resources::Resource>(res);
   }
