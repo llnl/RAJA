@@ -30,6 +30,7 @@
 
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
+#include "RAJA/util/Jit.hpp"
 
 #include "RAJA/pattern/kernel.hpp"
 #include "RAJA/pattern/kernel/For.hpp"
@@ -211,7 +212,8 @@ namespace internal
  * CUDA global function for launching CudaKernel policies
  */
 template<typename Data, typename Exec>
-__global__ RAJA_JIT_COMPILE void CudaKernelLauncher(const RAJA_CUDA_GRID_CONSTANT Data data)
+__global__ RAJA_JIT_COMPILE void CudaKernelLauncher(
+    const RAJA_CUDA_GRID_CONSTANT Data data)
 {
 
   using data_t        = camp::decay<Data>;
@@ -681,7 +683,7 @@ struct StatementExecutor<
         auto cuda_data = RAJA::cuda::make_launch_body(
             func, launch_dims.dims.blocks, launch_dims.dims.threads, shmem, res,
             data);
-
+        RAJA::register_lambda(func);
         //
         // Launch the kernel
         //

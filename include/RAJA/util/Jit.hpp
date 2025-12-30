@@ -3,17 +3,32 @@
 #include "proteus/JitInterface.hpp"
 #endif
 
-#ifndef RAJA_plugins_HPP
-#define RAJA_plugins_HPP
+#ifndef RAJA_jit_HPP
+#define RAJA_jit_HPP
 
-namespace RAJA {
-  template<typename Lambda>
-  inline auto register_lambda(Lambda&& lambda) {
-    #if defined RAJA_ENABLE_JIT
-      return proteus::register_lambda(std::forward<Lambda>(lambda));
-    #endif
-    return std::forward<Lambda>(lambda);
-  }
+namespace RAJA
+{
+template<typename Lambda>
+inline auto register_lambda(Lambda&& lambda)
+{
+#if defined RAJA_ENABLE_JIT
+  return proteus::register_lambda(std::forward<Lambda>(lambda));
+#else
+  return std::forward<Lambda>(lambda);
+#endif
 }
+
+template<typename T>
+inline auto jit_variable(T arg)
+{
+#if defined RAJA_ENABLE_JIT
+  return proteus::jit_variable(std::forward<T>(arg));
+#else
+  return std::forward<T>(arg);
+#endif
+}
+
+
+}  // namespace RAJA
 
 #endif

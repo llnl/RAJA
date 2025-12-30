@@ -24,14 +24,15 @@
 #include "RAJA/policy/cuda/MemUtils_CUDA.hpp"
 #include "RAJA/policy/cuda/raja_cudaerrchk.hpp"
 #include "RAJA/util/resource.hpp"
+#include "RAJA/util/Jit.hpp"
 
 namespace RAJA
 {
 
 template<typename BODY, typename ReduceParams>
-__global__ RAJA_JIT_COMPILE void launch_new_reduce_global_fcn(const RAJA_CUDA_GRID_CONSTANT BODY
-                                                 body_in,
-                                             ReduceParams reduce_params)
+__global__ RAJA_JIT_COMPILE void launch_new_reduce_global_fcn(
+    const RAJA_CUDA_GRID_CONSTANT BODY body_in,
+    ReduceParams reduce_params)
 {
   LaunchContext ctx;
 
@@ -95,7 +96,7 @@ struct LaunchExecute<
     if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
-
+      RAJA::register_lambda(body_in);
       RAJA_FT_BEGIN;
 
       size_t shared_mem_size = launch_params.shared_mem_size;
@@ -206,7 +207,7 @@ struct LaunchExecute<
     if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
-
+      RAJA::register_lambda(body_in);
       RAJA_FT_BEGIN;
 
       size_t shared_mem_size = launch_params.shared_mem_size;

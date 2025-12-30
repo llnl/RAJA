@@ -24,13 +24,15 @@
 #include "RAJA/policy/hip/MemUtils_HIP.hpp"
 #include "RAJA/policy/hip/raja_hiperrchk.hpp"
 #include "RAJA/util/resource.hpp"
+#include "RAJA/util/Jit.hpp"
 
 namespace RAJA
 {
 
 template<typename BODY, typename ReduceParams>
-__global__ RAJA_JIT_COMPILE void launch_new_reduce_global_fcn(const BODY body_in,
-                                             ReduceParams reduce_params)
+__global__ RAJA_JIT_COMPILE void launch_new_reduce_global_fcn(
+    const BODY body_in,
+    ReduceParams reduce_params)
 {
   LaunchContext ctx;
 
@@ -260,7 +262,7 @@ struct LoopExecute<
       BODY const& body)
   {
     const diff_t i = IndexMapper::template index<diff_t>();
-    RAJA::register_lambda(body);
+
     body(*(segment.begin() + i));
   }
 };
