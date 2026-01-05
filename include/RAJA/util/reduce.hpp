@@ -357,13 +357,12 @@ RAJA_HOST_DEVICE RAJA_INLINE
                 "BinaryOp must model BinaryFunction");
 
   auto begin_it = begin(c);
-  auto end_it = end(c);
+  auto end_it   = end(c);
 
   LeftFoldReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
 
   for (; begin_it != end_it; ++begin_it)
   {
-
     reducer.combine(*begin_it);
   }
 
@@ -385,13 +384,13 @@ RAJA_HOST_DEVICE RAJA_INLINE
                        BinaryOp op = BinaryOp {})
 {
   using std::begin;
-  using std::end;
   using std::distance;
+  using std::end;
   static_assert(type_traits::is_binary_function<BinaryOp, T, T, T>::value,
                 "BinaryOp must model BinaryFunction");
 
-  auto begin_it = begin(c);
-  auto end_it = end(c);
+  auto begin_it  = begin(c);
+  auto end_it    = end(c);
   using SizeType = std::make_unsigned_t<decltype(distance(begin_it, end_it))>;
 
   BinaryTreeReduce<T, BinaryOp, SizeType> reducer(std::move(init),
@@ -399,7 +398,6 @@ RAJA_HOST_DEVICE RAJA_INLINE
 
   for (; begin_it != end_it; ++begin_it)
   {
-
     reducer.combine(*begin_it);
   }
 
@@ -420,13 +418,12 @@ RAJA_HOST_DEVICE RAJA_INLINE concepts::
   using std::end;
 
   auto begin_it = begin(c);
-  auto end_it = end(c);
+  auto end_it   = end(c);
 
   KahanSum<T> reducer(std::move(init));
 
   for (; begin_it != end_it; ++begin_it)
   {
-
     reducer.combine(*begin_it);
   }
 
@@ -454,13 +451,12 @@ RAJA_HOST_DEVICE RAJA_INLINE
                 "BinaryOp must model BinaryFunction");
 
   auto begin_it = begin(c);
-  auto end_it = end(c);
+  auto end_it   = end(c);
 
   HighAccuracyReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
 
   for (; begin_it != end_it; ++begin_it)
   {
-
     reducer.combine(*begin_it);
   }
 
@@ -487,13 +483,12 @@ RAJA_HOST_DEVICE RAJA_INLINE
                 "BinaryOp must model BinaryFunction");
 
   auto begin_it = begin(c);
-  auto end_it = end(c);
+  auto end_it   = end(c);
 
   LeftFoldReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
 
   for (; begin_it != end_it; ++begin_it)
   {
-
     reducer.combine(*begin_it);
   }
 
