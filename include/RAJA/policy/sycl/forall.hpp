@@ -38,8 +38,6 @@
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 
-#include "RAJA/internal/fault_tolerance.hpp"
-
 #include "RAJA/policy/sycl/MemUtils_SYCL.hpp"
 #include "RAJA/policy/sycl/policy.hpp"
 

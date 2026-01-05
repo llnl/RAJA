@@ -93,7 +93,6 @@ struct LaunchExecute<
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
 
-      RAJA_FT_BEGIN;
 
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::hip::detail::hipInfo launch_info;
@@ -124,8 +123,6 @@ struct LaunchExecute<
         RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers,
                                                         launch_info);
       }
-
-      RAJA_FT_END;
     }
 
     return resources::EventProxy<resources::Resource>(res);
@@ -200,7 +197,6 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
 
-      RAJA_FT_BEGIN;
 
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::hip::detail::hipInfo launch_info;
@@ -231,8 +227,6 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
         RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers,
                                                         launch_info);
       }
-
-      RAJA_FT_END;
     }
 
     return resources::EventProxy<resources::Resource>(res);
