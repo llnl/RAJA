@@ -34,79 +34,7 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
   template<typename LoopBody, typename ReduceParams>
   static concepts::enable_if_t<
       resources::EventProxy<resources::Resource>,
-<<<<<<< HEAD
-      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
-      RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>
-  exec(RAJA::resources::Resource res,
-       const LaunchParams& params,
-       BODY_IN&& body_in,
-       ReduceParams& RAJA_UNUSED_ARG(launch_reducers))
-  {
-
-    /*Get the queue from concrete resource */
-    ::sycl::queue* q = res.get<camp::resources::Sycl>().get_queue();
-
-    //
-    // Compute the number of blocks and threads
-    //
-
-    const ::sycl::range<3> blockSize(params.threads.value[2],
-                                     params.threads.value[1],
-                                     params.threads.value[0]);
-
-    const ::sycl::range<3> gridSize(
-        params.threads.value[2] * params.teams.value[2],
-        params.threads.value[1] * params.teams.value[1],
-        params.threads.value[0] * params.teams.value[0]);
-
-    // Only launch kernel if we have something to iterate over
-    constexpr int zero = 0;
-    if (params.threads.value[0] > zero && params.threads.value[1] > zero &&
-        params.threads.value[2] > zero && params.teams.value[0] > zero &&
-        params.teams.value[1] > zero && params.teams.value[2] > zero)
-    {
-
-
-      q->submit([&](::sycl::handler& h) {
-        auto s_vec = ::sycl::local_accessor<char, 1>(params.shared_mem_size, h);
-
-        h.parallel_for(
-            ::sycl::nd_range<3>(gridSize, blockSize),
-            [=](::sycl::nd_item<3> itm) {
-              LaunchContext ctx;
-              ctx.itm = &itm;
-
-              // Point to shared memory
-              ctx.shared_mem_ptr =
-                  s_vec.get_multi_ptr<::sycl::access::decorated::yes>().get();
-
-              body_in(ctx);
-            });
-      });
-
-      if (!async)
-      {
-        q->wait();
-      }
-    }
-
-    return resources::EventProxy<resources::Resource>(res);
-  }
-
-  // If the launch lambda is trivially copyable and we have explcit reduction
-  // parameters
-  template<typename BODY_IN,
-           typename ReduceParams,
-           typename std::enable_if<std::is_trivially_copyable<BODY_IN> {},
-                                   bool>::type = true>
-  static concepts::enable_if_t<
-      resources::EventProxy<resources::Resource>,
-      RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>,
-      concepts::negate<
-          RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>>>
-=======
       RAJA::expt::type_traits::is_ForallParamPack<ReduceParams>>
->>>>>>> develop
   exec(RAJA::resources::Resource res,
        const LaunchParams& launch_params,
        LoopBody&& loop_body,
@@ -152,52 +80,9 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
         launch_params.teams.value[1] <= zero ||
         launch_params.teams.value[2] <= zero)
     {
-<<<<<<< HEAD
-
-
-      auto combiner = [](ReduceParams x, ReduceParams y) {
-        RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, x, y);
-        return x;
-      };
-
-
-      ReduceParams* res = ::sycl::malloc_shared<ReduceParams>(1, *q);
-      RAJA::expt::ParamMultiplexer::parampack_init(pol, *res);
-      auto reduction = ::sycl::reduction(res, launch_reducers, combiner);
-
-      q->submit([&](::sycl::handler& h) {
-         auto s_vec =
-             ::sycl::local_accessor<char, 1>(launch_params.shared_mem_size, h);
-
-         h.parallel_for(
-             ::sycl::nd_range<3>(gridSize, blockSize), reduction,
-             [=](::sycl::nd_item<3> itm, auto& red) {
-               LaunchContext ctx;
-               ctx.itm = &itm;
-
-               // Point to shared memory
-               ctx.shared_mem_ptr =
-                   s_vec.get_multi_ptr<::sycl::access::decorated::yes>().get();
-
-               ReduceParams fp;
-               RAJA::expt::ParamMultiplexer::parampack_init(pol, fp);
-
-               RAJA::expt::invoke_body(fp, body_in, ctx);
-
-               red.combine(fp);
-             });
-       }).wait();  // Need to wait for completion to free memory
-
-      RAJA::expt::ParamMultiplexer::parampack_combine(pol, launch_reducers,
-                                                      *res);
-      ::sycl::free(res, *q);
-=======
       return resources::EventProxy<resources::Resource>(res);
->>>>>>> develop
     }
 
-
-    RAJA_FT_BEGIN;
 
     using LOOP_BODY  = camp::decay<LoopBody>;
     LOOP_BODY* lbody = nullptr;
@@ -207,41 +92,8 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
     //
     if constexpr (!is_lbody_trivially_copyable)
     {
-<<<<<<< HEAD
-
-
-      //
-      // Kernel body is nontrivially copyable, create space on device and copy
-      // to Workaround until "is_device_copyable" is supported
-      //
-      using LOOP_BODY = camp::decay<BODY_IN>;
-      LOOP_BODY* lbody;
-      lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LOOP_BODY), *q);
-      q->memcpy(lbody, &body_in, sizeof(LOOP_BODY)).wait();
-
-      q->submit([&](::sycl::handler& h) {
-         auto s_vec =
-             ::sycl::local_accessor<char, 1>(params.shared_mem_size, h);
-
-         h.parallel_for(
-             ::sycl::nd_range<3>(gridSize, blockSize),
-             [=](::sycl::nd_item<3> itm) {
-               LaunchContext ctx;
-               ctx.itm = &itm;
-
-               // Point to shared memory
-               ctx.shared_mem_ptr =
-                   s_vec.get_multi_ptr<::sycl::access::decorated::yes>().get();
-
-               (*lbody)(ctx);
-             });
-       }).wait();  // Need to wait for completion to free memory
-
-      ::sycl::free(lbody, *q);
-=======
       lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LOOP_BODY), *q);
       q->memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
->>>>>>> develop
     }
     // Both the parallel_for call, combinations, and resolution are all
     // unique to the parameter case, so we make a constexpr branch here
@@ -252,19 +104,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
         return x;
       };
 
-<<<<<<< HEAD
-
-      //
-      // Kernel body is nontrivially copyable, create space on device and copy
-      // to Workaround until "is_device_copyable" is supported
-      //
-      using LOOP_BODY = camp::decay<BODY_IN>;
-      LOOP_BODY* lbody;
-      lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LOOP_BODY), *q);
-      q->memcpy(lbody, &body_in, sizeof(LOOP_BODY)).wait();
-
-=======
->>>>>>> develop
       ReduceParams* res = ::sycl::malloc_shared<ReduceParams>(1, *q);
       RAJA::expt::ParamMultiplexer::parampack_init(pol, *res);
       auto reduction = ::sycl::reduction(res, launch_reducers, combiner);
@@ -302,8 +141,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
                                                       *res);
       ::sycl::free(res, *q);
       ::sycl::free(lbody, *q);
-<<<<<<< HEAD
-=======
       RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);
     }
     else
@@ -336,10 +173,7 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
       {
         q->wait();
       }
->>>>>>> develop
     }
-    RAJA_FT_END;
-
 
     return resources::EventProxy<resources::Resource>(res);
   }
