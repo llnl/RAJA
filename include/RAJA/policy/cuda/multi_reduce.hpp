@@ -285,7 +285,7 @@ struct MultiReduceGridAtomicHostInit_TallyData
   //! get value for bin, assumes synchronization occurred elsewhere
   T get(int bin) const
   {
-    ::RAJA::detail::HighAccuracyReduce<T, typename Combiner::operator_type>
+    ::RAJA::HighAccuracyReduce<T, typename Combiner::operator_type>
         reducer(m_identity);
     for (int tally_rep = 0; tally_rep < m_tally_replication; ++tally_rep)
     {

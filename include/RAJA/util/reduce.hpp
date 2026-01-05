@@ -35,9 +35,6 @@
 namespace RAJA
 {
 
-namespace detail
-{
-
 /*!
     \brief Reduce class that does a reduction with a left fold.
 */
@@ -259,6 +256,9 @@ private:
 
 /*!
     \brief Reduce class that does a reduction with a left fold.
+
+    \note KahanSum does not take an binary operation as the only valid operation
+          is plus.
 */
 template<typename T>
 struct KahanSum
@@ -338,89 +338,6 @@ using HighAccuracyReduce =
                        LeftFoldReduce<T, BinaryOp>>;
 
 /*!
-    \brief Combine into a single value using a left fold with the given
-           operation using O(N) operations and O(1) memory
-*/
-template<typename Iter, typename T, typename BinaryOp>
-RAJA_HOST_DEVICE RAJA_INLINE T
-left_fold_reduce(Iter begin, Iter end, T init, BinaryOp op)
-{
-  LeftFoldReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
-
-  for (; begin != end; ++begin)
-  {
-
-    reducer.combine(*begin);
-  }
-
-  return reducer.get_and_clear();
-}
-
-/*!
-    \brief reduce using a binary tree with the given operation
-           and using O(N) operations and O(lg(n)) memory
-
-    This is more accurate than sequentially adding into a single value for
-    floating point types.
-*/
-template<typename Iter, typename T, typename BinaryOp>
-RAJA_HOST_DEVICE RAJA_INLINE T
-binary_tree_reduce(Iter begin, Iter end, T init, BinaryOp op)
-{
-  using std::distance;
-  using SizeType = std::make_unsigned_t<decltype(distance(begin, end))>;
-  BinaryTreeReduce<T, BinaryOp, SizeType> reducer(std::move(init),
-                                                  std::move(op));
-
-  for (; begin != end; ++begin)
-  {
-
-    reducer.combine(*begin);
-  }
-
-  return reducer.get_and_clear();
-}
-
-/*!
-    \brief Combine into a single value using a kahan sum using O(N) operations
-           and O(1) memory
-*/
-template<typename Iter, typename T>
-RAJA_HOST_DEVICE RAJA_INLINE T kahan_sum(Iter begin, Iter end, T init)
-{
-  KahanSum<T> reducer(std::move(init));
-
-  for (; begin != end; ++begin)
-  {
-
-    reducer.combine(*begin);
-  }
-
-  return reducer.get_and_clear();
-}
-
-/*!
-    \brief reducer that uses a high accuracy implementation when round-off error
-    is a concern, or a faster algorithm with it is not a concern
-*/
-template<typename Iter, typename T, typename BinaryOp>
-RAJA_HOST_DEVICE RAJA_INLINE T
-high_accuracy_reduce(Iter begin, Iter end, T init, BinaryOp op)
-{
-  HighAccuracyReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
-
-  for (; begin != end; ++begin)
-  {
-
-    reducer.combine(*begin);
-  }
-
-  return reducer.get_and_clear();
-}
-
-}  // namespace detail
-
-/*!
   \brief Accumulate given range to a single value
   using a left fold algorithm in O(N) operations and O(1) extra memory
     see https://en.cppreference.com/w/cpp/algorithm/accumulate
@@ -430,17 +347,27 @@ template<typename Container,
          typename BinaryOp = operators::plus<T>>
 RAJA_HOST_DEVICE RAJA_INLINE
     concepts::enable_if_t<T, type_traits::is_range<Container>>
-    accumulate(Container&& c,
-               T init      = BinaryOp::identity(),
-               BinaryOp op = BinaryOp {})
+    left_fold_reduce(Container&& c,
+                     T init      = BinaryOp::identity(),
+                     BinaryOp op = BinaryOp {})
 {
   using std::begin;
   using std::end;
   static_assert(type_traits::is_binary_function<BinaryOp, T, T, T>::value,
                 "BinaryOp must model BinaryFunction");
 
-  return detail::left_fold_reduce(begin(c), end(c), std::move(init),
-                                  std::move(op));
+  auto begin_it = begin(c);
+  auto end_it = end(c);
+
+  LeftFoldReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
+
+  for (; begin_it != end_it; ++begin_it)
+  {
+
+    reducer.combine(*begin_it);
+  }
+
+  return reducer.get_and_clear();
 }
 
 /*!
@@ -459,11 +386,24 @@ RAJA_HOST_DEVICE RAJA_INLINE
 {
   using std::begin;
   using std::end;
+  using std::distance;
   static_assert(type_traits::is_binary_function<BinaryOp, T, T, T>::value,
                 "BinaryOp must model BinaryFunction");
 
-  return detail::binary_tree_reduce(begin(c), end(c), std::move(init),
-                                    std::move(op));
+  auto begin_it = begin(c);
+  auto end_it = end(c);
+  using SizeType = std::make_unsigned_t<decltype(distance(begin_it, end_it))>;
+
+  BinaryTreeReduce<T, BinaryOp, SizeType> reducer(std::move(init),
+                                                  std::move(op));
+
+  for (; begin_it != end_it; ++begin_it)
+  {
+
+    reducer.combine(*begin_it);
+  }
+
+  return reducer.get_and_clear();
 }
 
 /*!
@@ -479,7 +419,18 @@ RAJA_HOST_DEVICE RAJA_INLINE concepts::
   using std::begin;
   using std::end;
 
-  return detail::kahan_sum(begin(c), end(c), std::move(init));
+  auto begin_it = begin(c);
+  auto end_it = end(c);
+
+  KahanSum<T> reducer(std::move(init));
+
+  for (; begin_it != end_it; ++begin_it)
+  {
+
+    reducer.combine(*begin_it);
+  }
+
+  return reducer.get_and_clear();
 }
 
 /*!
@@ -502,8 +453,51 @@ RAJA_HOST_DEVICE RAJA_INLINE
   static_assert(type_traits::is_binary_function<BinaryOp, T, T, T>::value,
                 "BinaryOp must model BinaryFunction");
 
-  return detail::high_accuracy_reduce(begin(c), end(c), std::move(init),
-                                      std::move(op));
+  auto begin_it = begin(c);
+  auto end_it = end(c);
+
+  HighAccuracyReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
+
+  for (; begin_it != end_it; ++begin_it)
+  {
+
+    reducer.combine(*begin_it);
+  }
+
+  return reducer.get_and_clear();
+}
+
+/*!
+  \brief Accumulate given range to a single value
+  using a left fold algorithm in O(N) operations and O(1) extra memory
+    see https://en.cppreference.com/w/cpp/algorithm/accumulate
+*/
+template<typename Container,
+         typename T        = detail::ContainerVal<Container>,
+         typename BinaryOp = operators::plus<T>>
+RAJA_HOST_DEVICE RAJA_INLINE
+    concepts::enable_if_t<T, type_traits::is_range<Container>>
+    accumulate(Container&& c,
+               T init      = BinaryOp::identity(),
+               BinaryOp op = BinaryOp {})
+{
+  using std::begin;
+  using std::end;
+  static_assert(type_traits::is_binary_function<BinaryOp, T, T, T>::value,
+                "BinaryOp must model BinaryFunction");
+
+  auto begin_it = begin(c);
+  auto end_it = end(c);
+
+  LeftFoldReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
+
+  for (; begin_it != end_it; ++begin_it)
+  {
+
+    reducer.combine(*begin_it);
+  }
+
+  return reducer.get_and_clear();
 }
 
 }  // namespace RAJA

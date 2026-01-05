@@ -1118,7 +1118,7 @@ public:
     if (n != end)
     {
       tally_or_val_ptr.list->synchronize_resources();
-      ::RAJA::detail::HighAccuracyReduce<T, typename Combiner::operator_type>
+      ::RAJA::HighAccuracyReduce<T, typename Combiner::operator_type>
           reducer(std::move(val.value));
       for (; n != end; ++n)
       {
