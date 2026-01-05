@@ -377,7 +377,6 @@ struct WorkRunner<
                                          block_size),
           static_cast<cuda_dim_member_t>(num_loops), 1};
 
-      RAJA_FT_BEGIN;
 
       //
       // Setup shared memory buffers
@@ -392,8 +391,6 @@ struct WorkRunner<
         RAJA::cuda::launch((const void*)func, gridSize, blockSize, func_args,
                            shmem, r, Async);
       }
-
-      RAJA_FT_END;
     }
 
     return run_storage;

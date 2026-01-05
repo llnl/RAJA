@@ -31,8 +31,6 @@
 #include <omp.h>
 
 #include "RAJA/util/types.hpp"
-
-#include "RAJA/internal/fault_tolerance.hpp"
 #include "RAJA/pattern/kernel/TypeTraits.hpp"
 
 #include "RAJA/index/IndexSet.hpp"

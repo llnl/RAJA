@@ -84,8 +84,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
     }
 
 
-    RAJA_FT_BEGIN;
-
     using LOOP_BODY  = camp::decay<LoopBody>;
     LOOP_BODY* lbody = nullptr;
     //
@@ -176,8 +174,6 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
         q->wait();
       }
     }
-    RAJA_FT_END;
-
 
     return resources::EventProxy<resources::Resource>(res);
   }
