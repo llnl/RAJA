@@ -29,8 +29,6 @@
 
 #include "RAJA/policy/sequential/policy.hpp"
 
-#include "RAJA/internal/fault_tolerance.hpp"
-
 #include "RAJA/pattern/detail/forall.hpp"
 
 #include "RAJA/util/resource.hpp"

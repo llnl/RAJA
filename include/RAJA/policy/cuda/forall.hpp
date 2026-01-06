@@ -35,8 +35,6 @@
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 
-#include "RAJA/internal/fault_tolerance.hpp"
-
 #include "RAJA/policy/cuda/MemUtils_CUDA.hpp"
 #include "RAJA/policy/cuda/policy.hpp"
 #include "RAJA/policy/cuda/raja_cudaerrchk.hpp"
@@ -570,7 +568,6 @@ forall_impl(resources::Cuda cuda_res,
     internal::CudaDims dims(1);
     DimensionCalculator::set_dimensions(dims, len, func, shmem);
 
-    RAJA_FT_BEGIN;
 
     RAJA::cuda::detail::cudaInfo launch_info;
     launch_info.gridDim  = dims.blocks;
@@ -598,8 +595,6 @@ forall_impl(resources::Cuda cuda_res,
       RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params,
                                                       launch_info);
     }
-
-    RAJA_FT_END;
   }
 
   return resources::EventProxy<resources::Cuda>(cuda_res);

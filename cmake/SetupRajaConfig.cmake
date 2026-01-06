@@ -24,8 +24,6 @@ endif()
 #set(RAJA_USE_PTR_CLASS OFF)
 
 ## Fault tolerance options
-option(RAJA_ENABLE_FT "Enable fault-tolerance features" OFF)
-option(RAJA_REPORT_FT "Report on use of fault-tolerant features" OFF)
 option(RAJA_ENABLE_ITERATOR_OVERFLOW_DEBUG "Enable Overflow checking during Iterator operations" OFF)
 
 ## Timer options
