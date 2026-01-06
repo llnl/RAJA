@@ -89,7 +89,7 @@ if(RAJA_ENABLE_HIP)
 endif()
 
 
-set( UTIL_REDUCES BinaryTree Accumulate )
+set( UTIL_REDUCES BinaryTree Accumulate Kahan )
 
 RAJA_GENERATE_ALGORITHM_UTIL_TESTS( reduce Sequential Default "${UTIL_REDUCES}" )
 
