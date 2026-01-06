@@ -44,13 +44,14 @@ struct LeftFoldReduce
   RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit LeftFoldReduce(
       T init      = BinaryOp::identity(),
       BinaryOp op = BinaryOp {}) noexcept
-    : m_storage(std::move(op), std::move(init))
+      : m_storage(std::move(op), std::move(init))
   {}
 
   /*!
       \brief reset the combined value of the reducer to the identity
   */
-  RAJA_HOST_DEVICE RAJA_INLINE constexpr void reset(T init = BinaryOp::identity()) noexcept
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void reset(
+      T init = BinaryOp::identity()) noexcept
   {
     m_storage.m_accumulated_value = std::move(init);
   }
@@ -58,7 +59,8 @@ struct LeftFoldReduce
   /*!
       \brief return the combined value and reset the reducer
   */
-  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get_and_reset(T init = BinaryOp::identity())
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get_and_reset(
+      T init = BinaryOp::identity())
   {
     T value = get();
 
@@ -70,7 +72,10 @@ struct LeftFoldReduce
   /*!
       \brief return the combined value
   */
-  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get() { return m_storage.m_accumulated_value; }
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get()
+  {
+    return m_storage.m_accumulated_value;
+  }
 
   /*!
       \brief combine a value into the reducer
@@ -97,18 +102,17 @@ private:
     T m_accumulated_value;
 
     RAJA_HOST_DEVICE RAJA_INLINE constexpr Storage(BinaryOp op, T init)
-      : BinaryOp(std::move(op))
-      , m_accumulated_value(std::move(init))
-    {
-
-    }
+        : BinaryOp(std::move(op)),
+          m_accumulated_value(std::move(init))
+    {}
 
     RAJA_HOST_DEVICE RAJA_INLINE constexpr BinaryOp& get_op() noexcept
     {
       return *this;
     }
 
-    RAJA_HOST_DEVICE RAJA_INLINE constexpr BinaryOp const& get_op() const noexcept
+    RAJA_HOST_DEVICE RAJA_INLINE constexpr BinaryOp const& get_op()
+        const noexcept
     {
       return *this;
     }
@@ -136,7 +140,7 @@ struct BinaryTreeReduce
   RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit BinaryTreeReduce(
       T init      = BinaryOp::identity(),
       BinaryOp op = BinaryOp {}) noexcept
-    : m_storage(std::move(op))
+      : m_storage(std::move(op))
   {
     combine(std::move(init));
   }
@@ -144,7 +148,8 @@ struct BinaryTreeReduce
   /*!
       \brief reset the combined value of the reducer to the identity
   */
-  RAJA_HOST_DEVICE RAJA_INLINE constexpr void reset(T init = BinaryOp::identity()) noexcept
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void reset(
+      T init = BinaryOp::identity()) noexcept
   {
     m_storage.m_count = 0;
 
@@ -154,7 +159,8 @@ struct BinaryTreeReduce
   /*!
       \brief return the combined value and reset the reducer
   */
-  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get_and_reset(T init = BinaryOp::identity())
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get_and_reset(
+      T init = BinaryOp::identity())
   {
     T value = get();
 
@@ -176,7 +182,8 @@ struct BinaryTreeReduce
     {
       if (count & mask)
       {
-        value = m_storage.get_op()(std::move(value), m_storage.m_tree_stack[level]);
+        value =
+            m_storage.get_op()(std::move(value), m_storage.m_tree_stack[level]);
 
         count ^= mask;
       }
@@ -195,7 +202,8 @@ struct BinaryTreeReduce
     SizeType level = 0;
     for (SizeType mask = 1; m_storage.m_count & mask; ++level, mask <<= 1)
     {
-      value = m_storage.get_op()(std::move(m_storage.m_tree_stack[level]), std::move(value));
+      value = m_storage.get_op()(std::move(m_storage.m_tree_stack[level]),
+                                 std::move(value));
     }
 
     m_storage.m_tree_stack[level] = std::move(value);
@@ -220,22 +228,21 @@ private:
     // The bits of count indicate which levels of tree stack have a value
     SizeType m_count = 0;
 
-    // Each level in tree stack has a value that holds the accumulation of 2^level
-    // values or is unused and has no value.
+    // Each level in tree stack has a value that holds the accumulation of
+    // 2^level values or is unused and has no value.
     T m_tree_stack[num_levels];
 
     RAJA_HOST_DEVICE RAJA_INLINE constexpr Storage(BinaryOp op)
-      : BinaryOp(std::move(op))
-    {
-
-    }
+        : BinaryOp(std::move(op))
+    {}
 
     RAJA_HOST_DEVICE RAJA_INLINE constexpr BinaryOp& get_op() noexcept
     {
       return *this;
     }
 
-    RAJA_HOST_DEVICE RAJA_INLINE constexpr BinaryOp const& get_op() const noexcept
+    RAJA_HOST_DEVICE RAJA_INLINE constexpr BinaryOp const& get_op()
+        const noexcept
     {
       return *this;
     }
@@ -310,7 +317,6 @@ struct KahanSum
   }
 
 private:
-
   T m_accumulated_value;
   T m_accumulated_carry;
 };
@@ -329,8 +335,8 @@ using HighAccuracyReduce =
 template<typename Container,
          typename T        = detail::ContainerVal<Container>,
          typename BinaryOp = operators::plus<T>>
-RAJA_HOST_DEVICE RAJA_INLINE constexpr
-    concepts::enable_if_t<T, type_traits::is_range<Container>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
+    enable_if_t<T, type_traits::is_range<Container>>
     left_fold_reduce(Container&& c,
                      T init      = BinaryOp::identity(),
                      BinaryOp op = BinaryOp {})
@@ -361,8 +367,8 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr
 template<typename Container,
          typename T        = detail::ContainerVal<Container>,
          typename BinaryOp = operators::plus<T>>
-RAJA_HOST_DEVICE RAJA_INLINE constexpr
-    concepts::enable_if_t<T, type_traits::is_range<Container>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
+    enable_if_t<T, type_traits::is_range<Container>>
     binary_tree_reduce(Container&& c,
                        T init      = BinaryOp::identity(),
                        BinaryOp op = BinaryOp {})
@@ -423,8 +429,8 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
 template<typename Container,
          typename T        = detail::ContainerVal<Container>,
          typename BinaryOp = operators::plus<T>>
-RAJA_HOST_DEVICE RAJA_INLINE constexpr
-    concepts::enable_if_t<T, type_traits::is_range<Container>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
+    enable_if_t<T, type_traits::is_range<Container>>
     high_accuracy_reduce(Container&& c,
                          T init      = BinaryOp::identity(),
                          BinaryOp op = BinaryOp {})
@@ -455,8 +461,8 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr
 template<typename Container,
          typename T        = detail::ContainerVal<Container>,
          typename BinaryOp = operators::plus<T>>
-RAJA_HOST_DEVICE RAJA_INLINE constexpr
-    concepts::enable_if_t<T, type_traits::is_range<Container>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
+    enable_if_t<T, type_traits::is_range<Container>>
     accumulate(Container&& c,
                T init      = BinaryOp::identity(),
                BinaryOp op = BinaryOp {})
