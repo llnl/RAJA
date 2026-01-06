@@ -72,7 +72,7 @@ struct LeftFoldReduce
   /*!
       \brief return the combined value
   */
-  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get()
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get() const
   {
     return m_storage.m_accumulated_value;
   }
@@ -292,7 +292,10 @@ struct KahanSum
   /*!
       \brief return the combined value
   */
-  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get() { return m_accumulated_value; }
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get() const
+  {
+    return m_accumulated_value;
+  }
 
   /*!
       \brief combine a value into the reducer
