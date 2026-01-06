@@ -293,7 +293,7 @@ struct MultiReduceGridAtomicHostInit_TallyData
           GetTallyOffset {}(bin, m_tally_bins, tally_rep, m_tally_replication);
       reducer.combine(m_tally_mem[tally_offset]);
     }
-    return reducer.get_and_clear();
+    return reducer.get_and_reset();
   }
 
   int num_bins() const { return m_num_bins; }

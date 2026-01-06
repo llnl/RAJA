@@ -1136,7 +1136,7 @@ public:
           reducer.combine(std::move(values[r]));
         }
       }
-      val.value = reducer.get_and_clear();
+      val.value = reducer.get_and_reset();
       tally_or_val_ptr.list->free_list();
     }
     return val.value;

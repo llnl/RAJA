@@ -317,7 +317,7 @@ struct MultiReduceDataOMP<
       reducer.combine(
           m_data[index_data(bin, thread_idx, m_padded_bins, m_padded_threads)]);
     }
-    return reducer.get_and_clear();
+    return reducer.get_and_reset();
   }
 
 private:
