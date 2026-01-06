@@ -310,14 +310,14 @@ struct MultiReduceDataOMP<
 
   T get(size_t bin) const
   {
-    ::RAJA::detail::HighAccuracyReduce<T, typename MultiReduceOp::operator_type>
+    ::RAJA::HighAccuracyReduce<T, typename MultiReduceOp::operator_type>
         reducer(m_identity);
     for (size_t thread_idx = 0; thread_idx < m_max_threads; ++thread_idx)
     {
       reducer.combine(
           m_data[index_data(bin, thread_idx, m_padded_bins, m_padded_threads)]);
     }
-    return reducer.get_and_clear();
+    return reducer.get_and_reset();
   }
 
 private:

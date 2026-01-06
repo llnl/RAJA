@@ -1118,8 +1118,8 @@ public:
     if (n != end)
     {
       tally_or_val_ptr.list->synchronize_resources();
-      ::RAJA::detail::HighAccuracyReduce<T, typename Combiner::operator_type>
-          reducer(std::move(val.value));
+      ::RAJA::HighAccuracyReduce<T, typename Combiner::operator_type> reducer(
+          std::move(val.value));
       for (; n != end; ++n)
       {
         T(&values)[tally_slots] = *n;
@@ -1128,7 +1128,7 @@ public:
           reducer.combine(std::move(values[r]));
         }
       }
-      val.value = reducer.get_and_clear();
+      val.value = reducer.get_and_reset();
       tally_or_val_ptr.list->free_list();
     }
     return val.value;
