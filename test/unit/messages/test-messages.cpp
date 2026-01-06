@@ -13,12 +13,11 @@
 TEST(message_handler, initialize) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -29,12 +28,11 @@ TEST(message_handler, initialize) {
 TEST(message_handler, initialize_with_resource) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager(msg_sz, camp::resources::Host());
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -45,12 +43,11 @@ TEST(message_handler, initialize_with_resource) {
 TEST(message_handler, clear) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -70,7 +67,7 @@ TEST(message_handler, try_post_message) {
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -80,12 +77,11 @@ TEST(message_handler, try_post_message) {
 TEST(message_handler, try_post_message_overflow) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -102,12 +98,11 @@ TEST(message_handler, try_post_message_overwrite) {
 TEST(message_handler, wait_all) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -121,12 +116,11 @@ TEST(message_handler, wait_all) {
 TEST(message_handler, wait_all_overalloc) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(2*msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>(msg_id, [&](int val) {
+  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -140,12 +134,11 @@ TEST(message_handler, wait_all_overalloc) {
 TEST(message_handler, wait_all_array) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<camp::array<int, 3>>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   camp::array<int, 3> test = {0, 0, 0};
-  auto q = msg_manager.get_queue<RAJA::mpsc_queue>(1, 
+  auto q = msg_manager.get_queue<RAJA::mpsc_queue>( 
     [&](camp::array<int, 3> val) {
       test[0] = val[0];   
       test[1] = val[1];

@@ -21,8 +21,10 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include <vector>
 
 #include "RAJA/util/msg_header.hpp"
+#include "RAJA/util/msg_callback.hpp"
 #include "RAJA/policy/msg_queue.hpp"
 
 #include "camp/resource.hpp"
@@ -214,14 +216,14 @@ public:
   }
 
   template<typename Policy, typename... Args>
-  auto get_queue(int id) noexcept
+  auto get_queue(std::size_t id) noexcept
   {
     return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {
         id, m_bus.get()};
   }
 
   template<typename Policy, typename... Args>
-  auto get_queue(int id) const noexcept
+  auto get_queue(std::size_t id) const noexcept
   {
     return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {
         id, m_bus.get()};
@@ -251,12 +253,9 @@ private:
 class message_manager
 {
 public:
-  using callback_type = std::function<void(char*)>;
-  using msg_id        = int;
-  using msg_bus       = message_bus<char>;
-
-  template<typename T>
-  using msg_decay_t = std::decay_t<T>;
+  using callback_t = std::unique_ptr<RAJA::imsg_callback>;
+  using msg_id     = std::size_t;
+  using msg_bus    = message_bus<char>;
 
 public:
   template<typename Resource>
@@ -274,10 +273,9 @@ public:
   message_manager& operator=(message_manager&&) = default;
 
   template<typename Policy, typename Callable>
-  auto get_queue(msg_id id, Callable&& c)
+  auto get_queue(Callable&& c)
   {
-    return get_queue_impl<Policy>(id, std::forward<Callable>(c),
-                                  std::function {std::forward<Callable>(c)});
+    return get_queue_impl<Policy>(msg_callback{std::forward<Callable>(c)});
   }
 
   void clear() { m_bus.clear_messages(); }
@@ -290,28 +288,26 @@ public:
     {
       for (auto& msg : m_bus)
       {
-        m_callbacks[msg.id](msg.args);
+        (*m_callbacks[msg.id])(msg.args);
       }
       clear();
     }
   }
 
 private:
-  // TODO: create small wrapper for callables
   template<typename Policy, typename Callable, typename R, typename... Args>
-  auto get_queue_impl(msg_id id, Callable&& c, std::function<R(Args...)>)
+  auto get_queue_impl(msg_callback<Callable, R(Args...)>&& c)
   {
-    m_callbacks[id] = callback_type {[=](char* msg_args_buf) {
-      msg_args<msg_decay_t<Args>...>& aligned_args = *std::launder(
-          reinterpret_cast<msg_args<msg_decay_t<Args>...>*>(msg_args_buf));
-      camp::apply(c, aligned_args);
-      aligned_args.~msg_args<msg_decay_t<Args>...>();
-    }};
-    return m_bus.template get_queue<Policy, msg_decay_t<Args>...>(id);
+    using msg_callback_t = msg_callback<Callable, R(Args...)>;
+
+    msg_id id = m_callbacks.size();
+    m_callbacks.emplace_back(std::make_unique<msg_callback_t>(std::move(c)));
+
+    return m_bus.template get_queue<Policy, std::decay_t<Args>...>(id);
   }
 
   msg_bus m_bus;
-  std::map<msg_id, callback_type> m_callbacks;
+  std::vector<callback_t> m_callbacks;
 };
 
 template<typename Resource>

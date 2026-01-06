@@ -85,7 +85,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 // Allocate and initialize message handler and queue
 //
   auto logger = RAJA::make_message_manager(buf_sz, host);
-  auto cpu_msg_queue = logger.get_queue<RAJA::mpsc_queue>(0,
+  auto cpu_msg_queue = logger.get_queue<RAJA::mpsc_queue>(
     [](const my_string<128>& str, int* ptr, int idx, int value) {
       std::cout << "\n " << str.c_str() << " " << ptr << " a[" << idx << "] = " << value << "\n";
     }
@@ -243,14 +243,14 @@ const int GPU_BLOCK_SIZE = 256;
   using EXEC_POLICY = RAJA::sycl_exec<GPU_BLOCK_SIZE>;
 #endif
   auto gpu_logger1    = RAJA::make_message_manager(buf_sz, res_gpu1);
-  auto gpu_msg_queue1 = gpu_logger1.get_queue<RAJA::mpsc_queue>(0,
+  auto gpu_msg_queue1 = gpu_logger1.get_queue<RAJA::mpsc_queue>(
     [](const my_string<128>& str, int* ptr, int idx, int value) {
       std::cout << "\n " << str.c_str() << " " << ptr << " a[" << idx << "] = " << value << "\n";
     }
   );
 
   auto gpu_logger2    = RAJA::make_message_manager(buf_sz, res_gpu2); 
-  auto gpu_msg_queue2 = gpu_logger2.get_queue<RAJA::mpsc_queue>(0,
+  auto gpu_msg_queue2 = gpu_logger2.get_queue<RAJA::mpsc_queue>(
     [](const my_string<128>& str, int* ptr, int idx, int value) {
       std::cout << "\n " << str.c_str() << " " << ptr << " a[" << idx << "] = " << value << "\n";
     }
@@ -334,14 +334,14 @@ const int GPU_BLOCK_SIZE = 256;
   using EXEC_POLICY = RAJA::sycl_exec<GPU_BLOCK_SIZE>;
 #endif
   auto gpu_logger1    = RAJA::make_message_manager(buf_sz, res_gpu1); 
-  auto gpu_msg_queue1 = gpu_logger1.get_queue<RAJA::mpsc_queue>(0,
+  auto gpu_msg_queue1 = gpu_logger1.get_queue<RAJA::mpsc_queue>(
     [](int* ptr, int idx, int value) {
       std::cout << "\n gpu stream 1: pointer (" << ptr << ") d_array1[" << idx << "] = " << value << "\n";
     }
   );
 
   auto gpu_logger2    = RAJA::make_message_manager(buf_sz, res_gpu2);
-  auto gpu_msg_queue2 = gpu_logger2.get_queue<RAJA::mpsc_queue>(0,
+  auto gpu_msg_queue2 = gpu_logger2.get_queue<RAJA::mpsc_queue>(
     [](int* ptr, int idx, int value) {
       std::cout << "\n gpu stream 2: pointer (" << ptr << ") d_array2[" << idx << "] = " << value << "\n";
     }

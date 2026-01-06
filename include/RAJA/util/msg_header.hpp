@@ -38,7 +38,7 @@ constexpr std::size_t align(std::size_t size, std::size_t alignment = 16)
 struct msg_header
 {
   std::size_t sz;
-  int id;
+  std::size_t id;
   char* args;
 };
 
