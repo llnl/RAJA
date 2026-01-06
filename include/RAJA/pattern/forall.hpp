@@ -67,8 +67,6 @@
 #include "RAJA/index/ListSegment.hpp"
 #include "RAJA/index/RangeSegment.hpp"
 
-#include "RAJA/internal/fault_tolerance.hpp"
-
 #include "RAJA/util/concepts.hpp"
 #include "RAJA/util/Span.hpp"
 #include "RAJA/util/types.hpp"
