@@ -121,7 +121,7 @@ include(cmake/SetupCompilers.cmake)
 include (cmake/RAJAMacros.cmake)
 
 # Configure `style` target for enforcing code style
-raja_add_code_checks()
+raja_add_code_checks(DIRS "RAJA" "include" "src")
 
 set (raja_sources
   src/AlignedRangeIndexSetBuilders.cpp
@@ -310,6 +310,13 @@ if (RAJA_ENABLE_HIP AND NOT RAJA_ENABLE_EXTERNAL_ROCPRIM)
   target_include_directories(RAJA SYSTEM
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tpl/rocPRIM/rocprim/include>)
+endif()
+
+if (RAJA_ENABLE_JIT)
+  target_include_directories(RAJA 
+    PUBLIC
+    "${PROTEUS_INSTALL_DIR}/include"
+    )
 endif()
 
 install(DIRECTORY include/ DESTINATION include FILES_MATCHING PATTERN *.hpp)

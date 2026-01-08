@@ -222,7 +222,7 @@ macro(raja_add_code_checks)
 
   set(options)
   set(singleValueArgs)
-  set(multiValueArgs)
+  set(multiValueArgs DIRS)
 
   # Parse the arguments to the macro
   cmake_parse_arguments(arg
@@ -233,13 +233,12 @@ macro(raja_add_code_checks)
   if ("${PROJECT_SOURCE_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
       # Create file globbing expressions that only include directories that contain source
       # TODO(bowen) Add examples, exercises, test, and benchmark to the list below
-      set(_base_dirs "RAJA" "include" "src")
       set(_ext_expressions "*.cpp" "*.hpp" "*.inl"
                            "*.cxx" "*.hxx" "*.cc" "*.c" "*.h" "*.hh")
 
       set(_glob_expressions)
       foreach(_exp ${_ext_expressions})
-          foreach(_base_dir ${_base_dirs})
+          foreach(_base_dir ${arg_DIRS})
               list(APPEND _glob_expressions "${PROJECT_SOURCE_DIR}/${_base_dir}/${_exp}")
           endforeach()
       endforeach()
