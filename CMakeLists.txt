@@ -328,6 +328,13 @@ install(FILES
 # Setup internal RAJA configuration options
 include(cmake/SetupRajaConfig.cmake)
 
+if (RAJA_ENABLE_JIT)
+  target_include_directories(RAJA 
+    PUBLIC
+    "${PROTEUS_INSTALL_DIR}/include"
+    )
+endif()
+
 if(RAJA_ENABLE_TESTS)
   add_subdirectory(test)
 endif()
