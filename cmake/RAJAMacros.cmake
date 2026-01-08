@@ -232,7 +232,6 @@ macro(raja_add_code_checks)
   # another project
   if ("${PROJECT_SOURCE_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
       # Create file globbing expressions that only include directories that contain source
-      # TODO(bowen) Add examples, exercises, test, and benchmark to the list below
       set(_ext_expressions "*.cpp" "*.hpp" "*.inl"
                            "*.cxx" "*.hxx" "*.cc" "*.c" "*.h" "*.hh")
 

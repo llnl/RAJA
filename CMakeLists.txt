@@ -313,13 +313,6 @@ if (RAJA_ENABLE_HIP AND NOT RAJA_ENABLE_EXTERNAL_ROCPRIM)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tpl/rocPRIM/rocprim/include>)
 endif()
 
-if (RAJA_ENABLE_JIT)
-  target_include_directories(RAJA 
-    PUBLIC
-    "${PROTEUS_INSTALL_DIR}/include"
-    )
-endif()
-
 install(DIRECTORY include/ DESTINATION include FILES_MATCHING PATTERN *.hpp)
 if (RAJA_ENABLE_CUDA AND NOT RAJA_ENABLE_EXTERNAL_CUB)
   install(DIRECTORY tpl/cub/cub/ DESTINATION include/cub FILES_MATCHING PATTERN *.cuh)
