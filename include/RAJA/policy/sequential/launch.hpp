@@ -48,12 +48,12 @@ struct LaunchExecute<RAJA::seq_launch_t>
        BODY const& body,
        ReduceParams& launch_reducers)
   {
-    using EXEC_POL = RAJA::seq_exec;
-    EXEC_POL pol {};
     constexpr bool is_parampack_empty =
         RAJA::expt::type_traits::is_ForallParamPack_empty<ReduceParams>::value;
     if constexpr (!is_parampack_empty)
     {
+      using EXEC_POL = RAJA::seq_exec;
+      EXEC_POL pol {};
       expt::ParamMultiplexer::parampack_init(pol, launch_reducers);
     }
 
@@ -74,6 +74,8 @@ struct LaunchExecute<RAJA::seq_launch_t>
     ctx.shared_mem_ptr = nullptr;
     if constexpr (!is_parampack_empty)
     {
+      using EXEC_POL = RAJA::seq_exec;
+      EXEC_POL pol {};
       expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);
     }
 
