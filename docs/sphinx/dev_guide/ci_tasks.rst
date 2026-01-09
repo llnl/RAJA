@@ -201,15 +201,15 @@ Building the Compiler
 
     flux alloc -t 60 -N 1 --bank=wbronze
 
-#. Load the module of the version of GCC headers that you want to use. We typically use the system default, which on corona is currently gcc/10.3.1-magic. Set an environment variable ``GCC_VERSION=10.3.1``, then load the module::
+#. Load the module of the version of GCC headers that you want to use. We typically use the system default, which on corona is currently gcc/10.3.1-magic. Set then environment variable ``GCC_VERSION`` to the GCC version, then load the module::
 
     module load gcc/${GCC_VERSION}-magic
 
-#. Load the module of the version of ROCm that you want to use. Set an environment variable ``ROCM_VERSION=6.4.2``, then load the module::
+#. Load the module of the version of ROCm that you want to use. Set the environment variable ``ROCM_VERSION`` to the ROCm version, then load the module::
 
     module load rocm/${ROCM_VERSION}
 
-#. Load Python module you want to use. The LLVM configure requires at least version 3.7. Set an environment variable ``PYTHON_VERSION=3.9.12``, then load the module::
+#. Load Python module you want to use. The LLVM configure requires at least version 3.7. Set the environment variable ``PYTHON_VERSION`` to the Python version, then load the module::
 
     module load python/${PYTHON_VERSION}
     
@@ -217,12 +217,14 @@ Building the Compiler
 
     git clone https://github.com/intel/llvm -b sycl
 
-#. cd into the LLVM folder and extract the GIT SHA for naming the install directories. The install directory uses the naming convention ``clang_sycl_<git sha>_hip_gcc<version>_rocm<version>``, where ``git sha`` is the first 12 characters ofthe hash you are building. To see the hash value::
+#. cd into the LLVM folder and get the Git SHA for commit hash you are building, which is used in the name of the compiler install directories: ``clang_sycl_<git sha>_hip_gcc<version>_rocm<version>``, where ``git sha`` is the first 12 characters of the hash. To get the hash value::
 
     cd llvm
     git rev-parse --short=12 HEAD
 
-Set an environment variable for the vash value ``GIT_SHA=<git sha>`` and for theinstallation directory ``INSTALL_PREFIX=/usr/workspace/raja-dev/clang_sycl_${GIT_SHA}_hip_gcc${GCC_VERSION}_rocm${ROCM_VERSION}``
+Set the environment variable ``GIT_SHA`` to the hash value.
+
+Set the environment variable ``INSTALL_PREFIX`` to the installation directory as described above:  ``/usr/workspace/raja-dev/clang_sycl_${GIT_SHA}_hip_gcc${GCC_VERSION}_rocm${ROCM_VERSION}``
 
 #. Then build and install the compiler.
 
