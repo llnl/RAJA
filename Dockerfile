@@ -11,7 +11,7 @@
 ## commands below. This seems to work best for throughput.
 ##
 
-FROM ghcr.io/llnl/radiuss:gcc-12-ubuntu-24.04 AS gcc12
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-gcc-12 AS gcc12
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -20,7 +20,7 @@ RUN cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DRAJA_ENABLE_WARN
     ctest -T test --output-on-failure && \
     make clean
 
-FROM ghcr.io/llnl/radiuss:gcc-12-ubuntu-24.04 AS gcc12_debug
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-gcc-12 AS gcc12_debug
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -29,7 +29,7 @@ RUN cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug -DRAJA_ENABLE_WARNIN
     ctest -T test --output-on-failure && \
     make clean
 
-FROM ghcr.io/llnl/radiuss:gcc-13-ubuntu-24.04 AS gcc13
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-gcc-13 AS gcc13
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -38,7 +38,7 @@ RUN cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DRAJA_ENABLE_WARN
     ctest -T test --output-on-failure && \
     make clean
 
-FROM ghcr.io/llnl/radiuss:gcc-13-ubuntu-24.04 AS gcc13_desul
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-gcc-13 AS gcc13_desul
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
