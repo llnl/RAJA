@@ -217,16 +217,14 @@ Building the Compiler
 
     git clone https://github.com/intel/llvm -b sycl
 
-#. cd into the LLVM folder and get the Git SHA for commit hash you are building, which is used in the name of the compiler install directories: ``clang_sycl_<git sha>_hip_gcc<version>_rocm<version>``, where ``git sha`` is the first 12 characters of the hash. To get the hash value::
+#. Go into the LLVM folder and get the Git SHA for the commit hash you are building. The first 12 characters of the hash value are used in the name of the compiler install directory. To get the first 12 characters of the hash value::
 
     cd llvm
     git rev-parse --short=12 HEAD
 
-Set the environment variable ``GIT_SHA`` to the hash value.
+#. Then, set the environment variable ``GIT_SHA`` to the hash value, and set the environment variable ``INSTALL_PREFIX`` to the name of the installation directory, which has the following form:  ``/usr/workspace/raja-dev/clang_sycl_${GIT_SHA}_hip_gcc${GCC_VERSION}_rocm${ROCM_VERSION}``
 
-Set the environment variable ``INSTALL_PREFIX`` to the installation directory as described above:  ``/usr/workspace/raja-dev/clang_sycl_${GIT_SHA}_hip_gcc${GCC_VERSION}_rocm${ROCM_VERSION}``
-
-#. Then build and install the compiler.
+#. After, the compiler repo code is in place and the build environment is set as described in the previous steps, build and install the compiler.
 
    a. Configure:
 
