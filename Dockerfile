@@ -79,10 +79,9 @@ FROM ghcr.io/llnl/radiuss:ubuntu-24.04-intel-2024.2 AS intel2024_2
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
-RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 > /dev/null && \
-    cmake -DCMAKE_CXX_COMPILER=icpx -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=On -DBLT_CXX_STD=c++17 .. && \
+RUN cmake -DCMAKE_CXX_COMPILER=icpx -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=On -DBLT_CXX_STD=c++17 .. && \
     make -j 16 &&\
-    make clean"
+    make clean
 
 ## Don't run tests due to failure in RAJA launch tests with new reducer interface.
 FROM ghcr.io/llnl/radiuss:ubuntu-24.04-intel-2024.2 AS intel2024_2_debug
