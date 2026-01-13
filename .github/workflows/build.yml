@@ -43,6 +43,7 @@ jobs:
         - args: 
             BUILD_SHARED_LIBS=On 
             CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=On
+            ENABLE_OPENMP=On
         - args: BUILD_SHARED_LIBS=Off
           
     runs-on: windows-latest
