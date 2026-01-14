@@ -7,29 +7,13 @@
 .. ## SPDX-License-Identifier: (BSD-3-Clause)
 .. ##
 
-.. _raja-copyright:
+.. _rajaperf-copyright:
 
-======================================
+==========================================================
 RAJA Copyright and License Information
-======================================
+==========================================================
 
-Copyright (c) 2016-25, Lawrence Livermore National Security, LLC.
+.. include:: ../../LICENSE
 
-Produced at the Lawrence Livermore National Laboratory.
-
-All rights reserved. See additional details below.
-
-Unlimited Open Source - BSD Distribution
-
-LLNL-CODE-689114
-
-OCEC-16-063
-
-
-RAJA License
-------------
-
-.. include:: ../../LICENSE 
-
-.. include:: ../../NOTICE 
+.. include:: ../../NOTICE
 
