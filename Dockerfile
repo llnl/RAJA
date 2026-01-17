@@ -98,7 +98,7 @@ FROM ghcr.io/llnl/radiuss:ubuntu-24.04-intel-2024.2 AS intel2024_2_sycl
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
-RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 && export PATH=/opt/intel/oneapi/compiler/2024.2/bin/:\$PATH && cmake -DCMAKE_CXX_COMPILER=icpx -DCMAKE_CXX_FLAGS=\"-fsycl -fsycl-unnamed-lambda\" -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_OPENMP=Off -DRAJA_ENABLE_SYCL=On -DRAJA_ENABLE_DESUL_ATOMICS=On -DBLT_CXX_STD=c++17 .. && \
+RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 && export PATH=/opt/intel/oneapi/compiler/2024.2/bin/:\$PATH && export LD_LIBRARY_PATH=/opt/intel/oneapi/2024.2/lib:\$LD_LIBRARY_PATH && cmake -DCMAKE_CXX_COMPILER=icpx -DCMAKE_CXX_FLAGS=\"-fsycl -fsycl-unnamed-lambda\" -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_OPENMP=Off -DRAJA_ENABLE_SYCL=On -DRAJA_ENABLE_DESUL_ATOMICS=On -DBLT_CXX_STD=c++17 .. && \
     make -j 16 &&\
     make clean"
 
