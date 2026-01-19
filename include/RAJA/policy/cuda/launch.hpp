@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -107,7 +109,6 @@ struct LaunchExecute<
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
 
-      RAJA_FT_BEGIN;
 
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::cuda::detail::cudaInfo launch_info;
@@ -137,8 +138,6 @@ struct LaunchExecute<
         RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers,
                                                         launch_info);
       }
-
-      RAJA_FT_END;
     }
 
     return resources::EventProxy<resources::Resource>(res);
@@ -230,7 +229,6 @@ struct LaunchExecute<
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
 
-      RAJA_FT_BEGIN;
 
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::cuda::detail::cudaInfo launch_info;
@@ -260,8 +258,6 @@ struct LaunchExecute<
         RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers,
                                                         launch_info);
       }
-
-      RAJA_FT_END;
     }
 
     return resources::EventProxy<resources::Resource>(res);

@@ -12,8 +12,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -1126,8 +1128,8 @@ public:
     if (n != end)
     {
       tally_or_val_ptr.list->synchronize_resources();
-      ::RAJA::detail::HighAccuracyReduce<T, typename Combiner::operator_type>
-          reducer(std::move(val.value));
+      ::RAJA::HighAccuracyReduce<T, typename Combiner::operator_type> reducer(
+          std::move(val.value));
       for (; n != end; ++n)
       {
         T(&values)[tally_slots] = *n;
@@ -1136,7 +1138,7 @@ public:
           reducer.combine(std::move(values[r]));
         }
       }
-      val.value = reducer.get_and_clear();
+      val.value = reducer.get_and_reset();
       tally_or_val_ptr.list->free_list();
     }
     return val.value;
