@@ -49,6 +49,11 @@ public:
     m_id {id}, m_container {container} 
   {}
 
+  std::size_t get_id() const noexcept
+  {
+    return m_id;
+  }
+
   /// Posts message to queue. This is marked `const` to pass to lambda by
   /// copy. This throws away messages that are over the capacity of the
   /// container.

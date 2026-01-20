@@ -288,17 +288,18 @@ public:
   template <typename Callable>
   void subscribe(msg_id id, Callable&& c)
   {
+    auto callback = RAJA::msg_callback{std::forward<Callable>(c)};
     auto& fn_list = m_callback_map.at(id);
     auto it = std::find_if(fn_list.begin(), fn_list.end(), [] (const auto& fn) {
-      return typeid(Callable).hash_code() == fn.hash();
+      return typeid(Callable).hash_code() == fn->hash();
     });
 
+    using msg_callback_t = decltype(callback);
     if (it != fn_list.end()) {
       // TODO: would it be better to throw or just replace old one?
-      *it = std::make_unique<msg_callback_t>(std::forward<Callable>(c));
+      *it = std::make_unique<msg_callback_t>(std::move(callback));
     } else {
-      fn_list.emplace_back(std::make_unique<msg_callback_t>(
-        std::forward<Callable>(c)));
+      fn_list.emplace_back(std::make_unique<msg_callback_t>(std::move(callback)));
     }
   }
 
@@ -307,7 +308,7 @@ public:
   {
     auto& fn_list = m_callback_map.at(id);
     auto it = std::find_if(fn_list.begin(), fn_list.end(), [] (const auto& fn) {
-      return typeid(Callable).hash_code() == fn.hash();
+      return typeid(Callable).hash_code() == fn->hash();
     });
 
     if (it != fn_list.end()) {
