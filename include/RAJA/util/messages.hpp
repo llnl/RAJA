@@ -253,9 +253,10 @@ private:
 class message_manager
 {
 public:
-  using callback_t = std::unique_ptr<RAJA::imsg_callback>;
-  using msg_id     = std::size_t;
-  using msg_bus    = message_bus<char>;
+  using msg_callback_t = std::unique_ptr<RAJA::imsg_callback>;
+  using msg_fn_list_t  = std::vector<msg_callback_t>;
+  using msg_id         = std::size_t;
+  using msg_bus        = message_bus<char>;
 
 public:
   template<typename Resource>
@@ -272,15 +273,69 @@ public:
   message_manager(message_manager&&)            = default;
   message_manager& operator=(message_manager&&) = default;
 
-  template<typename Policy, typename Callable>
-  auto get_queue(Callable&& c)
+  template <typename Policy, typename Callable>
+  auto subscribe(Callable&& c)
   {
-    return get_queue_impl<Policy>(msg_callback{std::forward<Callable>(c)});
+    msg_id id = m_callback_map.size();
+
+    // Create new callback list
+    m_callback_map.emplace_back();
+
+    return get_queue_impl<Policy>(id, RAJA::msg_callback{
+      std::forward<Callable>(c)});
   }
 
-  void clear() { m_bus.clear_messages(); }
+  template <typename Callable>
+  void subscribe(msg_id id, Callable&& c)
+  {
+    auto& fn_list = m_callback_map.at(id);
+    auto it = std::find_if(fn_list.begin(), fn_list.end(), [] (const auto& fn) {
+      return typeid(Callable).hash_code() == fn.hash();
+    });
 
-  bool test_any() { return m_bus.has_pending_messages(); }
+    if (it != fn_list.end()) {
+      // TODO: would it be better to throw or just replace old one?
+      *it = std::make_unique<msg_callback_t>(std::forward<Callable>(c));
+    } else {
+      fn_list.emplace_back(std::make_unique<msg_callback_t>(
+        std::forward<Callable>(c)));
+    }
+  }
+
+  template <typename Callable>
+  void unsubscribe(msg_id id, Callable&& c)
+  {
+    auto& fn_list = m_callback_map.at(id);
+    auto it = std::find_if(fn_list.begin(), fn_list.end(), [] (const auto& fn) {
+      return typeid(Callable).hash_code() == fn.hash();
+    });
+
+    if (it != fn_list.end()) {
+      fn_list.erase(it);
+    } else {
+      throw std::runtime_error("Callable is not subscribed");
+    }
+  }
+
+  void unsubscribe_all(msg_id id)
+  {
+    m_callback_map.at(id).clear();
+  }
+
+  void unsubscribe_all()
+  {
+    m_callback_map.clear();
+  }
+
+  void clear()
+  { 
+    m_bus.clear_messages(); 
+  }
+
+  bool test_any() 
+  { 
+    return m_bus.has_pending_messages(); 
+  }
 
   void wait_all()
   {
@@ -288,7 +343,9 @@ public:
     {
       for (auto& msg : m_bus)
       {
-        (*m_callbacks[msg.id])(msg.args);
+        for (auto& callback: m_callback_map[msg.id]) {
+          (*callback)(msg.args);
+	}
       }
       clear();
     }
@@ -296,18 +353,18 @@ public:
 
 private:
   template<typename Policy, typename Callable, typename R, typename... Args>
-  auto get_queue_impl(msg_callback<Callable, R(Args...)>&& c)
+  auto get_queue_impl(msg_id id, msg_callback<Callable, R(Args...)>&& c)
   {
     using msg_callback_t = msg_callback<Callable, R(Args...)>;
 
-    msg_id id = m_callbacks.size();
-    m_callbacks.emplace_back(std::make_unique<msg_callback_t>(std::move(c)));
+    m_callback_map[id].emplace_back(std::make_unique<msg_callback_t>(
+      std::move(c)));
 
     return m_bus.template get_queue<Policy, std::decay_t<Args>...>(id);
   }
 
   msg_bus m_bus;
-  std::vector<callback_t> m_callbacks;
+  std::vector<msg_fn_list_t> m_callback_map;
 };
 
 template<typename Resource>

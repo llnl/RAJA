@@ -17,7 +17,7 @@ TEST(message_handler, initialize) {
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
+  auto q = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -32,7 +32,7 @@ TEST(message_handler, initialize_with_resource) {
   auto msg_manager = RAJA::make_message_manager(msg_sz, camp::resources::Host());
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
+  auto q = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -47,7 +47,7 @@ TEST(message_handler, clear) {
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
+  auto q = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -67,7 +67,7 @@ TEST(message_handler, try_post_message) {
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
+  auto q = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -81,7 +81,7 @@ TEST(message_handler, try_post_message_overflow) {
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
+  auto q = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -102,7 +102,7 @@ TEST(message_handler, wait_all) {
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
+  auto q = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -120,7 +120,7 @@ TEST(message_handler, wait_all_overalloc) {
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(2*msg_sz);
 
   int test = 0;
-  auto q = msg_manager.get_queue<RAJA::spsc_queue>([&](int val) {
+  auto q = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -138,7 +138,7 @@ TEST(message_handler, wait_all_array) {
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   camp::array<int, 3> test = {0, 0, 0};
-  auto q = msg_manager.get_queue<RAJA::mpsc_queue>( 
+  auto q = msg_manager.subscribe<RAJA::mpsc_queue>( 
     [&](camp::array<int, 3> val) {
       test[0] = val[0];   
       test[1] = val[1];

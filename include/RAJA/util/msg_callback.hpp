@@ -28,6 +28,11 @@ class imsg_callback
 public:
   virtual ~imsg_callback() = default;
 
+  virtual std::size_t hash() const 
+  {
+    return typeid(void).hash_code();
+  }
+
   virtual void operator()(char*) const = 0;
 };
 
@@ -47,6 +52,11 @@ public:
   template <typename Object>
   explicit msg_callback(Object&& obj) : m_callable{std::move(obj)}
   {}
+
+  std::size_t hash() const final override 
+  {
+    return typeid(Callable).hash_code();
+  }
 
   void operator()(char* args_buf) const final override
   {
