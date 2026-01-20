@@ -381,7 +381,7 @@ const int GPU_BLOCK_SIZE = 256;
   // _raja_res_k3_start
   RAJA::forall<EXEC_POLICY>(res_gpu1, RAJA::RangeSegment(0,N),
     [=] RAJA_HOST_DEVICE (int i) {
-      d_array1[i] *= d_array2[i];
+      d_array1[i] *= -1;
       gpu_msg_queue1.try_post_message(d_array1, i, d_array1[i]);
     }
   );

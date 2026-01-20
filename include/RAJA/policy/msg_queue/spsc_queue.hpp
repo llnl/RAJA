@@ -66,17 +66,15 @@ public:
       constexpr size_type args_sz   = align(sizeof(msg_args<Args...>));
       constexpr size_type msg_sz    = header_sz + args_sz;
       auto local_size               = m_container->m_end;
-      m_container->m_end += msg_sz;
       if (m_container->m_data != nullptr &&
           local_size + msg_sz <= m_container->m_capacity)
       {
+        m_container->m_end += msg_sz;
         char* buf = m_container->m_data + local_size;
         new (buf) msg_header {args_sz, m_id, buf + header_sz};
         new (buf + header_sz)
             msg_args<Args...> {args_type(std::forward<Ts>(args)...)};
 
-        // Actual size of buffer used
-        m_container->m_size += msg_sz;
         return true;
       }
     }

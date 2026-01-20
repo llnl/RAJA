@@ -61,7 +61,6 @@ private:
     size_type m_begin {0};
     size_type m_end {0};
     size_type m_capacity {0};
-    size_type m_size {0};
     pointer m_data {nullptr};
   };
 
@@ -144,11 +143,7 @@ public:
   using resource_type  = resource_deleter::resource_type;
 
   message_bus()
-      : m_res {camp::resources::Host()},
-        m_bus {new (m_res.allocate<queue>(
-                   1,
-                   camp::resources::MemoryAccess::Pinned)) queue {},
-               resource_deleter {m_res}}
+      : message_bus(camp::resources::Host())
   {}
 
   template<typename Resource>
@@ -194,7 +189,6 @@ public:
       m_bus->m_data = nullptr;
     }
     m_bus->m_capacity = 0;
-    m_bus->m_size     = 0;
     m_bus->m_end      = 0;
     m_bus->m_begin    = 0;
   }
@@ -204,13 +198,12 @@ public:
   size_type get_num_pending_messages()
   {
     m_res.wait();
-    return m_bus->m_size;
+    return m_bus->m_end;
   }
 
   void clear_messages()
   {
     m_res.wait();
-    m_bus->m_size  = 0;
     m_bus->m_end   = 0;
     m_bus->m_begin = 0;
   }

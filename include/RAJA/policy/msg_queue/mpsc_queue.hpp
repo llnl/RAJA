@@ -75,10 +75,12 @@ public:
         new (buf + header_sz)
             msg_args<Args...> {args_type(std::forward<Ts>(args)...)};
 
-        // Actual size of buffer used
-        RAJA::atomicAdd<auto_atomic>(&(m_container->m_size), msg_sz);
         return true;
       }
+
+      // If message is not stored, update end to have the correct number of
+      // bytes and/or allow for additional smaller messages to be stored
+      RAJA::atomicSub<auto_atomic>(&(m_container->m_end), msg_sz);
     }
 
     return false;
