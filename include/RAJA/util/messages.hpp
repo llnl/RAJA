@@ -193,12 +193,10 @@ public:
     m_bus->m_begin    = 0;
   }
 
-  bool has_pending_messages() { return get_num_pending_messages() != 0; }
-
-  size_type get_num_pending_messages()
+  bool has_pending_messages()
   {
     m_res.wait();
-    return m_bus->m_end;
+    return (m_bus->m_end != 0);
   }
 
   void clear_messages()
@@ -223,11 +221,10 @@ public:
   }
 
   iterator begin() noexcept { return iterator {m_bus->m_data}; }
+  iterator begin() const noexcept { return iterator {m_bus->m_data}; }
 
-  iterator end() noexcept
-  {
-    return iterator {m_bus->m_data + get_num_pending_messages()};
-  }
+  iterator end() noexcept { return iterator {m_bus->m_data + m_bus->m_end}; }
+  iterator end() const noexcept { return iterator {m_bus->m_data + m_bus->m_end}; }
 
 private:
   resource_type m_res;
@@ -331,16 +328,53 @@ public:
     return m_bus.has_pending_messages(); 
   }
 
-  void wait_all()
+  auto get_messages() 
   {
-    if (!m_callback_map.empty() && test_any())
+    std::vector<const msg_header*> messages;
+
+    if (test_any())
     {
-      for (auto& msg : m_bus)
+      for (const auto& msg : m_bus)
       {
-        for (auto& callback: m_callback_map[msg.id]) {
-          (*callback)(msg.args);
+        messages.emplace_back(&msg);
+      }
+    }
+  
+    return messages;
+  }
+
+  /**
+   * This takes in a container of messages and applies them to the
+   * callbacks. Once messages are handled, then container is cleared.
+   */ 
+  template <typename Container>
+  void handle_all(Container& messages)
+  {
+    if (!m_callback_map.empty())
+    {
+      for (const auto& msg : messages)
+      {
+        for (auto& callback: m_callback_map[msg->id]) {
+          (*callback)(msg->args);
 	}
       }
+      messages.clear();
+    }
+    clear();
+  }
+
+  void wait_all()
+  {
+    if (!m_callback_map.empty())
+    {
+      auto messages = get_messages();
+      for (const auto& msg : messages)
+      {
+        for (auto& callback: m_callback_map[msg->id]) {
+          (*callback)(msg->args);
+	}
+      }
+      messages.clear();
     }
     clear();
   }

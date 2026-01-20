@@ -255,3 +255,56 @@ TEST(message_handler, unsubscribe_all) {
   ASSERT_EQ(test1, 0);
   ASSERT_EQ(test2, 0);
 } 
+
+TEST(message_handler, get_messages) {
+  constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
+                                 RAJA::align(sizeof(RAJA::msg_args<int>));
+  constexpr int msg_id         = 0;
+
+  auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(20*msg_sz);
+
+  int test1 = 0;
+  auto q1 = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
+    test1 = val;
+  });
+
+  ASSERT_EQ(q1.try_post_message(1), true);
+  ASSERT_EQ(q1.try_post_message(2), true);
+  ASSERT_EQ(q1.try_post_message(3), true);
+
+
+  auto msg_list = msg_manager.get_messages();
+  ASSERT_EQ(msg_list.size(), 3);
+  ASSERT_EQ(test1, 0);
+} 
+
+TEST(message_handler, handle_all_sort) {
+  constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
+                                 RAJA::align(sizeof(RAJA::msg_args<>));
+  constexpr int msg_id         = 0;
+
+  auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(20*msg_sz);
+
+  int test1 = 0;
+  auto q1 = msg_manager.subscribe<RAJA::spsc_queue>([&]() {
+    test1 = 1;
+  });
+  auto q2 = msg_manager.subscribe<RAJA::spsc_queue>([&]() {
+    test1 = 2;
+  });
+
+  ASSERT_EQ(q1.try_post_message(), true);
+  ASSERT_EQ(q2.try_post_message(), true);
+  ASSERT_EQ(q1.try_post_message(), true);
+
+  auto msg_list = msg_manager.get_messages();
+  ASSERT_EQ(msg_list.size(), 3);
+
+  // Forces all q2 messages to the end
+  std::sort(msg_list.begin(), msg_list.end(), [] (auto msg1, auto msg2) {
+    return msg1->id < msg2->id;
+  });
+  msg_manager.handle_all(msg_list);
+
+  ASSERT_EQ(test1, 2);
+} 
