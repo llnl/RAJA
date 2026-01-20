@@ -9,8 +9,10 @@
 */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -35,9 +37,6 @@
 namespace RAJA
 {
 
-namespace detail
-{
-
 /*!
     \brief Reduce class that does a reduction with a left fold.
 */
@@ -47,53 +46,81 @@ struct LeftFoldReduce
   RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit LeftFoldReduce(
       T init      = BinaryOp::identity(),
       BinaryOp op = BinaryOp {}) noexcept
-      : m_op(std::move(op)),
-        m_accumulated_value(std::move(init))
+      : m_storage(std::move(op), std::move(init))
   {}
-
-  LeftFoldReduce(LeftFoldReduce const&)            = delete;
-  LeftFoldReduce& operator=(LeftFoldReduce const&) = delete;
-  LeftFoldReduce(LeftFoldReduce&&)                 = delete;
-  LeftFoldReduce& operator=(LeftFoldReduce&&)      = delete;
-
-  ~LeftFoldReduce() = default;
 
   /*!
       \brief reset the combined value of the reducer to the identity
   */
-  RAJA_HOST_DEVICE RAJA_INLINE void clear() noexcept
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void reset(
+      T init = BinaryOp::identity()) noexcept
   {
-    m_accumulated_value = BinaryOp::identity();
+    m_storage.m_accumulated_value = std::move(init);
   }
 
   /*!
-      \brief return the combined value and clear the reducer
+      \brief return the combined value and reset the reducer
   */
-  RAJA_HOST_DEVICE RAJA_INLINE T get_and_clear()
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get_and_reset(
+      T init = BinaryOp::identity())
   {
-    T accumulated_value = std::move(m_accumulated_value);
+    T value = get();
 
-    clear();
+    reset(std::move(init));
 
-    return accumulated_value;
+    return value;
   }
 
   /*!
       \brief return the combined value
   */
-  RAJA_HOST_DEVICE RAJA_INLINE T get() { return m_accumulated_value; }
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get() const
+  {
+    return m_storage.m_accumulated_value;
+  }
 
   /*!
       \brief combine a value into the reducer
   */
-  RAJA_HOST_DEVICE RAJA_INLINE void combine(T val)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void combine(T value)
   {
-    m_accumulated_value = m_op(std::move(m_accumulated_value), std::move(val));
+    m_storage.m_accumulated_value = m_storage.get_op()(
+        std::move(m_storage.m_accumulated_value), std::move(value));
+  }
+
+  /*!
+      \brief combine a value into the reducer
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void operator+=(T value)
+  {
+    combine(std::move(value));
   }
 
 private:
-  BinaryOp m_op;
-  T m_accumulated_value;
+  // use a struct derived from BinaryOp to avoid extra storage when BinaryOp
+  // is an empty class
+  struct Storage : BinaryOp
+  {
+    T m_accumulated_value;
+
+    RAJA_HOST_DEVICE RAJA_INLINE constexpr Storage(BinaryOp op, T init)
+        : BinaryOp(std::move(op)),
+          m_accumulated_value(std::move(init))
+    {}
+
+    RAJA_HOST_DEVICE RAJA_INLINE constexpr BinaryOp& get_op() noexcept
+    {
+      return *this;
+    }
+
+    RAJA_HOST_DEVICE RAJA_INLINE constexpr BinaryOp const& get_op()
+        const noexcept
+    {
+      return *this;
+    }
+  };
+
+  Storage m_storage;
 };
 
 /*!
@@ -115,57 +142,31 @@ struct BinaryTreeReduce
   RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit BinaryTreeReduce(
       T init      = BinaryOp::identity(),
       BinaryOp op = BinaryOp {}) noexcept
-      : m_op(std::move(op))
+      : m_storage(std::move(op))
   {
     combine(std::move(init));
   }
 
-  BinaryTreeReduce(BinaryTreeReduce const&)            = delete;
-  BinaryTreeReduce& operator=(BinaryTreeReduce const&) = delete;
-  BinaryTreeReduce(BinaryTreeReduce&&)                 = delete;
-  BinaryTreeReduce& operator=(BinaryTreeReduce&&)      = delete;
-
-  RAJA_HOST_DEVICE RAJA_INLINE ~BinaryTreeReduce() { clear(); }
-
   /*!
       \brief reset the combined value of the reducer to the identity
   */
-  RAJA_HOST_DEVICE RAJA_INLINE void clear() noexcept
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void reset(
+      T init = BinaryOp::identity()) noexcept
   {
-    // destroy all values on the tree stack and reset count to 0
-    for (SizeType level = 0, mask = 1; m_count; ++level, mask <<= 1)
-    {
+    m_storage.m_count = 0;
 
-      if (m_count & mask)
-      {
-
-        get_value(level)->~T();
-
-        m_count ^= mask;
-      }
-    }
+    combine(std::move(init));
   }
 
   /*!
-      \brief return the combined value and clear the reducer
+      \brief return the combined value and reset the reducer
   */
-  RAJA_HOST_DEVICE RAJA_INLINE T get_and_clear()
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get_and_reset(
+      T init = BinaryOp::identity())
   {
-    // accumulate all values
-    T value = BinaryOp::identity();
+    T value = get();
 
-    for (SizeType level = 0, mask = 1; m_count; ++level, mask <<= 1)
-    {
-
-      if (m_count & mask)
-      {
-
-        value = m_op(std::move(value), std::move(*get_value(level)));
-        get_value(level)->~T();
-
-        m_count ^= mask;
-      }
-    }
+    reset(std::move(init));
 
     return value;
   }
@@ -173,19 +174,18 @@ struct BinaryTreeReduce
   /*!
       \brief return the combined value
   */
-  RAJA_HOST_DEVICE RAJA_INLINE T get()
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get() const
   {
     // accumulate all values
     T value = BinaryOp::identity();
 
-    for (SizeType count = m_count, level = 0, mask = 1; count;
+    for (SizeType count = m_storage.m_count, level = 0, mask = 1; count;
          ++level, mask <<= 1)
     {
-
       if (count & mask)
       {
-
-        value = m_op(std::move(value), *get_value(level));
+        value =
+            m_storage.get_op()(std::move(value), m_storage.m_tree_stack[level]);
 
         count ^= mask;
       }
@@ -197,48 +197,133 @@ struct BinaryTreeReduce
   /*!
       \brief combine a value into the reducer
   */
-  RAJA_HOST_DEVICE RAJA_INLINE void combine(T value)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void combine(T value)
   {
     // accumulate values and store in the first unused level found
-    // clear values from used levels along the way
+    // reset values from used levels along the way
     SizeType level = 0;
-    for (SizeType mask = 1; m_count & mask; ++level, mask <<= 1)
+    for (SizeType mask = 1; m_storage.m_count & mask; ++level, mask <<= 1)
     {
-
-      value = m_op(std::move(*get_value(level)), std::move(value));
-      get_value(level)->~T();
+      value = m_storage.get_op()(std::move(m_storage.m_tree_stack[level]),
+                                 std::move(value));
     }
 
-    new (get_storage(level)) T(std::move(value));
+    m_storage.m_tree_stack[level] = std::move(value);
 
-    ++m_count;
+    ++m_storage.m_count;
+  }
+
+  /*!
+      \brief combine a value into the reducer
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void operator+=(T value)
+  {
+    combine(std::move(value));
   }
 
 private:
-  BinaryOp m_op;
-
-  // A counter of the number of inputs combined.
-  // The bits of count indicate which levels of tree stack have a value
-  SizeType m_count = 0;
-
-  // Each level in tree stack has a value that holds the accumulation of 2^level
-  // values or is unused and has no value.
-  std::aligned_storage_t<sizeof(T), alignof(T)> m_tree_stack[num_levels];
-
-  RAJA_HOST_DEVICE RAJA_INLINE void* get_storage(SizeType level)
+  // use a struct derived from BinaryOp to avoid extra storage when BinaryOp
+  // is an empty class
+  struct Storage : BinaryOp
   {
-    return &m_tree_stack[level];
+    // A counter of the number of inputs combined.
+    // The bits of count indicate which levels of tree stack have a value
+    SizeType m_count = 0;
+
+    // Each level in tree stack has a value that holds the accumulation of
+    // 2^level values or is unused and has no value.
+    T m_tree_stack[num_levels];
+
+    RAJA_HOST_DEVICE RAJA_INLINE constexpr Storage(BinaryOp op)
+        : BinaryOp(std::move(op))
+    {}
+
+    RAJA_HOST_DEVICE RAJA_INLINE constexpr BinaryOp& get_op() noexcept
+    {
+      return *this;
+    }
+
+    RAJA_HOST_DEVICE RAJA_INLINE constexpr BinaryOp const& get_op()
+        const noexcept
+    {
+      return *this;
+    }
+  };
+
+  Storage m_storage;
+};
+
+/*!
+    \brief Reduce class that does a reduction with a left fold.
+
+    \note KahanSum does not take an binary operation as the only valid operation
+          is plus.
+*/
+template<typename T>
+struct KahanSum
+{
+  static_assert(std::is_floating_point_v<T>, "T must be a floating point type");
+
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit KahanSum(
+      T init = T()) noexcept
+      : m_accumulated_value(std::move(init)),
+        m_accumulated_carry(T())
+  {}
+
+  /*!
+      \brief reset the combined value of the reducer to the identity
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void reset(T init = T()) noexcept
+  {
+    m_accumulated_value = std::move(init);
+    m_accumulated_carry = T();
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE T* get_value(SizeType level)
+  /*!
+      \brief return the combined value and reset the reducer
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get_and_reset(T init = T())
   {
-#if __cplusplus >= 201703L && !defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
-    // TODO: check that launder is supported in device code
-    return std::launder(reinterpret_cast<T*>(&m_tree_stack[level]));
-#else
-    return reinterpret_cast<T*>(&m_tree_stack[level]);
-#endif
+    T value = get();
+
+    reset(std::move(init));
+
+    return value;
   }
+
+  /*!
+      \brief return the combined value
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr T get() const
+  {
+    return m_accumulated_value;
+  }
+
+  /*!
+      \brief combine a value into the reducer
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void combine(T val)
+  {
+    // volatile used to prevent compiler optimizations that assume
+    // floating-point operations are associative
+    T y                 = val - m_accumulated_carry;
+    volatile T t        = m_accumulated_value + y;
+    volatile T z        = t - m_accumulated_value;
+    m_accumulated_carry = z - y;
+    m_accumulated_value = t;
+  }
+
+  /*!
+      \brief combine a value into the reducer
+  */
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr void operator+=(T val)
+  {
+    combine(std::move(val));
+  }
+
+private:
+  T m_accumulated_value;
+  T m_accumulated_carry;
 };
 
 template<typename T, typename BinaryOp>
@@ -248,71 +333,6 @@ using HighAccuracyReduce =
                        LeftFoldReduce<T, BinaryOp>>;
 
 /*!
-    \brief Combine into a single value using a left fold with the given
-           operation using O(N) operations and O(1) memory
-*/
-template<typename Iter, typename T, typename BinaryOp>
-RAJA_HOST_DEVICE RAJA_INLINE T
-left_fold_reduce(Iter begin, Iter end, T init, BinaryOp op)
-{
-  LeftFoldReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
-
-  for (; begin != end; ++begin)
-  {
-
-    reducer.combine(*begin);
-  }
-
-  return reducer.get_and_clear();
-}
-
-/*!
-    \brief reduce using a binary tree with the given operation
-           and using O(N) operations and O(lg(n)) memory
-
-    This is more accurate than sequentially adding into a single value for
-    floating point types.
-*/
-template<typename Iter, typename T, typename BinaryOp>
-RAJA_HOST_DEVICE RAJA_INLINE T
-binary_tree_reduce(Iter begin, Iter end, T init, BinaryOp op)
-{
-  using std::distance;
-  using SizeType = std::make_unsigned_t<decltype(distance(begin, end))>;
-  BinaryTreeReduce<T, BinaryOp, SizeType> reducer(std::move(init),
-                                                  std::move(op));
-
-  for (; begin != end; ++begin)
-  {
-
-    reducer.combine(*begin);
-  }
-
-  return reducer.get_and_clear();
-}
-
-/*!
-    \brief reducer that uses a high accuracy implementation when round-off error
-    is a concern, or a faster algorithm with it is not a concern
-*/
-template<typename Iter, typename T, typename BinaryOp>
-RAJA_HOST_DEVICE RAJA_INLINE T
-high_accuracy_reduce(Iter begin, Iter end, T init, BinaryOp op)
-{
-  HighAccuracyReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
-
-  for (; begin != end; ++begin)
-  {
-
-    reducer.combine(*begin);
-  }
-
-  return reducer.get_and_clear();
-}
-
-}  // namespace detail
-
-/*!
   \brief Accumulate given range to a single value
   using a left fold algorithm in O(N) operations and O(1) extra memory
     see https://en.cppreference.com/w/cpp/algorithm/accumulate
@@ -320,19 +340,28 @@ high_accuracy_reduce(Iter begin, Iter end, T init, BinaryOp op)
 template<typename Container,
          typename T        = detail::ContainerVal<Container>,
          typename BinaryOp = operators::plus<T>>
-RAJA_HOST_DEVICE RAJA_INLINE
-    concepts::enable_if_t<T, type_traits::is_range<Container>>
-    accumulate(Container&& c,
-               T init      = BinaryOp::identity(),
-               BinaryOp op = BinaryOp {})
+RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
+    enable_if_t<T, type_traits::is_range<Container>>
+    left_fold_reduce(Container&& c,
+                     T init      = BinaryOp::identity(),
+                     BinaryOp op = BinaryOp {})
 {
   using std::begin;
   using std::end;
   static_assert(type_traits::is_binary_function<BinaryOp, T, T, T>::value,
                 "BinaryOp must model BinaryFunction");
 
-  return detail::left_fold_reduce(begin(c), end(c), std::move(init),
-                                  std::move(op));
+  auto begin_it = begin(c);
+  auto end_it   = end(c);
+
+  LeftFoldReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
+
+  for (; begin_it != end_it; ++begin_it)
+  {
+    reducer.combine(*begin_it);
+  }
+
+  return reducer.get_and_reset();
 }
 
 /*!
@@ -343,19 +372,57 @@ RAJA_HOST_DEVICE RAJA_INLINE
 template<typename Container,
          typename T        = detail::ContainerVal<Container>,
          typename BinaryOp = operators::plus<T>>
-RAJA_HOST_DEVICE RAJA_INLINE
-    concepts::enable_if_t<T, type_traits::is_range<Container>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
+    enable_if_t<T, type_traits::is_range<Container>>
     binary_tree_reduce(Container&& c,
                        T init      = BinaryOp::identity(),
                        BinaryOp op = BinaryOp {})
 {
   using std::begin;
+  using std::distance;
   using std::end;
   static_assert(type_traits::is_binary_function<BinaryOp, T, T, T>::value,
                 "BinaryOp must model BinaryFunction");
 
-  return detail::binary_tree_reduce(begin(c), end(c), std::move(init),
-                                    std::move(op));
+  auto begin_it  = begin(c);
+  auto end_it    = end(c);
+  using SizeType = std::make_unsigned_t<decltype(distance(begin_it, end_it))>;
+
+  BinaryTreeReduce<T, BinaryOp, SizeType> reducer(std::move(init),
+                                                  std::move(op));
+
+  for (; begin_it != end_it; ++begin_it)
+  {
+    reducer.combine(*begin_it);
+  }
+
+  return reducer.get_and_reset();
+}
+
+/*!
+  \brief Accumulate given range to a single value
+  using a left fold algorithm in O(N) operations and O(1) extra memory
+    see https://en.cppreference.com/w/cpp/algorithm/accumulate
+*/
+template<typename Container, typename T = detail::ContainerVal<Container>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
+    enable_if_t<T, type_traits::is_range<Container>, std::is_floating_point<T>>
+    kahan_sum(Container&& c, T init = T())
+{
+  using std::begin;
+  using std::end;
+
+  auto begin_it = begin(c);
+  auto end_it   = end(c);
+
+  KahanSum<T> reducer(std::move(init));
+
+  for (; begin_it != end_it; ++begin_it)
+  {
+    reducer.combine(*begin_it);
+  }
+
+  return reducer.get_and_reset();
 }
 
 /*!
@@ -367,8 +434,8 @@ RAJA_HOST_DEVICE RAJA_INLINE
 template<typename Container,
          typename T        = detail::ContainerVal<Container>,
          typename BinaryOp = operators::plus<T>>
-RAJA_HOST_DEVICE RAJA_INLINE
-    concepts::enable_if_t<T, type_traits::is_range<Container>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
+    enable_if_t<T, type_traits::is_range<Container>>
     high_accuracy_reduce(Container&& c,
                          T init      = BinaryOp::identity(),
                          BinaryOp op = BinaryOp {})
@@ -378,8 +445,49 @@ RAJA_HOST_DEVICE RAJA_INLINE
   static_assert(type_traits::is_binary_function<BinaryOp, T, T, T>::value,
                 "BinaryOp must model BinaryFunction");
 
-  return detail::high_accuracy_reduce(begin(c), end(c), std::move(init),
-                                      std::move(op));
+  auto begin_it = begin(c);
+  auto end_it   = end(c);
+
+  HighAccuracyReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
+
+  for (; begin_it != end_it; ++begin_it)
+  {
+    reducer.combine(*begin_it);
+  }
+
+  return reducer.get_and_reset();
+}
+
+/*!
+  \brief Accumulate given range to a single value
+  using a left fold algorithm in O(N) operations and O(1) extra memory
+    see https://en.cppreference.com/w/cpp/algorithm/accumulate
+*/
+template<typename Container,
+         typename T        = detail::ContainerVal<Container>,
+         typename BinaryOp = operators::plus<T>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
+    enable_if_t<T, type_traits::is_range<Container>>
+    accumulate(Container&& c,
+               T init      = BinaryOp::identity(),
+               BinaryOp op = BinaryOp {})
+{
+  using std::begin;
+  using std::end;
+  static_assert(type_traits::is_binary_function<BinaryOp, T, T, T>::value,
+                "BinaryOp must model BinaryFunction");
+
+  auto begin_it = begin(c);
+  auto end_it   = end(c);
+
+  LeftFoldReduce<T, BinaryOp> reducer(std::move(init), std::move(op));
+
+  for (; begin_it != end_it; ++begin_it)
+  {
+    reducer.combine(*begin_it);
+  }
+
+  return reducer.get_and_reset();
 }
 
 }  // namespace RAJA

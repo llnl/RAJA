@@ -1,7 +1,8 @@
 .. ##
-.. ## Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-.. ## and RAJA project contributors. See the RAJA/LICENSE file
-.. ## for details.
+.. ## Copyright (c) Lawrence Livermore National Security, LLC and other
+.. ## RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+.. ## files for dates and other details. No copyright assignment is required
+.. ## to contribute to RAJA.
 .. ##
 .. ## SPDX-License-Identifier: (BSD-3-Clause)
 .. ##
@@ -334,25 +335,6 @@ in units of **bytes**.
 
 For details on the options in this section are used, please see the 
 header file ``RAJA/include/RAJA/util/types.hpp``.
-
-Other RAJA Features
--------------------
-   
-RAJA contains some features that are used mainly for development or may
-not be of general interest to RAJA users. These are turned off be default.
-They are described here for reference and completeness.
-
-      ===========================   =======================================
-      Variable                      Meaning
-      ===========================   =======================================
-      RAJA_ENABLE_FT                Enable/disable RAJA experimental
-                                    loop-level fault-tolerance mechanism
-      RAJA_REPORT_FT                Enable/disable a report of fault-
-                                    tolerance enabled run (e.g., number of 
-                                    faults detected, recovered from, 
-                                    recovery overhead, etc.)
-      ===========================   =======================================
-
 
 .. _configopt-raja-backends-label:
 

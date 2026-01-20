@@ -10,8 +10,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -27,11 +29,12 @@
 #include <cstddef>
 #include <cstdio>
 #include <limits>
+#include <mutex>
 #include <type_traits>
 #include <unordered_map>
 
+
 #include "RAJA/util/basic_mempool.hpp"
-#include "RAJA/util/mutex.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/resource.hpp"
@@ -182,17 +185,12 @@ struct cudaInfo
 
 struct cudaStatusInfo : cudaInfo
 {
-#if defined(RAJA_ENABLE_OPENMP)
-  omp::mutex lock;
-#endif
+  std::mutex lock;
 };
 
 extern cudaStatusInfo g_status;
 
-extern cudaStatusInfo tl_status;
-#if defined(RAJA_ENABLE_OPENMP)
-#pragma omp threadprivate(tl_status)
-#endif
+thread_local extern cudaStatusInfo tl_status;
 
 // stream to synchronization status: true synchronized, false running
 extern std::unordered_map<cudaStream_t, bool> g_stream_info_map;
@@ -206,9 +204,7 @@ void synchronize_impl(::RAJA::resources::Cuda res) { res.wait(); }
 RAJA_INLINE
 void synchronize()
 {
-#if defined(RAJA_ENABLE_OPENMP)
-  lock_guard<omp::mutex> lock(detail::g_status.lock);
-#endif
+  std::lock_guard<std::mutex> lock(detail::g_status.lock);
   bool synchronize = false;
   for (auto& val : detail::g_stream_info_map)
   {
@@ -228,9 +224,7 @@ void synchronize()
 RAJA_INLINE
 void synchronize(::RAJA::resources::Cuda res)
 {
-#if defined(RAJA_ENABLE_OPENMP)
-  lock_guard<omp::mutex> lock(detail::g_status.lock);
-#endif
+  std::lock_guard<std::mutex> lock(detail::g_status.lock);
   auto iter = detail::g_stream_info_map.find(res.get_stream());
   if (iter != detail::g_stream_info_map.end())
   {
@@ -250,9 +244,7 @@ void synchronize(::RAJA::resources::Cuda res)
 RAJA_INLINE
 void launch(::RAJA::resources::Cuda res, bool async = true)
 {
-#if defined(RAJA_ENABLE_OPENMP)
-  lock_guard<omp::mutex> lock(detail::g_status.lock);
-#endif
+  std::lock_guard<std::mutex> lock(detail::g_status.lock);
   auto iter = detail::g_stream_info_map.find(res.get_stream());
   if (iter != detail::g_stream_info_map.end())
   {

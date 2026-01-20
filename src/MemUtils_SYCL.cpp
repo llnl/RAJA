@@ -10,8 +10,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -42,10 +44,7 @@ namespace detail
 syclInfo g_status;
 
 //! State of the host code in this thread
-syclInfo tl_status;
-#if defined(RAJA_ENABLE_OPENMP)
-#pragma omp threadprivate(tl_status)
-#endif
+thread_local syclInfo tl_status;
 
 //! State of raja sycl queue synchronization for sycl reducer objects
 std::unordered_map<::sycl::queue, bool> g_queue_info_map {

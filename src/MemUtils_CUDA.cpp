@@ -10,8 +10,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -44,10 +46,7 @@ namespace detail
 cudaStatusInfo g_status;
 
 //! State of the host code in this thread
-cudaStatusInfo tl_status;
-#if defined(RAJA_ENABLE_OPENMP)
-#pragma omp threadprivate(tl_status)
-#endif
+thread_local cudaStatusInfo tl_status;
 
 //! State of raja cuda stream synchronization for cuda reducer objects
 std::unordered_map<cudaStream_t, bool> g_stream_info_map;

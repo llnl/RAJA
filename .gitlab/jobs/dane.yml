@@ -1,6 +1,8 @@
 ##############################################################################
-# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-# and RAJA project contributors. See the RAJA/LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other
+# RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+# files for dates and other details. No copyright assignment is required
+# to contribute to RAJA.
 #
 # SPDX-License-Identifier: (BSD-3-Clause)
 ##############################################################################
@@ -17,26 +19,23 @@
 # project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
 # when possible so that the comparison with the original job is easier.
 
-# Shared job uses %clang-14-gcc-11
-clang_14_0_6:
-  variables:
-    SPEC: " ~shared +openmp +omptask ~vectorization +tests %llvm@=14.0.6 ${PROJECT_DANE_DEPS}"
+# Shared job uses %clang-19-gcc-13, replaced with %clang-19 below
+clang_19_1_3_gcc_13_3_1:
   extends: .job_on_dane
+  variables:
+    ON_DANE: "OFF"
 
-## gcc 11.2.1 job is in the shared RSC set of jobs
+# Shared job uses %oneapi-2025-gcc-10, replaced with %oneapi@=2025.2 below
+oneapi_2025_2_0_gcc_10_3_1:
+  extends: .job_on_dane
+  variables:
+    ON_DANE: "OFF"
+
+## gcc 13.3.1 job is in the shared RSC set of jobs
 
 # Similar to shared RSC job, but use OpenMP task, turn off vectorization,
 # and lower optimization level to get correct results
 # https://github.com/LLNL/RAJA/pull/1712#issuecomment-2292006843
-oneapi_2023_2_1:
-  variables:
-    SPEC: "~shared +openmp +vectorization +tests +lowopttest cxxflags==-fp-model=precise %oneapi@=2023.2.1"
-  extends: .job_on_dane
-
-oneapi_2025_2_0:
-  variables:
-    SPEC: "~shared +openmp +vectorization +tests cxxflags==-fp-model=precise %oneapi@=2025.2.0"
-  extends: .job_on_dane
 
 ############
 # Extra jobs
@@ -44,6 +43,11 @@ oneapi_2025_2_0:
 # We do not recommend using ${PROJECT_<MACHINE>_VARIANTS} and
 # ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
 # describe the spec here.
+
+clang_14_0_6:
+  variables:
+    SPEC: " ~shared +openmp +omptask ~vectorization +tests %llvm@=14.0.6"
+  extends: .job_on_dane
 
 clang_19_1_3:
   variables:
@@ -60,12 +64,12 @@ gcc_12_1_1:
     SPEC: " ~shared +openmp +tests %gcc@=12.1.1"
   extends: .job_on_dane
 
-gcc_13_3_1:
-  variables:
-    SPEC: " ~shared +openmp +tests %gcc@=13.3.1"
-  extends: .job_on_dane
-
 clang_14_0_6_gcc_11_2_1_desul_atomics:
   variables:
     SPEC: " ~shared +openmp +tests +desul %clang-14-gcc-11"
+  extends: .job_on_dane
+
+oneapi_2025_2_0:
+  variables:
+    SPEC: "~shared +openmp +vectorization +tests cxxflags==-fp-model=precise %oneapi@=2025.2.0"
   extends: .job_on_dane

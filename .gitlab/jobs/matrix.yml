@@ -1,6 +1,8 @@
 ##############################################################################
-# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-# and RAJA project contributors. See the RAJA/LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other
+# RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+# files for dates and other details. No copyright assignment is required
+# to contribute to RAJA.
 #
 # SPDX-License-Identifier: (BSD-3-Clause)
 ##############################################################################
@@ -17,7 +19,11 @@
 # project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
 # when possible so that the comparison with the original job is easier.
 
-## clang 18.1.1 + CUDA 12.6.0 job is in the shared RSC set of jobs 
+# Shared job uses toolchain %clang-18-gcc-13, replaced with %llvm@=18.1.8 below
+clang_18_1_1_gcc_13_cuda_12_6_0:
+  extends: .job_on_matrix
+  variables:
+    ON_MATRIX: "OFF"
 
 ############
 # Extra jobs
@@ -26,4 +32,10 @@
 # ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
 # describe the spec here.
 
+# clang_18_1_8_cuda_12_6_0
+clang_18_1_8_cuda_12_6_0:
+  variables:
+    SPEC: " ~shared +cuda cuda_arch=90 %llvm@=18.1.8 ^cuda@12.6.0+allow-unsupported-compilers"
+  extends: .job_on_matrix
+  allow_failure: true
 
