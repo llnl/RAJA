@@ -142,9 +142,7 @@ public:
   using const_iterator = const iterator;
   using resource_type  = resource_deleter::resource_type;
 
-  message_bus()
-      : message_bus(camp::resources::Host())
-  {}
+  message_bus() : message_bus(camp::resources::Host()) {}
 
   template<typename Resource>
   message_bus(Resource res)
@@ -221,10 +219,15 @@ public:
   }
 
   iterator begin() noexcept { return iterator {m_bus->m_data}; }
+
   iterator begin() const noexcept { return iterator {m_bus->m_data}; }
 
   iterator end() noexcept { return iterator {m_bus->m_data + m_bus->m_end}; }
-  iterator end() const noexcept { return iterator {m_bus->m_data + m_bus->m_end}; }
+
+  iterator end() const noexcept
+  {
+    return iterator {m_bus->m_data + m_bus->m_end};
+  }
 
 private:
   resource_type m_res;
@@ -263,7 +266,7 @@ public:
   message_manager(message_manager&&)            = default;
   message_manager& operator=(message_manager&&) = default;
 
-  template <typename Policy, typename Callable>
+  template<typename Policy, typename Callable>
   auto subscribe(Callable&& c)
   {
     msg_id id = m_callback_map.size();
@@ -271,64 +274,59 @@ public:
     // Create new callback list
     m_callback_map.emplace_back();
 
-    return get_queue_impl<Policy>(id, RAJA::msg_callback{
-      std::forward<Callable>(c)});
+    return get_queue_impl<Policy>(
+        id, RAJA::msg_callback {std::forward<Callable>(c)});
   }
 
-  template <typename Callable>
+  template<typename Callable>
   void subscribe(msg_id id, Callable&& c)
   {
-    auto callback = RAJA::msg_callback{std::forward<Callable>(c)};
+    auto callback = RAJA::msg_callback {std::forward<Callable>(c)};
     auto& fn_list = m_callback_map.at(id);
-    auto it = std::find_if(fn_list.begin(), fn_list.end(), [] (const auto& fn) {
+    auto it = std::find_if(fn_list.begin(), fn_list.end(), [](const auto& fn) {
       return typeid(Callable).hash_code() == fn->hash();
     });
 
     using msg_callback_t = decltype(callback);
-    if (it != fn_list.end()) {
+    if (it != fn_list.end())
+    {
       // TODO: would it be better to throw or just replace old one?
       *it = std::make_unique<msg_callback_t>(std::move(callback));
-    } else {
-      fn_list.emplace_back(std::make_unique<msg_callback_t>(std::move(callback)));
+    }
+    else
+    {
+      fn_list.emplace_back(
+          std::make_unique<msg_callback_t>(std::move(callback)));
     }
   }
 
-  template <typename Callable>
+  template<typename Callable>
   void unsubscribe(msg_id id, Callable&& c)
   {
     auto& fn_list = m_callback_map.at(id);
-    auto it = std::find_if(fn_list.begin(), fn_list.end(), [] (const auto& fn) {
+    auto it = std::find_if(fn_list.begin(), fn_list.end(), [](const auto& fn) {
       return typeid(Callable).hash_code() == fn->hash();
     });
 
-    if (it != fn_list.end()) {
+    if (it != fn_list.end())
+    {
       fn_list.erase(it);
-    } else {
+    }
+    else
+    {
       throw std::runtime_error("Callable is not subscribed");
     }
   }
 
-  void unsubscribe_all(msg_id id)
-  {
-    m_callback_map.at(id).clear();
-  }
+  void unsubscribe_all(msg_id id) { m_callback_map.at(id).clear(); }
 
-  void unsubscribe_all()
-  {
-    m_callback_map.clear();
-  }
+  void unsubscribe_all() { m_callback_map.clear(); }
 
-  void clear()
-  { 
-    m_bus.clear_messages(); 
-  }
+  void clear() { m_bus.clear_messages(); }
 
-  bool test_any() 
-  { 
-    return m_bus.has_pending_messages(); 
-  }
+  bool test_any() { return m_bus.has_pending_messages(); }
 
-  auto get_messages() 
+  auto get_messages()
   {
     std::vector<const msg_header*> messages;
 
@@ -339,24 +337,25 @@ public:
         messages.emplace_back(&msg);
       }
     }
-  
+
     return messages;
   }
 
   /**
    * This takes in a container of messages and applies them to the
    * callbacks. Once messages are handled, then container is cleared.
-   */ 
-  template <typename Container>
+   */
+  template<typename Container>
   void handle_all(Container& messages)
   {
     if (!m_callback_map.empty())
     {
       for (const auto& msg : messages)
       {
-        for (auto& callback: m_callback_map[msg->id]) {
+        for (auto& callback : m_callback_map[msg->id])
+        {
           (*callback)(msg->args);
-	}
+        }
       }
       messages.clear();
     }
@@ -370,9 +369,10 @@ public:
       auto messages = get_messages();
       for (const auto& msg : messages)
       {
-        for (auto& callback: m_callback_map[msg->id]) {
+        for (auto& callback : m_callback_map[msg->id])
+        {
           (*callback)(msg->args);
-	}
+        }
       }
       messages.clear();
     }
@@ -385,8 +385,8 @@ private:
   {
     using msg_callback_t = msg_callback<Callable, R(Args...)>;
 
-    m_callback_map[id].emplace_back(std::make_unique<msg_callback_t>(
-      std::move(c)));
+    m_callback_map[id].emplace_back(
+        std::make_unique<msg_callback_t>(std::move(c)));
 
     return m_bus.template get_queue<Policy, std::decay_t<Args>...>(id);
   }

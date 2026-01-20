@@ -41,18 +41,17 @@ public:
   using args_type = camp::tuple<Args...>;
   using size_type = typename Container::size_type;
 
-  queue(std::size_t id, Container& container) : 
-    m_id {id}, m_container {&container} 
+  queue(std::size_t id, Container& container)
+      : m_id {id},
+        m_container {&container}
   {}
 
-  queue(std::size_t id, Container* container) : 
-    m_id {id}, m_container {container} 
+  queue(std::size_t id, Container* container)
+      : m_id {id},
+        m_container {container}
   {}
 
-  std::size_t get_id() const noexcept
-  {
-    return m_id;
-  }
+  std::size_t get_id() const noexcept { return m_id; }
 
   /// Posts message to queue. This is marked `const` to pass to lambda by
   /// copy. This throws away messages that are over the capacity of the
