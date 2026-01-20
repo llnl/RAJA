@@ -340,7 +340,7 @@ public:
 
   void wait_all()
   {
-    if (test_any())
+    if (!m_callback_map.empty() && test_any())
     {
       for (auto& msg : m_bus)
       {
@@ -348,8 +348,8 @@ public:
           (*callback)(msg.args);
 	}
       }
-      clear();
     }
+    clear();
   }
 
 private:
