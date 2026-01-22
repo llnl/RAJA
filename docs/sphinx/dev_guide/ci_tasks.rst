@@ -207,7 +207,7 @@ Building the Compiler
     module load gcc/${GCC_VERSION}-magic
 
 #. Load the module of the version of ROCm that you want to use::
-    ROCM_VERSION=6.4.2
+    ROCM_VERSION=6.4.3
     module load rocm/${ROCM_VERSION}
 
 #. Load Python module you want to use.  At time of writing, the LLVM configure requires at least version 3.7. we use Corona default::
@@ -269,7 +269,7 @@ Using the compiler
 
 #. Load the version of ROCm that you used when building the compiler, for example::
 
-    ROCM_VERSION=6.4.2 
+    ROCM_VERSION=6.4.3 
     module load rocm/${ROCM_VERSION}
 
 #. Navigate to the root of your local RAJA checkout space::
@@ -280,15 +280,15 @@ Using the compiler
 
    This is the ``INSTALL_PREFIX`` used above.  For example::
 
-    SYCL_INSTALL_PREFIX=/usr/workspace/raja-dev/clang_sycl_16b7bcb09915_hip_gcc10.3.1_rocm6.4.2
+    SYCL_INSTALL_PREFIX=/usr/workspace/raja-dev/clang_sycl_16b7bcb09915_hip_gcc10.3.1_rocm6.4.3
 
 #. Run the test config script::
 
     ./scripts/lc-builds/corona_sycl.sh ${SYCL_INSTALL_PREFIX}
 
 #. As indicated in the output of the ``corona_sycl.sh`` script the SYCL compiler libraries need to be on the ``LD_LIBRARY_PATH``::
-   
-    export LD_LIBRARY_PATH=${SYCL_INSTALL_PREFIX}/lib:${SYCL_INSTALL_PREFIX}/lib64:$LD_LIBRARY_PATH    
+ 
+    export LD_LIBRARY_PATH=${SYCL_INSTALL_PREFIX}/lib:${SYCL_INSTALL_PREFIX}/lib64:$LD_LIBRARY_PATH
 
 #. cd into the generated build directory::
 
