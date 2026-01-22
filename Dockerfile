@@ -13,7 +13,7 @@
 ## commands below. This seems to work best for throughput.
 ##
 
-FROM ghcr.io/llnl/radiuss:gcc-12-ubuntu-24.04 AS gcc12
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-gcc-12 AS gcc12
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -22,7 +22,7 @@ RUN cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DRAJA_ENABLE_WARN
     ctest -T test --output-on-failure && \
     make clean
 
-FROM ghcr.io/llnl/radiuss:gcc-12-ubuntu-24.04 AS gcc12_debug
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-gcc-12 AS gcc12_debug
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -31,7 +31,7 @@ RUN cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug -DRAJA_ENABLE_WARNIN
     ctest -T test --output-on-failure && \
     make clean
 
-FROM ghcr.io/llnl/radiuss:gcc-13-ubuntu-24.04 AS gcc13
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-gcc-13 AS gcc13
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -40,7 +40,7 @@ RUN cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DRAJA_ENABLE_WARN
     ctest -T test --output-on-failure && \
     make clean
 
-FROM ghcr.io/llnl/radiuss:gcc-13-ubuntu-24.04 AS gcc13_desul
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-gcc-13 AS gcc13_desul
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -49,7 +49,7 @@ RUN cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DRAJA_ENABLE_WARN
     ctest -T test --output-on-failure && \
     make clean
 
-FROM ghcr.io/llnl/radiuss:clang-14-ubuntu-22.04 AS clang14_debug
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-clang-14 AS clang14_debug
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -58,7 +58,7 @@ RUN cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug  -DENABLE_OPENMP
     ctest -T test --output-on-failure && \
     make clean
 
-FROM ghcr.io/llnl/radiuss:clang-14-ubuntu-22.04 AS clang14_style
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-clang-14 AS clang14_style
 USER root
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
@@ -67,7 +67,7 @@ RUN clang-format --version && \
     cmake -DENABLE_CLANGFORMAT=ON ../ && \
     make check
 
-FROM ghcr.io/llnl/radiuss:clang-14-ubuntu-22.04 AS clang14_desul
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-clang-14 AS clang14_desul
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -77,31 +77,28 @@ RUN cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENM
     make clean
 
 ## Don't run tests due to failure in RAJA launch tests with new reducer interface.
-FROM ghcr.io/llnl/radiuss:intel-2024.0-ubuntu-20.04 AS intel2024_0
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-intel-2024.2 AS intel2024_2
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
-RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 > /dev/null && \
-    cmake -DCMAKE_CXX_COMPILER=icpx -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=On -DBLT_CXX_STD=c++17 .. && \
+RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 && export PATH=/opt/intel/oneapi/compiler/2024.2/bin/:\$PATH && cmake -DCMAKE_CXX_COMPILER=icpx -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=On -DBLT_CXX_STD=c++17 .. && \
     make -j 16 &&\
     make clean"
 
 ## Don't run tests due to failure in RAJA launch tests with new reducer interface.
-FROM ghcr.io/llnl/radiuss:intel-2024.0-ubuntu-20.04 AS intel2024_0_debug
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-intel-2024.2 AS intel2024_2_debug
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
-RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 > /dev/null && \
-    cmake -DCMAKE_CXX_COMPILER=icpx -DCMAKE_BUILD_TYPE=Debug -DENABLE_OPENMP=On -DBLT_CXX_STD=c++17 .. && \
+RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 && export PATH=/opt/intel/oneapi/compiler/2024.2/bin/:\$PATH && cmake -DCMAKE_CXX_COMPILER=icpx -DCMAKE_BUILD_TYPE=Debug -DENABLE_OPENMP=On -DBLT_CXX_STD=c++17 .. && \ 
     make -j 16 &&\
     make clean"
 
-FROM ghcr.io/llnl/radiuss:intel-2024.0-ubuntu-20.04 AS intel2024_0_sycl
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-intel-2024.2 AS intel2024_2_sycl
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
-RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 > /dev/null && \
-    cmake -DCMAKE_CXX_COMPILER=dpcpp -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=Off -DRAJA_ENABLE_SYCL=On -DRAJA_ENABLE_DESUL_ATOMICS=On -DBLT_CXX_STD=c++17 .. && \
+RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 && export PATH=/opt/intel/oneapi/compiler/2024.2/bin/:\$PATH && export LD_LIBRARY_PATH=/opt/intel/oneapi/2024.2/lib:\$LD_LIBRARY_PATH && cmake -DCMAKE_CXX_COMPILER=icpx -DCMAKE_CXX_FLAGS=\"-fsycl -fsycl-unnamed-lambda\" -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_OPENMP=Off -DRAJA_ENABLE_SYCL=On -DRAJA_ENABLE_DESUL_ATOMICS=On -DBLT_CXX_STD=c++17 .. && \
     make -j 16 &&\
     make clean"
 
