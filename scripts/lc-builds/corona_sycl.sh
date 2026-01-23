@@ -16,7 +16,7 @@ DEFAULT_CMAKE_VER=3.25.2
 if [ "$1" == "" ]; then
   echo
   echo "You must pass a SYCL compiler path to script. For example,"
-  echo "    corona_sycl.sh /usr/workspace/raja-dev/clang_sycl_16b7bcb09915_hip_gcc10.3.1_rocm6.4.2 [3.27.4]"
+  echo "    corona_sycl.sh /usr/workspace/raja-dev/clang_sycl_16b7bcb09915_hip_gcc10.3.1_rocm6.4.3 [3.27.4]"
   echo "An optional second argument can be given to set the CMake version to load."
   echo "If no CMake version is provided, version ${DEFAULT_CMAKE_VER} will be used."
   exit 1
