@@ -1,6 +1,9 @@
 ###############################################################################
-# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-# and RAJA project contributors. See the RAJA/LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other
+# RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+# files for dates and other details. No copyright assignment is required
+# to contribute to RAJA.
+#
 # SPDX-License-Identifier: (BSD-3-Clause)
 ###############################################################################
 
@@ -44,7 +47,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/thirdparty" ${CMAKE_MODULE_PA
 set(BLT_REQUIRED_CLANGFORMAT_VERSION  "14" CACHE STRING "")
 include(cmake/SetupRajaOptions.cmake)
 
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.24)
 
 # Detect C++ standard and add appropriate flag _before_ loading BLT
 set(COMPILERS_KNOWN_TO_CMAKE33 AppleClang Clang GNU MSVC)

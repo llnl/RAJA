@@ -1,7 +1,8 @@
 [comment]: # (#################################################################)
-[comment]: # (Copyright 2016-25, Lawrence Livermore National Security, LLC)
-[comment]: # (and RAJA project contributors. See the RAJA/LICENSE file)
-[comment]: # (for details.)
+[comment]: # (Copyright Lawrence Livermore National Security, LLC and other)
+[comment]: # (RAJA Project Developers. See top-level LICENSE and COPYRIGHT)
+[comment]: # (files for dates and other details. No copyright assignment is)
+[comment]: # (required to contribute to RAJA.)
 [comment]: # 
 [comment]: # (# SPDX-License-Identifier: BSD-3-Clause)
 [comment]: # (#################################################################)
@@ -20,6 +21,21 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
+Version 2025.MM.PP -- Release date 2025-mm-dd
+=============================================
+
+This release contains ...
+
+Notable changes include:
+
+  * New features / API changes:
+
+  * Build changes/improvements:
+    * Bump minimum CMake version required to 3.24.
+
+  * Bug fixes/improvements:
+
+
 Version 2025.12.0 -- Release date 2025-12-19
 ============================================
 
@@ -34,7 +50,6 @@ Notable changes include:
     * Update Camp submodule to v2025.12.0 release.
     * Improve CMake support for configuring with Caliper and fix issue reported
       by a user.
-    * Bump minimum CMake version required to 3.24.
 
   * Bug fixes/improvements:
     * Fix compilation failue when a downstream library or applications is

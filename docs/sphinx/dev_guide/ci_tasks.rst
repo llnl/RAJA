@@ -1,7 +1,8 @@
 .. ##
-.. ## Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-.. ## and RAJA project contributors. See the RAJA/LICENSE file
-.. ## for details.
+.. ## Copyright (c) Lawrence Livermore National Security, LLC and other
+.. ## RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+.. ## files for dates and other details. No copyright assignment is required
+.. ## to contribute to RAJA.
 .. ##
 .. ## SPDX-License-Identifier: (BSD-3-Clause)
 .. ##
@@ -125,11 +126,12 @@ there, modify the job entry, and create a pull request.
 Changing run parameters
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The parameters for each system/scheduler on which we run GitLab CI for
-RAJA, such as job time limits, resource allocations, etc. are defined in the 
-``RAJA/.gitlab/custom-jobs-and-variables.yml`` file. This information can
-remain as is, for the most part, and should not be changed unless absolutely 
-necessary.
+The parameters for each system/scheduler on which we run GitLab CI for RAJA,
+such as job time limits, resource allocations, etc. are defined in the
+``RAJA/.gitlab/custom-variables.yml`` file. Job-specific templates and
+customizations are defined in ``RAJA/.gitlab/custom-jobs.yml``. This
+information can remain as is, for the most part, and should not be changed
+unless absolutely necessary.
 
 For example, sometimes a particular job will take longer to build and run than
 the default allotted time for jobs on a machine. In this case, the time for the
@@ -410,10 +412,11 @@ Specifically,
 
   * The RAJA Performance Suite GitLab CI process is driven by the
     `RAJAPerf/.gitlab-ci.yml
-    <https://github.com/LLNL/RAJAPerf/blob/develop/.gitlab-ci.yml>`_ file.
-  * The ``custom-jobs-and-variables.yml`` and ``subscribed-pipelines.yml``
-    files reside in the `RAJAPerf/.gitlab
-    <https://github.com/LLNL/RAJAPerf/tree/develop/.gitlab>`_ directory.
+    <https://github.com/LLNL/RAJAPerf/blob/develop/.gitlab-ci.yml>`_ file,
+    which uses GitLab CI Components from radiuss-shared-ci.
+  * The ``custom-jobs.yml`` and ``custom-variables.yml`` files reside in
+    `RAJAPerf/.gitlab
+    <https://github.com/LLNL/RAJAPerf/tree/develop/.gitlab>`_.
   * The ``build_and_test.sh`` script resides in the `RAJAPerf/scripts/gitlab
     <https://github.com/LLNL/RAJAPerf/tree/develop/scripts/gitlab>`_ directory.
   * The `RAJAPerf/Dockerfile
