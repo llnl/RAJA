@@ -40,6 +40,7 @@ RAJA_HOSTCONFIG=../host-configs/lc-builds/toss4/corona_sycl.cmake
 
 echo
 echo "Creating build directory build_${BUILD_SUFFIX} and generating configuration in it"
+echo "Using CMake version: ${CMAKE_VER}"
 echo "Configuration extra arguments:"
 echo "   $@"
 echo
