@@ -84,7 +84,10 @@ forall_impl(resources::Host host_res,
   {
 // This branch handles the case of an OpenMP reduction through the RAJA::kernel
 // abstraction. MSVC is not supported in this case.
-#if !defined(RAJA_COMPILER_MSVC)
+#if defined(RAJA_COMPILER_MSVC)
+    static_assert(false, "MSVC does not support an OpenMP reduction through "
+                         "the RAJA::kernel abstraction");
+#else
     auto reducers_tuple = loop_body.data.param_tuple;
 
     using EXEC_POL = camp::decay<InnerPolicy>;

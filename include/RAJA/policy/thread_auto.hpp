@@ -25,6 +25,7 @@
 #include "RAJA/util/macros.hpp"
 
 #ifdef RAJA_OPENMP_ACTIVE
+#include <omp.h>
 #include "RAJA/policy/openmp/policy.hpp"
 #endif
 
