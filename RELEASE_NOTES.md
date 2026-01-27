@@ -21,8 +21,8 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
-Version 2025.12.1 -- Release date 2026-2-dd
-===========================================
+Version 2025.12.1 -- Release date 2026-01-28
+============================================
 
 This release contains some improvements to code robustness, including
 evolving internal code implementations to use C++17, and eventually C++20.
