@@ -253,13 +253,23 @@ private:
   Storage m_storage;
 };
 
+enum struct KahanSumImplementation
+{
+  Default,
+  Volatile
+};
+
 /*!
     \brief Reduce class that does a reduction with a left fold.
 
     \note KahanSum does not take an binary operation as the only valid operation
           is plus.
+
+    \note sum_impl can be used to have the implementation use volatile on some
+          intermediate values to force compilers to not optimize out the
+          compensated summation if fast-math is enabled.
 */
-template<typename T>
+template<typename T, KahanSumImplementation sum_impl = KahanSumImplementation::Default>
 struct KahanSum
 {
   static_assert(std::is_floating_point_v<T>, "T must be a floating point type");
@@ -304,13 +314,26 @@ struct KahanSum
   */
   RAJA_HOST_DEVICE RAJA_INLINE constexpr void combine(T val)
   {
-    // volatile used to prevent compiler optimizations that assume
-    // floating-point operations are associative
-    T y                 = val - m_accumulated_carry;
-    volatile T t        = m_accumulated_value + y;
-    volatile T z        = t - m_accumulated_value;
-    m_accumulated_carry = z - y;
-    m_accumulated_value = t;
+    if constexpr (sum_impl == KahanSumImplementation::Default) {
+
+      T y                 = val - m_accumulated_carry;
+      T t                 = m_accumulated_value + y;
+      T z                 = t - m_accumulated_value;
+      m_accumulated_carry = z - y;
+      m_accumulated_value = t;
+
+    } else if constexpr (sum_impl == KahanSumImplementation::Volatile) {
+
+      // volatile used to prevent compiler optimizations that assume
+      // floating-point operations are associative
+      T y                 = val - m_accumulated_carry;
+      volatile T t        = m_accumulated_value + y;
+      volatile T z        = t - m_accumulated_value;
+      m_accumulated_carry = z - y;
+      m_accumulated_value = t;
+
+    }
+
   }
 
   /*!
@@ -401,7 +424,7 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
 
 /*!
   \brief Accumulate given range to a single value
-  using a left fold algorithm in O(N) operations and O(1) extra memory
+  using a kahan summation algorithm in O(N) operations and O(1) extra memory
     see https://en.cppreference.com/w/cpp/algorithm/accumulate
 */
 template<typename Container, typename T = detail::ContainerVal<Container>>
@@ -416,6 +439,34 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
   auto end_it   = end(c);
 
   KahanSum<T> reducer(std::move(init));
+
+  for (; begin_it != end_it; ++begin_it)
+  {
+    reducer.combine(*begin_it);
+  }
+
+  return reducer.get_and_reset();
+}
+
+/*!
+  \brief Accumulate given range to a single value
+  using a kahan summation algorithm in O(N) operations and O(1) extra memory
+    see https://en.cppreference.com/w/cpp/algorithm/accumulate
+  \note Uses volatile on intermediate products to keep compiler from optimizing
+  out the compensated summation with fast-math.
+*/
+template<typename Container, typename T = detail::ContainerVal<Container>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr concepts::
+    enable_if_t<T, type_traits::is_range<Container>, std::is_floating_point<T>>
+    kahan_sum_volatile(Container&& c, T init = T())
+{
+  using std::begin;
+  using std::end;
+
+  auto begin_it = begin(c);
+  auto end_it   = end(c);
+
+  KahanSum<T, KahanSumImplementation::Volatile> reducer(std::move(init));
 
   for (; begin_it != end_it; ++begin_it)
   {
