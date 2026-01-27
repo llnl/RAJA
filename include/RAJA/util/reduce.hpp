@@ -269,7 +269,8 @@ enum struct KahanSumImplementation
           intermediate values to force compilers to not optimize out the
           compensated summation if fast-math is enabled.
 */
-template<typename T, KahanSumImplementation sum_impl = KahanSumImplementation::Default>
+template<typename T,
+         KahanSumImplementation sum_impl = KahanSumImplementation::Default>
 struct KahanSum
 {
   static_assert(std::is_floating_point_v<T>, "T must be a floating point type");
@@ -314,15 +315,17 @@ struct KahanSum
   */
   RAJA_HOST_DEVICE RAJA_INLINE constexpr void combine(T val)
   {
-    if constexpr (sum_impl == KahanSumImplementation::Default) {
+    if constexpr (sum_impl == KahanSumImplementation::Default)
+    {
 
       T y                 = val - m_accumulated_carry;
       T t                 = m_accumulated_value + y;
       T z                 = t - m_accumulated_value;
       m_accumulated_carry = z - y;
       m_accumulated_value = t;
-
-    } else if constexpr (sum_impl == KahanSumImplementation::Volatile) {
+    }
+    else if constexpr (sum_impl == KahanSumImplementation::Volatile)
+    {
 
       // volatile used to prevent compiler optimizations that assume
       // floating-point operations are associative
@@ -331,9 +334,7 @@ struct KahanSum
       volatile T z        = t - m_accumulated_value;
       m_accumulated_carry = z - y;
       m_accumulated_value = t;
-
     }
-
   }
 
   /*!
