@@ -24,7 +24,9 @@
 #include "RAJA/config.hpp"
 
 #include "RAJA/pattern/thread.hpp"
+#if defined(RAJA_ENABLE_OPENMP)
 #include "RAJA/policy/openmp/thread.hpp"
+#endif
 #include "RAJA/policy/sequential/thread.hpp"
 
 namespace RAJA
