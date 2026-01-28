@@ -9,23 +9,36 @@
 # SPDX-License-Identifier: (BSD-3-Clause)
 ###############################################################################
 
+# Default CMake version if not provided
+DEFAULT_CMAKE_VER=3.24.2
+
 if [[ $# -lt 3 ]]; then
   echo
   echo "You must pass 3 or more arguments to the script (in this order): "
   echo "   1) compiler version number"
   echo "   2) HIP version"
   echo "   3) HIP compute architecture"
-  echo "   4...) optional arguments to cmake"
+  echo "   4) optional CMake version to load."
   echo
   echo "For example: "
-  echo "    toss4_cce_hip.sh 14.0.3 5.2.3 gfx90a"
-  exit
+  echo "    toss4_cce_hip.sh 14.0.3 5.2.3 gfx90a [3.27.4]"
+  echo "If no CMake version is provided, version ${DEFAULT_CMAKE_VER} will be used."
+  exit 1
 fi
 
 COMP_VER=$1
 HIP_VER=$2
 HIP_ARCH=$3
-shift 3
+
+# Detect optional fourth positional argument as a CMake version if it looks like N.M or N.M.P
+# Otherwise, treat it as a normal CMake argument.
+if [ -n "$4" ] && [[ "$4" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+  CMAKE_VER=$4
+  shift 4
+else
+  CMAKE_VER=$DEFAULT_CMAKE_VER
+  shift 3
+fi
 
 HOSTCONFIG="hip_3_X"
 
@@ -33,6 +46,7 @@ BUILD_SUFFIX=lc_toss4-cce-${COMP_VER}-hip-${HIP_VER}-${HIP_ARCH}
 
 echo
 echo "Creating build directory build_${BUILD_SUFFIX} and generating configuration in it"
+echo "Using CMake version: ${CMAKE_VER}"
 echo "Configuration extra arguments:"
 echo "   $@"
 echo
@@ -44,7 +58,7 @@ rm -rf build_${BUILD_SUFFIX} >/dev/null
 mkdir build_${BUILD_SUFFIX} && cd build_${BUILD_SUFFIX}
 
 
-module load cmake/3.24.2
+module load cmake/${CMAKE_VER}
 
 cmake \
   -DCMAKE_BUILD_TYPE=Release \

@@ -9,20 +9,34 @@
 # SPDX-License-Identifier: (BSD-3-Clause)
 ###############################################################################
 
-if [ "$1" == "" ]; then
+# Default CMake version if not provided
+DEFAULT_CMAKE_VER=3.25.2
+
+if [[ $# -lt 2 ]]; then
   echo
-  echo "You must pass 2 arguments to the script (in this order): "
-  echo "    1) compiler version number for clang"
-  echo "    2) sanitizer version (one of 2 options: asan, or ubsan)"
+  echo "You must pass 2 or more arguments to the script (in the following order): "
+  echo "   1) compiler version number"
+  echo "   2) HIP compute architecture"
+  echo "   3) optional CMake version to load."
   echo
   echo "For example: "
-  echo "    toss4_clang.sh 14.0.6-magic asan"
-  exit
+  echo "    toss4_clang.sh 14.0.6-magic asan [3.27.4]"
+  echo "If no CMake version is provided, version ${DEFAULT_CMAKE_VER} will be used."
+  exit 1
 fi
 
 COMP_VER=$1
 SAN_VER=$2
-shift 2
+
+# Detect optional third positional argument as a CMake version if it looks like N.M or N.M.P
+# Otherwise, treat it as a normal CMake argument.
+if [ -n "$3" ] && [[ "$3" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+  CMAKE_VER=$3
+  shift 3
+else
+  CMAKE_VER=$DEFAULT_CMAKE_VER
+  shift 2
+fi
 
 if [[ ( ${SAN_VER} != "asan" ) && ( ${SAN_VER} != "ubsan" ) ]] ; then
   echo "Sanitizer version must be \"asan\" or \"ubsan\". Exiting!" ; exit
@@ -32,6 +46,7 @@ BUILD_SUFFIX=lc_toss4-clang-${COMP_VER}-${SAN_VER}
 
 echo
 echo "Creating build directory build_${BUILD_SUFFIX} and generating configuration in it"
+echo "Using CMake version: ${CMAKE_VER}"
 echo "Configuration extra arguments:"
 echo "   $@"
 echo
@@ -39,7 +54,7 @@ echo
 rm -rf build_${BUILD_SUFFIX} 2>/dev/null
 mkdir build_${BUILD_SUFFIX} && cd build_${BUILD_SUFFIX}
 
-module load cmake/3.23.1
+module load cmake/${CMAKE_VER}
 
 cmake \
   -DCMAKE_BUILD_TYPE=Debug \
