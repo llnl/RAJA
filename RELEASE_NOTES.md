@@ -30,8 +30,10 @@ evolving internal code implementations to use C++17, and eventually C++20.
 Notable changes include:
 
   * New features / API changes:
-    * Add Kahan sum class used internally to make parallel sum reductions
-      more accurate 
+    * Add Kahan sum class used in RAJAPerf to make parallel sum reductions
+      more accurate. Note that using fast-math compiler option (default with the
+      Intel compiler) will undo the accuracy increase. To recover the accuracy
+      with the Intel compiler, use the '-fp-model=precise' option. 
 
   * Build changes/improvements:
     * Bump minimum CMake version required to 3.24.
