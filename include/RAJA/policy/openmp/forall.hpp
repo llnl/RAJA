@@ -12,8 +12,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -31,8 +33,6 @@
 #include <omp.h>
 
 #include "RAJA/util/types.hpp"
-
-#include "RAJA/internal/fault_tolerance.hpp"
 #include "RAJA/pattern/kernel/TypeTraits.hpp"
 
 #include "RAJA/index/IndexSet.hpp"
@@ -82,6 +82,12 @@ forall_impl(resources::Host host_res,
   }
   else
   {
+// This branch handles the case of an OpenMP reduction through the RAJA::kernel
+// abstraction. MSVC is not supported in this case.
+#if defined(RAJA_COMPILER_MSVC)
+    static_assert(false, "MSVC does not support an OpenMP reduction through "
+                         "the RAJA::kernel abstraction");
+#else
     auto reducers_tuple = loop_body.data.param_tuple;
 
     using EXEC_POL = camp::decay<InnerPolicy>;
@@ -110,6 +116,7 @@ forall_impl(resources::Host host_res,
       }
     }
     RAJA::expt::detail::resolve_params<EXEC_POL>(reducers_tuple);
+#endif
   }
   return resources::EventProxy<resources::Host>(host_res);
 }
