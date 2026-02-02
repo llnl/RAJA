@@ -21,19 +21,26 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
-Version 2025.MM.PP -- Release date 2025-mm-dd
-=============================================
+Version 2025.12.1 -- Release date 2026-01-28
+============================================
 
-This release contains ...
+This release contains some improvements to code robustness, including
+evolving internal code implementations to use C++17, and eventually C++20.
 
 Notable changes include:
 
   * New features / API changes:
+    * Add Kahan sum class used in RAJAPerf to make parallel sum reductions
+      more accurate. Note that using fast-math compiler option (default with the
+      Intel compiler) will undo the accuracy increase. To recover the accuracy
+      with the Intel compiler, use the '-fp-model=precise' option. 
 
   * Build changes/improvements:
     * Bump minimum CMake version required to 3.24.
 
   * Bug fixes/improvements:
+    * Various internal code cleanups, simplifications, and improvements using
+      C++17 features, with an eye toward C++20.
 
 
 Version 2025.12.0 -- Release date 2025-12-19
