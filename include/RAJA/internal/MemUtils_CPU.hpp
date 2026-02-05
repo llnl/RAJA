@@ -44,7 +44,7 @@ namespace RAJA
  * Convenience function to allocate aligned memory using the
  * std::aligned_alloc function but returns a pointer of the allocated
  * type rather than void*
- * 
+ *
  * Memory should be deallocated using standard C++ free.
  */
 template<typename T>
