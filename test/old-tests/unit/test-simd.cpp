@@ -46,8 +46,8 @@ TEST(SIMD, Align)
     ASSERT_DOUBLE_EQ((double)y[i], (double)1.0);
   }
 
-  RAJA::free_aligned(a);
-  RAJA::free_aligned(b);
+  free(a);
+  free(b);
 }
 
 #if defined(RAJA_ENABLE_OPENMP)
@@ -85,9 +85,9 @@ TEST(SIMD, OMPAndSimd)
     ASSERT_DOUBLE_EQ((double)c[i], (double)2.0);
   }
 
-  RAJA::free_aligned(a);
-  RAJA::free_aligned(b);
-  RAJA::free_aligned(c);
+  free(a);
+  free(b);
+  free(c);
 }
 
 TEST(SIMD, OMPAndSimd_MultiLambda)
@@ -141,12 +141,12 @@ TEST(SIMD, OMPAndSimd_MultiLambda)
     ASSERT_DOUBLE_EQ((double)c2[i], (double)2.0);
   }
 
-  RAJA::free_aligned(a);
-  RAJA::free_aligned(b);
-  RAJA::free_aligned(c);
+  free(a);
+  free(b);
+  free(c);
 
-  RAJA::free_aligned(a2);
-  RAJA::free_aligned(b2);
-  RAJA::free_aligned(c2);
+  free(a2);
+  free(b2);
+  free(c2);
 }
 #endif

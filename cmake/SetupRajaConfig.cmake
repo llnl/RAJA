@@ -49,11 +49,6 @@ else ()
     set(RAJA_USE_CLOCK   OFF CACHE BOOL "Use clock from time.h for timer"    )
 endif ()
 
-include(CheckCXXSymbolExists)
-check_cxx_symbol_exists(posix_memalign cstdlib RAJA_HAVE_POSIX_MEMALIGN)
-check_cxx_symbol_exists(std::aligned_alloc cstdlib RAJA_HAVE_ALIGNED_ALLOC)
-check_cxx_symbol_exists(_mm_malloc cstdlib RAJA_HAVE_MM_MALLOC)
-
 # Set up RAJA_ENABLE prefixed options
 set(RAJA_ENABLE_OPENMP ${ENABLE_OPENMP})
 set(RAJA_ENABLE_TARGET_OPENMP ${ENABLE_TARGET_OPENMP})

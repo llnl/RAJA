@@ -3,8 +3,8 @@
  *
  * \file
  *
- * \brief   Header file defining prototypes for routines used to manage
- *          memory for CPU reductions and other operations.
+ * \brief   Internal memory functions and classes to manage memory for
+ *          CPU reductions and other operations.
  *
  ******************************************************************************
  */
@@ -38,72 +38,37 @@
 namespace RAJA
 {
 
-///
-/// Portable aligned memory allocation
-///
-inline void* allocate_aligned(size_t alignment, size_t size)
-{
-#if defined(RAJA_HAVE_POSIX_MEMALIGN)
-  // posix_memalign available
-  void* ret = nullptr;
-  int err   = posix_memalign(&ret, alignment, size);
-  return err ? nullptr : ret;
-#elif defined(RAJA_HAVE_ALIGNED_ALLOC)
-  return std::aligned_alloc(alignment, size);
-#elif defined(RAJA_HAVE_MM_MALLOC)
-  return _mm_malloc(size, alignment);
-#elif defined(RAJA_PLATFORM_WINDOWS)
-  return _aligned_malloc(size, alignment);
-#else
-  char* mem = (char*)malloc(size + alignment + sizeof(void*));
-  if (nullptr == mem) return nullptr;
-  void** ptr = (void**)((std::uintptr_t)(mem + alignment + sizeof(void*)) &
-                        ~(alignment - 1));
-  // Store the original address one position behind what we give the user.
-  ptr[-1] = mem;
-  return ptr;
-#endif
-}
-
-///
-/// Portable aligned memory allocation
-///
+/*!
+ * Typed aligned memory allocation
+ *
+ * Convenience function to allocate aligned memory using the
+ * std::aligned_alloc function but returns a pointer of the allocated
+ * type rather than void*
+ * 
+ * Memory should be deallocated using standard C++ free.
+ */
 template<typename T>
 inline T* allocate_aligned_type(size_t alignment, size_t size)
 {
-  return reinterpret_cast<T*>(allocate_aligned(alignment, size));
+  return reinterpret_cast<T*>(std::aligned_alloc(alignment, size));
 }
 
-///
-/// Portable aligned memory free - required for Windows
-///
-inline void free_aligned(void* ptr)
-{
-#if defined(RAJA_HAVE_POSIX_MEMALIGN) || defined(RAJA_HAVE_ALIGNED_ALLOC)
-  free(ptr);
-#elif defined(RAJA_HAVE_MM_MALLOC)
-  _mm_free(ptr);
-#elif defined(RAJA_PLATFORM_WINDOWS)
-  _aligned_free(ptr);
-#else
-  // Free the address stored one position behind the user data in ptr.
-  // This is valid for pointers allocated with allocate_aligned
-  free(((void**)ptr)[-1]);
-#endif
-}
-
-///
-/// Deleter function object for memory allocated with allocate_aligned
-///
+/*!
+ * Deleter function object for memory allocated with std allocation
+ * methods.
+ *
+ * Can be used with the RAJA::allocate_aligned_type function.
+ */
 struct FreeAligned
 {
-  void operator()(void* ptr) { free_aligned(ptr); }
+  void operator()(void* ptr) { free(ptr); }
 };
 
-///
-/// Deleter function object for memory allocated with allocate_aligned_type
-/// that calls the destructor for the fist size objects in the storage.
-///
+/*!
+ * Deleter function object for memory allocated with
+ * allocate_aligned_type that calls the destructor for the first `size`
+ * objects in the storage.
+ */
 template<typename T, typename index_type>
 struct FreeAlignedType : FreeAligned
 {

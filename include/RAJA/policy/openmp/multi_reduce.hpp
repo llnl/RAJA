@@ -191,7 +191,7 @@ private:
     {
       data[bin - 1].~T();
     }
-    RAJA::free_aligned(data);
+    free(data);
     data = nullptr;
   }
 };
@@ -408,7 +408,7 @@ private:
             .~T();
       }
     }
-    RAJA::free_aligned(data);
+    free(data);
     data = nullptr;
   }
 };
