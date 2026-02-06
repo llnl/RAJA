@@ -9,21 +9,34 @@
 # SPDX-License-Identifier: (BSD-3-Clause)
 ###############################################################################
 
+# Default CMake version if not provided
+DEFAULT_CMAKE_VER=3.24.2
+
 if [[ $# -lt 2 ]]; then
   echo
   echo "You must pass 2 or more arguments to the script (in the following order): "
   echo "   1) compiler version number"
   echo "   2) HIP compute architecture"
-  echo "   3...) optional arguments to cmake"
+  echo "   3) optional CMake version to load."
   echo
   echo "For example: "
-  echo "    toss4_amdclang.sh 4.1.0 gfx906"
-  exit
+  echo "    toss4_amdclang.sh 4.1.0 gfx906 [3.27.4]"
+  echo "If no CMake version is provided, version ${DEFAULT_CMAKE_VER} will be used."
+  exit 1
 fi
 
 COMP_VER=$1
 COMP_ARCH=$2
-shift 2
+
+# Detect optional third positional argument as a CMake version if it looks like N.M or N.M.P
+# Otherwise, treat it as a normal CMake argument.
+if [ -n "$3" ] && [[ "$3" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+  CMAKE_VER=$3
+  shift 3
+else
+  CMAKE_VER=$DEFAULT_CMAKE_VER
+  shift 2
+fi
 
 HOSTCONFIG="hip_3_X"
 
@@ -42,6 +55,7 @@ BUILD_SUFFIX=lc_toss4-amdclang-${COMP_VER}-${COMP_ARCH}
 
 echo
 echo "Creating build directory build_${BUILD_SUFFIX} and generating configuration in it"
+echo "Using CMake version: ${CMAKE_VER}"
 echo "Configuration extra arguments:"
 echo "   $@"
 echo
@@ -53,7 +67,7 @@ rm -rf build_${BUILD_SUFFIX} >/dev/null
 mkdir build_${BUILD_SUFFIX} && cd build_${BUILD_SUFFIX}
 
 
-module load cmake/3.24.2
+module load cmake/${CMAKE_VER}
 
 # unload rocm to avoid configuration problems where the loaded rocm and COMP_VER
 # are inconsistent causing the rocprim from the module to be used unexpectedly
