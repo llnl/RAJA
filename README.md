@@ -10,8 +10,9 @@
 
 # <img src="/share/raja/logo/RAJA_LOGO_Color.png?raw=true" width="128" valign="middle" alt="RAJA"/>
 
+[![Build Status](https://github.com/llnl/RAJA/actions/workflows/build.yml/badge.svg)](https://github.com/llnl/RAJA/actions/workflows/build.yml)
 [![Documentation Status](https://readthedocs.org/projects/raja/badge/?version=develop)](https://raja.readthedocs.io/en/develop/?badge=develop)
-[![Coverage](https://img.shields.io/codecov/c/github/LLNL/RAJA/develop.svg)](https://codecov.io/gh/LLNL/RAJA)
+[![GitHub release](https://img.shields.io/github/release/llnl/RAJA.svg)](https://github.com/llnl/RAJA/releases/latest)
 [![Join the chat at https://gitter.im/llnl/raja](https://badges.gitter.im/llnl/raja.svg)](https://gitter.im/llnl/raja?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 RAJA is a library of C++ software abstractions, primarily developed at
