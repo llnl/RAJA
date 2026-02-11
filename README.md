@@ -1,9 +1,10 @@
 
 [comment]: # (#################################################################)
-[comment]: # (Copyright 2016-25, Lawrence Livermore National Security, LLC)
-[comment]: # (and RAJA project contributors. See the RAJA/LICENSE file)
-[comment]: # (for details.)
-[comment]: # 
+[comment]: # (Copyright Lawrence Livermore National Security, LLC and other)
+[comment]: # (RAJA Project Developers. See top-level LICENSE and COPYRIGHT)
+[comment]: # (files for dates and other details. No copyright assignment is)
+[comment]: # (required to contribute to RAJA.)
+[comment]: #
 [comment]: # (# SPDX-License-Identifier: BSD-3-Clause)
 [comment]: # (#################################################################)
 
@@ -138,17 +139,16 @@ License
 
 RAJA is licensed under the [BSD 3-Clause license](https://opensource.org/licenses/BSD-3-Clause).
 
-Copyrights and patents in the RAJA project are retained by contributors.
-No copyright assignment is required to contribute to RAJA.
-
 Unlimited Open Source - BSD 3-clause Distribution
 `LLNL-CODE-689114`  `OCEC-16-063`
 
+Copyrights and patents in the RAJA project are retained by contributors.
+No copyright assignment is required to contribute to RAJA.
+
 For release details and restrictions, please see the information in the
 following:
-- [RELEASE](./RELEASE)
+- [COPYRIGHT](./COPYRIGHT)
 - [LICENSE](./LICENSE)
-- [NOTICE](./NOTICE)
 
 
 SPDX usage
@@ -177,10 +177,7 @@ PackageName: camp
 PackageHomePage: https://github.com/LLNL/camp  
 PackageLicenseDeclared: BSD-3-Clause
 
-PackageName: CUB   
-PackageHomePage: https://github.com/NVlabs/cub  
-PackageLicenseDeclared: BSD-3-Clause
+* * *
 
-PackageName: rocPRIM   
-PackageHomePage: https://github.com/ROCmSoftwarePlatform/rocPRIM.git  
-PackageLicenseDeclared: MIT License
+[BLT]: https://github.com/LLNL/blt
+[RAJA]: https://github.com/LLNL/camp

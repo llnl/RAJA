@@ -1,18 +1,13 @@
 #!/usr/bin/env bash
 
-##
-## Copyright (c) 2017-19, Lawrence Livermore National Security, LLC.
-##
-## Produced at the Lawrence Livermore National Laboratory.
-##
-## LLNL-CODE-738930
-##
-## All rights reserved.
-##
-## This file is part of the RAJA Performance Suite.
-##
-## For details about use and distribution, please read RAJAPerf/LICENSE.
-##
+###############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other
+# RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+# files for dates and other details. No copyright assignment is required
+# to contribute to RAJA.
+#
+# SPDX-License-Identifier: (BSD-3-Clause)
+###############################################################################
 
 BUILD_SUFFIX=sycl
 : ${BUILD_TYPE:=RelWithDebInfo}

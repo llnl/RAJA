@@ -12,8 +12,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -285,15 +287,15 @@ struct MultiReduceGridAtomicHostInit_TallyData
   //! get value for bin, assumes synchronization occurred elsewhere
   T get(int bin) const
   {
-    ::RAJA::detail::HighAccuracyReduce<T, typename Combiner::operator_type>
-        reducer(m_identity);
+    ::RAJA::HighAccuracyReduce<T, typename Combiner::operator_type> reducer(
+        m_identity);
     for (int tally_rep = 0; tally_rep < m_tally_replication; ++tally_rep)
     {
       int tally_offset =
           GetTallyOffset {}(bin, m_tally_bins, tally_rep, m_tally_replication);
       reducer.combine(m_tally_mem[tally_offset]);
     }
-    return reducer.get_and_clear();
+    return reducer.get_and_reset();
   }
 
   int num_bins() const { return m_num_bins; }
