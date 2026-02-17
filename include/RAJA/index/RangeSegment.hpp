@@ -615,7 +615,7 @@ DefineTypeTraitFromConcept(is_range_constructible,
 
 DefineTypeTraitFromConcept(is_range_stride_constructible,
                            RAJA::concepts::RangeStrideConstructible);
-
+       
 }  // namespace type_traits
 
 }  // namespace RAJA

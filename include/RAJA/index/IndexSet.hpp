@@ -22,9 +22,6 @@
 
 #include "RAJA/config.hpp"
 
-#include "RAJA/index/ListSegment.hpp"
-#include "RAJA/index/RangeSegment.hpp"
-
 #include "RAJA/internal/Iterators.hpp"
 #include "RAJA/internal/RAJAVec.hpp"
 
@@ -801,6 +798,16 @@ struct is_indexset_policy
                                             typename std::decay<T>::type>
 {};
 }  // namespace type_traits
+template <typename T>
+concept IndexSetType = //RAJA::type_traits::is_index_set<T>::value;
+//std::is_same<typename 
+static_cast<bool>(RAJA::type_traits::is_index_set<T>::value);//, camp::true_type>::value;  
+
+
+template <typename T>
+concept IndexSetPolicy = //type_traits::is_indexset_policy<T>::value;
+//std::is_same<typename 
+static_cast<bool>(type_traits::is_indexset_policy<T>::value);//, camp::true_type>::value;  
 
 }  // namespace RAJA
 
