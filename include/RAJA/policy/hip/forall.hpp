@@ -13,8 +13,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -36,8 +38,6 @@
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA/util/Jit.hpp"
-
-#include "RAJA/internal/fault_tolerance.hpp"
 
 #include "RAJA/policy/hip/MemUtils_HIP.hpp"
 #include "RAJA/policy/hip/policy.hpp"
@@ -555,7 +555,6 @@ forall_impl(resources::Hip hip_res,
     internal::HipDims dims(1);
     DimensionCalculator::set_dimensions(dims, len, func, shmem);
 
-    RAJA_FT_BEGIN;
 
     RAJA::hip::detail::hipInfo launch_info;
     launch_info.gridDim  = dims.blocks;
@@ -583,8 +582,6 @@ forall_impl(resources::Hip hip_res,
       RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params,
                                                       launch_info);
     }
-
-    RAJA_FT_END;
   }
 
   return resources::EventProxy<resources::Hip>(hip_res);

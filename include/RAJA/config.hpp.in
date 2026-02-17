@@ -22,8 +22,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -114,7 +116,6 @@ static_assert(RAJA_HAS_SOME_CXX14,
  *
  ******************************************************************************
  */
-#cmakedefine RAJA_ENABLE_FT
 #cmakedefine RAJA_ENABLE_ITERATOR_OVERFLOW_DEBUG
 /*!
  ******************************************************************************
@@ -172,7 +173,7 @@ static_assert(RAJA_HAS_SOME_CXX14,
  * indicate if the back-end is present when the application/library
  * using RAJA is compiled.   An application/library can use a subset of
  * back-ends that are present in a RAJA install.
- * 
+ *
  ******************************************************************************
  */
 
@@ -272,8 +273,8 @@ namespace RAJA {
 
 #if defined(RAJA_ENABLE_OPENMP) && !defined(__HIP_DEVICE_COMPILE__)
 #if defined(_OPENMP)
-// RAJA build can be configured but downstream packages may not; guard OpenMP 
-#define RAJA_OPENMP_ACTIVE  
+// RAJA build can be configured but downstream packages may not; guard OpenMP
+#define RAJA_OPENMP_ACTIVE
 #if (_OPENMP >= 200805)
 #if defined(RAJA_ENABLE_OPENMP_TASK)
 #define RAJA_ENABLE_OPENMP_TASK_INTERNAL
