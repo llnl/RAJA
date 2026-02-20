@@ -26,7 +26,6 @@
 #include "RAJA/pattern/tensor/internal/MatrixMatrixMultiply.hpp"
 #include "RAJA/util/BitMask.hpp"
 
-//#define DEBUG_MATRIX_LOAD_STORE
 
 
 namespace RAJA
@@ -81,9 +80,9 @@ public:
                                         layout_type,
                                         camp::idx_seq<COL_SIZE, ROW_SIZE>>;
   using product_type   = TensorRegister<REGISTER_POLICY,
-                                      T,
-                                      layout_type,
-                                      camp::idx_seq<ROW_SIZE, ROW_SIZE>>;
+                                        T,
+                                        layout_type,
+                                        camp::idx_seq<ROW_SIZE, ROW_SIZE>>;
 
   static constexpr camp::idx_t s_num_rows    = ROW_SIZE;
   static constexpr camp::idx_t s_num_columns = COL_SIZE;
@@ -1672,7 +1671,7 @@ public:
             reg++;
 
           }  // rowreg
-        }    // col
+        }  // col
       }
     }
     return result;

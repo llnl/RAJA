@@ -774,13 +774,11 @@ template<typename Function,
          typename Arg2 = Arg1>
 struct BinaryFunction
     : DefineConcept(::RAJA::concepts::convertible_to<Return>(
-          camp::val<Function>()(camp::val<Arg1>(), camp::val<Arg2>())))
-{};
+          camp::val<Function>()(camp::val<Arg1>(), camp::val<Arg2>()))) {};
 
 template<typename Function, typename Return, typename Arg = Return>
 struct UnaryFunction : DefineConcept(::RAJA::concepts::convertible_to<Return>(
-                           camp::val<Function>()(camp::val<Arg>())))
-{};
+                           camp::val<Function>()(camp::val<Arg>()))) {};
 
 namespace detail
 {

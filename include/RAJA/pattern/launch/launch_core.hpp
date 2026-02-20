@@ -31,7 +31,6 @@
 #include "camp/tuple.hpp"
 
 // Odd dependecy with atomics is breaking CI builds
-//#include "RAJA/util/View.hpp"
 
 #if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_SYCL_ACTIVE)
 #define RAJA_TEAM_SHARED __shared__

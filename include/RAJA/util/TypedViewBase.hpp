@@ -746,9 +746,9 @@ public:
 
   using Base         = ViewBase<ValueType, PointerType, LayoutType>;
   using Self         = TypedViewBase<value_type,
-                             pointer_type,
-                             layout_type,
-                             camp::list<IndexTypes...>>;
+                                     pointer_type,
+                                     layout_type,
+                                     camp::list<IndexTypes...>>;
   using NonConstView = TypedViewBase<nc_value_type,
                                      nc_pointer_type,
                                      layout_type,
@@ -756,9 +756,9 @@ public:
 
   using shifted_layout_type = typename add_offset<layout_type>::type;
   using ShiftedView         = TypedViewBase<value_type,
-                                    pointer_type,
-                                    shifted_layout_type,
-                                    camp::list<IndexTypes...>>;
+                                            pointer_type,
+                                            shifted_layout_type,
+                                            camp::list<IndexTypes...>>;
 
   static constexpr size_t n_dims = sizeof...(IndexTypes);
 

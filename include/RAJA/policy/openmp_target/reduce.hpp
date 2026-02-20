@@ -14,7 +14,7 @@
 
 #if defined(RAJA_ENABLE_TARGET_OPENMP)
 
-//#include <cassert>  // Leaving out until XL is fixed 2/25/2019.
+// #include <cassert>  // Leaving out until XL is fixed 2/25/2019.
 
 #include <algorithm>
 
