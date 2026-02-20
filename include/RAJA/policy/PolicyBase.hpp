@@ -195,8 +195,7 @@ struct ExecutionPolicy
                     ::RAJA::concepts::has_type<::RAJA::Launch>(
                         camp::decay<decltype(Pol::launch)>()),
                     ::RAJA::concepts::has_type<::RAJA::Platform>(
-                        camp::decay<decltype(Pol::platform)>()))
-{};
+                        camp::decay<decltype(Pol::platform)>())) {};
 
 }  // end namespace concepts
 

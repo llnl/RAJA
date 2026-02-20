@@ -117,11 +117,10 @@
  *******************************************************************************
  */
 template<typename... T>
-RAJA_HOST_DEVICE RAJA_INLINE void RAJA_UNUSED_VAR(T&&...) noexcept
-{}
+RAJA_HOST_DEVICE RAJA_INLINE void RAJA_UNUSED_VAR(T&&...) noexcept {}
 
 #define RAJA_DIVIDE_CEILING_INT(dividend, divisor)                             \
-  (((dividend) + (divisor)-1) / (divisor))
+  (((dividend) + (divisor) - 1) / (divisor))
 
 /*!
  * OpenMP helper for the new RAJA reducer interface.
@@ -141,8 +140,7 @@ RAJA_HOST_DEVICE RAJA_INLINE void RAJA_UNUSED_VAR(T&&...) noexcept
 #endif
 
 
-RAJA_HOST_DEVICE
-inline void RAJA_ABORT_OR_THROW(const char* str)
+RAJA_HOST_DEVICE inline void RAJA_ABORT_OR_THROW(const char* str)
 {
 #if defined(__SYCL_DEVICE_ONLY__)
   RAJA_UNUSED_VAR(str);
