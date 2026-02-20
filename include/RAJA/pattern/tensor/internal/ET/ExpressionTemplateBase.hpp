@@ -29,7 +29,6 @@
 #include "RAJA/pattern/tensor/internal/ET/normalizeOperand.hpp"
 #include "RAJA/pattern/tensor/internal/ET/BinaryOperatorTraits.hpp"
 
-
 namespace RAJA
 {
 namespace internal

@@ -26,8 +26,6 @@
 #include "RAJA/pattern/tensor/internal/MatrixMatrixMultiply.hpp"
 #include "RAJA/util/BitMask.hpp"
 
-
-
 namespace RAJA
 {
 namespace expt

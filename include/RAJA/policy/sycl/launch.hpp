@@ -24,6 +24,7 @@
 #include "RAJA/pattern/detail/privatizer.hpp"
 #include "RAJA/policy/sycl/policy.hpp"
 #include "RAJA/policy/sycl/MemUtils_SYCL.hpp"
+// #include "RAJA/policy/sycl/raja_syclerrchk.hpp"
 #include "RAJA/util/resource.hpp"
 
 namespace RAJA
