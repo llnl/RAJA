@@ -557,7 +557,7 @@ forall_impl(resources::Cuda cuda_res,
   // Only launch kernel if we have something to iterate over
   if (len > 0)
   {
-    RAJA::register_lambda(loop_body);
+    RAJA::internal::jit::register_lambda(loop_body);
     auto func = reinterpret_cast<const void*>(
         &impl::forallp_cuda_kernel<EXEC_POL, BlocksPerSM, Iterator, LOOP_BODY,
                                    IndexType, camp::decay<ForallParam>>);
@@ -642,7 +642,7 @@ RAJA_INLINE resources::EventProxy<resources::Cuda> forall_impl(
     LoopBody&& loop_body)
 {
   int num_seg = iset.getNumSegments();
-  RAJA::register_lambda(loop_body);
+  RAJA::internal::jit::register_lambda(loop_body);
   for (int isi = 0; isi < num_seg; ++isi)
   {
     iset.segmentCall(

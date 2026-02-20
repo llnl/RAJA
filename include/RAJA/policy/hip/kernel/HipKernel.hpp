@@ -642,7 +642,7 @@ struct StatementExecutor<
         auto hip_data = RAJA::hip::make_launch_body(
             func, launch_dims.dims.blocks, launch_dims.dims.threads, shmem, res,
             data);
-        RAJA::register_lambda(func);
+        RAJA::internal::jit::register_lambda(func);
         //
         // Launch the kernel
         //

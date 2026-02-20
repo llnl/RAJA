@@ -227,9 +227,12 @@ inline void RAJA_ABORT_OR_THROW(const char* str)
 #endif
 
 #if defined RAJA_ENABLE_JIT
+// This macro accepts a list of integers as its arguments, corresponding to the
+// 1-indexed arguments for which to specialize a function's IR.
 #define RAJA_JIT_COMPILE_ARGS(...) __attribute__((annotate("jit", __VA_ARGS__)))
 #define RAJA_JIT_COMPILE           __attribute__((annotate("jit")))
 #else
+// When JIT is not enabled, simply pass through.
 #define RAJA_JIT_COMPILE_ARGS(...)
 #define RAJA_JIT_COMPILE
 #endif

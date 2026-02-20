@@ -8,6 +8,11 @@
 
 namespace RAJA
 {
+namespace internal
+{
+namespace jit
+{
+
 template<typename Lambda>
 inline auto register_lambda(Lambda&& lambda)
 {
@@ -28,7 +33,8 @@ inline auto jit_variable(T arg)
 #endif
 }
 
-
+}  // namespace jit
+}  // namespace internal
 }  // namespace RAJA
 
 #endif

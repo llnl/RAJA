@@ -332,7 +332,10 @@ install(FILES
 include(cmake/SetupRajaConfig.cmake)
 
 if (RAJA_ENABLE_JIT)
-  target_include_directories(RAJA 
+  if (NOT CMAKE_CXX_COMPILER_ID MATCHES Clang)
+    message(FATAL_ERROR "RAJA requires an LLVM based compiler in order to support JIT compilation, but found ${CMAKE_CXX_COMPILER_ID}")
+  endif()
+  target_include_directories(RAJA
     PUBLIC
     "${PROTEUS_INSTALL_DIR}/include"
     )
