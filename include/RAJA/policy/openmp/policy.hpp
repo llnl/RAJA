@@ -21,6 +21,7 @@
 #define policy_openmp_HPP
 
 #include <type_traits>
+#include <omp.h>
 
 #include "RAJA/policy/PolicyBase.hpp"
 
@@ -39,8 +40,6 @@ typedef enum omp_sched_t
   // schedule modifier
   omp_sched_monotonic = 0x80000000u
 } omp_sched_t;
-#else
-#include <omp.h>
 #endif
 
 namespace RAJA
