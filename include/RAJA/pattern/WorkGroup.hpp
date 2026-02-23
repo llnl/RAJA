@@ -226,9 +226,9 @@ struct WorkPool<WorkGroupPolicy<EXEC_POLICY_T,
   using storage_policy  = STORAGE_POLICY_T;
   using dispatch_policy = DISPATCH_POLICY_T;
   using policy          = WorkGroupPolicy<exec_policy,
-                                 order_policy,
-                                 storage_policy,
-                                 dispatch_policy>;
+                                          order_policy,
+                                          storage_policy,
+                                          dispatch_policy>;
   using index_type      = INDEX_T;
   using xarg_type       = xargs<Args...>;
   using Allocator       = ALLOCATOR_T;
@@ -338,9 +338,9 @@ struct WorkGroup<WorkGroupPolicy<EXEC_POLICY_T,
   using storage_policy  = STORAGE_POLICY_T;
   using dispatch_policy = DISPATCH_POLICY_T;
   using policy          = WorkGroupPolicy<exec_policy,
-                                 order_policy,
-                                 storage_policy,
-                                 dispatch_policy>;
+                                          order_policy,
+                                          storage_policy,
+                                          dispatch_policy>;
   using index_type      = INDEX_T;
   using xarg_type       = xargs<Args...>;
   using Allocator       = ALLOCATOR_T;
@@ -412,9 +412,9 @@ struct WorkSite<WorkGroupPolicy<EXEC_POLICY_T,
   using storage_policy  = STORAGE_POLICY_T;
   using dispatch_policy = DISPATCH_POLICY_T;
   using policy          = WorkGroupPolicy<exec_policy,
-                                 order_policy,
-                                 storage_policy,
-                                 dispatch_policy>;
+                                          order_policy,
+                                          storage_policy,
+                                          dispatch_policy>;
   using index_type      = INDEX_T;
   using xarg_type       = xargs<Args...>;
   using Allocator       = ALLOCATOR_T;
