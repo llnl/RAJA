@@ -91,6 +91,12 @@ include:
       github_project_org: $GITHUB_PROJECT_ORG
       always_run_pattern: "^develop$|^main$|^v[0-9.]*-RC$"
 
+  # Draft PR filter
+  - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/variable-as-input-test@woptim/github-token-fix
+    inputs:
+      rsci_project_input: $RSCI_PROJECT_VAR
+      rsci_group_input: $RSCI_GROUP_VAR
+
   # Local custom variables (used for component inputs and forwarded to child pipelines)
   - local: '.gitlab/custom-variables.yml'
 
