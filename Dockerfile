@@ -49,7 +49,7 @@ RUN cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DRAJA_ENABLE_WARN
     ctest -T test --output-on-failure && \
     make clean
 
-FROM ghcr.io/llnl/radiuss:ubuntu-24.04-clang-14 AS clang14_debug
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-clang-19 AS clang19_debug
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
@@ -58,7 +58,7 @@ RUN cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug  -DENABLE_OPENMP
     ctest -T test --output-on-failure && \
     make clean
 
-FROM ghcr.io/llnl/radiuss:ubuntu-24.04-clang-14 AS clang14_style
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-clang-19 AS clang19_style
 USER root
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
@@ -67,7 +67,7 @@ RUN clang-format --version && \
     cmake -DENABLE_CLANGFORMAT=ON ../ && \
     make check
 
-FROM ghcr.io/llnl/radiuss:ubuntu-24.04-clang-14 AS clang14_desul
+FROM ghcr.io/llnl/radiuss:ubuntu-24.04-clang-19 AS clang19_desul
 ENV GTEST_COLOR=1
 COPY . /home/raja/workspace
 WORKDIR /home/raja/workspace/build
