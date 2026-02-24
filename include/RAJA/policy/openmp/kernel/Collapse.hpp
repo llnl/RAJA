@@ -88,8 +88,7 @@ struct StatementExecutor<statement::Collapse<omp_parallel_collapse_exec,
     RAJA_UNUSED_VAR(EXEC_POL {});
     RAJA_OMP_DECLARE_TUPLE_REDUCTION_COMBINE;
 #pragma omp parallel for private(i0, i1) firstprivate(privatizer)              \
-    RAJA_COLLAPSE(2) reduction(combine                                         \
-                               : reducers_tuple)
+    RAJA_COLLAPSE(2) reduction(combine : reducers_tuple)
     for (i0 = 0; i0 < l0; ++i0)
     {
       for (i1 = 0; i1 < l1; ++i1)
@@ -180,8 +179,7 @@ struct StatementExecutor<statement::Collapse<omp_parallel_collapse_exec,
     using EXEC_POL  = omp_parallel_collapse_exec;
     RAJA_OMP_DECLARE_TUPLE_REDUCTION_COMBINE;
 #pragma omp parallel for private(i0, i1, i2) firstprivate(privatizer)          \
-    RAJA_COLLAPSE(3) reduction(combine                                         \
-                               : reducers_tuple)
+    RAJA_COLLAPSE(3) reduction(combine : reducers_tuple)
     for (i0 = 0; i0 < l0; ++i0)
     {
       for (i1 = 0; i1 < l1; ++i1)

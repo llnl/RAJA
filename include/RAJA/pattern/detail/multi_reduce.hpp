@@ -36,7 +36,7 @@
   {                                                                            \
     using policy = POL<tuning>;                                                \
     using Base   = reduce::detail::BaseMultiReduce##OP_NAME<                   \
-        DATA<T, RAJA::reduce::OP<T>, tuning>>;                               \
+          DATA<T, RAJA::reduce::OP<T>, tuning>>;                               \
     using Base::Base;                                                          \
     using typename Base::value_type;                                           \
     using typename Base::reference;                                            \
