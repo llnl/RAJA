@@ -1,6 +1,6 @@
 #include "RAJA/config.hpp"
 #if defined(RAJA_ENABLE_JIT)
-#include "proteus/JitInterface.hpp"
+#include "proteus/JitInterface.h"
 #endif
 
 #ifndef RAJA_jit_HPP

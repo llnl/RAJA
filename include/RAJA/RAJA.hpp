@@ -78,7 +78,7 @@
 #endif
 
 #if defined(RAJA_ENABLE_JIT)
-#include "proteus/JitInterface.hpp"
+#include "proteus/JitInterface.h"
 #endif
 
 #if defined(RAJA_ENABLE_SYCL)

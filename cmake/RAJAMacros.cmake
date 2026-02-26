@@ -7,6 +7,23 @@
 # SPDX-License-Identifier: (BSD-3-Clause)
 ################################################################################
 
+macro(raja_link_include_proteus)
+  set(options)
+  set(singleValueArgs NAME )
+  set(multiValueArgs)
+
+  cmake_parse_arguments(arg
+    "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  if (RAJA_ENABLE_JIT_TESTS)
+    add_proteus(${arg_NAME})
+    target_include_directories(${arg_NAME}
+      PUBLIC
+      "${PROTEUS_HEADERS_DIR}"
+    )
+  endif()
+endmacro(raja_link_include_proteus)
+
 macro(raja_add_executable)
   set(options )
   set(singleValueArgs NAME TEST REPRODUCER BENCHMARK)
@@ -50,6 +67,12 @@ macro(raja_add_executable)
     DEPENDS_ON ${arg_DEPENDS_ON}
     OUTPUT_DIR ${_output_dir}
     )
+
+  # If JIT is enabled, link with target with Proteus and identify Proteus
+  # header directory
+  if (RAJA_ENABLE_JIT)
+    raja_link_include_proteus(NAME ${arg_NAME})
+  endif()
 endmacro(raja_add_executable)
 
 macro(raja_add_plugin_library)
@@ -86,6 +109,11 @@ macro(raja_add_plugin_library)
     SHARED ${arg_SHARED}
     )
 
+  # If JIT is enabled, link with target with Proteus and identify Proteus
+  # header directory
+  if (RAJA_ENABLE_JIT)
+    raja_link_include_proteus(NAME ${arg_NAME})
+  endif()
   #target_include_directories(${arg_NAME}
   #PUBLIC
   #$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
