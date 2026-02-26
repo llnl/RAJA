@@ -81,12 +81,12 @@ include:
     inputs:
       github_project_name: $GITHUB_PROJECT_NAME
       github_project_org: $GITHUB_PROJECT_ORG
-      github_token: $GITHUB_TOKEN
+      github_token: $RSCI_GITHUB_STATUS_TOKEN
 
   # Draft PR filter
   - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/utility-draft-pr-filter@v2026.02.0
     inputs:
-      github_token: $GITHUB_TOKEN
+      github_token: $RSCI_GITHUB_STATUS_TOKEN
       github_project_name: $GITHUB_PROJECT_NAME
       github_project_org: $GITHUB_PROJECT_ORG
       always_run_pattern: "^develop$|^main$|^v[0-9.]*-RC$"
