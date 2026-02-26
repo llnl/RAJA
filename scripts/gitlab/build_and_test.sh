@@ -26,6 +26,7 @@ project_dir="$(pwd)"
 hostconfig=${HOST_CONFIG:-""}
 spec=${SPEC:-""}
 module_list=${MODULE_LIST:-""}
+cmake_extra_args_raw=${CMAKE_EXTRA_ARGS:-""}
 job_unique_id=${CI_JOB_ID:-""}
 use_dev_shm=${USE_DEV_SHM:-true}
 spack_debug=${SPACK_DEBUG:-false}
@@ -211,9 +212,17 @@ then
         cmake_options="-DBLT_MPI_COMMAND_APPEND:STRING=--overlap"
     fi
 
+    cmake_extra_args=()
+    if [[ -n "${cmake_extra_args_raw}" ]]
+    then
+      read -r -a cmake_extra_args <<< "${cmake_extra_args_raw}"
+      echo "[Information]: CMAKE_EXTRA_ARGS: ${cmake_extra_args_raw}"
+    fi
+
     $cmake_exe \
       -C ${hostconfig_path} \
       ${cmake_options} \
+      "${cmake_extra_args[@]}" \
       -DCMAKE_INSTALL_PREFIX=${install_dir} \
       ${project_dir}
     if ! $cmake_exe --build . -j ${core_counts[$truehostname]}
