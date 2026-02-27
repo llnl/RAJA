@@ -76,6 +76,10 @@ raja_add_executable(
   SOURCES raja-launch.cpp)
 
 raja_add_executable(
+  NAME hip-launch-context-indices
+  SOURCES hip-launch-context-indices.cpp)
+
+raja_add_executable(
   NAME launch_matrix-multiply
   SOURCES launch_matrix-multiply.cpp)
 
