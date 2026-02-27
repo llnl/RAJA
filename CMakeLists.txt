@@ -19,7 +19,7 @@ include(CMakeDependentOption)
 # Set version number
 set(RAJA_VERSION_MAJOR 2025)
 set(RAJA_VERSION_MINOR 12)
-set(RAJA_VERSION_PATCHLEVEL 0)
+set(RAJA_VERSION_PATCHLEVEL 1)
 
 if (RAJA_LOADED AND (NOT RAJA_LOADED STREQUAL "${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}"))
   message(FATAL_ERROR "You are mixing RAJA versions. Loaded is ${RAJA_LOADED}, expected ${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}")
@@ -44,10 +44,10 @@ project(RAJA LANGUAGES CXX C
   VERSION ${RAJA_LOADED})
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/thirdparty" ${CMAKE_MODULE_PATH})
-set(BLT_REQUIRED_CLANGFORMAT_VERSION  "14" CACHE STRING "")
+set(BLT_REQUIRED_CLANGFORMAT_VERSION  "19" CACHE STRING "")
 include(cmake/SetupRajaOptions.cmake)
 
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.24)
 
 # Detect C++ standard and add appropriate flag _before_ loading BLT
 set(COMPILERS_KNOWN_TO_CMAKE33 AppleClang Clang GNU MSVC)

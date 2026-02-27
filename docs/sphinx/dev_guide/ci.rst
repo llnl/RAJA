@@ -127,8 +127,9 @@ collaboratively with other projects. These include
 
   * `RADIUSS Shared CI <https://github.com/LLNL/radiuss-shared-ci>`_,
     a centralized framework for software testing with GitLab CI on LC
-    machines. The project is developed on GitHub and is mirrored to the LC 
-    CZ GitLab instance.
+    machines. The project is developed on GitHub and is mirrored to the LC
+    CZ GitLab instance. As of v2025.12.0, RADIUSS Shared CI provides
+    reusable GitLab CI Components (requires GitLab 17.0+).
   * `Spack <https://github.com/spack/spack>`_, a multi-platform package 
     manager that builds and installs HPC software stacks.
   * `Uberenv <https://github.com/LLNL/uberenv>`_, a Python script
@@ -143,9 +144,14 @@ collaboratively with other projects. These include
     they relate to the Spack configuration. RADIUSS Spack Configs is a
     submodule in RAJA that lives in ``RAJA/scripts/radiuss-spack-configs/``.
 
-The relationships among these dependencies in a project that uses them is 
+The relationships among these dependencies in a project that uses them is
 described in the `RADIUSS Shared CI User Guide <https://radiuss-shared-ci.readthedocs.io/en/woptim-isolate-jobs/sphinx/user_guide/how_to.html#leverage-spack>`_ along with information about
 how the framework works and how to set up a project to use it.
+
+.. note:: For detailed information about the GitLab CI Components architecture
+   and migration from the traditional include-based configuration, see the
+   `RADIUSS Shared CI Components Migration Guide
+   <https://radiuss-shared-ci.readthedocs.io/en/latest/sphinx/user_guide/components_migration.html>`_.
 
 .. important:: The RAJA Spack package is maintained in the `RADIUSS Spack
    Configs <https://github.com/LLNL/radiuss-spack-configs>`_ project. After
@@ -164,45 +170,47 @@ GitLab CI Testing Files (specific to LC CZ)
 The following figure shows directories and files in the RAJA project that 
 support LC GitLab CI testing. 
 
-.. figure:: ./figures/RAJA-Gitlab-Files.png
+.. figure:: ./figures/RAJA-GitLab-Files.png
 
    The figure shows directories and files in the RAJA repo that support GitLab
-   CI testing. Files in blue are specific to the CI while those in red relates
+   CI testing. Files in blue are specific to CI while those in red relate
    to the build (Spack) environment description. The ``build_and_test.sh``
-   scripts stands at the interface between CI and Spack. ``uberenv`` and
-   ``radiuss-spack-configs`` are both Git submodules that are shared and
-   maintained with other projects.
+   scripts drives the configuration, compilation, and testing processes in
+   GitLab. ``uberenv`` and ``radiuss-spack-configs`` are both Git submodules
+   that are shared and maintained with other projects.
 
 Briefly, these files play the following roles in GitLab CI testing:
 
   * The `RAJA/.gitlab-ci.yml
     <https://github.com/LLNL/RAJA/tree/develop/.gitlab-ci.yml>`_ file is the
-    top-level file for GitLab CI configuration. It defines variables used
-    throughout the CI configuration such as GitHub project name and
-    organization, service user account name, version information for RADIUSS
-    Shared CI project we are using, and top-level information for triggering
-    build-and-test sub-pipelines.
+    top-level file for GitLab CI configuration. It uses GitLab CI Components
+    (requires GitLab 17.0+) from the RADIUSS Shared CI project. It defines
+    variables used throughout the CI configuration such as GitHub project name
+    and organization, service user account name, and includes components for
+    machine-specific pipelines and utilities.
   * The `RAJA/.uberenv_config.json
     <https://github.com/LLNL/RAJA/tree/develop/.uberenv_config.json>`_ file
     defines information about Spack such as Spack version we are using,
     location of Spack packages, etc.
   * The `RAJA/.gitlab <https://github.com/LLNL/RAJA/tree/develop/.gitlab>`_
-    directory contains several files that connect RAJA GitLab pipelines to
-    shared pipelines defined in the `RADIUSS Shared CI
-    <https://github.com/LLNL/radiuss-shared-ci>`_ project, as well as
-    RAJA-specific jobs and global job customizations that we use, such as job
-    time limits, etc. These files are modified from templates provided by the
-    RADIUSS Shared CI project.
-  * In particular, `RAJA/.gitlab/jobs
+    directory contains RAJA-specific CI configuration files:
+
+    * ``.gitlab/custom-jobs.yml`` - Job templates for child pipelines, created
+      and customized by the project based on templates from RADIUSS Shared CI.
+    * ``.gitlab/custom-variables.yml`` - Machine-specific allocation variables
+      and build configurations, created and customized by the project based on
+      templates from RADIUSS Shared CI.
+
+  * The `RAJA/.gitlab/jobs
     <https://github.com/LLNL/RAJA/tree/develop/.gitlab/jobs>`_ directory
-    contains the files defining RAJA specific jobs per machine. This file is
+    contains files defining RAJA specific jobs per machine. These files are
     appended to the list of shared CI jobs provided by `RADIUSS Spack Configs
-    <https://github.com/LLNL/radiuss-spack-configs>`_. Each job ultimately consists
-    in one Spack spec.
+    <https://github.com/LLNL/radiuss-spack-configs>`_. Each job ultimately
+    corresponds to one Spack spec.
   * The `RAJA/scripts/gitlab/build_and_test.sh
     <https://github.com/LLNL/RAJA/tree/develop/scripts/gitlab/build_and_test.sh>`_
-    contains commands that are run during the RAJA build and test process. It is
-    set in the CI using the ``JOB_CMD`` variable.
+    script contains commands that are run during the RAJA build and test
+    process. It is set in the CI using the ``JOB_CMD`` variable.
 
 In the following sections, we discuss how these files are used in the 
 steps of the RAJA GitLab CI testing process summarized above.
@@ -212,16 +220,63 @@ steps of the RAJA GitLab CI testing process summarized above.
 Launching CI pipelines (step 2) 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In **step 2** of the diagram above, GitLab launches RAJA test pipelines 
+In **step 2** of the diagram above, GitLab launches RAJA test pipelines
 starting with the content of the ``RAJA/.gitlab-ci.yml`` file described above.
-Most importantly, this file identifies the location of two files 
-`RAJA/.gitlab/subscribed-pipelines.yml <https://github.com/LLNL/RAJA/tree/develop/.gitlab/subscribed-pipelines.yml>`_ and
-`RAJA/.gitlab/custom-jobs-and-variables.yml <https://github.com/LLNL/RAJA/tree/develop/.gitlab/custom-jobs-and-variables.yml>`_.
-The ``subscribed-pipelines.yml`` file connects the RAJA GitLab environment to 
-the platform and pipelines defined in the RADIUSS Shared CI project.
-The ``custom-jobs-and-variables.yml`` file defines how resources are 
-allocated to run test jobs on various LC platforms and common build 
-configuration variants for those platforms
+This file includes GitLab CI Components directly from the RADIUSS Shared CI
+project using the syntax
+``component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/<component-name>@<version>``.
+The available components include:
+
+  * ``base-pipeline`` - Provides core templates for machine availability checks
+    and pipeline orchestration
+  * ``utility-draft-pr-filter`` - Filters out draft pull requests
+  * Machine-specific pipeline components (``dane-pipeline``, ``matrix-pipeline``,
+    ``corona-pipeline``, ``tioga-pipeline``, ``tuolumne-pipeline``,
+    ``lassen-pipeline``) - Define the build and test workflows for each machine
+
+.. note:: **Component Versioning:** Components are versioned using the
+   ``@<version>`` syntax (e.g., ``@v2025.12.0``). RAJA currently uses
+   ``@v2025.12.0``. When updating to a new version of RADIUSS Shared CI
+   components, all component references in ``.gitlab-ci.yml`` should be
+   updated to use the same version to ensure consistency. Version numbers
+   follow the ``v<YEAR>.<MONTH>.<PATCH>`` format.
+
+Machine pipelines are defined inline in the ``.gitlab-ci.yml`` file using
+trigger syntax with component includes. Each project creates and customizes
+``.gitlab/custom-variables.yml`` locally (based on templates from RADIUSS
+Shared CI) to define allocation settings for each machine, and
+``.gitlab/custom-jobs.yml`` to define job-specific templates and behaviors.
+
+Component Inputs
+""""""""""""""""
+
+Components accept inputs that configure their behavior. The main inputs used are:
+
+**Base Pipeline Component:**
+  * ``github_project_name`` - The GitHub project name (e.g., "RAJA")
+  * ``github_project_org`` - The GitHub organization (e.g., "LLNL")
+  * ``github_token`` - Token for GitHub API access (typically ``$GITHUB_TOKEN``)
+
+**Draft PR Filter Component:**
+  * ``github_token``, ``github_project_name``, ``github_project_org`` - Same as above
+  * ``always_run_pattern`` - Regex pattern for branches that should always run
+    (e.g., ``"^develop$|^main$|^v[0-9.]*-RC$"``)
+
+**Machine Pipeline Components** (dane, matrix, corona, tioga, tuolumne, lassen):
+  * ``job_cmd`` - The command to run for each job (e.g., ``"./scripts/gitlab/build_and_test.sh"``)
+  * ``shared_alloc`` - Scheduler allocation for the shared allocation job
+    (e.g., ``"--exclusive --time=120 --nodes=1"`` for SLURM)
+  * ``job_alloc`` - Scheduler allocation for individual jobs within the shared allocation
+    (e.g., ``"--nodes=1"`` for SLURM)
+  * ``github_project_name``, ``github_project_org`` - For status reporting
+
+Allocation settings are defined in ``.gitlab/custom-variables.yml`` and vary by
+machine and scheduler type (SLURM for dane/matrix, flux for corona/tioga/tuolumne,
+LSF for lassen). For example::
+
+  # Dane (SLURM) allocation settings
+  DANE_SHARED_ALLOC: "--exclusive --reservation=ci --time=120 --nodes=1"
+  DANE_JOB_ALLOC: "--reservation=ci --nodes=1"
 
 Each job that is run is defined by a Spack spec in one of two places, depending
 on whether it is *shared* with other projects or it is specific to RAJA. The
