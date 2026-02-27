@@ -43,7 +43,10 @@ struct msg_header
 };
 
 template<typename... Args>
-using msg_args = camp::tuple<Args...>;
+struct msg_args
+{
+  camp::tuple<Args...> args;
+};
 }  // namespace RAJA
 
 #endif  // RAJA_MSG_ALIGN_HPP

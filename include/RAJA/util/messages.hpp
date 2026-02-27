@@ -47,8 +47,10 @@ class message_bus;
 template<>
 class message_bus<char>
 {
-private:
   // Internal classes
+public:
+  // queue is public due to limitation with extended lambdas
+  // in nvcc
   struct queue
   {
     using value_type     = char;
@@ -64,6 +66,7 @@ private:
     pointer m_data {nullptr};
   };
 
+private:
   struct msg_iterator
   {
     using value_type        = char;
@@ -147,10 +150,10 @@ public:
   template<typename Resource>
   message_bus(Resource res)
       : m_res {res},
-        m_bus {new (m_res.allocate<queue>(
-                   1,
-                   camp::resources::MemoryAccess::Pinned)) queue {},
-               resource_deleter {m_res}}
+        m_bus {
+            new(m_res.allocate<queue>(1, camp::resources::MemoryAccess::Pinned))
+                queue {},
+            resource_deleter {m_res}}
   {}
 
   template<typename Resource>

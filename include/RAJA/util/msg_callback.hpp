@@ -57,10 +57,10 @@ public:
 
   void operator()(char* args_buf) const final override
   {
-    auto& args = *std::launder(
+    auto& msg = *std::launder(
         reinterpret_cast<msg_args<std::decay_t<Args>...>*>(args_buf));
-    camp::apply(m_callable, args);
-    args.~msg_args<std::decay_t<Args>...>();
+    camp::apply(m_callable, msg.args);
+    msg.~msg_args<std::decay_t<Args>...>();
   }
 
 private:
