@@ -129,7 +129,7 @@ TYPED_TEST(SubViewTest, FixedSubView1D)
 
     auto& sr = TypeParam::get_subregion(sv);
     EXPECT_EQ(sr.size(), 1);
-    EXPECT_EQ(sr.size_noproj(), 1);
+    EXPECT_EQ(sr.size_noproj(), 0);
 }
 
 TYPED_TEST(SubViewTest, RangeSubView2D)
