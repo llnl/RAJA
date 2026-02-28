@@ -118,7 +118,8 @@ struct StridedSlice {
 
     template<IndexType DIM, typename LayoutType>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const {
-        return (end_ - start_) / stride_ + 1;
+        return (stride_ > 0) ? (end_ - start_) / stride_ + 1
+                             : (start_ - end_) / (-stride_) + 1;
     }
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {

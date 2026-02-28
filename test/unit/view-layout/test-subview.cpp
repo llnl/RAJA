@@ -110,11 +110,21 @@ TYPED_TEST(SubViewTest, StridedSubView1D)
     // sv = View[0:3:2]
     auto sv = make_view_with_sublayout(view, StridedSlice<>{0,3,2});
 
+    // sv = View[3:0:2]
+    auto sv_neg_stride = make_view_with_sublayout(view, StridedSlice<>{3,0,-2});
+
     EXPECT_EQ(sv(0), 1);
     EXPECT_EQ(sv(1), 3);
 
+    EXPECT_EQ(sv_neg_stride(0), 4);
+    EXPECT_EQ(sv_neg_stride(1), 2);
+
     auto& sr = TypeParam::get_subregion(sv);
     EXPECT_EQ(sr.size(), 2);
+
+    auto& sr_neg_stride = TypeParam::get_subregion(sv_neg_stride);
+    EXPECT_EQ(sr_neg_stride.size(), 2);
+
 }
 
 TYPED_TEST(SubViewTest, FixedSubView1D)
@@ -275,7 +285,7 @@ TYPED_TEST(SubViewTest, SubViewOfSubView2D)
     EXPECT_EQ(sr.size(), 6);
 
     // sv2 = sv[0:1,1:2]
-    auto sv2 =TypeParam{}(sv, RangeSlice<>{0,1}, RangeSlice<>{1,2});
+    auto sv2 = TypeParam{}(sv, RangeSlice<>{0,1}, RangeSlice<>{1,2});
 
     EXPECT_EQ(sv2(0,0), 5);
     EXPECT_EQ(sv2(0,1), 6);
