@@ -76,27 +76,23 @@ int run_example()
   RAJA::launch<launch_policy>(
       device_res,
       RAJA::LaunchParams(RAJA::Teams(GRID_DIM), RAJA::Threads(BLOCK_DIM)),
-      [=] RAJA_HOST_DEVICE(Ctx ctx) {
-        auto const& idx = ctx.get_indices_and_dims();
-        RAJA_UNUSED_VAR(idx);
+      [=] RAJA_HOST_DEVICE(Ctx ctx) {     
 
         RAJA::loop<teams_x>(ctx, RAJA::RangeSegment(0, GRID_DIM), [&](int bx) {
-          RAJA_UNUSED_VAR(bx);
 
-          RAJA::loop<threads_x>(ctx, RAJA::RangeSegment(0, BLOCK_DIM),
-                                [&](int tx) {
-                                  RAJA_UNUSED_VAR(tx);
+          RAJA::loop<threads_x>(ctx, RAJA::RangeSegment(0, BLOCK_DIM), [&](int tx) {                  
 
-                                  int i = tx + BLOCK_DIM * bx;
-
-                                  if (i < N)
-                                  {
-                                    d_array[i] = i;
-                                  }
-                                });
-        });
+          int i = tx + BLOCK_DIM * bx;
+          
+          if (i < N)
+          {
+            d_array[i] = i;
+          }
+          
       });
-
+    });
+  });
+  
   device_res.memcpy(h_array, d_array, sizeof(int) * N);
 
   int err_count = 0;
