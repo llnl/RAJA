@@ -791,6 +791,28 @@ using CachedThreadIndicesAndBlockDims =
 // threadIdx, blockDim, blockIdx, gridDim cached
 using AllCachedIndicesAndDims = IndicesAndDims<true, true, true, true>;
 
+/*!
+ * Launch context policy helper to include IndicesAndDims caching.
+ *
+ * This policy can be used with RAJA::LaunchContextT to request a launch
+ * context that contains an IndicesAndDimsT instance (cached or uncached),
+ * when supported by the active launch backend.
+ */
+template<typename IndicesAndDimsT = NonCachedIndicesAndDims>
+struct LaunchContextIndicesAndDimsPolicy
+{
+  using indices_and_dims_t = IndicesAndDimsT;
+};
+
+using LaunchContextNonCachedIndicesAndDimsPolicy =
+    LaunchContextIndicesAndDimsPolicy<NonCachedIndicesAndDims>;
+
+using LaunchContextCachedThreadIndicesAndBlockDimsPolicy =
+    LaunchContextIndicesAndDimsPolicy<CachedThreadIndicesAndBlockDims>;
+
+using LaunchContextAllCachedIndicesAndDimsPolicy =
+    LaunchContextIndicesAndDimsPolicy<AllCachedIndicesAndDims>;
+
 /// Type representing thread indexing within a grid
 /// It has various specializations that optimize specific patterns
 

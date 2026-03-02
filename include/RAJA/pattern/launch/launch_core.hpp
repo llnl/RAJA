@@ -235,7 +235,6 @@ template<>
 class LaunchContextT<LaunchContextDefaultPolicy> : public LaunchContextBase
 {
 public:
-  static constexpr bool hasDim3 = false;
 
   using LaunchContextBase::LaunchContextBase;
 };
@@ -243,26 +242,56 @@ public:
 // Preserve backwards compatibility
 using LaunchContext = LaunchContextT<LaunchContextDefaultPolicy>;
 
-#if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
-template<>
-class LaunchContextT<LaunchContextDim3Policy> : public LaunchContextBase
+namespace detail
 {
-public:
-  static constexpr bool hasDim3 = true;
 
-  dim3 thread_id;
-  dim3 block_dim;
+/*!
+ * Helper to compute IndexMapper indices/sizes using cached indices/dims when
+ * present in the launch context (via ctx.get_indices_and_dims()), falling back
+ * to the default IndexMapper API when not available.
+ *
+ * This allows backends to optionally provide LaunchContextT specializations
+ * that carry cached thread/block/grid indices and dimensions.
+ */
+template<typename IndexMapper, typename IdxT, typename LaunchContextType>
+RAJA_INLINE RAJA_DEVICE auto launch_index_impl(LaunchContextType const& ctx, int)
+    -> decltype(IndexMapper::template index<IdxT>(ctx.get_indices_and_dims()))
+{
+  return IndexMapper::template index<IdxT>(ctx.get_indices_and_dims());
+}
 
-  LaunchContextT() : LaunchContextBase(), thread_id(), block_dim() {}
+template<typename IndexMapper, typename IdxT, typename LaunchContextType>
+RAJA_INLINE RAJA_DEVICE IdxT launch_index_impl(LaunchContextType const&, long)
+{
+  return IndexMapper::template index<IdxT>();
+}
 
-  RAJA_DEVICE
-  LaunchContextT(dim3 thread, dim3 block)
-      : LaunchContextBase(),
-        thread_id(thread),
-        block_dim(block)
-  {}
-};
-#endif
+template<typename IndexMapper, typename IdxT, typename LaunchContextType>
+RAJA_INLINE RAJA_DEVICE IdxT launch_index(LaunchContextType const& ctx)
+{
+  return launch_index_impl<IndexMapper, IdxT>(ctx, 0);
+}
+
+template<typename IndexMapper, typename IdxT, typename LaunchContextType>
+RAJA_INLINE RAJA_DEVICE auto launch_size_impl(LaunchContextType const& ctx, int)
+    -> decltype(IndexMapper::template size<IdxT>(ctx.get_indices_and_dims()))
+{
+  return IndexMapper::template size<IdxT>(ctx.get_indices_and_dims());
+}
+
+template<typename IndexMapper, typename IdxT, typename LaunchContextType>
+RAJA_INLINE RAJA_DEVICE IdxT launch_size_impl(LaunchContextType const&, long)
+{
+  return IndexMapper::template size<IdxT>();
+}
+
+template<typename IndexMapper, typename IdxT, typename LaunchContextType>
+RAJA_INLINE RAJA_DEVICE IdxT launch_size(LaunchContextType const& ctx)
+{
+  return launch_size_impl<IndexMapper, IdxT>(ctx, 0);
+}
+
+}  // namespace detail
 
 template<typename LAUNCH_POLICY>
 struct LaunchExecute;

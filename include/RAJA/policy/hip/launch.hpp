@@ -51,60 +51,11 @@ public:
         indices_and_dims()
   {}
 
-  RAJA_DEVICE
-  LaunchContextT(dim3 thread, dim3 block)
-      : LaunchContextBase(),
-        indices_and_dims()
-  {}
-
   RAJA_HOST_DEVICE RAJA_INLINE indices_and_dims_t const& get_indices_and_dims() const
   {
     return indices_and_dims;
   }
 };
-
-namespace detail
-{
-
-template<typename IndexMapper, typename IdxT, typename LaunchContextType>
-RAJA_INLINE RAJA_DEVICE auto launch_index_impl(LaunchContextType const& ctx, int)
-    -> decltype(IndexMapper::template index<IdxT>(ctx.get_indices_and_dims()))
-{
-  return IndexMapper::template index<IdxT>(ctx.get_indices_and_dims());
-}
-
-template<typename IndexMapper, typename IdxT, typename LaunchContextType>
-RAJA_INLINE RAJA_DEVICE IdxT launch_index_impl(LaunchContextType const&, long)
-{
-  return IndexMapper::template index<IdxT>();
-}
-
-template<typename IndexMapper, typename IdxT, typename LaunchContextType>
-RAJA_INLINE RAJA_DEVICE IdxT launch_index(LaunchContextType const& ctx)
-{
-  return launch_index_impl<IndexMapper, IdxT>(ctx, 0);
-}
-
-template<typename IndexMapper, typename IdxT, typename LaunchContextType>
-RAJA_INLINE RAJA_DEVICE auto launch_size_impl(LaunchContextType const& ctx, int)
-    -> decltype(IndexMapper::template size<IdxT>(ctx.get_indices_and_dims()))
-{
-  return IndexMapper::template size<IdxT>(ctx.get_indices_and_dims());
-}
-
-template<typename IndexMapper, typename IdxT, typename LaunchContextType>
-RAJA_INLINE RAJA_DEVICE IdxT launch_size_impl(LaunchContextType const&, long)
-{
-  return IndexMapper::template size<IdxT>();
-}
-
-template<typename IndexMapper, typename IdxT, typename LaunchContextType>
-RAJA_INLINE RAJA_DEVICE IdxT launch_size(LaunchContextType const& ctx)
-{
-  return launch_size_impl<IndexMapper, IdxT>(ctx, 0);
-}
-
-}  // namespace detail
 
 template<typename BODY, typename ReduceParams>
 __global__ void launch_new_reduce_global_fcn(const BODY body_in,

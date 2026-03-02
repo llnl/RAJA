@@ -26,10 +26,6 @@ class LaunchContextT;
 
 class LaunchContextDefaultPolicy;
 
-#if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
-class LaunchContextDim3Policy;
-#endif
-
 namespace detail
 {
 
