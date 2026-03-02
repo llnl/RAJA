@@ -40,31 +40,21 @@ class LaunchContextT<hip::LaunchContextIndicesAndDimsPolicy<IndicesAndDimsT>>
     : public LaunchContextBase
 {
 public:
-//static constexpr bool hasDim3 = true;
 
   using indices_and_dims_t = IndicesAndDimsT;
 
   indices_and_dims_t indices_and_dims;
 
-/*
-  dim3 thread_id;
-  dim3 block_dim;
-*/
-
   RAJA_DEVICE
   LaunchContextT()
       : LaunchContextBase(),
         indices_and_dims()
-        //        thread_id(),
-        //block_dim()
   {}
 
   RAJA_DEVICE
   LaunchContextT(dim3 thread, dim3 block)
       : LaunchContextBase(),
         indices_and_dims()
-        //thread_id(thread),
-        //block_dim(block)
   {}
 
   RAJA_HOST_DEVICE RAJA_INLINE indices_and_dims_t const& get_indices_and_dims() const
@@ -131,20 +121,9 @@ __global__ void launch_new_reduce_global_fcn(const BODY body_in,
   using LaunchContextType =
       typename RAJA::detail::launch_context_type<BODY>::type;
 
-  /*  
-  if constexpr (LaunchContextType::hasDim3)
-  {
-    LaunchContextType ctx(threadIdx, blockDim);
-    ctx.shared_mem_ptr = raja_shmem_ptr;
-    RAJA::expt::invoke_body(reduce_params, body, ctx);
-  }
-  else
-  */
-  {
     LaunchContextType ctx;
     ctx.shared_mem_ptr = raja_shmem_ptr;
     RAJA::expt::invoke_body(reduce_params, body, ctx);
-  }
 
   // Using a flatten global policy as we may use all dimensions
   RAJA::expt::ParamMultiplexer::parampack_combine(
@@ -247,20 +226,9 @@ __launch_bounds__(num_threads, 1) __global__
   using LaunchContextType =
       typename RAJA::detail::launch_context_type<BODY>::type;
 
-  /*
-  if constexpr (LaunchContextType::hasDim3)
-  {
-    LaunchContextType ctx(threadIdx, blockDim);
-    ctx.shared_mem_ptr = raja_shmem_ptr;
-    RAJA::expt::invoke_body(reduce_params, body, ctx);
-  }
-  else
-  */
-  {
     LaunchContextType ctx;
     ctx.shared_mem_ptr = raja_shmem_ptr;
     RAJA::expt::invoke_body(reduce_params, body, ctx);
-  }
 
   // Using a flatten global policy as we may use all dimensions
   RAJA::expt::ParamMultiplexer::parampack_combine(
