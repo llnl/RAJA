@@ -18,6 +18,8 @@
 #ifndef RAJA_pattern_context_policy_HPP
 #define RAJA_pattern_context_policy_HPP
 
+#include <type_traits>
+
 namespace RAJA
 {
 
@@ -30,87 +32,72 @@ namespace detail
 {
 
 
-template<typename T, typename = void>
-struct has_single_call_operator : std::false_type
-{};
+template<typename T>
+using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template<typename T>
-struct has_single_call_operator<
+struct first_argument;
+
+template<typename R, typename Arg0, typename... Args>
+struct first_argument<R(Arg0, Args...)>
+{
+  using type = Arg0;
+};
+
+template<typename R, typename Arg0, typename... Args>
+struct first_argument<R (*)(Arg0, Args...)> : first_argument<R(Arg0, Args...)>
+{};
+
+template<typename R, typename Arg0, typename... Args>
+struct first_argument<R (&)(Arg0, Args...)> : first_argument<R(Arg0, Args...)>
+{};
+
+template<typename C, typename R, typename Arg0, typename... Args>
+struct first_argument<R (C::*)(Arg0, Args...)> : first_argument<R(Arg0, Args...)>
+{};
+
+template<typename C, typename R, typename Arg0, typename... Args>
+struct first_argument<R (C::*)(Arg0, Args...) const>
+    : first_argument<R(Arg0, Args...)>
+{};
+
+template<typename C, typename R, typename Arg0, typename... Args>
+struct first_argument<R (C::*)(Arg0, Args...) noexcept>
+    : first_argument<R(Arg0, Args...)>
+{};
+
+template<typename C, typename R, typename Arg0, typename... Args>
+struct first_argument<R (C::*)(Arg0, Args...) const noexcept>
+    : first_argument<R(Arg0, Args...)>
+{};
+
+template<typename T, typename = void>
+struct callable_signature
+{
+  using type = remove_cvref_t<T>;
+};
+
+template<typename T>
+struct callable_signature<
     T,
-    std::enable_if_t<
-        !std::is_same_v<decltype(&std::decay_t<T>::operator()), void>>>
-    : std::true_type
-{};
-
-template<typename T>
-struct function_traits
-{};
-
-template<typename R, typename... Args>
-struct function_traits<R(Args...)>
+    std::void_t<decltype(&remove_cvref_t<T>::operator())>>
 {
-  using result_type                  = R;
-  static constexpr std::size_t arity = sizeof...(Args);
-
-  template<std::size_t N>
-  struct arg
-  {
-    static_assert(N < arity, "argument index out of range");
-    using type = typename std::tuple_element<N, std::tuple<Args...>>::type;
-  };
+  using type = decltype(&remove_cvref_t<T>::operator());
 };
-
-template<typename R, typename... Args>
-struct function_traits<R (*)(Args...)> : function_traits<R(Args...)>
-{};
-
-template<typename R, typename... Args>
-struct function_traits<R (&)(Args...)> : function_traits<R(Args...)>
-{};
-
-template<typename C, typename R, typename... Args>
-struct function_traits<R (C::*)(Args...) const> : function_traits<R(Args...)>
-{
-  using functional_type = C;
-};
-
-template<typename C, typename R, typename... Args>
-struct function_traits<R (C::*)(Args...)> : function_traits<R(Args...)>
-{
-  using functional_type = C;
-};
-
-template<typename T,
-         bool hasCallOp = has_single_call_operator<std::decay_t<T>>::value>
-struct functional_traits : function_traits<std::decay_t<T>>
-{};
-
-template<typename T>
-struct functional_traits<T, true>
-    : function_traits<decltype(&std::decay_t<T>::operator())>
-{};
 
 template<typename T, typename = void>
-struct has_arg0 : std::false_type
-{};
-
-template<typename T>
-struct has_arg0<T,
-                typename std::enable_if_t<!std::is_same_v<
-                    typename functional_traits<T>::template arg<0>::type,
-                    void>>> : std::true_type
-{};
-
-template<typename T, bool HasArg0 = has_arg0<T>::value>
 struct launch_context_type
 {
   using type = LaunchContextT<LaunchContextDefaultPolicy>;
 };
 
 template<typename T>
-struct launch_context_type<T, true>
+struct launch_context_type<
+    T,
+    std::void_t<typename first_argument<typename callable_signature<T>::type>::type>>
 {
-  using type = typename functional_traits<T>::template arg<0>::type;
+  using type = remove_cvref_t<
+      typename first_argument<typename callable_signature<T>::type>::type>;
 };
 
 
