@@ -50,7 +50,7 @@ int run_example()
   using T = BackendTraits<Backend>;
 
   std::cout << "\n Running RAJA " << T::name
-            << " launch-context IndicesAndDims caching example...\n";
+            << " launch-context indices/dims caching example...\n";
 
   constexpr int N         = 1024;
   constexpr int BLOCK_DIM = 256;
@@ -122,21 +122,21 @@ int run_example()
 
 int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv[]))
 {
+#if defined(RAJA_ENABLE_HIP) || defined(RAJA_ENABLE_CUDA)
   int err_count = 0;
 
-#if defined(RAJA_ENABLE_HIP)
+  #if defined(RAJA_ENABLE_HIP)
   err_count += run_example<HipBackend>();
-#endif
+  #endif
 
-#if defined(RAJA_ENABLE_CUDA)
+  #if defined(RAJA_ENABLE_CUDA)
   err_count += run_example<CudaBackend>();
-#endif
+  #endif
 
-#if !defined(RAJA_ENABLE_HIP) && !defined(RAJA_ENABLE_CUDA)
-  std::cout << "Please build with HIP or CUDA to run this example ...\n";
-  return 0;
-#else
   std::cout << "\n DONE!...\n";
   return (err_count ? 1 : 0);
+#else
+  std::cout << "Please build with HIP or CUDA to run this example ...\n";
+  return 0;
 #endif
 }
