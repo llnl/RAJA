@@ -44,4 +44,6 @@ rocmcc_6_4_1_hip_jit_proteus:
   variables:
     SPEC: "${PROJECT_TIOGA_VARIANTS} +rocm amdgpu_target=gfx90a %llvm-amdgpu@=6.4.1 ^hip@6.4.1 ${PROJECT_TIOGA_DEPS}"
     CMAKE_EXTRA_ARGS: "-DBUILD_SHARED=ON -DRAJA_ENABLE_JIT=ON -DRAJA_ENABLE_JIT_TESTS=ON -DLLVM_INSTALL_DIR=/opt/rocm-6.4.1/llvm"
+    CTEST_REGEX: "forall.*Hip|kernel.*Hip|launch.*Hip"
+    CTEST_JOBS: "16"
   extends: .job_on_tioga
