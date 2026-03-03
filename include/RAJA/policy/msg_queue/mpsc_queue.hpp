@@ -86,9 +86,9 @@ public:
       } while (local_sz != old_sz);
 
       if (m_container->m_data != nullptr &&
-          local_size + msg_sz <= m_container->m_capacity)
+          local_sz + msg_sz <= m_container->m_capacity)
       {
-        char* buf = m_container->m_data + local_size;
+        char* buf = m_container->m_data + local_sz;
         new (buf) msg_header {args_sz, m_id, buf + header_sz};
         new (buf + header_sz)
             msg_args<Args...> {args_type(std::forward<Ts>(args)...)};
