@@ -31,7 +31,6 @@ class LaunchContextDefaultPolicy;
 namespace detail
 {
 
-
 template<typename T>
 struct first_argument;
 
@@ -40,10 +39,6 @@ struct first_argument<R(Arg0, Args...)>
 {
   using type = Arg0;
 };
-
-template<typename R, typename Arg0, typename... Args>
-struct first_argument<R (*)(Arg0, Args...)> : first_argument<R(Arg0, Args...)>
-{};
 
 template<typename C, typename R, typename Arg0, typename... Args>
 struct first_argument<R (C::*)(Arg0, Args...)>
