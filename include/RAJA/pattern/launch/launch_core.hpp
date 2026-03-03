@@ -27,6 +27,17 @@
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/plugins.hpp"
 #include "RAJA/util/types.hpp"
+
+// Needed to provide a default indices/dims implementation for LaunchContext
+// when compiling for GPU backends. The default launch context is used by
+// existing examples and user code (e.g. RAJA::LaunchContext), but device-side
+// index mappers require an indices/dims object.
+#if defined(RAJA_HIP_ACTIVE)
+#include "RAJA/policy/hip/policy.hpp"
+#elif defined(RAJA_CUDA_ACTIVE)
+#include "RAJA/policy/cuda/policy.hpp"
+#endif
+
 #include "camp/camp.hpp"
 #include "camp/concepts.hpp"
 #include "camp/tuple.hpp"
@@ -237,6 +248,20 @@ class LaunchContextT<LaunchContextDefaultPolicy> : public LaunchContextBase
 public:
 
   using LaunchContextBase::LaunchContextBase;
+
+#if defined(RAJA_HIP_ACTIVE)
+  using indices_and_dims_t = hip::NonCachedIndicesAndDims;
+#elif defined(RAJA_CUDA_ACTIVE)
+  using indices_and_dims_t = cuda::NonCachedIndicesAndDims;
+#else
+  struct indices_and_dims_t
+  {};
+#endif
+
+  RAJA_HOST_DEVICE RAJA_INLINE indices_and_dims_t get_indices_and_dims() const
+  {
+    return indices_and_dims_t {};
+  }
 };
 
 // Preserve backwards compatibility
