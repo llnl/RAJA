@@ -67,8 +67,7 @@ struct callable_signature
 };
 
 template<typename T>
-struct callable_signature<T,
-                          std::void_t<decltype(&camp::decay<T>::operator())>>
+struct callable_signature<T, std::void_t<decltype(&camp::decay<T>::operator())>>
 {
   using type = decltype(&camp::decay<T>::operator());
 };
@@ -81,8 +80,8 @@ struct launch_context_type
 
 template<typename T>
 struct launch_context_type<T,
-                           std::void_t<typename first_argument<
-                                       camp::decay<typename callable_signature<T>::type>>::type>>
+                           std::void_t<typename first_argument<camp::decay<
+                               typename callable_signature<T>::type>>::type>>
 {
   using type = camp::decay<
       typename first_argument<typename callable_signature<T>::type>::type>;

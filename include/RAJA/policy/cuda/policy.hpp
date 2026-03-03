@@ -1415,16 +1415,16 @@ using warp_global_xyz =
 
 }  // namespace cuda
 
-//Make available through RAJA namespace
+// Make available through RAJA namespace
+using cuda::AllCachedIndicesAndDims;
+using cuda::CachedBlockDims;
 using cuda::IndicesAndDims;
 using cuda::NonCachedIndicesAndDims;
-using cuda::CachedBlockDims;
-using cuda::AllCachedIndicesAndDims;
 
+using cuda::LaunchContextAllCachedIndicesAndDimsPolicy;
+using cuda::LaunchContextCachedBlockDimsPolicy;
 using cuda::LaunchContextIndicesAndDimsPolicy;
 using cuda::LaunchContextNonCachedIndicesAndDimsPolicy;
-using cuda::LaunchContextCachedBlockDimsPolicy;
-using cuda::LaunchContextAllCachedIndicesAndDimsPolicy;
 
 // contretizers used in forall, scan, and sort policies
 

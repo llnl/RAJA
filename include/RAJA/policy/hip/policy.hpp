@@ -1407,17 +1407,17 @@ using warp_global_xyz =
 
 }  // namespace hip
 
-//Make available through RAJA namespace
+// Make available through RAJA namespace
 
+using hip::AllCachedIndicesAndDims;
+using hip::CachedBlockDims;
 using hip::IndicesAndDims;
 using hip::NonCachedIndicesAndDims;
-using hip::CachedBlockDims;
-using hip::AllCachedIndicesAndDims;
 
+using hip::LaunchContextAllCachedIndicesAndDimsPolicy;
+using hip::LaunchContextCachedBlockDimsPolicy;
 using hip::LaunchContextIndicesAndDimsPolicy;
 using hip::LaunchContextNonCachedIndicesAndDimsPolicy;
-using hip::LaunchContextCachedBlockDimsPolicy;
-using hip::LaunchContextAllCachedIndicesAndDimsPolicy;
 
 
 // contretizers used in forall, scan, and sort policies
