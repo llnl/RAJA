@@ -64,8 +64,27 @@ public:
       constexpr size_type header_sz = align(sizeof(msg_header));
       constexpr size_type args_sz   = align(sizeof(msg_args<Args...>));
       constexpr size_type msg_sz    = header_sz + args_sz;
-      auto local_size =
-          RAJA::atomicAdd<auto_atomic>(&(m_container->m_end), msg_sz);
+
+      size_type local_sz;
+      size_type old_sz = RAJA::atomicLoad<auto_atomic>(&(m_container->m_end));
+
+      // Checks if message can fit in queue. If so, adds msg_sz to end of queue
+      // to reserve space. Otherwise, message doesn't fit and no space is
+      // reserved. In other words, the CAS-loop below performs the follwing
+      // operation:
+      // (*address + msg_sz <= capacity) ?  (*address + msg_sz) : *address;
+      do
+      {
+        size_type new_sz = old_sz + msg_sz;
+        local_sz         = old_sz;  // offset to start of message
+        // Checks if fits in queue
+        if (new_sz <= m_container->m_capacity)
+        {
+          old_sz = RAJA::atomicCAS<auto_atomic>(&(m_container->m_end), local_sz,
+                                                new_sz);
+        }
+      } while (local_sz != old_sz);
+
       if (m_container->m_data != nullptr &&
           local_size + msg_sz <= m_container->m_capacity)
       {
@@ -76,10 +95,6 @@ public:
 
         return true;
       }
-
-      // If message is not stored, update end to have the correct number of
-      // bytes and/or allow for additional smaller messages to be stored
-      RAJA::atomicSub<auto_atomic>(&(m_container->m_end), msg_sz);
     }
 
     return false;
