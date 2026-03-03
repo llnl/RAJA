@@ -53,7 +53,8 @@ struct first_argument<R (&)(Arg0, Args...)> : first_argument<R(Arg0, Args...)>
 {};
 
 template<typename C, typename R, typename Arg0, typename... Args>
-struct first_argument<R (C::*)(Arg0, Args...)> : first_argument<R(Arg0, Args...)>
+struct first_argument<R (C::*)(Arg0, Args...)>
+    : first_argument<R(Arg0, Args...)>
 {};
 
 template<typename C, typename R, typename Arg0, typename... Args>
@@ -78,9 +79,8 @@ struct callable_signature
 };
 
 template<typename T>
-struct callable_signature<
-    T,
-    std::void_t<decltype(&remove_cvref_t<T>::operator())>>
+struct callable_signature<T,
+                          std::void_t<decltype(&remove_cvref_t<T>::operator())>>
 {
   using type = decltype(&remove_cvref_t<T>::operator());
 };
@@ -92,9 +92,9 @@ struct launch_context_type
 };
 
 template<typename T>
-struct launch_context_type<
-    T,
-    std::void_t<typename first_argument<typename callable_signature<T>::type>::type>>
+struct launch_context_type<T,
+                           std::void_t<typename first_argument<
+                               typename callable_signature<T>::type>::type>>
 {
   using type = remove_cvref_t<
       typename first_argument<typename callable_signature<T>::type>::type>;

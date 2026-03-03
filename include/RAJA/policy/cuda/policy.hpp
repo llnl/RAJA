@@ -785,8 +785,7 @@ struct IndicesAndDims : ThreadIndices<cache_threadIdx>,
 using NonCachedIndicesAndDims = IndicesAndDims<false, false, false, false>;
 
 // threadIdx and blockDim cached, rest not cached
-using CachedBlockDims =
-    IndicesAndDims<false, false, true, false>;
+using CachedBlockDims = IndicesAndDims<false, false, true, false>;
 
 // threadIdx, blockIdx, blockDim, gridDim cached
 using AllCachedIndicesAndDims = IndicesAndDims<true, true, true, true>;

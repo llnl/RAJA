@@ -40,7 +40,6 @@ class LaunchContextT<cuda::LaunchContextIndicesAndDimsPolicy<IndicesAndDimsT>>
     : public LaunchContextBase
 {
 public:
-
   using indices_and_dims_t = IndicesAndDimsT;
 
   indices_and_dims_t indices_and_dims;
@@ -48,7 +47,8 @@ public:
   RAJA_DEVICE
   LaunchContextT() : LaunchContextBase(), indices_and_dims() {}
 
-  RAJA_HOST_DEVICE RAJA_INLINE indices_and_dims_t const& get_indices_and_dims() const
+  RAJA_HOST_DEVICE RAJA_INLINE indices_and_dims_t const& get_indices_and_dims()
+      const
   {
     return indices_and_dims;
   }
@@ -69,9 +69,9 @@ __global__ void launch_new_reduce_global_fcn(const RAJA_CUDA_GRID_CONSTANT BODY
   using LaunchContextType =
       typename RAJA::detail::launch_context_type<BODY>::type;
 
-    LaunchContextType ctx;
-    ctx.shared_mem_ptr = raja_shmem_ptr;
-    RAJA::expt::invoke_body(reduce_params, body, ctx);
+  LaunchContextType ctx;
+  ctx.shared_mem_ptr = raja_shmem_ptr;
+  RAJA::expt::invoke_body(reduce_params, body, ctx);
 
   // Using a flatten global policy as we may use all dimensions
   RAJA::expt::ParamMultiplexer::parampack_combine(
@@ -179,9 +179,9 @@ __launch_bounds__(num_threads, BLOCKS_PER_SM) __global__
   using LaunchContextType =
       typename RAJA::detail::launch_context_type<BODY>::type;
 
-    LaunchContextType ctx;
-    ctx.shared_mem_ptr = raja_shmem_ptr;
-    RAJA::expt::invoke_body(reduce_params, body, ctx);
+  LaunchContextType ctx;
+  ctx.shared_mem_ptr = raja_shmem_ptr;
+  RAJA::expt::invoke_body(reduce_params, body, ctx);
 
   // Using a flatten global policy as we may use all dimensions
   RAJA::expt::ParamMultiplexer::parampack_combine(
@@ -270,7 +270,6 @@ struct LaunchExecute<
   }
 };
 
-
 /*
    CUDA generic loop implementations
 */
@@ -291,7 +290,8 @@ struct LoopExecute<
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t i = IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment.begin() + i));
   }
@@ -316,8 +316,10 @@ struct LoopExecute<
       SEGMENT const& segment1,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment0.begin() + i0), *(segment1.begin() + i1));
   }
@@ -347,9 +349,12 @@ struct LoopExecute<
       SEGMENT const& segment2,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i2 = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment0.begin() + i0), *(segment1.begin() + i1),
          *(segment2.begin() + i2));
@@ -374,7 +379,8 @@ struct LoopExecute<
       BODY const& body)
   {
     const diff_t len = segment.end() - segment.begin();
-    const diff_t i   = IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i < len)
     {
@@ -405,8 +411,10 @@ struct LoopExecute<
     const int len0 = segment0.end() - segment0.begin();
     const int len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i0 < len0 && i1 < len1)
     {
@@ -443,9 +451,12 @@ struct LoopExecute<
     const int len1 = segment1.end() - segment1.begin();
     const int len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i2 = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i0 < len0 && i1 < len1 && i2 < len2)
     {
@@ -473,9 +484,11 @@ struct LoopExecute<
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t len      = segment.end() - segment.begin();
-    const diff_t i_init   = IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i_stride = IndexMapper::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t len = segment.end() - segment.begin();
+    const diff_t i_init =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i_stride =
+        IndexMapper::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i = i_init; i < len; i += i_stride)
     {
@@ -507,11 +520,15 @@ struct LoopExecute<
     const int len0 = segment0.end() - segment0.begin();
     const int len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1_init = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i0 = i0_init; i0 < len0; i0 += i0_stride)
     {
@@ -554,13 +571,19 @@ struct LoopExecute<
     const int len1 = segment1.end() - segment1.begin();
     const int len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1_init = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i2_init = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2_init =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i2_stride = IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2_stride =
+        IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i0 = i0_init; i0 < len0; i0 += i0_stride)
     {
@@ -599,7 +622,8 @@ struct LoopICountExecute<
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t i = IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment.begin() + i), i);
   }
@@ -624,8 +648,10 @@ struct LoopICountExecute<
       SEGMENT const& segment1,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment0.begin() + i0), *(segment1.begin() + i1), i0, i1);
   }
@@ -655,9 +681,12 @@ struct LoopICountExecute<
       SEGMENT const& segment2,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i2 = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment0.begin() + i0), *(segment1.begin() + i1),
          *(segment2.begin() + i2), i0, i1, i2);
@@ -682,7 +711,8 @@ struct LoopICountExecute<
       BODY const& body)
   {
     const diff_t len = segment.end() - segment.begin();
-    const diff_t i   = IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i < len)
     {
@@ -713,8 +743,10 @@ struct LoopICountExecute<
     const int len0 = segment0.end() - segment0.begin();
     const int len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i0 < len0 && i1 < len1)
     {
@@ -751,9 +783,12 @@ struct LoopICountExecute<
     const int len1 = segment1.end() - segment1.begin();
     const int len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i2 = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i0 < len0 && i1 < len1 && i2 < len2)
     {
@@ -781,9 +816,11 @@ struct LoopICountExecute<
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t len      = segment.end() - segment.begin();
-    const diff_t i_init   = IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i_stride = IndexMapper::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t len = segment.end() - segment.begin();
+    const diff_t i_init =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i_stride =
+        IndexMapper::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i = i_init; i < len; i += i_stride)
     {
@@ -815,11 +852,15 @@ struct LoopICountExecute<
     const int len0 = segment0.end() - segment0.begin();
     const int len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1_init = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i0 = i0_init; i0 < len0; i0 += i0_stride)
     {
@@ -862,13 +903,19 @@ struct LoopICountExecute<
     const int len1 = segment1.end() - segment1.begin();
     const int len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1_init = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i2_init = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2_init =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i2_stride = IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2_stride =
+        IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i0 = i0_init; i0 < len0; i0 += i0_stride)
     {
@@ -920,10 +967,13 @@ struct LoopExecute<RAJA::policy::cuda::cuda_flatten_indexer<
       SEGMENT const& segment,
       BODY const& body)
   {
-    const int i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const int i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
 
     const int i = i0 + i0_stride * i1;
 
@@ -952,12 +1002,17 @@ struct LoopExecute<RAJA::policy::cuda::cuda_flatten_indexer<
       SEGMENT const& segment,
       BODY const& body)
   {
-    const int i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const int i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const int i2 = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     const int i = i0 + i0_stride * (i1 + i1_stride * i2);
 
@@ -996,10 +1051,13 @@ struct LoopExecute<
   {
     const int len = segment.end() - segment.begin();
 
-    const int i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const int i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
 
     const int i = i0 + i0_stride * i1;
 
@@ -1033,12 +1091,17 @@ struct LoopExecute<
   {
     const int len = segment.end() - segment.begin();
 
-    const int i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const int i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const int i2 = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     const int i = i0 + i0_stride * (i1 + i1_stride * i2);
 
@@ -1084,11 +1147,15 @@ struct LoopExecute<
   {
     const int len = segment.end() - segment.begin();
 
-    const int i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const int i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const int i0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
-    const int i1_stride = IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const int i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const int i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (int i = i0 + i0_stride * i1; i < len; i += i0_stride * i1_stride)
     {
@@ -1121,13 +1188,19 @@ struct LoopExecute<
   {
     const int len = segment.end() - segment.begin();
 
-    const int i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const int i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const int i2 = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const int i0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
-    const int i1_stride = IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
-    const int i2_stride = IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
+    const int i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const int i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const int i2_stride =
+        IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (int i = i0 + i0_stride * (i1 + i1_stride * i2); i < len;
          i += i0_stride * i1_stride * i2_stride)
@@ -1187,10 +1260,12 @@ struct TileExecute<
       SEGMENT const& segment1,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
-                      static_cast<diff_t>(tile_size0);
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
-                      static_cast<diff_t>(tile_size1);
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
 
     body(segment0.slice(i0, static_cast<diff_t>(tile_size0)),
          segment1.slice(i1, static_cast<diff_t>(tile_size1)));
@@ -1224,12 +1299,15 @@ struct TileExecute<
       SEGMENT const& segment2,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
-                      static_cast<diff_t>(tile_size0);
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
-                      static_cast<diff_t>(tile_size1);
-    const diff_t i2 = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims()) *
-                      static_cast<diff_t>(tile_size2);
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size2);
 
     body(segment0.slice(i0, static_cast<diff_t>(tile_size0)),
          segment1.slice(i1, static_cast<diff_t>(tile_size1)),
@@ -1291,10 +1369,12 @@ struct TileExecute<
     const diff_t len0 = segment0.end() - segment0.begin();
     const diff_t len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
-                      static_cast<diff_t>(tile_size0);
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
-                      static_cast<diff_t>(tile_size1);
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
 
     if (i0 < len0 && i1 < len1)
     {
@@ -1335,12 +1415,15 @@ struct TileExecute<
     const diff_t len1 = segment1.end() - segment1.begin();
     const diff_t len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
-                      static_cast<diff_t>(tile_size0);
-    const diff_t i1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
-                      static_cast<diff_t>(tile_size1);
-    const diff_t i2 = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims()) *
-                      static_cast<diff_t>(tile_size2);
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size2);
 
     if (i0 < len0 && i1 < len1 && i2 < len2)
     {
@@ -1410,10 +1493,12 @@ struct TileExecute<
     const diff_t len0 = segment0.end() - segment0.begin();
     const diff_t len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
-                           static_cast<diff_t>(tile_size0);
-    const diff_t i1_init = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
-                           static_cast<diff_t>(tile_size1);
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
 
     const diff_t i0_stride =
         IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims()) *
@@ -1465,12 +1550,15 @@ struct TileExecute<
     const diff_t len1 = segment1.end() - segment1.begin();
     const diff_t len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
-                           static_cast<diff_t>(tile_size0);
-    const diff_t i1_init = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
-                           static_cast<diff_t>(tile_size1);
-    const diff_t i2_init = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims()) *
-                           static_cast<diff_t>(tile_size2);
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
+    const diff_t i2_init =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size2);
 
     const diff_t i0_stride =
         IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims()) *
@@ -1518,7 +1606,8 @@ struct TileTCountExecute<
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t t = IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
     const diff_t i = t * static_cast<diff_t>(tile_size);
 
     body(segment.slice(i, static_cast<diff_t>(tile_size)), t);
@@ -1546,8 +1635,10 @@ struct TileTCountExecute<
       SEGMENT const& segment1,
       BODY const& body)
   {
-    const diff_t t0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0 = t0 * static_cast<diff_t>(tile_size0);
     const diff_t i1 = t1 * static_cast<diff_t>(tile_size1);
@@ -1584,9 +1675,12 @@ struct TileTCountExecute<
       SEGMENT const& segment2,
       BODY const& body)
   {
-    const diff_t t0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t2 = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0 = t0 * static_cast<diff_t>(tile_size0);
     const diff_t i1 = t1 * static_cast<diff_t>(tile_size1);
@@ -1617,8 +1711,9 @@ struct TileTCountExecute<
       BODY const& body)
   {
     const diff_t len = segment.end() - segment.begin();
-    const diff_t t   = IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i   = t * static_cast<diff_t>(tile_size);
+    const diff_t t =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i = t * static_cast<diff_t>(tile_size);
 
     if (i < len)
     {
@@ -1651,8 +1746,10 @@ struct TileTCountExecute<
     const diff_t len0 = segment0.end() - segment0.begin();
     const diff_t len1 = segment1.end() - segment1.begin();
 
-    const diff_t t0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0 = t0 * static_cast<diff_t>(tile_size0);
     const diff_t i1 = t1 * static_cast<diff_t>(tile_size1);
@@ -1696,9 +1793,12 @@ struct TileTCountExecute<
     const diff_t len1 = segment1.end() - segment1.begin();
     const diff_t len2 = segment2.end() - segment2.begin();
 
-    const diff_t t0 = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t1 = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t2 = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0 = t0 * static_cast<diff_t>(tile_size0);
     const diff_t i1 = t1 * static_cast<diff_t>(tile_size1);
@@ -1732,10 +1832,12 @@ struct TileTCountExecute<
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t len      = segment.end() - segment.begin();
-    const diff_t t_init   = IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t i_init   = t_init * static_cast<diff_t>(tile_size);
-    const diff_t t_stride = IndexMapper::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t len = segment.end() - segment.begin();
+    const diff_t t_init =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i_init = t_init * static_cast<diff_t>(tile_size);
+    const diff_t t_stride =
+        IndexMapper::template size<diff_t>(ctx.get_indices_and_dims());
     const diff_t i_stride = t_stride * static_cast<diff_t>(tile_size);
 
     for (diff_t i = i_init, t = t_init; i < len; i += i_stride, t += t_stride)
@@ -1770,14 +1872,18 @@ struct TileTCountExecute<
     const diff_t len0 = segment0.end() - segment0.begin();
     const diff_t len1 = segment1.end() - segment1.begin();
 
-    const diff_t t0_init = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t1_init = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0_init = t0_init * static_cast<diff_t>(tile_size0);
     const diff_t i1_init = t1_init * static_cast<diff_t>(tile_size1);
 
-    const diff_t t0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t1_stride = IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0_stride = t0_stride * static_cast<diff_t>(tile_size0);
     const diff_t i1_stride = t1_stride * static_cast<diff_t>(tile_size1);
@@ -1827,17 +1933,23 @@ struct TileTCountExecute<
     const diff_t len1 = segment1.end() - segment1.begin();
     const diff_t len2 = segment2.end() - segment2.begin();
 
-    const diff_t t0_init = IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t1_init = IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t2_init = IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t2_init =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0_init = t0_init * static_cast<diff_t>(tile_size0);
     const diff_t i1_init = t1_init * static_cast<diff_t>(tile_size1);
     const diff_t i2_init = t2_init * static_cast<diff_t>(tile_size2);
 
-    const diff_t t0_stride = IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t1_stride = IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
-    const diff_t t2_stride = IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t2_stride =
+        IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0_stride = t0_stride * static_cast<diff_t>(tile_size0);
     const diff_t i1_stride = t1_stride * static_cast<diff_t>(tile_size1);

@@ -246,7 +246,6 @@ template<>
 class LaunchContextT<LaunchContextDefaultPolicy> : public LaunchContextBase
 {
 public:
-
   using LaunchContextBase::LaunchContextBase;
 
 #if defined(RAJA_HIP_ACTIVE)
