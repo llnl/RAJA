@@ -777,10 +777,10 @@ struct IndicesAndDims : ThreadIndices<cache_threadIdx>,
 using NonCachedIndicesAndDims = IndicesAndDims<false, false, false, false>;
 
 // threadIdx and blockDim cached, rest not cached
-using CachedThreadIndicesAndBlockDims =
-    IndicesAndDims<true, false, true, false>;
+using CachedBlockDims =
+    IndicesAndDims<false, false, true, false>;
 
-// threadIdx, blockDim, blockIdx, gridDim cached
+// threadIdx, blockIdx, blockDim, gridDim cached
 using AllCachedIndicesAndDims = IndicesAndDims<true, true, true, true>;
 
 /*!
@@ -799,8 +799,8 @@ struct LaunchContextIndicesAndDimsPolicy
 using LaunchContextNonCachedIndicesAndDimsPolicy =
     LaunchContextIndicesAndDimsPolicy<NonCachedIndicesAndDims>;
 
-using LaunchContextCachedThreadIndicesAndBlockDimsPolicy =
-    LaunchContextIndicesAndDimsPolicy<CachedThreadIndicesAndBlockDims>;
+using LaunchContextCachedBlockDimsPolicy =
+    LaunchContextIndicesAndDimsPolicy<CachedBlockDims>;
 
 using LaunchContextAllCachedIndicesAndDimsPolicy =
     LaunchContextIndicesAndDimsPolicy<AllCachedIndicesAndDims>;
