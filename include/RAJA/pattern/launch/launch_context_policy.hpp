@@ -33,9 +33,6 @@ namespace detail
 
 
 template<typename T>
-using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
-
-template<typename T>
 struct first_argument;
 
 template<typename R, typename Arg0, typename... Args>
@@ -46,10 +43,6 @@ struct first_argument<R(Arg0, Args...)>
 
 template<typename R, typename Arg0, typename... Args>
 struct first_argument<R (*)(Arg0, Args...)> : first_argument<R(Arg0, Args...)>
-{};
-
-template<typename R, typename Arg0, typename... Args>
-struct first_argument<R (&)(Arg0, Args...)> : first_argument<R(Arg0, Args...)>
 {};
 
 template<typename C, typename R, typename Arg0, typename... Args>
@@ -75,14 +68,14 @@ struct first_argument<R (C::*)(Arg0, Args...) const noexcept>
 template<typename T, typename = void>
 struct callable_signature
 {
-  using type = remove_cvref_t<T>;
+  using type = camp::decay<T>;
 };
 
 template<typename T>
 struct callable_signature<T,
-                          std::void_t<decltype(&remove_cvref_t<T>::operator())>>
+                          std::void_t<decltype(&camp::decay<T>::operator())>>
 {
-  using type = decltype(&remove_cvref_t<T>::operator());
+  using type = decltype(&camp::decay<T>::operator());
 };
 
 template<typename T, typename = void>
@@ -94,9 +87,9 @@ struct launch_context_type
 template<typename T>
 struct launch_context_type<T,
                            std::void_t<typename first_argument<
-                               typename callable_signature<T>::type>::type>>
+                                       camp::decay<typename callable_signature<T>::type>>::type>>
 {
-  using type = remove_cvref_t<
+  using type = camp::decay<
       typename first_argument<typename callable_signature<T>::type>::type>;
 };
 
