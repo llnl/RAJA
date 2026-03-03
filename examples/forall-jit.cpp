@@ -25,9 +25,9 @@
 // layout i x a x b
 #define A(i, r, c) A[i * a * b  + b * r + c]
 // layout i x b x a
-#define B(i, r, c) B[i * a * b  + a * r + c]
+#define B(i, r, c) B[i * b * a  + a * r + c]
 // layout i x a x a.  matrix products of A[i]B[i]
-#define C(i, r, c) C[i * a * b  + a * r + c]
+#define C(i, r, c) C[i * a * a + a * r + c]
 
 int main (int argc, char** argv) {
   if (argc < 3) {
@@ -49,7 +49,7 @@ int main (int argc, char** argv) {
   auto res = RAJA::resources::get_default_resource<policy>();
   double *A = res.template allocate<double>(N * a * b);
   double *B = res.template allocate<double>(N * a * b);
-  double *C = res.template allocate<double>(N * a * b);
+  double *C = res.template allocate<double>(N * a * a);
   RAJA::Timer aot_timer;
   aot_timer.start();
   // data setup
@@ -66,7 +66,7 @@ int main (int argc, char** argv) {
   RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=] (int i) {
     for (int row = 0; row < a; ++row){
       for (int col = 0; col < b; ++col) {
-        if (a < b) {
+        if (accum) {
           C(i, row, col) = A(i, row, col) * B(i, col, row);
         }
         else {
@@ -98,7 +98,7 @@ int main (int argc, char** argv) {
     accum = proteus::jit_variable(accum)] (int i) {
     for (int row = 0; row < a; ++row){
       for (int col = 0; col < b; ++col) {
-        if (a < b) {
+        if (accum) {
           C(i, row, col) = A(i, row, col) * B(i, col, row);
         }
         else {

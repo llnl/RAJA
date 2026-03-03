@@ -46,7 +46,7 @@ variables:
   PROJECT_CORONA_DEPS: ""
 
   # Tioga (flux) allocation settings
-  TIOGA_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=75m --nodes=1 -o per-resource.count=2"
+  TIOGA_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=90m --nodes=1 -o per-resource.count=2"
   TIOGA_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
   # Project specific variants for tioga
   PROJECT_TIOGA_VARIANTS: "~shared +openmp +vectorization +tests"

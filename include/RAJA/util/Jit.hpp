@@ -23,16 +23,6 @@ inline auto register_lambda(Lambda&& lambda)
 #endif
 }
 
-template<typename T>
-inline auto jit_variable(T arg)
-{
-#if defined RAJA_ENABLE_JIT
-  return proteus::jit_variable(std::forward<T>(arg));
-#else
-  return std::forward<T>(arg);
-#endif
-}
-
 }  // namespace jit
 }  // namespace internal
 }  // namespace RAJA
