@@ -24,6 +24,10 @@ raja_add_executable(
   SOURCES dynamic-forall.cpp)
 
 raja_add_executable(
+  NAME forall-jit
+  SOURCES forall-jit.cpp)
+
+raja_add_executable(
   NAME forall-param-reductions
   SOURCES forall-param-reductions.cpp)
 
