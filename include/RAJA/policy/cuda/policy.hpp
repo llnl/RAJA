@@ -806,7 +806,7 @@ struct LaunchContextIndicesAndDimsPolicy
 using LaunchContextNonCachedIndicesAndDimsPolicy =
     LaunchContextIndicesAndDimsPolicy<NonCachedIndicesAndDims>;
 
-using LaunchContextCachedThreadIndicesAndBlockDimsPolicy =
+using LaunchContextCachedBlockDimsPolicy =
     LaunchContextIndicesAndDimsPolicy<CachedBlockDims>;
 
 using LaunchContextAllCachedIndicesAndDimsPolicy =
@@ -1414,6 +1414,17 @@ using warp_global_xyz =
                  block_xyz<GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z>>;
 
 }  // namespace cuda
+
+//Make available through RAJA namespace
+using cuda::IndicesAndDims;
+using cuda::NonCachedIndicesAndDims;
+using cuda::CachedBlockDims;
+using cuda::AllCachedIndicesAndDims;
+
+using cuda::LaunchContextIndicesAndDimsPolicy;
+using cuda::LaunchContextNonCachedIndicesAndDimsPolicy;
+using cuda::LaunchContextCachedBlockDimsPolicy;
+using cuda::LaunchContextAllCachedIndicesAndDimsPolicy;
 
 // contretizers used in forall, scan, and sort policies
 
