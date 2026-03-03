@@ -291,7 +291,7 @@ struct LoopExecute<
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t i = detail::launch_index<IndexMapper, diff_t>(ctx);
+    const diff_t i = IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment.begin() + i));
   }
