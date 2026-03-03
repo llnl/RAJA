@@ -21,6 +21,23 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
+Version 2025.12.2 -- Release date 2026-03-dd
+============================================
+
+This release contains a bug fix and some performance enhancements
+
+Notable changes include:
+
+  * New features / API changes:
+    * 
+
+  * Build changes/improvements:
+    * None
+
+  * Bug fixes/improvements:
+    * Fixed issue with our checks for C++ symbol names.
+
+
 Version 2025.12.1 -- Release date 2026-01-28
 ============================================
 
