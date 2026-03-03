@@ -85,7 +85,8 @@ struct CudaStatementExecutor<Data, statement::CudaSyncWarp, Types>
 #else
       void
       exec(Data&, bool)
-  {}
+  {
+  }
 #endif
 
   static inline LaunchDims calculateDimensions(

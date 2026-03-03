@@ -36,8 +36,7 @@ using namespace camp::concepts;
 
 template<typename From, typename To>
 struct ConvertibleTo
-    : DefineConcept(::RAJA::concepts::convertible_to<To>(camp::val<From>()))
-{};
+    : DefineConcept(::RAJA::concepts::convertible_to<To>(camp::val<From>())) {};
 
 }  // namespace concepts
 
