@@ -21,7 +21,7 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
-Version 2025.12.2 -- Release date 2026-03-dd
+Version 2025.12.2 -- Release date 2026-03-04
 ============================================
 
 This release contains a bug fix and some performance enhancements resulting
