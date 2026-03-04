@@ -249,7 +249,8 @@ public:
 
 // Preserve backwards compatibility
 #if defined(RAJA_HIP_ACTIVE) || defined(RAJA_CUDA_ACTIVE)
-using LaunchContext = LaunchContextT<LaunchContextNonCachedIndicesAndDimsPolicy>;
+using LaunchContext =
+    LaunchContextT<LaunchContextNonCachedIndicesAndDimsPolicy>;
 #else
 using LaunchContext = LaunchContextT<LaunchContextDefaultPolicy>;
 #endif

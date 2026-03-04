@@ -42,6 +42,7 @@ class LaunchContextT<cuda::LaunchContextIndicesAndDimsPolicy<IndicesAndDimsT>>
 public:
   using indices_and_dims_t = IndicesAndDimsT;
 
+  /*[[no_unique_address]] -- add when we move to C++20  */
   indices_and_dims_t indices_and_dims;
 
   RAJA_HOST_DEVICE RAJA_INLINE
