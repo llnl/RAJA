@@ -45,8 +45,10 @@ public:
   /*[[no_unique_address]] -- add when we move to C++20  */
   indices_and_dims_t indices_and_dims;
 
-  RAJA_HOST_DEVICE RAJA_INLINE
-  LaunchContextT() : LaunchContextBase(), indices_and_dims() {}
+  RAJA_HOST_DEVICE RAJA_INLINE LaunchContextT()
+      : LaunchContextBase(),
+        indices_and_dims()
+  {}
 
   RAJA_HOST_DEVICE RAJA_INLINE indices_and_dims_t const& get_indices_and_dims()
       const

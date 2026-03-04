@@ -30,10 +30,9 @@ template<typename SEGMENT>
 struct LoopExecute<simd_exec, SEGMENT>
 {
 
- template<typename BODY>
-  static RAJA_INLINE RAJA_HOST_DEVICE void exec(
-      SEGMENT const& segment,
-      BODY const& body)
+  template<typename BODY>
+  static RAJA_INLINE RAJA_HOST_DEVICE void exec(SEGMENT const& segment,
+                                                BODY const& body)
   {
 
     const int len = segment.end() - segment.begin();
@@ -65,9 +64,8 @@ struct LoopICountExecute<simd_exec, SEGMENT>
 {
 
   template<typename BODY>
-  static RAJA_INLINE RAJA_HOST_DEVICE void exec(
-      SEGMENT const& segment,
-      BODY const& body)
+  static RAJA_INLINE RAJA_HOST_DEVICE void exec(SEGMENT const& segment,
+                                                BODY const& body)
   {
 
     const int len = segment.end() - segment.begin();
