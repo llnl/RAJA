@@ -592,6 +592,8 @@ public:
   using shifted_layout_type = typename add_offset<layout_type>::type;
   using ShiftedView = ViewBase<value_type, pointer_type, shifted_layout_type>;
 
+  static constexpr size_t n_dims = layout_type::n_dims;
+
 protected:
   pointer_type m_data;
   layout_type const m_layout;
@@ -633,7 +635,6 @@ public:
 #endif
 
   RAJA_HOST_DEVICE
-
   RAJA_INLINE
   constexpr ViewBase(pointer_type data, layout_type&& layout)
       : m_data(data),

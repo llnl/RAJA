@@ -165,6 +165,8 @@ struct MultiView
   using NonConstView =
       MultiView<nc_value_type, layout_type, P2Pidx, nc_pointer_type>;
 
+  static constexpr size_t n_dims = layout_type::n_dims + 1;
+
   layout_type layout {};
   nc_pointer_type data = nullptr;
 
@@ -312,6 +314,8 @@ struct AtomicViewWrapper
   using value_type   = typename base_type::value_type;
   using atomic_type  = RAJA::AtomicRef<value_type, AtomicPolicy>;
 
+  static constexpr size_t n_dims = base_type::n_dims;
+
   base_type base_;
 
   RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit AtomicViewWrapper(
@@ -342,6 +346,8 @@ struct AtomicViewWrapper<ViewType, RAJA::seq_atomic>
   using pointer_type = typename base_type::pointer_type;
   using value_type   = typename base_type::value_type;
   using atomic_type  = RAJA::AtomicRef<value_type, RAJA::seq_atomic>;
+
+  static constexpr size_t n_dims = base_type::n_dims;
 
   base_type base_;
 
