@@ -251,7 +251,7 @@ public:
 // Preserve backwards compatibility
 #if defined(RAJA_HIP_ACTIVE)
 using LaunchContext =
-    LaunchContextT<hip::LaunchContextNonCachedIndicesAndDimsPolicy>;
+    LaunchContextT<HipLaunchContextNonCachedIndicesAndDimsPolicy>;
 #elif defined(RAJA_CUDA_ACTIVE)
 using LaunchContext =
     LaunchContextT<cuda::LaunchContextNonCachedIndicesAndDimsPolicy>;
