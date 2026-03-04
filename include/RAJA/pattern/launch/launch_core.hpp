@@ -254,7 +254,7 @@ using LaunchContext =
     LaunchContextT<HipLaunchContextNonCachedIndicesAndDimsPolicy>;
 #elif defined(RAJA_CUDA_ACTIVE)
 using LaunchContext =
-    LaunchContextT<cuda::LaunchContextNonCachedIndicesAndDimsPolicy>;
+    LaunchContextT<CudaLaunchContextNonCachedIndicesAndDimsPolicy>;
 #else
 using LaunchContext = LaunchContextT<LaunchContextHostPolicy>;
 #endif
