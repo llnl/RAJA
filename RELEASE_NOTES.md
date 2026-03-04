@@ -24,12 +24,17 @@ Notable changes include:
 Version 2025.12.2 -- Release date 2026-03-dd
 ============================================
 
-This release contains a bug fix and some performance enhancements
+This release contains a bug fix and some performance enhancements resulting
+from new execution policies
 
 Notable changes include:
 
   * New features / API changes:
-    * 
+    * Add new policies for RAJA::launch that enable caching of team (block)
+      indices and dimensions, and thread indices and dimenstions. This 
+      eliminates repeated calls to device intrinsics when those quantities 
+      are used multiple times in a kernel. A new example code was added to
+      show the usage. RAJA User Guide documentation will be forthcoming.
 
   * Build changes/improvements:
     * None
