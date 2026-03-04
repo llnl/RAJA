@@ -19,9 +19,9 @@
 # project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
 # So that the comparison with the original job is easier.
 
-## cce 20.0.0 job is in the shared RSC set of jobs
+## cce 21.0.0 job is in the shared RSC set of jobs
 
-## rocm 6.4.3 job is in the shared RSC set of jobs
+## rocm 7.2.0 job is in the shared RSC set of jobs
 
 ############
 # Extra jobs
@@ -30,12 +30,12 @@
 # ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
 # describe the spec here.
 
-rocmcc_6_4_3_hip_desul_atomics:
+rocmcc_7_2_0_hip_desul_atomics:
   variables:
-    SPEC: "~shared +rocm ~openmp +desul +tests amdgpu_target=gfx942 %llvm-amdgpu@=6.4.3 ^hip@6.4.3"
+    SPEC: "~shared +rocm ~openmp +desul +tests amdgpu_target=gfx942 %llvm-amdgpu@=7.2.0 ^hip@7.2.0"
   extends: .job_on_tuolumne
 
-rocmcc_6_4_3_hip_openmp:
+rocmcc_7_2_0_hip_openmp:
   variables:
-    SPEC: "~shared +rocm +openmp +omptask +tests amdgpu_target=gfx942 %llvm-amdgpu@=6.4.3 ^hip@6.4.3"
+    SPEC: "~shared +rocm +openmp +omptask +tests amdgpu_target=gfx942 %llvm-amdgpu@=7.2.0 ^hip@7.2.0"
   extends: .job_on_tuolumne
