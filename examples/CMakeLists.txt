@@ -76,6 +76,10 @@ raja_add_executable(
   SOURCES raja-launch.cpp)
 
 raja_add_executable(
+  NAME gpu-launch-context-indices
+  SOURCES gpu-launch-context-indices.cpp)
+
+raja_add_executable(
   NAME launch_matrix-multiply
   SOURCES launch_matrix-multiply.cpp)
 
