@@ -196,16 +196,6 @@ public:
   size_t shared_mem_offset;
   void* shared_mem_ptr;
 
-#if defined(RAJA_HIP_ACTIVE)
-  using indices_and_dims_t = hip::NonCachedIndicesAndDims;
-#elif defined(RAJA_CUDA_ACTIVE)
-  using indices_and_dims_t = cuda::NonCachedIndicesAndDims;
-#else
-  struct indices_and_dims_t
-  {};
-#endif
-
-
 #if defined(RAJA_SYCL_ACTIVE)
   // SGS ODR issue
   mutable ::sycl::nd_item<3>* itm;
@@ -215,18 +205,6 @@ public:
       : shared_mem_offset(0),
         shared_mem_ptr(nullptr)
   {}
-
-  /*!
-   * Fallback indices/dims implementation for launch contexts.
-   *
-   * CUDA/HIP loop execution may unconditionally query indices/dims through the
-   * launch context. Backend-specific LaunchContextT specializations can hide
-   * this method to provide cached indices/dims storage when available.
-   */
-  RAJA_HOST_DEVICE RAJA_INLINE indices_and_dims_t get_indices_and_dims() const
-  {
-    return indices_and_dims_t {};
-  }
 
   // TODO handle alignment
   template<typename T>
@@ -270,7 +248,11 @@ public:
 };
 
 // Preserve backwards compatibility
+#if defined(RAJA_HIP_ACTIVE) || defined(RAJA_CUDA_ACTIVE)
+using LaunchContext = LaunchContextT<LaunchContextNonCachedIndicesAndDimsPolicy>;
+#else
 using LaunchContext = LaunchContextT<LaunchContextDefaultPolicy>;
+#endif
 
 template<typename LAUNCH_POLICY>
 struct LaunchExecute;
