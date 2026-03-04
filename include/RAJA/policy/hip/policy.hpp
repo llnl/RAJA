@@ -1407,19 +1407,6 @@ using warp_global_xyz =
 
 }  // namespace hip
 
-// Make available through RAJA namespace
-
-using hip::AllCachedIndicesAndDims;
-using hip::CachedBlockDims;
-using hip::IndicesAndDims;
-using hip::NonCachedIndicesAndDims;
-
-using hip::LaunchContextAllCachedIndicesAndDimsPolicy;
-using hip::LaunchContextCachedBlockDimsPolicy;
-using hip::LaunchContextIndicesAndDimsPolicy;
-using hip::LaunchContextNonCachedIndicesAndDimsPolicy;
-
-
 // contretizers used in forall, scan, and sort policies
 
 using HipAvoidDeviceMaxThreadOccupancyConcretizer =

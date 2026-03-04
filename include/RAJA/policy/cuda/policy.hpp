@@ -1415,17 +1415,6 @@ using warp_global_xyz =
 
 }  // namespace cuda
 
-// Make available through RAJA namespace
-using cuda::AllCachedIndicesAndDims;
-using cuda::CachedBlockDims;
-using cuda::IndicesAndDims;
-using cuda::NonCachedIndicesAndDims;
-
-using cuda::LaunchContextAllCachedIndicesAndDimsPolicy;
-using cuda::LaunchContextCachedBlockDimsPolicy;
-using cuda::LaunchContextIndicesAndDimsPolicy;
-using cuda::LaunchContextNonCachedIndicesAndDimsPolicy;
-
 // contretizers used in forall, scan, and sort policies
 
 using CudaAvoidDeviceMaxThreadOccupancyConcretizer =

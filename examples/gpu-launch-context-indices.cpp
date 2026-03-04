@@ -43,8 +43,8 @@ struct BackendTraits<HipBackend>
   using launch_t                    = RAJA::hip_launch_t<true>;
   // Cache all indices/dimensions accessed through the launch context.
   //threadIdx, blockDim, blockIdx, gridDim cached 
-  using cache_policy_t              = RAJA::IndicesAndDims<true, true, true, true>;
-  using ctx_policy_t                = RAJA::LaunchContextIndicesAndDimsPolicy<cache_policy_t>;
+  using cache_policy_t              = RAJA::hip::IndicesAndDims<true, true, true, true>;
+  using ctx_policy_t                = RAJA::hip::LaunchContextIndicesAndDimsPolicy<cache_policy_t>;
   using block_x_direct_t            = RAJA::hip_block_x_direct;
   using thread_x_direct_t           = RAJA::hip_thread_x_loop;
 };
@@ -61,8 +61,8 @@ struct BackendTraits<CudaBackend>
   using launch_t                    = RAJA::cuda_launch_t<true>;
   // Cache all indices/dimensions accessed through the launch context.
   //threadIdx, blockDim, blockIdx, gridDim cached
-  using cache_policy_t              = RAJA::IndicesAndDims<true, true, true, true>;
-  using ctx_policy_t                = RAJA::LaunchContextIndicesAndDimsPolicy<cache_policy_t>;
+  using cache_policy_t              = RAJA::cuda::IndicesAndDims<true, true, true, true>;
+  using ctx_policy_t                = RAJA::cuda::LaunchContextIndicesAndDimsPolicy<cache_policy_t>;
   using block_x_direct_t            = RAJA::cuda_block_x_direct;
   using thread_x_direct_t           = RAJA::cuda_thread_x_loop;
 };

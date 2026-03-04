@@ -29,7 +29,7 @@ namespace RAJA
 template<typename LaunchContextPolicy>
 class LaunchContextT;
 
-class LaunchContextDefaultPolicy;
+class LaunchContextHostPolicy;
 
 namespace detail
 {
@@ -78,7 +78,7 @@ struct callable_signature<T, std::void_t<decltype(&camp::decay<T>::operator())>>
 template<typename T, typename = void>
 struct launch_context_type
 {
-  using type = LaunchContextT<LaunchContextDefaultPolicy>;
+  using type = LaunchContextT<LaunchContextHostPolicy>;
 };
 
 template<typename T>

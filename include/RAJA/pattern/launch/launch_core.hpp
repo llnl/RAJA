@@ -196,6 +196,7 @@ public:
   size_t shared_mem_offset;
   void* shared_mem_ptr;
 
+// In the future move this into a derived class.
 #if defined(RAJA_SYCL_ACTIVE)
   // SGS ODR issue
   mutable ::sycl::nd_item<3>* itm;
@@ -241,18 +242,21 @@ public:
 };
 
 template<>
-class LaunchContextT<LaunchContextDefaultPolicy> : public LaunchContextBase
+class LaunchContextT<LaunchContextHostPolicy> : public LaunchContextBase
 {
 public:
   using LaunchContextBase::LaunchContextBase;
 };
 
 // Preserve backwards compatibility
-#if defined(RAJA_HIP_ACTIVE) || defined(RAJA_CUDA_ACTIVE)
+#if defined(RAJA_HIP_ACTIVE)
 using LaunchContext =
-    LaunchContextT<LaunchContextNonCachedIndicesAndDimsPolicy>;
+    LaunchContextT<hip::LaunchContextNonCachedIndicesAndDimsPolicy>;
+#elif defined(RAJA_CUDA_ACTIVE)
+using LaunchContext =
+    LaunchContextT<cuda::LaunchContextNonCachedIndicesAndDimsPolicy>;
 #else
-using LaunchContext = LaunchContextT<LaunchContextDefaultPolicy>;
+using LaunchContext = LaunchContextT<LaunchContextHostPolicy>;
 #endif
 
 template<typename LAUNCH_POLICY>
