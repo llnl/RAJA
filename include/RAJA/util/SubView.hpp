@@ -185,7 +185,7 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType> {
     static inline constexpr size_t s_num_slices = sizeof...(Slices);
 
     static inline constexpr 
-    IndexType n_dims = (!Slices::reduces_dimension + ...);
+    IndexType n_dims = ((!Slices::reduces_dimension ? 1 : 0) + ...);
 
     static inline constexpr 
     camp::array<IndexType, s_num_slices> s_slice_to_parent_map = 
@@ -258,6 +258,7 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType> {
     template <typename... Idxs>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr auto operator()(Idxs... idxs) const {
         static_assert(sizeof...(idxs) == n_dims, "Wrong number of indices");
+        //static_assert(s_num_slices == m_parent.size(), "Wrong number of slices"); // To do
 
         camp::array<IndexType, n_dims> arr{idxs...};
         camp::array<IndexType, s_num_slices> parent_indices{};

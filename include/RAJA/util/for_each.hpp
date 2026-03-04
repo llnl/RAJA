@@ -43,7 +43,7 @@ namespace detail
 
 // compile time expansion applying func to each of the indices
 RAJA_SUPPRESS_HD_WARN
-template<typename UnaryFunc, typename IndexType, IndexType... Is>
+template<typename UnaryFunc, camp::idx_t... Is>
 constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_index(camp::idx_seq<Is...>,
                                                                 UnaryFunc func)
 {
