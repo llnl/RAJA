@@ -25,7 +25,7 @@ Version 2025.12.2 -- Release date 2026-03-04
 ============================================
 
 This release contains a bug fix and some performance enhancements resulting
-from new execution policies
+from new execution policies.
 
 Notable changes include:
 
