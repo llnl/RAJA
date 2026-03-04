@@ -1407,6 +1407,29 @@ using warp_global_xyz =
 
 }  // namespace hip
 
+using HipAllCachedIndicesAndDims = hip::AllCachedIndicesAndDims;
+using HipCachedBlockDims         = hip::CachedBlockDims;
+using HipNonCachedIndicesAndDims = hip::NonCachedIndicesAndDims;
+
+template<bool cache_threadIdx,
+         bool cache_blockIdx,
+         bool cache_blockDim,
+         bool cache_gridDim>
+using HipIndicesAndDims = hip::IndicesAndDims<cache_threadIdx,
+                                              cache_blockIdx,
+                                              cache_blockDim,
+                                              cache_gridDim>;
+
+using HipLaunchContextAllCachedIndicesAndDimsPolicy =
+    hip::LaunchContextAllCachedIndicesAndDimsPolicy;
+using HipLaunchContextCachedBlockDimsPolicy =
+    hip::LaunchContextCachedBlockDimsPolicy;
+template<typename IndicesAndDimsT = hip::NonCachedIndicesAndDims>
+using HipLaunchContextIndicesAndDimsPolicy =
+    hip::LaunchContextIndicesAndDimsPolicy<IndicesAndDimsT>;
+using HipLaunchContextNonCachedIndicesAndDimsPolicy =
+    hip::LaunchContextNonCachedIndicesAndDimsPolicy;
+
 // contretizers used in forall, scan, and sort policies
 
 using HipAvoidDeviceMaxThreadOccupancyConcretizer =

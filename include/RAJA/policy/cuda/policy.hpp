@@ -1415,6 +1415,29 @@ using warp_global_xyz =
 
 }  // namespace cuda
 
+using CudaAllCachedIndicesAndDims = cuda::AllCachedIndicesAndDims;
+using CudaCachedBlockDims         = cuda::CachedBlockDims;
+using CudaNonCachedIndicesAndDims = cuda::NonCachedIndicesAndDims;
+
+template<bool cache_threadIdx,
+         bool cache_blockIdx,
+         bool cache_blockDim,
+         bool cache_gridDim>
+using CudaIndicesAndDims = cuda::IndicesAndDims<cache_threadIdx,
+                                                cache_blockIdx,
+                                                cache_blockDim,
+                                                cache_gridDim>;
+
+using CudaLaunchContextAllCachedIndicesAndDimsPolicy =
+    cuda::LaunchContextAllCachedIndicesAndDimsPolicy;
+using CudaLaunchContextCachedBlockDimsPolicy =
+    cuda::LaunchContextCachedBlockDimsPolicy;
+template<typename IndicesAndDimsT = cuda::NonCachedIndicesAndDims>
+using CudaLaunchContextIndicesAndDimsPolicy =
+    cuda::LaunchContextIndicesAndDimsPolicy<IndicesAndDimsT>;
+using CudaLaunchContextNonCachedIndicesAndDimsPolicy =
+    cuda::LaunchContextNonCachedIndicesAndDimsPolicy;
+
 // contretizers used in forall, scan, and sort policies
 
 using CudaAvoidDeviceMaxThreadOccupancyConcretizer =
