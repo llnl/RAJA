@@ -22,7 +22,6 @@
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 #include "camp/tuple.hpp"
-#include "camp/array.hpp"
 
 namespace RAJA
 {
@@ -141,7 +140,7 @@ struct StridedSlice {
 template<typename... Slices>
 RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_slice_to_parent_index_map() {
     size_t sub_idx = 0;
-    camp::array<size_t, sizeof...(Slices)> map{
+    std::array<size_t, sizeof...(Slices)> map{
         {(Slices::reduces_dimension ? size_t(0) : sub_idx++)...}};
     return map;
 }
@@ -152,7 +151,7 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_slice_index_map() {
     constexpr size_t n_dims = (!Slices::reduces_dimension + ...);
     size_t sub_idx = 0;
     size_t i = 0;
-    camp::array<size_t, n_dims> map{};
+    std::array<size_t, n_dims> map{};
 
     auto process_slice = [&](auto slice_type) constexpr {
         if constexpr (!decltype(slice_type)::reduces_dimension) {
@@ -190,11 +189,11 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType> {
     size_t n_dims = ((!Slices::reduces_dimension ? 1 : 0) + ...);
 
     static inline constexpr 
-    camp::array<size_t, s_num_slices> s_slice_to_parent_map = 
+    std::array<size_t, s_num_slices> s_slice_to_parent_map = 
         make_slice_to_parent_index_map<Slices...>();
 
     static inline constexpr 
-    camp::array<size_t, n_dims> s_parent_to_slice_map = 
+    std::array<size_t, n_dims> s_parent_to_slice_map = 
         make_parent_to_slice_index_map<Slices...>();
 
     const LayoutType m_parent;
