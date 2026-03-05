@@ -31,7 +31,7 @@ Notable changes include:
 
   * New features / API changes:
     * Add new policies for RAJA::launch that enable caching of team (block)
-      indices and dimensions, and thread indices and dimenstions. This 
+      indices and dimensions, and thread indices and dimensions. This 
       eliminates repeated calls to device intrinsics when those quantities 
       are used multiple times in a kernel. A new example code was added to
       show the usage. RAJA User Guide documentation will be forthcoming.
