@@ -6,8 +6,10 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 #include <gtest/gtest.h>
+#include <array>
 #include "RAJA/policy/PolicyBase.hpp"
 #include "RAJA/util/SubView.hpp"
+#include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA_test-base.hpp"
 #include "RAJA_unit-test-forone.hpp"
@@ -16,6 +18,7 @@ using namespace RAJA;
 
 /* helper to create a RAJA View with a sliced SubLayout */
 template<typename ViewType, typename... Slices>
+RAJA_HOST_DEVICE
 auto make_view_with_sublayout(ViewType& view, Slices... slices) {
     using SubLayoutType = SubLayout<typename ViewType::layout_type, camp::list<Slices...>>;
     return View<Index_type, SubLayoutType>(view.get_data(), SubLayoutType(view.get_layout(), slices...));
@@ -23,12 +26,14 @@ auto make_view_with_sublayout(ViewType& view, Slices... slices) {
 
 /* helper to create a sliced SubView without modifying underlying layout */
 template<typename ViewType, typename... Slices>
+RAJA_HOST_DEVICE
 auto make_subview_with_layout(ViewType& view, Slices... slices) {
     using SubViewType = SubView<ViewType, camp::list<Slices...>>;
     return SubViewType(view, slices...);
 }
 
 template<typename ViewType, typename... Slices>
+RAJA_HOST_DEVICE
 auto make_multiview_with_sublayout(ViewType& view, Slices... slices) {
     using SubLayoutType = SubLayout<typename ViewType::layout_type, camp::list<Slices...>>;
     return MultiView<Index_type, SubLayoutType>(view.get_data(), SubLayoutType(view.get_layout(), slices...));
@@ -395,23 +400,90 @@ TEST(SubViewMultiViewTest, SubViewOfMultiView2D)
 
 }
 
-// void test_subviewGPU() {
-// #if defined(RAJA_ENABLE_HIP)
-//     forone<test_hip>([=] __host__ __device__ () {
-//         Index_type a[3][3] = {{1,2,3},{4,5,6},{7,8,9}};
+#if defined(RAJA_ENABLE_HIP)
+GPU_TEST(SubViewGPUTest, SubView2D_HIP)
+{
+  constexpr Index_type rows = 3;
+  constexpr Index_type cols = 6;
+  constexpr Index_type N    = rows * cols;
 
-//         View<Index_type, Layout<2>> view(&a[0][0], Layout<2>(3,3));
+  std::array<Index_type, static_cast<size_t>(N)> host_data{};
+  for (Index_type r = 0; r < rows; ++r) {
+    for (Index_type c = 0; c < cols; ++c) {
+      host_data[static_cast<size_t>(r * cols + c)] =
+          Index_type(1) + r * cols + c;
+    }
+  }
 
-//         // sv = View[1:2,:]
-//         auto sv = SubView(view, RangeSlice<>{1,2}, NoSlice{});
+  Index_type* data = nullptr;
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, &data, sizeof(Index_type) * N);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, data, host_data.data(),
+                                sizeof(Index_type) * N,
+                                hipMemcpyHostToDevice);
 
-//         //printf("sv(0,0): %ld\n", sv(0,0));
+  std::array<Index_type, 16> host_out{};
+  Index_type* out = nullptr;
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, &out, sizeof(Index_type) * 16);
+  for (size_t i = 0; i < host_out.size(); ++i) {
+    host_out[i] = Index_type(-1);
+  }
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, out, host_out.data(),
+                                sizeof(Index_type) * host_out.size(),
+                                hipMemcpyHostToDevice);
 
-//     });
-// #endif
-// }
+  View<Index_type, Layout<2>> view(data, Layout<2>(rows, cols));
 
-// TYPED_TEST(SubViewTest, RangeFirstDimSubView2DGPU)
-// {
-//     test_subviewGPU();
-// }
+  forone<test_hip>([=] RAJA_DEVICE() {
+
+    // sv = View[1:3,1:6:2]
+    auto sv_with_sublayout =
+        make_view_with_sublayout(view, RangeSlice<>{1, 3}, StridedSlice<>{1, 6, 2});
+    auto sv_with_layout =
+        make_subview_with_layout(view, RangeSlice<>{1, 3}, StridedSlice<>{1, 6, 2});
+
+    out[0] = sv_with_sublayout(0, 0);
+    out[1] = sv_with_sublayout(0, 1);
+    out[2] = sv_with_sublayout(0, 2);
+    out[3] = sv_with_sublayout(1, 0);
+    out[4] = sv_with_sublayout(1, 1);
+    out[5] = sv_with_sublayout(1, 2);
+
+    auto const& sr1 = sv_with_sublayout.get_layout();
+    out[6]          = sr1.template get_parent_dim_stride<0>();
+    out[7]          = sr1.template get_parent_dim_stride<1>();
+    out[8]          = sr1.template get_dim_stride<0>();
+    out[9]          = sr1.template get_dim_stride<1>();
+
+    out[10] = sv_with_layout(0, 0);
+    out[11] = sv_with_layout(0, 1);
+    out[12] = sv_with_layout(0, 2);
+    out[13] = sv_with_layout(1, 0);
+    out[14] = sv_with_layout(1, 1);
+    out[15] = sv_with_layout(1, 2);
+  });
+
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, host_out.data(), out,
+                                sizeof(Index_type) * host_out.size(),
+                                hipMemcpyDeviceToHost);
+
+  EXPECT_EQ(host_out[0], 8);
+  EXPECT_EQ(host_out[1], 10);
+  EXPECT_EQ(host_out[2], 12);
+  EXPECT_EQ(host_out[3], 14);
+  EXPECT_EQ(host_out[4], 16);
+  EXPECT_EQ(host_out[5], 18);
+  EXPECT_EQ(host_out[6], 6);
+  EXPECT_EQ(host_out[7], 2);
+  EXPECT_EQ(host_out[8], 3);
+  EXPECT_EQ(host_out[9], 1);
+  EXPECT_EQ(host_out[10], 8);
+  EXPECT_EQ(host_out[11], 10);
+  EXPECT_EQ(host_out[12], 12);
+  EXPECT_EQ(host_out[13], 14);
+  EXPECT_EQ(host_out[14], 16);
+  EXPECT_EQ(host_out[15], 18);
+
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, out);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, data);
+}
+#endif
