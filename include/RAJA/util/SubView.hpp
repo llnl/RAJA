@@ -29,17 +29,17 @@ namespace RAJA
 
 template<typename IndexType = Index_type>
 struct RangeSlice {
-    IndexType start_, end_; 
+    IndexType m_start, m_end; 
 
     static constexpr bool reduces_dimension = false;
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(const IndexType& idx) const {
-        return start_ + idx;
+        return m_start + idx;
     }
 
     template<IndexType RAJA_UNUSED_ARG(DIM), typename LayoutType>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const {
-        return (end_ - start_);
+        return (m_end - m_start);
     }
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
@@ -49,17 +49,17 @@ struct RangeSlice {
 
 template<typename IndexType = Index_type>
 struct RangeStartSlice {
-    IndexType start_; 
+    IndexType m_start; 
 
     static constexpr bool reduces_dimension = false;
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(const IndexType& idx) const {
-        return start_ + idx;
+        return m_start + idx;
     }
 
     template<IndexType DIM, typename LayoutType>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType& layout) const {
-        return (layout.template get_dim_size<DIM>() - start_);
+        return (layout.template get_dim_size<DIM>() - m_start);
     }
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
@@ -69,12 +69,12 @@ struct RangeStartSlice {
 
 template<typename IndexType = Index_type>
 struct FixedSlice { 
-    IndexType idx_; 
+    IndexType m_idx; 
 
     static constexpr bool reduces_dimension = true;
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index() const {
-        return idx_;
+        return m_idx;
     }
 
     template<IndexType DIM, typename LayoutType>
@@ -108,50 +108,51 @@ struct NoSlice {
 
 template<typename IndexType = Index_type>
 struct StridedSlice { 
-    IndexType start_, end_, stride_;
+    IndexType m_start, m_end, m_stride;
 
     static constexpr bool reduces_dimension = false;
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(const IndexType& idx) const {
-        return start_ + stride_ * idx;
+        return m_start + m_stride * idx;
     }
 
     template<IndexType DIM, typename LayoutType>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const {
-        if (stride_ == 0) {
+        if (m_stride == 0) {
             return 0;
-        } else if (stride_ > 0) {
-            if (start_ >= end_) {
+        } else if (m_stride > 0) {
+            if (m_start >= m_end) {
                 return 0;
             }
-            return (end_ - start_ + stride_ - 1) / stride_;
+            return (m_end - m_start + m_stride - 1) / m_stride;
         } else {
-            if (start_ <= end_) {
+            if (m_start <= m_end) {
                 return 0;
             }
-            return (start_ - end_ - stride_ - 1) / (-stride_);
+            return (m_start - m_end - m_stride - 1) / (-m_stride);
         }
     }
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const {
-        return stride_;
+        return m_stride;
     }
 };
 
-template<typename IndexType, typename... Slices>
+template<typename... Slices>
 RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_slice_to_parent_index_map() {
-    IndexType sub_idx = 0;
-    camp::array<IndexType, sizeof...(Slices)> map{{(Slices::reduces_dimension ? IndexType(0) : sub_idx++)...}};
+    size_t sub_idx = 0;
+    camp::array<size_t, sizeof...(Slices)> map{
+        {(Slices::reduces_dimension ? size_t(0) : sub_idx++)...}};
     return map;
 }
 
-template<typename IndexType, typename... Slices>
+template<typename... Slices>
 RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_slice_index_map() {
 
-    constexpr IndexType n_dims = (!Slices::reduces_dimension + ...);
-    IndexType sub_idx = 0;
-    IndexType i = 0;
-    camp::array<IndexType, n_dims> map{};
+    constexpr size_t n_dims = (!Slices::reduces_dimension + ...);
+    size_t sub_idx = 0;
+    size_t i = 0;
+    camp::array<size_t, n_dims> map{};
 
     auto process_slice = [&](auto slice_type) constexpr {
         if constexpr (!decltype(slice_type)::reduces_dimension) {
@@ -186,15 +187,15 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType> {
     static_assert(s_num_slices == LayoutType::n_dims, "Wrong number of slices");
 
     static inline constexpr 
-    IndexType n_dims = ((!Slices::reduces_dimension ? 1 : 0) + ...);
+    size_t n_dims = ((!Slices::reduces_dimension ? 1 : 0) + ...);
 
     static inline constexpr 
-    camp::array<IndexType, s_num_slices> s_slice_to_parent_map = 
-        make_slice_to_parent_index_map<IndexType, Slices...>();
+    camp::array<size_t, s_num_slices> s_slice_to_parent_map = 
+        make_slice_to_parent_index_map<Slices...>();
 
     static inline constexpr 
-    camp::array<IndexType, n_dims> s_parent_to_slice_map = 
-        make_parent_to_slice_index_map<IndexType, Slices...>();
+    camp::array<size_t, n_dims> s_parent_to_slice_map = 
+        make_parent_to_slice_index_map<Slices...>();
 
     const LayoutType m_parent;
     camp::tuple<Slices...> m_slices;
@@ -210,30 +211,9 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType> {
         return m_slices;
     }
 
-    template<IndexType Index>
+    template<size_t Index>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr const auto& get_slice() const {
         return camp::get<Index>(m_slices);
-    }
-
-private:
-    template<IndexType DIM, camp::idx_t... Ds>
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear logical_stride_impl(
-        camp::idx_seq<Ds...>) const
-    {
-        IndexLinear stride = 1;
-        ((stride *= (Ds > DIM
-                         ? get_dim_size<Ds>()
-                         : IndexLinear(1))),
-         ...);
-        return stride;
-    }
-
-public:
-    template<IndexType DIM>
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_logical_stride() const {
-        static_assert(DIM < n_dims, "DIM out of bounds");
-        return logical_stride_impl<DIM>(
-            camp::make_idx_seq_t<static_cast<std::size_t>(n_dims)>{});
     }
 
     RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size() const {
@@ -263,15 +243,28 @@ public:
         return prod_dims;
     }
 
-    template<IndexType DIM>
+    template<size_t DIM>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_size() const {
         static_assert(DIM < n_dims, "DIM out of bounds");
         constexpr auto SliceDim = s_parent_to_slice_map[DIM];
         return camp::get<SliceDim>(m_slices).template size<SliceDim>(m_parent);
     }
 
-    template<IndexType DIM>
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_stride() const {
+    template<size_t DIM>
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_stride() const {
+        static_assert(DIM < n_dims, "DIM out of bounds");
+        IndexLinear stride = 1;
+        for_each_index<n_dims>(
+            [&](auto dim_c) constexpr {
+                if constexpr (decltype(dim_c)::value > DIM) {
+                    stride *= this->template get_dim_size<decltype(dim_c)::value>();
+                }
+            });
+        return stride;
+    }
+
+    template<size_t DIM>
+    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_parent_dim_stride() const {
         static_assert(DIM < n_dims, "DIM out of bounds");
         constexpr auto SliceDim = s_parent_to_slice_map[DIM];
         return m_parent.template get_dim_stride<SliceDim>() *
@@ -282,8 +275,8 @@ public:
     RAJA_INLINE RAJA_HOST_DEVICE constexpr auto operator()(Idxs... idxs) const {
         static_assert(sizeof...(idxs) == n_dims, "Wrong number of indices");
 
-        camp::array<IndexType, n_dims> arr{idxs...};
-        camp::array<IndexType, s_num_slices> parent_indices{};
+        std::array<IndexType, n_dims> arr{idxs...};
+        std::array<IndexType, s_num_slices> parent_indices{};
 
         for_each_tuple_index( m_slices,
             [&](auto slice, auto index) {
@@ -294,7 +287,7 @@ public:
                 }
             });
 
-        return camp::apply(m_parent, parent_indices);
+        return std::apply(m_parent, parent_indices);
     }
 };
 
