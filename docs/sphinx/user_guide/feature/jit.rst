@@ -35,6 +35,16 @@ Enabling ``RAJA_ENABLE_JIT`` requires an LLVM-based (Clang-family) compiler.
 If you enable JIT and configure with a non-Clang compiler, configuration will
 fail. See :ref:`configopt-label` for the CMake options described here.
 
+Proteus dependency
+^^^^^^^^^^^^^^^^^^
+
+When ``RAJA_ENABLE_JIT=On``, RAJA needs Proteus headers and build integration:
+
+* If you provide ``-DPROTEUS_INSTALL_DIR=<prefix>``, RAJA will use
+  ``find_package(proteus ...)`` using that prefix.
+* Otherwise, RAJA will attempt to fetch Proteus via CMake ``FetchContent`` at
+  configure time.
+
 LLVM installation requirement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -45,16 +55,6 @@ RAJA/Proteus at it via ``LLVM_INSTALL_DIR``:
 .. code-block:: bash
 
   cmake -DRAJA_ENABLE_JIT=On -DLLVM_INSTALL_DIR=/path/to/llvm-19 ...
-
-Proteus dependency
-^^^^^^^^^^^^^^^^^^
-
-When ``RAJA_ENABLE_JIT=On``, RAJA needs Proteus headers and build integration:
-
-* If you provide ``-DPROTEUS_INSTALL_DIR=<prefix>``, RAJA will use
-  ``find_package(proteus ...)`` using that prefix.
-* Otherwise, RAJA will attempt to fetch Proteus via CMake ``FetchContent`` at
-  configure time.
 
 --------------------------
 Marking a kernel for JIT
