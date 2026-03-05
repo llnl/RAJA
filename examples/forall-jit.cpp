@@ -20,14 +20,8 @@
 
 #include "RAJA/RAJA.hpp"
 #include "RAJA/util/Timer.hpp"
+#include "RAJA/util/View.hpp"
 #include "proteus/JitInterface.h"
-
-// layout i x a x b
-#define A(i, r, c) A[i * a * b  + b * r + c]
-// layout i x b x a
-#define B(i, r, c) B[i * b * a  + a * r + c]
-// layout i x a x a.  matrix products of A[i]B[i]
-#define C(i, r, c) C[i * a * a + a * r + c]
 
 int main (int argc, char** argv) {
   if (argc < 3) {
@@ -47,9 +41,17 @@ int main (int argc, char** argv) {
   #endif
 
   auto res = RAJA::resources::get_default_resource<policy>();
-  double *A = res.template allocate<double>(N * a * b);
-  double *B = res.template allocate<double>(N * a * b);
-  double *C = res.template allocate<double>(N * a * a);
+  // layout i x a x b
+  double *A_ptr = res.template allocate<double>(N * a * b);
+  auto A = RAJA::make_permuted_view<RAJA::layout_right>(A_ptr, N, a, b);
+  // layout i x b x a
+  double *B_ptr = res.template allocate<double>(N * a * b);
+  auto B = RAJA::make_permuted_view<RAJA::layout_right>(B_ptr, N, b, a);
+  // layout i x a x a.  matrix products of A[i]B[i]
+  double *C_ptr = res.template allocate<double>(N * a * a);
+  auto C = RAJA::make_permuted_view<RAJA::layout_right>(C_ptr, N, a, a);
+
+
   RAJA::Timer aot_timer;
   aot_timer.start();
   // data setup
@@ -82,7 +84,9 @@ int main (int argc, char** argv) {
   jit_timer.start();
 
   RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=,
-    a = proteus::jit_variable(a), b = proteus::jit_variable(b)] (int i) {
+    a = proteus::jit_variable(a),
+    b = proteus::jit_variable(b)
+  ]  (int i) RAJA_JIT_COMPILE {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
         A(i, row, col) = i % row;
@@ -95,7 +99,8 @@ int main (int argc, char** argv) {
   RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=,
     a = proteus::jit_variable(a),
     b = proteus::jit_variable(b),
-    accum = proteus::jit_variable(accum)] (int i) {
+    accum = proteus::jit_variable(accum)
+  ]  (int i) RAJA_JIT_COMPILE {
     for (int row = 0; row < a; ++row){
       for (int col = 0; col < b; ++col) {
         if (accum) {
