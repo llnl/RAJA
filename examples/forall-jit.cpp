@@ -20,7 +20,6 @@
 
 #include "RAJA/RAJA.hpp"
 #include "RAJA/util/Timer.hpp"
-#include "RAJA/util/View.hpp"
 #include "proteus/JitInterface.h"
 
 int main (int argc, char** argv) {
