@@ -37,6 +37,8 @@ int main (int argc, char** argv) {
   using policy = RAJA::hip_exec<256>;
   #elif defined(RAJA_ENABLE_OPENMP)
   using policy = RAJA::omp_parallel_for_exec;
+  #else
+  using policy = RAJA::seq_exec;
   #endif
 
   auto res = RAJA::resources::get_default_resource<policy>();
