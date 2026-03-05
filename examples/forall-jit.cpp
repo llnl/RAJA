@@ -72,7 +72,7 @@ int main (int argc, char** argv) {
           C(i, row, col) = A(i, row, col) * B(i, col, row);
         }
         else {
-          C(i, row, col) = A(i, row, col) * B(i, col, row) + C(i, row, col);
+          C(i, row, col) += A(i, row, col) * B(i, col, row);
         }
       }
     }
@@ -107,7 +107,7 @@ int main (int argc, char** argv) {
           C(i, row, col) = A(i, row, col) * B(i, col, row);
         }
         else {
-          C(i, row, col) = A(i, row, col) * B(i, col, row) + C(i, row, col);
+          C(i, row, col) += A(i, row, col) * B(i, col, row);
         }
       }
     }
