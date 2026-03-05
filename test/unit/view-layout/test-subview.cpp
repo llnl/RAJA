@@ -171,10 +171,10 @@ TYPED_TEST(SubViewTest, RangeSubView2D)
     EXPECT_EQ(sr.size(), 4);
     EXPECT_EQ(sr.template get_dim_size<0>(), 2);
     EXPECT_EQ(sr.template get_dim_size<1>(), 2);
-    EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
+    EXPECT_EQ(sr.template get_parent_dim_stride<0>(), 3);
+    EXPECT_EQ(sr.template get_parent_dim_stride<1>(), 1);
+    EXPECT_EQ(sr.template get_dim_stride<0>(), 2);
     EXPECT_EQ(sr.template get_dim_stride<1>(), 1);
-    EXPECT_EQ(sr.template get_dim_logical_stride<0>(), 2);
-    EXPECT_EQ(sr.template get_dim_logical_stride<1>(), 1);
 
 }
 
@@ -212,8 +212,8 @@ TYPED_TEST(SubViewTest, RangeFixedSubView2D)
     auto& sr = TypeParam::get_subregion(sv);
     EXPECT_EQ(sr.size(), 2);
     EXPECT_EQ(sr.template get_dim_size<0>(), 2);
-    EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
-    EXPECT_EQ(sr.template get_dim_logical_stride<0>(), 1);
+    EXPECT_EQ(sr.template get_parent_dim_stride<0>(), 3);
+    EXPECT_EQ(sr.template get_dim_stride<0>(), 1);
 
 }
 
@@ -236,7 +236,7 @@ TYPED_TEST(SubViewTest, FixedFirstDimSubView2D)
     auto& sr = TypeParam::get_subregion(sv);
     EXPECT_EQ(sr.size(), 3);
     EXPECT_EQ(sr.template get_dim_size<0>(), 3);
-    EXPECT_EQ(sr.template get_dim_stride<0>(), 1);
+    EXPECT_EQ(sr.template get_parent_dim_stride<0>(), 1);
 }
 
 TYPED_TEST(SubViewTest, RangeFirstDimSubView2D)
@@ -263,10 +263,10 @@ TYPED_TEST(SubViewTest, RangeFirstDimSubView2D)
     EXPECT_EQ(sr.size(), 6);
     EXPECT_EQ(sr.template get_dim_size<0>(), 2);
     EXPECT_EQ(sr.template get_dim_size<1>(), 3);
+    EXPECT_EQ(sr.template get_parent_dim_stride<0>(), 3);
+    EXPECT_EQ(sr.template get_parent_dim_stride<1>(), 1);
     EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
     EXPECT_EQ(sr.template get_dim_stride<1>(), 1);
-    EXPECT_EQ(sr.template get_dim_logical_stride<0>(), 3);
-    EXPECT_EQ(sr.template get_dim_logical_stride<1>(), 1);
 
 }
 
@@ -294,10 +294,10 @@ TYPED_TEST(SubViewTest, RangeFirstDimStridedSecondDimSubView2D)
     EXPECT_EQ(sr.size(), 6);
     EXPECT_EQ(sr.template get_dim_size<0>(), 2);
     EXPECT_EQ(sr.template get_dim_size<1>(), 3);
-    EXPECT_EQ(sr.template get_dim_stride<0>(), 6);
-    EXPECT_EQ(sr.template get_dim_stride<1>(), 2);
-    EXPECT_EQ(sr.template get_dim_logical_stride<0>(), 3);
-    EXPECT_EQ(sr.template get_dim_logical_stride<1>(), 1);
+    EXPECT_EQ(sr.template get_parent_dim_stride<0>(), 6);
+    EXPECT_EQ(sr.template get_parent_dim_stride<1>(), 2);
+    EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
+    EXPECT_EQ(sr.template get_dim_stride<1>(), 1);
 
 }
 
