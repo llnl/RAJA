@@ -173,7 +173,25 @@ TYPED_TEST(SubViewTest, RangeSubView2D)
     EXPECT_EQ(sr.template get_dim_size<1>(), 2);
     EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
     EXPECT_EQ(sr.template get_dim_stride<1>(), 1);
+    EXPECT_EQ(sr.template get_dim_logical_stride<0>(), 2);
+    EXPECT_EQ(sr.template get_dim_logical_stride<1>(), 1);
 
+}
+
+TYPED_TEST(SubViewTest, ProjectedLayoutSizeDiff2D)
+{
+
+    Index_type a[3] = {1,2,3};
+
+    // Projection in the second dimension (size 0)
+    View<Index_type, Layout<2>> view(&a[0], Layout<2>(3,0));
+
+    // sv = View[:, :]
+    auto sv = TypeParam{}(view, NoSlice{}, NoSlice{});
+
+    auto& sr = TypeParam::get_subregion(sv);
+    EXPECT_EQ(sr.size(), 3);
+    EXPECT_EQ(sr.size_noproj(), 0);
 }
 
 TYPED_TEST(SubViewTest, RangeFixedSubView2D)
@@ -195,6 +213,7 @@ TYPED_TEST(SubViewTest, RangeFixedSubView2D)
     EXPECT_EQ(sr.size(), 2);
     EXPECT_EQ(sr.template get_dim_size<0>(), 2);
     EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
+    EXPECT_EQ(sr.template get_dim_logical_stride<0>(), 1);
 
 }
 
@@ -246,6 +265,8 @@ TYPED_TEST(SubViewTest, RangeFirstDimSubView2D)
     EXPECT_EQ(sr.template get_dim_size<1>(), 3);
     EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
     EXPECT_EQ(sr.template get_dim_stride<1>(), 1);
+    EXPECT_EQ(sr.template get_dim_logical_stride<0>(), 3);
+    EXPECT_EQ(sr.template get_dim_logical_stride<1>(), 1);
 
 }
 
@@ -275,24 +296,8 @@ TYPED_TEST(SubViewTest, RangeFirstDimStridedSecondDimSubView2D)
     EXPECT_EQ(sr.template get_dim_size<1>(), 3);
     EXPECT_EQ(sr.template get_dim_stride<0>(), 6);
     EXPECT_EQ(sr.template get_dim_stride<1>(), 2);
-
-}
-
-TYPED_TEST(SubViewTest, DimStrideAccountsForParentStride2D)
-{
-
-    Index_type a[3][6] = {{1,2,3,4,5,6},
-                          {7,8,9,10,11,12},
-                          {13,14,15,16,17,18}};
-
-    View<Index_type, Layout<2>> view(&a[0][0], Layout<2>(3,6));
-
-    // sv = View[1:3,1:6:2]
-    auto sv = TypeParam{}(view, RangeSlice<>{1,3}, StridedSlice<>{1,6,2});
-
-    auto& sr = TypeParam::get_subregion(sv);
-    EXPECT_EQ(sr.template get_dim_stride<0>(), 6);
-    EXPECT_EQ(sr.template get_dim_stride<1>(), 2);
+    EXPECT_EQ(sr.template get_dim_logical_stride<0>(), 3);
+    EXPECT_EQ(sr.template get_dim_logical_stride<1>(), 1);
 
 }
 
