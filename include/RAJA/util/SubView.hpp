@@ -141,7 +141,7 @@ struct StridedSlice {
 template<typename IndexType, typename... Slices>
 RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_slice_to_parent_index_map() {
     IndexType sub_idx = 0;
-    camp::array<IndexType, sizeof...(Slices)> map{{(Slices::reduces_dimension ? -1 : sub_idx++)...}};
+    camp::array<IndexType, sizeof...(Slices)> map{{(Slices::reduces_dimension ? IndexType(0) : sub_idx++)...}};
     return map;
 }
 
@@ -215,46 +215,47 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType> {
         return camp::get<Index>(m_slices);
     }
 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size() const {
+	    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size() const {
 
-        IndexType prod_dims = 1;
-        for_each_tuple_index( m_slices,
-            [&](auto slice, auto index) {
-                const IndexType dim_size =
-                    decltype(slice)::reduces_dimension ? IndexType(0)
-                                                       : slice.template size<index>(m_parent);
-                prod_dims *= (dim_size == IndexType(0)) ? IndexType(1) : dim_size;
-            });
+	        IndexType prod_dims = 1;
+	        for_each_tuple_index( m_slices,
+	            [&](auto slice, auto index) {
+	                const IndexType dim_size =
+	                    decltype(slice)::reduces_dimension ? IndexType(1)
+	                                                       : slice.template size<index>(m_parent);
+	                prod_dims *= (dim_size == IndexType(0)) ? IndexType(1) : dim_size;
+	            });
 
-        return prod_dims;
-    }
+	        return prod_dims;
+	    }
 
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size_noproj() const {
+	    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size_noproj() const {
 
-        IndexType prod_dims = 1;
-        for_each_tuple_index( m_slices,
-            [&](auto slice, auto index) {
-                prod_dims *=
-                    decltype(slice)::reduces_dimension ? IndexType(0)
-                                                       : slice.template size<index>(m_parent);
-            });
+	        IndexType prod_dims = 1;
+	        for_each_tuple_index( m_slices,
+	            [&](auto slice, auto index) {
+	                prod_dims *=
+	                    decltype(slice)::reduces_dimension ? IndexType(1)
+	                                                       : slice.template size<index>(m_parent);
+	            });
 
-        return prod_dims;
-    }
+	        return prod_dims;
+	    }
 
-    template<IndexType DIM>
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_size() const {
-        static_assert(DIM < n_dims, "DIM out of bounds");
-        constexpr auto SliceDim = s_parent_to_slice_map[DIM];
-        return camp::get<SliceDim>(m_slices).template size<DIM>(m_parent);
-    }
+	    template<IndexType DIM>
+	    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_size() const {
+	        static_assert(DIM < n_dims, "DIM out of bounds");
+	        constexpr auto SliceDim = s_parent_to_slice_map[DIM];
+	        return camp::get<SliceDim>(m_slices).template size<SliceDim>(m_parent);
+	    }
 
-    template<IndexType DIM>
-    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_stride() const {
-        static_assert(DIM < n_dims, "DIM out of bounds");
-        constexpr auto SliceDim = s_parent_to_slice_map[DIM];
-        return camp::get<SliceDim>(m_slices).stride();
-    }
+	    template<IndexType DIM>
+	    RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_stride() const {
+	        static_assert(DIM < n_dims, "DIM out of bounds");
+	        constexpr auto SliceDim = s_parent_to_slice_map[DIM];
+	        return m_parent.template get_dim_stride<SliceDim>() *
+	               camp::get<SliceDim>(m_slices).stride();
+	    }
 
     template <typename... Idxs>
     RAJA_INLINE RAJA_HOST_DEVICE constexpr auto operator()(Idxs... idxs) const {
