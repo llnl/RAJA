@@ -15,7 +15,7 @@ macro(raja_link_include_proteus)
   cmake_parse_arguments(arg
     "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-  if (RAJA_ENABLE_JIT_TESTS)
+  if (RAJA_ENABLE_JIT)
     add_proteus(${arg_NAME})
     target_include_directories(${arg_NAME}
       PUBLIC

@@ -23,7 +23,7 @@ raja_add_executable(
   NAME dynamic-forall
   SOURCES dynamic-forall.cpp)
 
-if (RAJA_ENABLE_JIT_TESTS)
+if (RAJA_ENABLE_JIT)
   raja_add_executable(
     NAME forall-jit
     SOURCES forall-jit.cpp)
