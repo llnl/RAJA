@@ -21,6 +21,28 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
+Version 2025.12.2 -- Release date 2026-03-04
+============================================
+
+This release contains a bug fix and some performance enhancements resulting
+from new execution policies.
+
+Notable changes include:
+
+  * New features / API changes:
+    * Add new policies for RAJA::launch that enable caching of team (block)
+      indices and dimensions, and thread indices and dimensions. This 
+      eliminates repeated calls to device intrinsics when those quantities 
+      are used multiple times in a kernel. A new example code was added to
+      show the usage. RAJA User Guide documentation will be forthcoming.
+
+  * Build changes/improvements:
+    * None
+
+  * Bug fixes/improvements:
+    * Fixed issue with our checks for C++ symbol names.
+
+
 Version 2025.12.1 -- Release date 2026-01-28
 ============================================
 
