@@ -35,7 +35,7 @@
 
 int main (int argc, char** argv) {
   if (argc < 5) {
-    std::cout << "Expected integer threshold passed to example through command line, for example ./bin/forall-jit 24 16 1000000 1\n";
+    std::cout << "Expected ./bin/forall-jit <num rows> <num cols> <num matrices> <boolean accum>, for example ./bin/forall-jit 24 16 1000000 1\n";
     return 1;
   }
   int a = std::stoi(argv[1]);
