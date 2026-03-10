@@ -150,18 +150,6 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   checkResult(c, N);
   logger.wait_all();
 
-//----------------------------------------------------------------------------//
-// RAJA::sind_exec policy enforces simd execution.... 
-//----------------------------------------------------------------------------//
-
-  std::cout << "\n Running RAJA simd_exec vector addition...\n";
-
-  RAJA::forall<RAJA::simd_exec>(host, RAJA::RangeSegment(0, N), [=] (int i) { 
-    c[i] = a[i] + b[i]; 
-  });
-
-  checkResult(c, N);
-
 #if defined(RAJA_ENABLE_OPENMP)
 //----------------------------------------------------------------------------//
 // RAJA::omp_for_parallel_exec policy execution.... 
