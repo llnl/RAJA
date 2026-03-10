@@ -17,7 +17,7 @@ TEST(message_handler, initialize) {
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
+  msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -32,7 +32,7 @@ TEST(message_handler, initialize_with_resource) {
   auto msg_manager = RAJA::make_message_manager(msg_sz, camp::resources::Host());
 
   int test = 0;
-  auto q = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
+  msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -62,12 +62,11 @@ TEST(message_handler, clear) {
 TEST(message_handler, try_post_message) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
   int test = 0;
-  auto q = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
+  msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
     test = val;   
   });
 
@@ -163,7 +162,6 @@ TEST(message_handler, wait_all_overflow) {
 TEST(message_handler, subscribe) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
@@ -185,7 +183,6 @@ TEST(message_handler, subscribe) {
 TEST(message_handler, unsubscribe) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
@@ -207,7 +204,6 @@ TEST(message_handler, unsubscribe) {
 TEST(message_handler, unsubscribe_all_id) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(2*msg_sz);
 
@@ -233,7 +229,6 @@ TEST(message_handler, unsubscribe_all_id) {
 TEST(message_handler, unsubscribe_all) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(2*msg_sz);
 
@@ -259,7 +254,6 @@ TEST(message_handler, unsubscribe_all) {
 TEST(message_handler, get_messages) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<int>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(20*msg_sz);
 
@@ -281,7 +275,6 @@ TEST(message_handler, get_messages) {
 TEST(message_handler, handle_all_sort) {
   constexpr std::size_t msg_sz = RAJA::align(sizeof(RAJA::msg_header)) +
                                  RAJA::align(sizeof(RAJA::msg_args<>));
-  constexpr int msg_id         = 0;
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(20*msg_sz);
 
