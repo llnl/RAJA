@@ -68,7 +68,7 @@ macro(raja_add_executable)
     OUTPUT_DIR ${_output_dir}
     )
 
-  # If JIT is enabled, link with target with Proteus and identify Proteus
+  # If JIT is enabled, link the target with Proteus and identify Proteus
   # header directory
   if (RAJA_ENABLE_JIT)
     raja_link_include_proteus(NAME ${arg_NAME})
@@ -109,7 +109,7 @@ macro(raja_add_plugin_library)
     SHARED ${arg_SHARED}
     )
 
-  # If JIT is enabled, link with target with Proteus and identify Proteus
+  # If JIT is enabled, link target with Proteus and identify Proteus
   # header directory
   if (RAJA_ENABLE_JIT)
     raja_link_include_proteus(NAME ${arg_NAME})

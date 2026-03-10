@@ -50,7 +50,7 @@ LLVM installation requirement
 
 Unless you provide a Proteus installation that is statically linked with LLVM,
 Proteus support requires an LLVM 18, 19, or 20 installation that you must point
-RAJA/Proteus at it via ``LLVM_INSTALL_DIR``:
+RAJA/Proteus at via ``LLVM_INSTALL_DIR``:
 
 .. code-block:: bash
 
@@ -67,40 +67,29 @@ The user-facing interface shown in ``examples/forall-jit.cpp`` consists of:
 
 * ``RAJA_JIT_COMPILE``: annotate a lambda or function so Proteus can identify it
   as a JIT compilation candidate.
-* ``proteus::jit_variable(x)``: wrap runtime values that should be treated as
+* ``RAJA_JIT_VARIABLE``: wrap runtime values that should be treated as
   constants for specialization.
 
 For example, specializing loop bounds and a branch condition:
 
-.. code-block:: c++
-
-  #include "RAJA/RAJA.hpp"
-  #include "proteus/JitInterface.h"
-
-  int a = ...;
-  int b = ...;
-  bool accum = ...;
-
-  RAJA::forall<policy>(RAJA::RangeSegment(0, N),
-    [=,
-      a = proteus::jit_variable(a),
-      b = proteus::jit_variable(b),
-      accum = proteus::jit_variable(accum)
-    ] (int i) RAJA_JIT_COMPILE {
-      // kernel body that uses a, b, accum
-    });
+.. literalinclude:: ../../../../examples/forall-jit.cpp
+    :start-after: _raja_jit_mark_start
+    :end-before: _raja_jit_mark_end
+    :language: C++
 
 When JIT is disabled (``RAJA_ENABLE_JIT=Off``), ``RAJA_JIT_COMPILE`` expands to
-nothing. However, code that calls Proteus APIs (e.g., ``proteus::jit_variable``)
-must still be conditionally compiled or guarded by build configuration if you
-want a non-JIT build to compile without Proteus available.
+nothing. Similarly, RAJA_JIT_VARIABLE expands to ``proteus::jit_variable`` when JIT
+is enabled, but simply expands to its single argument with ``RAJA_ENABLE_JIT=Off``.
+``proteus::enable()`` and ``proteus::disable()`` manually enable/disable Proteus within a
+region of source code.  Currently, with ``RAJA_ENABLE_JIT=On``, all RAJA kernels
+will be JIT compiled unless ``proteus::disable()`` is specified.
 
 Building and running the example
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The example is built from the RAJA source tree when:
+The example ``examples/forall-jit.cpp`` is built from the RAJA source tree when:
 
-* ``ENABLE_EXAMPLES=On`` (default in RAJA)
+* ``ENABLE_EXAMPLES=On``
 * ``RAJA_ENABLE_JIT=On``
 
 The example takes four command-line arguments:
@@ -110,7 +99,12 @@ The example takes four command-line arguments:
   ./bin/forall-jit <a> <b> <N> <accum>
 
 where ``a`` and ``b`` are matrix dimensions, ``N`` is the problem size, and
-``accum`` is the branch condition (0/1) that is specialized with JIT.
+``accum`` is the branch condition (0/1) that is specialized with JIT. 
+The example performs N-many matrix multiplications (1 per thread).  Each multiplication
+is [a x b] [b x a].  The result is either set or added into the output, depending
+on the boolean flag the user provides.  By forcing each thread to perform serialized 
+arithmetic with a simple branch condition, we show how JIT compilation can improve both 
+serial loop scheduling (per-thread) and branch elimination.
 
 Specializing argument indices (advanced)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

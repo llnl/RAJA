@@ -7,12 +7,18 @@
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 // This file demonstrates usage of RAJA with Proteus JIT compilation to accelerate
-// types of GPU kernels.  In this example, we show how propagating variables
+// GPU kernels.  In this example, we show how propagating variables
 // as runtime constants with proteus::jit_variable in the capture list of a lambda
-// can lead create speedups from branch elimination and better loop scheduling analysis.
+// can create speedups from branch elimination and better loop scheduling analysis.
 // usage example:
-// ./bin/forall-jit 24 16             1000000               1
-//                   ^  ^ matrix dims       ^ problem size   ^ branch conditions
+// ./bin/forall-jit 24 16             1000000                   1
+//                  a^ b^ matrix dims       ^ problem size (N)  ^ branch conditions
+// This kernel performs N-many matrix multiplications (1 per thread).  Each multiplication
+// is [a x b] [b x a].  The result is either set or added into the output memory C, depending
+// on the boolean flag the user provides.  By forcing each thread to perform serialized 
+// arithmetic with a simple branch condition, we show how JIT compilation can improve both 
+// serial loop scheduling (per-thread) and branch elmination.
+//
 // Example output with ROCM 6.4.2, gfx90a, and storage cache (run executable twice)
 // aot total time = 0.0461152
 // jit total time = 0.0281013
@@ -31,7 +37,6 @@
 
 #include "RAJA/RAJA.hpp"
 #include "RAJA/util/Timer.hpp"
-#include "proteus/JitInterface.h"
 
 int main (int argc, char** argv) {
   if (argc < 5) {
@@ -107,8 +112,8 @@ int main (int argc, char** argv) {
   jit_timer.start();
 
   RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=,
-    a = proteus::jit_variable(a),
-    b = proteus::jit_variable(b)
+    a = RAJA_JIT_VARIABLE(a),
+    b = RAJA_JIT_VARIABLE(b)
   ]  (int i) RAJA_JIT_COMPILE {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
@@ -119,10 +124,11 @@ int main (int argc, char** argv) {
     }
   });
 
+  // _raja_jit_mark_start
   RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=,
-    a = proteus::jit_variable(a),
-    b = proteus::jit_variable(b),
-    accum = proteus::jit_variable(accum)
+    a =     RAJA_JIT_VARIABLE(a),
+    b =     RAJA_JIT_VARIABLE(b),
+    accum = RAJA_JIT_VARIABLE(accum)
   ]  (int i) RAJA_JIT_COMPILE {
     for (int row = 0; row < a; ++row){
       for (int col = 0; col < b; ++col) {
@@ -135,6 +141,7 @@ int main (int argc, char** argv) {
       }
     }
   });
+  // _raja_jit_mark_end
   jit_timer.stop();
 
   std::cout << "jit total time = " << jit_timer.elapsed() << "\n";
