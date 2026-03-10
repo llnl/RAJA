@@ -55,6 +55,9 @@ RAJA/Proteus at it via ``LLVM_INSTALL_DIR``:
 .. code-block:: bash
 
   cmake -DRAJA_ENABLE_JIT=On -DLLVM_INSTALL_DIR=/path/to/llvm-19 ...
+  
+An example of how to configure a JIT build of RAJA with HIP on LC machines is included
+in ``scripts/toss4_amdclang_proteus.sh``.
 
 --------------------------
 Marking a kernel for JIT

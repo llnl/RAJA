@@ -11,8 +11,19 @@
 // as runtime constants with proteus::jit_variable in the capture list of a lambda
 // can lead create speedups from branch elimination and better loop scheduling analysis.
 // usage example:
-// ./bin/forall-jit 24 16             100000               1
-//                   ^  ^ matrix dims      ^ problem size  ^ branch conditions
+// ./bin/forall-jit 24 16             1000000               1
+//                   ^  ^ matrix dims       ^ problem size   ^ branch conditions
+// Example output with ROCM 6.4.2, gfx90a, and storage cache (run executable twice)
+// aot total time = 0.0461152
+// jit total time = 0.0281013
+// speedup = 1.64103
+// [proteus][JitEngineDevice] MemoryCache rank 0 hits 0 accesses 4
+// [proteus][JitEngineDevice] MemoryCache rank 0 HashValue 4476808261502462989 NumExecs 1 NumHits 0
+// [proteus][JitEngineDevice] MemoryCache rank 0 HashValue 35575045561585350 NumExecs 1 NumHits 0
+// [proteus][JitEngineDevice] MemoryCache rank 0 HashValue 4373013077254060395 NumExecs 1 NumHits 0
+// [proteus][JitEngineDevice] MemoryCache rank 0 HashValue 2818265867228645266 NumExecs 1 NumHits 0
+// [proteus][JitEngineDevice] ObjectCacheChain rank 0 with 1 level(s):
+// [proteus][JitEngineDevice] StorageCache rank 0 hits 4 accesses 4
 
 #include <cstdlib>
 #include <iostream>
@@ -51,9 +62,19 @@ int main (int argc, char** argv) {
   // layout i x a x a.  matrix products of A[i]B[i]
   double *C_ptr = res.template allocate<double>(N * a * a);
   auto C = RAJA::make_permuted_view<RAJA::layout_right>(C_ptr, N, a, a);
-
+  // warmup
+  RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=] (int i) {
+    for (int row = 0; row < a; ++row) {
+      for (int col = 0; col < b; ++col) {
+        A(i, row, col) = 0;
+        B(i, row, col) = 0;
+        C(i, row, col) = 0;
+      }
+    }
+  });
 
   RAJA::Timer aot_timer;
+  proteus::disable();
   aot_timer.start();
   // data setup
   RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=] (int i) {
@@ -69,7 +90,7 @@ int main (int argc, char** argv) {
   RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=] (int i) {
     for (int row = 0; row < a; ++row){
       for (int col = 0; col < b; ++col) {
-        if (accum) {
+        if (!accum) {
           C(i, row, col) = A(i, row, col) * B(i, col, row);
         }
         else {
@@ -79,6 +100,7 @@ int main (int argc, char** argv) {
     }
   });
   aot_timer.stop();
+  proteus::enable();
   double t = aot_timer.elapsed();
   std::cout << "aot total time = " << t << "\n";
   RAJA::Timer jit_timer;
@@ -104,7 +126,7 @@ int main (int argc, char** argv) {
   ]  (int i) RAJA_JIT_COMPILE {
     for (int row = 0; row < a; ++row){
       for (int col = 0; col < b; ++col) {
-        if (accum) {
+        if (!accum) {
           C(i, row, col) = A(i, row, col) * B(i, col, row);
         }
         else {
