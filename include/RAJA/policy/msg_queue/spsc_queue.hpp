@@ -24,7 +24,7 @@
 #include "RAJA/util/concepts.hpp"
 #include "RAJA/pattern/atomic.hpp"
 
-#include "RAJA/util/msg_header.hpp"
+#include "RAJA/pattern/msg_header.hpp"
 #include "RAJA/policy/msg_queue/policy.hpp"
 
 namespace RAJA

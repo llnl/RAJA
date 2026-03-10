@@ -9,22 +9,24 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
-#ifndef RAJA_MESSAGES_HPP
-#define RAJA_MESSAGES_HPP
+#ifndef RAJA_MSG_MANAGER_HPP
+#define RAJA_MSG_MANAGER_HPP
 
 #include <algorithm>
 #include <functional>
 #include <memory>
 #include <vector>
 
-#include "RAJA/util/msg_header.hpp"
-#include "RAJA/util/msg_callback.hpp"
+#include "RAJA/pattern/messages/msg_header.hpp"
+#include "RAJA/pattern/messages/msg_callback.hpp"
 #include "RAJA/policy/msg_queue.hpp"
 
 #include "camp/resource.hpp"
@@ -413,4 +415,4 @@ auto make_message_manager(std::size_t bus_sz)
 
 }  // namespace RAJA
 
-#endif /* RAJA_MESSAGES_HPP */
+#endif /* RAJA_MSG_MANAGER_HPP */

@@ -9,17 +9,20 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
 #ifndef RAJA_MSG_CALLBACK_HPP
 #define RAJA_MSG_CALLBACK_HPP
 
 #include <type_traits>
 
-#include "RAJA/util/msg_header.hpp"
+#include "RAJA/pattern/messages/msg_header.hpp"
 
 namespace RAJA
 {

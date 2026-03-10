@@ -10,13 +10,16 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-#ifndef RAJA_MSG_ALIGN_HPP
-#define RAJA_MSG_ALIGN_HPP
+
+#ifndef RAJA_MSG_HEADER_HPP
+#define RAJA_MSG_HEADER_HPP
 
 #include <cstddef>
 #include "camp/tuple.hpp"
@@ -49,4 +52,4 @@ struct msg_args
 };
 }  // namespace RAJA
 
-#endif  // RAJA_MSG_ALIGN_HPP
+#endif  // RAJA_MSG_HEADER_HPP
