@@ -306,7 +306,7 @@ public:
   }
 
   template<typename Callable>
-  void unsubscribe(msg_id id, Callable&& c)
+  void unsubscribe(msg_id id, Callable&&)
   {
     auto& fn_list = m_callback_map.at(id);
     auto it = std::find_if(fn_list.begin(), fn_list.end(), [](const auto& fn) {
