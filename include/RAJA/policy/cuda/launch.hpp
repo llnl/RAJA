@@ -26,6 +26,7 @@
 #include "RAJA/policy/cuda/MemUtils_CUDA.hpp"
 #include "RAJA/policy/cuda/raja_cudaerrchk.hpp"
 #include "RAJA/util/resource.hpp"
+#include "RAJA/util/Jit.hpp"
 
 namespace RAJA
 {
@@ -58,9 +59,9 @@ public:
 };
 
 template<typename BODY, typename ReduceParams>
-__global__ void launch_new_reduce_global_fcn(const RAJA_CUDA_GRID_CONSTANT BODY
-                                                 body_in,
-                                             ReduceParams reduce_params)
+__global__ RAJA_JIT_COMPILE void launch_new_reduce_global_fcn(
+    const RAJA_CUDA_GRID_CONSTANT BODY body_in,
+    ReduceParams reduce_params)
 {
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
@@ -126,7 +127,7 @@ struct LaunchExecute<
     if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
-
+      RAJA::internal::jit::register_lambda(body_in);
 
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::cuda::detail::cudaInfo launch_info;
@@ -166,7 +167,7 @@ template<typename BODY,
          int num_threads,
          size_t BLOCKS_PER_SM,
          typename ReduceParams>
-__launch_bounds__(num_threads, BLOCKS_PER_SM) __global__
+__launch_bounds__(num_threads, BLOCKS_PER_SM) __global__ RAJA_JIT_COMPILE
     void launch_new_reduce_global_fcn_fixed(const RAJA_CUDA_GRID_CONSTANT BODY
                                                 body_in,
                                             ReduceParams reduce_params)
@@ -237,7 +238,7 @@ struct LaunchExecute<
     if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
-
+      RAJA::internal::jit::register_lambda(body_in);
 
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::cuda::detail::cudaInfo launch_info;
