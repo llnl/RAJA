@@ -26,11 +26,15 @@ project_dir="$(pwd)"
 hostconfig=${HOST_CONFIG:-""}
 spec=${SPEC:-""}
 module_list=${MODULE_LIST:-""}
+cmake_extra_args_raw=${CMAKE_EXTRA_ARGS:-""}
 job_unique_id=${CI_JOB_ID:-""}
 use_dev_shm=${USE_DEV_SHM:-true}
 spack_debug=${SPACK_DEBUG:-false}
 debug_mode=${DEBUG_MODE:-false}
 push_to_registry=${PUSH_TO_REGISTRY:-true}
+
+# Map CPU core allocations
+declare -A core_counts=(["lassen"]=40 ["poodle"]=28 ["dane"]=28 ["matrix"]=28 ["corona"]=32 ["rzansel"]=48 ["tioga"]=32 ["tuolumne"]=48)
 
 # REGISTRY_TOKEN allows you to provide your own personal access token to the CI
 # registry. Be sure to set the token with at least read access to the registry.
@@ -191,9 +195,6 @@ then
     echo ""
     timed_message "Cleaning working directory"
 
-    # Map CPU core allocations
-    declare -A core_counts=(["lassen"]=40 ["poodle"]=28 ["dane"]=28 ["matrix"]=28 ["corona"]=32 ["rzansel"]=48 ["tioga"]=32 ["tuolumne"]=48)
-
     # If building, then delete everything first
     # NOTE: 'cmake --build . -j core_counts' attempts to reduce individual build resources.
     #       If core_counts does not contain hostname, then will default to '-j ', which should
@@ -211,9 +212,17 @@ then
         cmake_options="-DBLT_MPI_COMMAND_APPEND:STRING=--overlap"
     fi
 
+    cmake_extra_args=()
+    if [[ -n "${cmake_extra_args_raw}" ]]
+    then
+      read -r -a cmake_extra_args <<< "${cmake_extra_args_raw}"
+      echo "[Information]: CMAKE_EXTRA_ARGS: ${cmake_extra_args_raw}"
+    fi
+
     $cmake_exe \
       -C ${hostconfig_path} \
       ${cmake_options} \
+      "${cmake_extra_args[@]}" \
       -DCMAKE_INSTALL_PREFIX=${install_dir} \
       ${project_dir}
     if ! $cmake_exe --build . -j ${core_counts[$truehostname]}
@@ -241,7 +250,20 @@ then
     cd ${build_dir}
 
     timed_message "Testing RAJA"
-    ctest --output-on-failure --no-compress-output -T test -VV 2>&1 | tee tests_output.txt
+    ctest_regex="${CTEST_REGEX:-}"
+    ctest_jobs="${CTEST_JOBS:-}"
+
+    ctest_cmd=(ctest --output-on-failure --no-compress-output -T test -VV)
+    if [[ -n "${ctest_regex}" ]]
+    then
+        ctest_cmd+=(-R "${ctest_regex}")
+    fi
+    if [[ -n "${ctest_jobs}" ]]
+    then
+        ctest_cmd+=(-j "${ctest_jobs}")
+    fi
+
+    "${ctest_cmd[@]}" 2>&1 | tee tests_output.txt
 
     no_test_str="No tests were found!!!"
     if [[ "$(tail -n 1 tests_output.txt)" == "${no_test_str}" ]]
