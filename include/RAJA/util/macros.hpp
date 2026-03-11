@@ -234,7 +234,7 @@ RAJA_HOST_DEVICE inline void RAJA_ABORT_OR_THROW(const char* str)
 // When JIT is not enabled, simply pass through.
 #define RAJA_JIT_COMPILE_ARGS(...)
 #define RAJA_JIT_COMPILE
-#define RAJA_JIT_VARIABLE(a)       a
+#define RAJA_JIT_VARIABLE(a) a
 #endif
 
 #endif /* RAJA_INTERNAL_MACROS_HPP */
