@@ -156,6 +156,12 @@ atomicCAS(auto_atomic, T* acc, T compare, T value)
   return atomicCAS(RAJA_AUTO_ATOMIC, acc, compare, value);
 }
 
+template<typename T, typename Operation>
+RAJA_INLINE RAJA_HOST_DEVICE T
+atomicOperation(auto_atomic, T* acc, Operation&& operation)
+{
+  return atomicOperation(RAJA_AUTO_ATOMIC, acc, std::forward<Operation>(operation));
+}
 
 }  // namespace RAJA
 

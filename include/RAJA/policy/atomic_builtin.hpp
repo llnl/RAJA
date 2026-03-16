@@ -1011,6 +1011,13 @@ atomicCAS(builtin_atomic, T* acc, T compare, T value)
   return detail::builtin_atomicCAS(acc, compare, value);
 }
 
+template<typename T, typename T>
+RAJA_DEVICE_HIP RAJA_INLINE T
+atomicOperation(builtin_atomic, T* acc, Operation&& operation)
+{
+  return detail::builtin_atomicCAS_loop(acc, std::forward<Operation>(operation));
+}
+
 
 }  // namespace RAJA
 
