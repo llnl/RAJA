@@ -23,6 +23,7 @@
 #include "RAJA/config.hpp"
 
 #include <cstdint>
+#include <utility>
 
 #if defined(RAJA_COMPILER_MSVC) ||                                             \
     ((defined(_WIN32) || defined(_WIN64)) && defined(__INTEL_COMPILER))
@@ -1011,7 +1012,7 @@ atomicCAS(builtin_atomic, T* acc, T compare, T value)
   return detail::builtin_atomicCAS(acc, compare, value);
 }
 
-template<typename T, typename T>
+template<typename T, typename Operation>
 RAJA_DEVICE_HIP RAJA_INLINE T
 atomicOperation(builtin_atomic, T* acc, Operation&& operation)
 {
