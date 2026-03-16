@@ -858,6 +858,18 @@ atomicCAS(cuda_atomic_explicit<host_policy>, T* acc, T compare, T value)
 #endif
 }
 
+RAJA_SUPPRESS_HD_WARN
+template<typename T, typename Operation, typename host_policy>
+RAJA_INLINE RAJA_HOST_DEVICE T
+atomicOperation(cuda_atomic_explicit<host_policy>, T* acc, Operation&& operation)
+{
+#ifdef __CUDA_ARCH__
+  return detail::cuda_atomicCAS_loop(acc, std::forward<Operation>(operation));
+#else
+  return RAJA::atomicOperation(host_policy {}, acc, std::forward<Operation>(operation));
+#endif
+}
+
 }  // namespace RAJA
 
 

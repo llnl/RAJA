@@ -280,12 +280,24 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicExchange(T* acc, T value)
  * @param compare Value to compare with *acc
  * @return Returns value at *acc immediately before this operation completed
  */
-
 RAJA_SUPPRESS_HD_WARN
 template<typename Policy, typename T>
 RAJA_INLINE RAJA_HOST_DEVICE T atomicCAS(T* acc, T compare, T value)
 {
   return RAJA::atomicCAS(Policy {}, acc, compare, value);
+}
+
+/*!
+ * @brief Generic atomic operation implemented using CAS loop
+ * @param acc Pointer to location to store value
+ * @param operation Functor that computes a new value from the old value
+ * @return Returns value at *acc immediately before this operation completed
+ */
+RAJA_SUPPRESS_HD_WARN
+template<typename Policy, typename T, typename Operation>
+RAJA_INLINE RAJA_HOST_DEVICE T atomicOperation(T* acc, Operation&& operation)
+{
+  return RAJA::atomicOperation(Policy {}, acc, std::forward<Operation>(operation));
 }
 
 /*!
