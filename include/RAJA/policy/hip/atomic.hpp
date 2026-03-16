@@ -909,7 +909,7 @@ atomicOperation(hip_atomic_explicit<host_policy>, T* acc, Operation&& operation)
 #if defined(__HIP_DEVICE_COMPILE__)
   return detail::hip_atomicCAS_loop(acc, std::forward<Operation>(operation));
 #else
-  return RAJA::atomicOperation(host_policy {}, acc, std::forward<Operation>(value));
+  return RAJA::atomicOperation(host_policy {}, acc, std::forward<Operation>(operation));
 #endif
 }
 
