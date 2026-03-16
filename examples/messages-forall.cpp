@@ -76,8 +76,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 // Define number of messages that can be stored
 //
   const std::size_t num_messages = 1;
-  const std::size_t message_sz   = RAJA::align(sizeof(RAJA::msg_header)) + 
-    RAJA::align(sizeof(RAJA::msg_args<my_string<128>, int*, int, int>));
+  const std::size_t message_sz   = RAJA::align_sz(sizeof(RAJA::msg_header)) + 
+    RAJA::align_sz(sizeof(RAJA::msg_args<my_string<128>, int*, int, int>));
 
   const std::size_t buf_sz       = num_messages*message_sz;
 
