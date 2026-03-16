@@ -15,11 +15,12 @@ This release contains ...
 Notable changes include:
 
   * New features / API changes:
+    * Added `RAJA::atomicOperation` to enable user-defined atomic update
+      operations implemented using a compare-and-swap loop.
 
   * Build changes/improvements:
 
   * Bug fixes/improvements:
-
 
 Version 2025.12.2 -- Release date 2026-03-04
 ============================================
