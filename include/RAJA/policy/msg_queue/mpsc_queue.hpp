@@ -21,6 +21,7 @@
 #ifndef RAJA_mpsc_queue_HPP
 #define RAJA_mpsc_queue_HPP
 
+#include "RAJA/util/align.hpp"
 #include "RAJA/util/concepts.hpp"
 #include "RAJA/pattern/atomic.hpp"
 
@@ -61,8 +62,8 @@ public:
   {
     if (m_container != nullptr)
     {
-      constexpr size_type header_sz = align(sizeof(msg_header));
-      constexpr size_type args_sz   = align(sizeof(msg_args<Args...>));
+      constexpr size_type header_sz = align_sz(sizeof(msg_header));
+      constexpr size_type args_sz   = align_sz(sizeof(msg_args<Args...>));
       constexpr size_type msg_sz    = header_sz + args_sz;
 
       size_type local_sz;

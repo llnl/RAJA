@@ -61,8 +61,8 @@ public:
   {
     if (m_container != nullptr)
     {
-      constexpr size_type header_sz = align(sizeof(msg_header));
-      constexpr size_type args_sz   = align(sizeof(msg_args<Args...>));
+      constexpr size_type header_sz = align_sz(sizeof(msg_header));
+      constexpr size_type args_sz   = align_sz(sizeof(msg_args<Args...>));
       constexpr size_type msg_sz    = header_sz + args_sz;
       auto local_size               = m_container->m_end;
       if (m_container->m_data != nullptr &&

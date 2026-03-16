@@ -25,6 +25,8 @@
 #include <memory>
 #include <vector>
 
+#include "RAJA/util/align.hpp"
+
 #include "RAJA/pattern/messages/msg_header.hpp"
 #include "RAJA/pattern/messages/msg_callback.hpp"
 #include "RAJA/policy/msg_queue.hpp"
@@ -92,7 +94,7 @@ private:
     msg_iterator& operator++()
     {
       msg_header& msg = *std::launder(reinterpret_cast<msg_header*>(cur_ptr));
-      cur_ptr += msg.sz + align(sizeof(msg_header));
+      cur_ptr += msg.sz + align_sz(sizeof(msg_header));
 
       return (*this);
     }
