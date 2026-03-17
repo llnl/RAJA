@@ -49,29 +49,11 @@ RAJA_HOST_DEVICE RAJA_INLINE bool desul_atomicCAS_equal(const T& a, const T& b)
                                std::uint32_t,
                                std::uint64_t>;
   static_assert(sizeof(T) == sizeof(std::uint32_t) ||
-                    sizeof(T) == sizeof(std::uint64_t),
+                sizeof(T) == sizeof(std::uint64_t),
                 "desul_atomicCAS_equal only supports 32/64-bit floating point");
 
   return RAJA::util::reinterp_A_as_B<T, R>(a) ==
          RAJA::util::reinterp_A_as_B<T, R>(b);
-}
-
-template<typename T, typename Oper>
-RAJA_HOST_DEVICE RAJA_INLINE T desul_atomicCAS_loop(T* acc, Oper&& oper)
-{
-  T old = desul::atomic_load(acc, raja_default_desul_order {},
-                            raja_default_desul_scope {});
-  T expected;
-
-  do
-  {
-    expected = old;
-    old = desul::atomic_compare_exchange(acc, expected, oper(expected),
-                                         raja_default_desul_order {},
-                                         raja_default_desul_scope {});
-  } while (!desul_atomicCAS_equal(old, expected));
-
-  return old;
 }
 
 }  // namespace detail
@@ -207,7 +189,27 @@ template<typename AtomicPolicy, typename T, typename Operation>
 RAJA_HOST_DEVICE RAJA_INLINE T
 atomicOperation(AtomicPolicy, T* acc, Operation&& operation)
 {
-  return detail::desul_atomicCAS_loop(acc, std::forward<Operation>(operation));
+  T expected = desul::atomic_load(acc,
+                                  raja_default_desul_order {},
+                                  raja_default_desul_scope {});
+
+  while (true) {
+    const T desired = operation(expected);
+
+    if (desul_atomicCAS_equal(desired, expected)) {
+      return expected; // no-op
+    }
+
+    const T old = desul::atomic_compare_exchange(acc, expected, desired,
+                                                 raja_default_desul_order {},
+                                                 raja_default_desul_scope {});
+
+    if (desul_atomicCAS_equal(old, expected)) {
+      return old; // success
+    }
+
+    expected = old; // CAS failed, old is the latest observed value
+  }
 }
 
 }  // namespace RAJA
