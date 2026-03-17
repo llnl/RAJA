@@ -20,7 +20,10 @@
 #ifndef RAJA_ALIGN_HPP
 #define RAJA_ALIGN_HPP
 
+#include <cstddef>
+
 #include "RAJA/config.hpp"
+#include "RAJA/util/macros.hpp"
 
 namespace RAJA
 {
