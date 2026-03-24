@@ -26,6 +26,7 @@
 #include "RAJA/policy/hip/MemUtils_HIP.hpp"
 #include "RAJA/policy/hip/raja_hiperrchk.hpp"
 #include "RAJA/util/resource.hpp"
+#include "RAJA/util/Jit.hpp"
 
 namespace RAJA
 {
@@ -57,8 +58,9 @@ public:
 };
 
 template<typename BODY, typename ReduceParams>
-__global__ void launch_new_reduce_global_fcn(const BODY body_in,
-                                             ReduceParams reduce_params)
+__global__ RAJA_JIT_COMPILE void launch_new_reduce_global_fcn(
+    const BODY body_in,
+    ReduceParams reduce_params)
 {
 
   using RAJA::internal::thread_privatize;
@@ -123,7 +125,7 @@ struct LaunchExecute<
     if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
-
+      RAJA::internal::jit::register_lambda(body_in);
 
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::hip::detail::hipInfo launch_info;
@@ -161,7 +163,7 @@ struct LaunchExecute<
 };
 
 template<typename BODY, int num_threads, typename ReduceParams>
-__launch_bounds__(num_threads, 1) __global__
+__launch_bounds__(num_threads, 1) __global__ RAJA_JIT_COMPILE
     void launch_new_reduce_global_fcn_fixed(const BODY body_in,
                                             ReduceParams reduce_params)
 {
@@ -240,7 +242,7 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
       launch_info.res          = hip_res;
 
       {
-
+        RAJA::internal::jit::register_lambda(body_in);
         RAJA::expt::ParamMultiplexer::parampack_init(pol, launch_reducers,
                                                      launch_info);
 

@@ -27,6 +27,12 @@ raja_add_executable(
   NAME dynamic-forall
   SOURCES dynamic-forall.cpp)
 
+if (RAJA_ENABLE_JIT)
+  raja_add_executable(
+    NAME forall-jit
+    SOURCES forall-jit.cpp)
+endif()
+
 raja_add_executable(
   NAME forall-param-reductions
   SOURCES forall-param-reductions.cpp)
