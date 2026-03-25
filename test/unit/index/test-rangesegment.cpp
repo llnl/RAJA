@@ -15,6 +15,8 @@
 
 #include "RAJA_unit-test-types.hpp"
 
+RAJA_INDEX_VALUE(ZeroToStrongIndex, "ZeroToStrongIndex");
+
 template<typename T>
 class RangeSegmentUnitTest : public ::testing::Test {};
 
@@ -165,4 +167,22 @@ TYPED_TEST(RangeSegmentUnitTest, Equality)
   auto r3 = RAJA::TypedRangeSegment<TypeParam>(10,15);
 
   ASSERT_NE(r1, r3);
+}
+
+TEST(RangeSegmentUnitTest, ZeroTo)
+{
+  auto r = RAJA::ZeroTo(RAJA::Index_type(17));
+
+  ASSERT_EQ(RAJA::RangeSegment(RAJA::Index_type(0), RAJA::Index_type(17)), r);
+  ASSERT_EQ(RAJA::Index_type(0), *r.begin());
+  ASSERT_EQ(RAJA::Index_type(17), r.size());
+}
+
+TEST(RangeSegmentUnitTest, TypedZeroTo)
+{
+  auto r = RAJA::ZeroTo<ZeroToStrongIndex>(17);
+
+  ASSERT_EQ((RAJA::TypedRangeSegment<ZeroToStrongIndex>(0, 17)), r);
+  ASSERT_EQ(ZeroToStrongIndex(0), *r.begin());
+  ASSERT_EQ(RAJA::Index_type(17), r.size());
 }

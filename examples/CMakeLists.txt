@@ -20,6 +20,10 @@ raja_add_executable(
   SOURCES resource-forall.cpp)
 
 raja_add_executable(
+  NAME zero-to-segment
+  SOURCES zero-to-segment.cpp)
+
+raja_add_executable(
   NAME dynamic-forall
   SOURCES dynamic-forall.cpp)
 

@@ -530,6 +530,33 @@ using RangeSegment = TypedRangeSegment<Index_type>;
 //! Alias for TypedRangeStrideSegment<Index_type>
 using RangeStrideSegment = TypedRangeStrideSegment<Index_type>;
 
+/*!
+ * \brief Function to make a RangeSegment for the interval [0, end)
+ *
+ *  \return a newly constructed RangeSegment over the half-open interval
+ *          starting at zero and ending at @end.
+ */
+RAJA_HOST_DEVICE RAJA_INLINE constexpr RangeSegment ZeroTo(
+    Index_type end) noexcept
+{
+  return {0, end};
+}
+
+/*!
+ * \brief Function to make a TypedRangeSegment for the interval [0, end)
+ *
+ *  \return a newly constructed TypedRangeSegment over the half-open interval
+ *          starting at zero and ending at @end.
+ */
+template<typename StorageT>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<StorageT> ZeroTo(
+    strip_index_type_t<StorageT> end) noexcept
+{
+  static_assert(!std::is_floating_point<strip_index_type_t<StorageT>>::value,
+                "ZeroTo requires a non-floating point index type.");
+  return {strip_index_type_t<StorageT> {0}, end};
+}
+
 namespace detail
 {
 
