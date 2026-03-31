@@ -234,7 +234,7 @@ TEST(RangeSegmentUnitTest, RangeBeginEndStridePositive)
   auto r = RAJA::range(2, 11, 3);
 
   ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(2, 11, 3)), r);
-  ASSERT_EQ(4, r.size());
+  ASSERT_EQ(3, r.size());
   ASSERT_EQ(2, *r.begin());
 }
 
@@ -245,4 +245,29 @@ TEST(RangeSegmentUnitTest, RangeBeginEndStrideNegative)
   ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(10, -1, -2)), r);
   ASSERT_EQ(6, r.size());
   ASSERT_EQ(10, *r.begin());
+}
+
+TEST(RangeSegmentUnitTest, RangeBeginEndStrideDeducesFromStride)
+{
+  auto r = RAJA::range(2, 11, long {3});
+
+  static_assert(
+      std::is_same<decltype(r), RAJA::TypedRangeStrideSegment<long>>::value,
+      "range(begin, end, stride) should include stride in the storage type.");
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<long>(2, 11, 3)), r);
+  ASSERT_EQ(3, r.size());
+  ASSERT_EQ(2, *r.begin());
+}
+
+TEST(RangeSegmentUnitTest, MakeStridedRangeDeducesFromStride)
+{
+  auto r = RAJA::make_strided_range(2, 11, long {3});
+
+  static_assert(
+      std::is_same<decltype(r), RAJA::TypedRangeStrideSegment<long>>::value,
+      "make_strided_range(begin, end, stride) should include stride in the "
+      "storage type.");
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<long>(2, 11, 3)), r);
+  ASSERT_EQ(3, r.size());
+  ASSERT_EQ(2, *r.begin());
 }

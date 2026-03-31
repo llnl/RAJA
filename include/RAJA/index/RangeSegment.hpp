@@ -618,7 +618,8 @@ template<typename StorageT = void,
          typename BeginT,
          typename EndT,
          typename StrideT,
-         typename Common = detail::range_storage_type_t<StorageT, BeginT, EndT>,
+         typename Common =
+             detail::range_storage_type_t<StorageT, BeginT, EndT, StrideT>,
          typename DiffT = make_signed_t<strip_index_type_t<Common>>>
 RAJA_HOST_DEVICE RAJA_INLINE TypedRangeStrideSegment<Common> range(
     BeginT&& begin,
@@ -671,17 +672,16 @@ RAJA_HOST_DEVICE TypedRangeSegment<Common> make_range(BeginT&& begin,
 template<typename BeginT,
          typename EndT,
          typename StrideT,
-         typename Common = detail::common_type_t<BeginT, EndT>>
+         typename Common = detail::common_type_t<BeginT, EndT, StrideT>>
 RAJA_HOST_DEVICE TypedRangeStrideSegment<Common> make_strided_range(
     BeginT&& begin,
     EndT&& end,
     StrideT&& stride)
 {
-  static_assert(std::is_signed<StrideT>::value,
+  static_assert(std::is_signed<strip_index_type_t<StrideT>>::value,
                 "make_strided_segment : stride must be signed.");
-  static_assert(
-      std::is_same<make_signed_t<EndT>, StrideT>::value,
-      "make_stride_segment : stride and end must be of similar types.");
+  static_assert(!std::is_floating_point<strip_index_type_t<StrideT>>::value,
+                "make_strided_segment : stride must be non-floating point.");
   return {begin, end, stride};
 }
 
