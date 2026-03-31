@@ -628,7 +628,7 @@ RAJA_HOST_DEVICE RAJA_INLINE TypedRangeStrideSegment<Common> range(
 {
   static_assert(std::is_signed<strip_index_type_t<StrideT>>::value,
                 "range requires a signed stride type.");
-  static_assert(!std::is_floating_point<strip_index_type_t<StrideT>>::value,
+  static_assert(!std::is_floating_point_v<strip_index_type_t<StrideT>>,
                 "range requires a non-floating point stride type.");
 
   DiffT const typed_stride = static_cast<DiffT>(stripIndexType(stride));
