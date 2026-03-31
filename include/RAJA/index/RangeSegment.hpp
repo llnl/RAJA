@@ -103,9 +103,9 @@ struct TypedRangeSegment
   // Static asserts to provide some useful error messages during compilation
   // for incorrect usage.
   //
-  static_assert(std::is_signed<DiffT>::value,
+  static_assert(std::is_signed_v<DiffT>,
                 "TypedRangeSegment DiffT requires signed type.");
-  static_assert(!std::is_floating_point<StorageT>::value,
+  static_assert(!std::is_floating_point_v<StorageT>,
                 "TypedRangeSegment Type must be non floating point.");
 
   //@{
@@ -336,9 +336,9 @@ struct TypedRangeStrideSegment
   // Static asserts to provide some useful error messages during compilation
   // for incorrect usage.
   //
-  static_assert(std::is_signed<DiffT>::value,
+  static_assert(std::is_signed_v<DiffT>,
                 "TypedRangeStrideSegment DiffT requires signed type.");
-  static_assert(!std::is_floating_point<StorageT>::value,
+  static_assert(!std::is_floating_point_v<StorageT>,
                 "TypedRangeStrideSegment Type must be non floating point.");
 
   //@{
@@ -581,7 +581,7 @@ template<typename StorageT = void,
 RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> range(
     EndT&& end) noexcept
 {
-  static_assert(!std::is_floating_point<StripCommon>::value,
+  static_assert(!std::is_floating_point_v<StripCommon>,
                 "range requires a non-floating point index type.");
   return {StripCommon {0}, static_cast<StripCommon>(stripIndexType(end))};
 }
