@@ -189,6 +189,18 @@ TEST(RangeSegmentUnitTest, LongRangeEnd)
   ASSERT_EQ(10, r.size());
 }
 
+TEST(RangeSegmentUnitTest, LongRangeEndLValue)
+{
+  const long end = 10;
+  auto r         = RAJA::range(end);
+
+  static_assert(std::is_same<decltype(r), RAJA::TypedRangeSegment<long>>::value,
+                "range(const long&) should decay the deduced storage type.");
+  ASSERT_EQ((RAJA::TypedRangeSegment<long>(0, 10)), r);
+  ASSERT_EQ(0, *r.begin());
+  ASSERT_EQ(10, r.size());
+}
+
 TEST(RangeSegmentUnitTest, TypedRangeEnd)
 {
   auto r = RAJA::range<RangeStrongIndex>(17);
