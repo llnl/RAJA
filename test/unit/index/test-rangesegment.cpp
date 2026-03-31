@@ -15,7 +15,7 @@
 
 #include "RAJA_unit-test-types.hpp"
 
-RAJA_INDEX_VALUE(ZeroToStrongIndex, "ZeroToStrongIndex");
+RAJA_INDEX_VALUE(RangeStrongIndex, "RangeStrongIndex");
 
 template<typename T>
 class RangeSegmentUnitTest : public ::testing::Test {};
@@ -169,20 +169,46 @@ TYPED_TEST(RangeSegmentUnitTest, Equality)
   ASSERT_NE(r1, r3);
 }
 
-TEST(RangeSegmentUnitTest, ZeroTo)
+TEST(RangeSegmentUnitTest, RangeEnd)
 {
-  auto r = RAJA::ZeroTo(RAJA::Index_type(17));
+  auto r = RAJA::Range(RAJA::Index_type(17));
 
   ASSERT_EQ(RAJA::RangeSegment(RAJA::Index_type(0), RAJA::Index_type(17)), r);
   ASSERT_EQ(RAJA::Index_type(0), *r.begin());
   ASSERT_EQ(RAJA::Index_type(17), r.size());
 }
 
-TEST(RangeSegmentUnitTest, TypedZeroTo)
+TEST(RangeSegmentUnitTest, TypedRangeEnd)
 {
-  auto r = RAJA::ZeroTo<ZeroToStrongIndex>(17);
+  auto r = RAJA::Range<RangeStrongIndex>(17);
 
-  ASSERT_EQ((RAJA::TypedRangeSegment<ZeroToStrongIndex>(0, 17)), r);
-  ASSERT_EQ(ZeroToStrongIndex(0), *r.begin());
+  ASSERT_EQ((RAJA::TypedRangeSegment<RangeStrongIndex>(0, 17)), r);
+  ASSERT_EQ(RangeStrongIndex(0), *r.begin());
   ASSERT_EQ(RAJA::Index_type(17), r.size());
+}
+
+TEST(RangeSegmentUnitTest, RangeBeginEnd)
+{
+  auto r = RAJA::Range(3, 17);
+
+  ASSERT_EQ((RAJA::TypedRangeSegment<int>(3, 17)), r);
+  ASSERT_EQ(14, r.size());
+}
+
+TEST(RangeSegmentUnitTest, RangeBeginEndStridePositive)
+{
+  auto r = RAJA::Range(2, 11, 3);
+
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(2, 11, 3)), r);
+  ASSERT_EQ(4, r.size());
+  ASSERT_EQ(2, *r.begin());
+}
+
+TEST(RangeSegmentUnitTest, RangeBeginEndStrideNegative)
+{
+  auto r = RAJA::Range(10, -1, -2);
+
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(10, -1, -2)), r);
+  ASSERT_EQ(6, r.size());
+  ASSERT_EQ(10, *r.begin());
 }
