@@ -533,19 +533,8 @@ using RangeStrideSegment = TypedRangeStrideSegment<Index_type>;
 namespace detail
 {
 
-template<typename T, typename... Rest>
-struct common_type
-    : std::common_type<std::decay_t<T>, typename common_type<Rest...>::type>
-{};
-
-template<typename T>
-struct common_type<T>
-{
-  using type = std::decay_t<T>;
-};
-
 template<typename... Ts>
-using common_type_t = typename common_type<Ts...>::type;
+using common_type_t = std::common_type_t<std::decay_t<Ts>...>;
 
 template<typename T>
 using range_stride_type_t =
