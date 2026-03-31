@@ -171,25 +171,59 @@ TYPED_TEST(RangeSegmentUnitTest, Equality)
 
 TEST(RangeSegmentUnitTest, RangeEnd)
 {
-  auto r = RAJA::Range(RAJA::Index_type(17));
+  auto r = RAJA::range(RAJA::Index_type(17));
 
   ASSERT_EQ(RAJA::RangeSegment(RAJA::Index_type(0), RAJA::Index_type(17)), r);
   ASSERT_EQ(RAJA::Index_type(0), *r.begin());
   ASSERT_EQ(RAJA::Index_type(17), r.size());
 }
 
+TEST(RangeSegmentUnitTest, LongRangeEnd)
+{
+  auto r = RAJA::range(long {10});
+
+  static_assert(std::is_same<decltype(r), RAJA::TypedRangeSegment<long>>::value,
+                "range(long) should deduce the segment storage type.");
+  ASSERT_EQ((RAJA::TypedRangeSegment<long>(0, 10)), r);
+  ASSERT_EQ(0, *r.begin());
+  ASSERT_EQ(10, r.size());
+}
+
 TEST(RangeSegmentUnitTest, TypedRangeEnd)
 {
-  auto r = RAJA::Range<RangeStrongIndex>(17);
+  auto r = RAJA::range<RangeStrongIndex>(17);
 
   ASSERT_EQ((RAJA::TypedRangeSegment<RangeStrongIndex>(0, 17)), r);
   ASSERT_EQ(RangeStrongIndex(0), *r.begin());
   ASSERT_EQ(RAJA::Index_type(17), r.size());
 }
 
+TEST(RangeSegmentUnitTest, DeducedStrongRangeEnd)
+{
+  auto r = RAJA::range(RangeStrongIndex(17));
+
+  static_assert(
+      std::is_same<decltype(r), RAJA::TypedRangeSegment<RangeStrongIndex>>::value,
+      "range(StrongIndex) should deduce the segment storage type.");
+  ASSERT_EQ((RAJA::TypedRangeSegment<RangeStrongIndex>(0, 17)), r);
+  ASSERT_EQ(RangeStrongIndex(0), *r.begin());
+  ASSERT_EQ(RAJA::Index_type(17), r.size());
+}
+
+TEST(RangeSegmentUnitTest, ExplicitTypedRangeEnd)
+{
+  auto r = RAJA::range<long>(10);
+
+  static_assert(std::is_same<decltype(r), RAJA::TypedRangeSegment<long>>::value,
+                "range<T>(end) should use the explicit storage type.");
+  ASSERT_EQ((RAJA::TypedRangeSegment<long>(0, 10)), r);
+  ASSERT_EQ(0, *r.begin());
+  ASSERT_EQ(10, r.size());
+}
+
 TEST(RangeSegmentUnitTest, RangeBeginEnd)
 {
-  auto r = RAJA::Range(3, 17);
+  auto r = RAJA::range(3, 17);
 
   ASSERT_EQ((RAJA::TypedRangeSegment<int>(3, 17)), r);
   ASSERT_EQ(14, r.size());
@@ -197,7 +231,7 @@ TEST(RangeSegmentUnitTest, RangeBeginEnd)
 
 TEST(RangeSegmentUnitTest, RangeBeginEndStridePositive)
 {
-  auto r = RAJA::Range(2, 11, 3);
+  auto r = RAJA::range(2, 11, 3);
 
   ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(2, 11, 3)), r);
   ASSERT_EQ(4, r.size());
@@ -206,7 +240,7 @@ TEST(RangeSegmentUnitTest, RangeBeginEndStridePositive)
 
 TEST(RangeSegmentUnitTest, RangeBeginEndStrideNegative)
 {
-  auto r = RAJA::Range(10, -1, -2);
+  auto r = RAJA::range(10, -1, -2);
 
   ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(10, -1, -2)), r);
   ASSERT_EQ(6, r.size());

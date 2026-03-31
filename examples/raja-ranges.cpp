@@ -15,10 +15,10 @@
  * RAJA ranges example
  *
  * Demonstrates Python-like range helpers backed by RAJA segments:
- *   1. RAJA::Range(N) for [0, N)
- *   2. RAJA::Range<T>(N) for a TypedRangeSegment<T> over [0, N)
- *   3. RAJA::Range(begin, end) for [begin, end)
- *   4. RAJA::Range(begin, end, step) for a strided half-open interval
+ *   1. RAJA::range(N) for [0, N)
+ *   2. RAJA::range<T>(N) for a TypedRangeSegment<T> over [0, N)
+ *   3. RAJA::range(begin, end) for [begin, end)
+ *   4. RAJA::range(begin, end, step) for a strided half-open interval
  */
 
 RAJA_INDEX_VALUE(CellIndex, "CellIndex");
@@ -33,51 +33,51 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv))
   int odd_values[N] = {};
 
   // Equivalent to Python range(N): [0, N)
-  RAJA::forall<RAJA::seq_exec>(RAJA::Range(N), [&](RAJA::Index_type i) {
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(N), [&](RAJA::Index_type i) {
     values[i] = static_cast<int>(i * i);
   });
 
   // Equivalent to Python range(N), but preserving a strong index type.
-  RAJA::forall<RAJA::seq_exec>(RAJA::Range<CellIndex>(N), [&](CellIndex i) {
+  RAJA::forall<RAJA::seq_exec>(RAJA::range<CellIndex>(N), [&](CellIndex i) {
     typed_values[*i] = static_cast<int>(*i + 10);
   });
 
   // Equivalent to Python range(2, 6): [2, 6)
-  RAJA::forall<RAJA::seq_exec>(RAJA::Range(2, 6), [&](int i) {
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(2, 6), [&](int i) {
     subrange_values[i] = i;
   });
 
   // Equivalent to Python range(1, N, 2): odd indices in [1, N)
-  RAJA::forall<RAJA::seq_exec>(RAJA::Range(1, N, 2), [&](int i) {
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(1, N, 2), [&](int i) {
     odd_values[i] = i;
   });
 
-  std::cout << "Range(N):";
-  for (auto i : RAJA::Range(N)) {
+  std::cout << "range(N):";
+  for (auto i : RAJA::range(N)) {
     std::cout << ' ' << values[i];
   }
   std::cout << '\n';
 
-  std::cout << "Range<CellIndex>(N):";
-  for (auto i : RAJA::Range<CellIndex>(N)) {
+  std::cout << "range<CellIndex>(N):";
+  for (auto i : RAJA::range<CellIndex>(N)) {
     std::cout << ' ' << typed_values[*i];
   }
   std::cout << '\n';
 
-  std::cout << "Range(2, 6):";
-  for (auto i : RAJA::Range(2, 6)) {
+  std::cout << "range(2, 6):";
+  for (auto i : RAJA::range(2, 6)) {
     std::cout << ' ' << subrange_values[i];
   }
   std::cout << '\n';
 
-  std::cout << "Range(1, N, 2):";
-  for (auto i : RAJA::Range(1, N, 2)) {
+  std::cout << "range(1, N, 2):";
+  for (auto i : RAJA::range(1, N, 2)) {
     std::cout << ' ' << odd_values[i];
   }
   std::cout << '\n';
 
-  std::cout << "Range(N - 1, -1, -2):";
-  for (auto i : RAJA::Range(N - 1, -1, -2)) {
+  std::cout << "range(N - 1, -1, -2):";
+  for (auto i : RAJA::range(N - 1, -1, -2)) {
     std::cout << ' ' << i;
   }
   std::cout << '\n';

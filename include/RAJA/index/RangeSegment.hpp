@@ -530,33 +530,6 @@ using RangeSegment = TypedRangeSegment<Index_type>;
 //! Alias for TypedRangeStrideSegment<Index_type>
 using RangeStrideSegment = TypedRangeStrideSegment<Index_type>;
 
-/*!
- * \brief Function to make a RangeSegment for the interval [0, end)
- *
- *  \return a newly constructed RangeSegment over the half-open interval
- *          starting at zero and ending at @end.
- */
-RAJA_HOST_DEVICE RAJA_INLINE constexpr RangeSegment Range(
-    Index_type end) noexcept
-{
-  return {0, end};
-}
-
-/*!
- * \brief Function to make a TypedRangeSegment for the interval [0, end)
- *
- *  \return a newly constructed TypedRangeSegment over the half-open interval
- *          starting at zero and ending at @end.
- */
-template<typename StorageT>
-RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<StorageT> Range(
-    strip_index_type_t<StorageT> end) noexcept
-{
-  static_assert(!std::is_floating_point<strip_index_type_t<StorageT>>::value,
-                "Range requires a non-floating point index type.");
-  return {strip_index_type_t<StorageT> {0}, end};
-}
-
 namespace detail
 {
 
@@ -574,24 +547,61 @@ struct common_type<T>
 template<typename... Ts>
 using common_type_t = typename common_type<Ts...>::type;
 
+template<typename StorageT, typename... Ts>
+struct range_storage_type
+{
+  using type = StorageT;
+};
+
+template<typename... Ts>
+struct range_storage_type<void, Ts...>
+{
+  using type = common_type_t<Ts...>;
+};
+
+template<typename StorageT, typename... Ts>
+using range_storage_type_t = typename range_storage_type<StorageT, Ts...>::type;
+
 }  // namespace detail
+
+/*!
+ * \brief Function to make a TypedRangeSegment for the interval [0, end)
+ *
+ *  \return a newly constructed TypedRangeSegment over the half-open interval
+ *          starting at zero and ending at @end. An explicit template argument
+ *          may be used to select the segment storage type.
+ */
+template<typename StorageT = void,
+         typename EndT,
+         typename Common = detail::range_storage_type_t<StorageT, EndT>,
+         typename StripCommon = strip_index_type_t<Common>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> range(
+    EndT&& end) noexcept
+{
+  static_assert(!std::is_floating_point<StripCommon>::value,
+                "range requires a non-floating point index type.");
+  return {StripCommon {0}, static_cast<StripCommon>(stripIndexType(end))};
+}
 
 /*!
  * \brief Function to make a TypedRangeSegment for the interval [begin, end)
  *
  *  \return a newly constructed TypedRangeSegment where the
  *          value_type is equivilent to the common type of
- *          @begin and @end. If there is no common type, then
- *          a compiler error will be produced.
+ *          @begin and @end unless an explicit template argument
+ *          is provided for the segment storage type.
  */
-template<typename BeginT,
+template<typename StorageT = void,
+         typename BeginT,
          typename EndT,
-         typename Common = detail::common_type_t<BeginT, EndT>>
-RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> Range(
+         typename Common = detail::range_storage_type_t<StorageT, BeginT, EndT>,
+         typename StripCommon = strip_index_type_t<Common>>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> range(
     BeginT&& begin,
     EndT&& end) noexcept
 {
-  return {begin, end};
+  return {static_cast<StripCommon>(stripIndexType(begin)),
+          static_cast<StripCommon>(stripIndexType(end))};
 }
 
 /*!
@@ -600,30 +610,36 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> Range(
  *
  *  \return a newly constructed TypedRangeStrideSegment where the
  *          value_type is equivilent to the common type of
- *          @begin and @end. If stride is zero, execution aborts or throws.
+ *          @begin and @end unless an explicit template argument
+ *          is provided for the segment storage type. If stride is zero,
+ *          execution aborts or throws.
  */
-template<typename BeginT,
+template<typename StorageT = void,
+         typename BeginT,
          typename EndT,
          typename StrideT,
-         typename Common = detail::common_type_t<BeginT, EndT>,
+         typename Common = detail::range_storage_type_t<StorageT, BeginT, EndT>,
          typename DiffT = make_signed_t<strip_index_type_t<Common>>>
-RAJA_HOST_DEVICE RAJA_INLINE TypedRangeStrideSegment<Common> Range(
+RAJA_HOST_DEVICE RAJA_INLINE TypedRangeStrideSegment<Common> range(
     BeginT&& begin,
     EndT&& end,
     StrideT&& stride)
 {
   static_assert(std::is_signed<strip_index_type_t<StrideT>>::value,
-                "Range requires a signed stride type.");
+                "range requires a signed stride type.");
   static_assert(!std::is_floating_point<strip_index_type_t<StrideT>>::value,
-                "Range requires a non-floating point stride type.");
+                "range requires a non-floating point stride type.");
 
-  DiffT const typed_stride = static_cast<DiffT>(stride);
+  DiffT const typed_stride = static_cast<DiffT>(stripIndexType(stride));
   if (typed_stride == DiffT {0})
   {
-    RAJA_ABORT_OR_THROW("RAJA::Range requires a non-zero stride.");
+    RAJA_ABORT_OR_THROW("RAJA::range requires a non-zero stride.");
   }
 
-  return {begin, end, typed_stride};
+  return {
+      static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
+      static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
+      typed_stride};
 }
 
 /*!
