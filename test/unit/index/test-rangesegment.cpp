@@ -259,6 +259,19 @@ TEST(RangeSegmentUnitTest, RangeBeginEndStrideDeducesFromStride)
   ASSERT_EQ(2, *r.begin());
 }
 
+TEST(RangeSegmentUnitTest, RangeBeginEndUnsignedStrideWorks)
+{
+  auto r = RAJA::range(-2, 11, 3u);
+
+  static_assert(
+      std::is_same<decltype(r), RAJA::TypedRangeStrideSegment<int>>::value,
+      "range(begin, end, unsigned stride) should preserve signed storage when "
+      "begin/end are signed.");
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(-2, 11, 3)), r);
+  ASSERT_EQ(5, r.size());
+  ASSERT_EQ(-2, *r.begin());
+}
+
 TEST(RangeSegmentUnitTest, MakeStridedRangeDeducesFromStride)
 {
   auto r = RAJA::make_strided_range(2, 11, long {3});
@@ -270,4 +283,17 @@ TEST(RangeSegmentUnitTest, MakeStridedRangeDeducesFromStride)
   ASSERT_EQ((RAJA::TypedRangeStrideSegment<long>(2, 11, 3)), r);
   ASSERT_EQ(3, r.size());
   ASSERT_EQ(2, *r.begin());
+}
+
+TEST(RangeSegmentUnitTest, MakeStridedRangeUnsignedStrideWorks)
+{
+  auto r = RAJA::make_strided_range(-2, 11, 3u);
+
+  static_assert(
+      std::is_same<decltype(r), RAJA::TypedRangeStrideSegment<int>>::value,
+      "make_strided_range(begin, end, unsigned stride) should preserve signed "
+      "storage when begin/end are signed.");
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(-2, 11, 3)), r);
+  ASSERT_EQ(5, r.size());
+  ASSERT_EQ(-2, *r.begin());
 }

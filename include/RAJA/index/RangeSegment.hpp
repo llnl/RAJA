@@ -547,6 +547,9 @@ struct common_type<T>
 template<typename... Ts>
 using common_type_t = typename common_type<Ts...>::type;
 
+template<typename T>
+using range_stride_type_t = make_signed_t<strip_index_type_t<T>>;
+
 template<typename StorageT, typename... Ts>
 struct range_storage_type
 {
@@ -619,17 +622,18 @@ template<typename StorageT = void,
          typename EndT,
          typename StrideT,
          typename Common =
-             detail::range_storage_type_t<StorageT, BeginT, EndT, StrideT>,
+             detail::range_storage_type_t<StorageT,
+                                          BeginT,
+                                          EndT,
+                                          detail::range_stride_type_t<StrideT>>,
          typename DiffT = make_signed_t<strip_index_type_t<Common>>>
 RAJA_HOST_DEVICE RAJA_INLINE TypedRangeStrideSegment<Common> range(
     BeginT&& begin,
     EndT&& end,
     StrideT&& stride)
 {
-  static_assert(std::is_signed<strip_index_type_t<StrideT>>::value,
-                "range requires a signed stride type.");
-  static_assert(!std::is_floating_point_v<strip_index_type_t<StrideT>>,
-                "range requires a non-floating point stride type.");
+  static_assert(std::is_integral_v<strip_index_type_t<StrideT>>,
+                "range requires an integral stride type.");
 
   DiffT const typed_stride = static_cast<DiffT>(stripIndexType(stride));
   if (typed_stride == DiffT {0})
@@ -672,17 +676,23 @@ RAJA_HOST_DEVICE TypedRangeSegment<Common> make_range(BeginT&& begin,
 template<typename BeginT,
          typename EndT,
          typename StrideT,
-         typename Common = detail::common_type_t<BeginT, EndT, StrideT>>
+         typename Common = detail::common_type_t<BeginT,
+                                                 EndT,
+                                                 detail::range_stride_type_t<
+                                                     StrideT>>,
+         typename DiffT = make_signed_t<strip_index_type_t<Common>>>
 RAJA_HOST_DEVICE TypedRangeStrideSegment<Common> make_strided_range(
     BeginT&& begin,
     EndT&& end,
     StrideT&& stride)
 {
-  static_assert(std::is_signed<strip_index_type_t<StrideT>>::value,
-                "make_strided_segment : stride must be signed.");
-  static_assert(!std::is_floating_point<strip_index_type_t<StrideT>>::value,
-                "make_strided_segment : stride must be non-floating point.");
-  return {begin, end, stride};
+  static_assert(std::is_integral_v<strip_index_type_t<StrideT>>,
+                "make_strided_segment : stride must be integral.");
+
+  return {
+      static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
+      static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
+      static_cast<DiffT>(stripIndexType(stride))};
 }
 
 namespace concepts
