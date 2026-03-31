@@ -580,7 +580,7 @@ using range_storage_type_t = typename range_storage_type<StorageT, Ts...>::type;
  */
 template<typename StorageT = void,
          typename EndT,
-         typename Common = detail::range_storage_type_t<StorageT, EndT>,
+         typename Common      = detail::range_storage_type_t<StorageT, EndT>,
          typename StripCommon = strip_index_type_t<Common>>
 RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> range(
     EndT&& end) noexcept
@@ -645,10 +645,9 @@ RAJA_HOST_DEVICE RAJA_INLINE TypedRangeStrideSegment<Common> range(
     RAJA_ABORT_OR_THROW("RAJA::range requires a non-zero stride.");
   }
 
-  return {
-      static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
-      static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
-      typed_stride};
+  return {static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
+          static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
+          typed_stride};
 }
 
 /*!
@@ -680,10 +679,8 @@ RAJA_HOST_DEVICE TypedRangeSegment<Common> make_range(BeginT&& begin,
 template<typename BeginT,
          typename EndT,
          typename StrideT,
-         typename Common = detail::common_type_t<BeginT,
-                                                 EndT,
-                                                 detail::range_stride_type_t<
-                                                     StrideT>>,
+         typename Common = detail::
+             common_type_t<BeginT, EndT, detail::range_stride_type_t<StrideT>>,
          typename DiffT = make_signed_t<strip_index_type_t<Common>>>
 RAJA_HOST_DEVICE TypedRangeStrideSegment<Common> make_strided_range(
     BeginT&& begin,
@@ -693,10 +690,9 @@ RAJA_HOST_DEVICE TypedRangeStrideSegment<Common> make_strided_range(
   static_assert(std::is_integral_v<strip_index_type_t<StrideT>>,
                 "make_strided_segment : stride must be integral.");
 
-  return {
-      static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
-      static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
-      static_cast<DiffT>(stripIndexType(stride))};
+  return {static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
+          static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
+          static_cast<DiffT>(stripIndexType(stride))};
 }
 
 namespace concepts
