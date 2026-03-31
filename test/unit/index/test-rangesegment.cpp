@@ -241,6 +241,20 @@ TEST(RangeSegmentUnitTest, RangeBeginEnd)
   ASSERT_EQ(14, r.size());
 }
 
+TEST(RangeSegmentUnitTest, StrongRangeBeginEnd)
+{
+  RangeStrongIndex begin(3);
+  RangeStrongIndex end(17);
+  auto r = RAJA::range(begin, end);
+
+  static_assert(
+      std::is_same<decltype(r), RAJA::TypedRangeSegment<RangeStrongIndex>>::value,
+      "range(StrongIndex, StrongIndex) should deduce the strong storage type.");
+  ASSERT_EQ((RAJA::TypedRangeSegment<RangeStrongIndex>(3, 17)), r);
+  ASSERT_EQ(RangeStrongIndex(3), *r.begin());
+  ASSERT_EQ(RAJA::Index_type(14), r.size());
+}
+
 TEST(RangeSegmentUnitTest, RangeBeginEndStridePositive)
 {
   auto r = RAJA::range(2, 11, 3);
