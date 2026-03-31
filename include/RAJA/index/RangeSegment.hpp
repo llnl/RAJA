@@ -534,7 +534,7 @@ namespace detail
 {
 
 template<typename... Ts>
-using common_type_t = std::common_type_t<std::decay_t<Ts>...>;
+using common_type_t = std::common_type_t<Ts...>;
 
 template<typename T>
 using range_stride_type_t =
