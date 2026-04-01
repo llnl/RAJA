@@ -19,6 +19,7 @@
  *   2. RAJA::range<T>(N) for a TypedRangeSegment<T> over [0, N)
  *   3. RAJA::range(begin, end) for [begin, end)
  *   4. RAJA::range(begin, end, step) for a strided half-open interval
+ *   5. Mixed strong/numeric begin/end and strided ranges
  */
 
 RAJA_INDEX_VALUE(CellIndex, "CellIndex");
@@ -31,6 +32,8 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv))
   int typed_values[N] = {};
   int subrange_values[N] = {};
   int odd_values[N] = {};
+  int mixed_end_values[N] = {};
+  int mixed_stride_values[N] = {};
 
   // Equivalent to Python range(N): [0, N)
   RAJA::forall<RAJA::seq_exec>(RAJA::range(N), [&](RAJA::Index_type i) {
@@ -51,6 +54,18 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv))
   RAJA::forall<RAJA::seq_exec>(RAJA::range(1, N, 2), [&](int i) {
     odd_values[i] = i;
   });
+
+  // Mixed numeric/strong range: preserves CellIndex for the loop index.
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(1, CellIndex {6}), [&](CellIndex i) {
+    mixed_end_values[*i] = static_cast<int>(*i * 10);
+  });
+
+  // Mixed strong begin with numeric end/stride for a strided range.
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(CellIndex {1}, N, 2),
+                               [&](CellIndex i) {
+                                 mixed_stride_values[*i] =
+                                     static_cast<int>(*i * 100);
+                               });
 
   std::cout << "range(N):";
   for (auto i : RAJA::range(N)) {
@@ -73,6 +88,18 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv))
   std::cout << "range(1, N, 2):";
   for (auto i : RAJA::range(1, N, 2)) {
     std::cout << ' ' << odd_values[i];
+  }
+  std::cout << '\n';
+
+  std::cout << "range(1, CellIndex{6}):";
+  for (auto i : RAJA::range(1, CellIndex {6})) {
+    std::cout << ' ' << mixed_end_values[*i];
+  }
+  std::cout << '\n';
+
+  std::cout << "range(CellIndex{1}, N, 2):";
+  for (auto i : RAJA::range(CellIndex {1}, N, 2)) {
+    std::cout << ' ' << mixed_stride_values[*i];
   }
   std::cout << '\n';
 

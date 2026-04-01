@@ -23,6 +23,7 @@
 #include "RAJA/config.hpp"
 
 #include <iostream>
+#include <type_traits>
 
 #include "RAJA/internal/Iterators.hpp"
 
@@ -536,24 +537,88 @@ namespace detail
 template<typename... Ts>
 using common_type_t = std::common_type_t<Ts...>;
 
-template<typename T>
-using range_stride_type_t =
-    make_signed_t<strip_index_type_t<std::decay_t<T>>>;
+struct no_strong_index
+{};
 
-template<typename StorageT, typename... Ts>
-struct range_storage_type
+template<typename T>
+using strong_index_candidate_t =
+    std::conditional_t<std::is_base_of_v<IndexValueBase, std::decay_t<T>>,
+                       std::decay_t<T>,
+                       no_strong_index>;
+
+template<typename... Ts>
+struct strong_index_type
+{
+  using type = no_strong_index;
+};
+
+template<typename T, typename... Ts>
+struct strong_index_type<T, Ts...>
+{
+  using current = strong_index_candidate_t<T>;
+  using rest    = typename strong_index_type<Ts...>::type;
+
+  static_assert(
+      std::is_same_v<current, no_strong_index> ||
+          std::is_same_v<rest, no_strong_index> ||
+          std::is_same_v<current, rest>,
+      "range requires matching strong index types for begin and end.");
+
+  using type = std::
+      conditional_t<!std::is_same_v<current, no_strong_index>, current, rest>;
+};
+
+template<typename... Ts>
+using strong_index_type_t = typename strong_index_type<Ts...>::type;
+
+template<typename T>
+using range_stride_type_t = make_signed_t<strip_index_type_t<std::decay_t<T>>>;
+
+template<typename StorageT, typename DeducedT>
+struct selected_range_storage
 {
   using type = StorageT;
 };
 
+template<typename DeducedT>
+struct selected_range_storage<void, DeducedT>
+{
+  using type = DeducedT;
+};
+
+template<typename StorageT, typename DeducedT>
+using selected_range_storage_t =
+    typename selected_range_storage<StorageT, DeducedT>::type;
+
+template<typename StrongT, typename... Ts>
+struct range_storage_from_strong
+{
+  using type = StrongT;
+};
+
 template<typename... Ts>
-struct range_storage_type<void, Ts...>
+struct range_storage_from_strong<no_strong_index, Ts...>
 {
   using type = common_type_t<Ts...>;
 };
 
-template<typename StorageT, typename... Ts>
-using range_storage_type_t = typename range_storage_type<StorageT, Ts...>::type;
+template<typename BeginT, typename EndT>
+using deduced_range_storage_type_t =
+    typename range_storage_from_strong<strong_index_type_t<BeginT, EndT>,
+                                       BeginT,
+                                       EndT>::type;
+
+template<typename BeginT, typename EndT, typename StrideT>
+using deduced_range_stride_storage_type_t =
+    typename range_storage_from_strong<strong_index_type_t<BeginT, EndT>,
+                                       BeginT,
+                                       EndT,
+                                       range_stride_type_t<StrideT>>::type;
+
+template<typename Common, typename StrideT>
+using deduced_range_stride_diff_type_t =
+    common_type_t<make_signed_t<strip_index_type_t<Common>>,
+                  range_stride_type_t<StrideT>>;
 
 }  // namespace detail
 
@@ -564,10 +629,12 @@ using range_storage_type_t = typename range_storage_type<StorageT, Ts...>::type;
  *          starting at zero and ending at @end. An explicit template argument
  *          may be used to select the segment storage type.
  */
-template<typename StorageT = void,
-         typename EndT,
-         typename Common      = detail::range_storage_type_t<StorageT, EndT>,
-         typename StripCommon = strip_index_type_t<Common>>
+template<
+    typename StorageT = void,
+    typename EndT,
+    typename Common =
+        detail::selected_range_storage_t<StorageT, detail::common_type_t<EndT>>,
+    typename StripCommon = strip_index_type_t<Common>>
 RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> range(
     EndT&& end) noexcept
 {
@@ -587,7 +654,9 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> range(
 template<typename StorageT = void,
          typename BeginT,
          typename EndT,
-         typename Common = detail::range_storage_type_t<StorageT, BeginT, EndT>,
+         typename Common = detail::selected_range_storage_t<
+             StorageT,
+             detail::deduced_range_storage_type_t<BeginT, EndT>>,
          typename StripCommon = strip_index_type_t<Common>>
 RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> range(
     BeginT&& begin,
@@ -607,17 +676,16 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> range(
  *          is provided for the segment storage type. If stride is zero,
  *          execution aborts or throws.
  */
-template<typename StorageT = void,
-         typename BeginT,
-         typename EndT,
-         typename StrideT,
-         typename Common =
-             detail::range_storage_type_t<StorageT,
-                                          BeginT,
-                                          EndT,
-                                          detail::range_stride_type_t<StrideT>>,
-         typename DiffT = make_signed_t<strip_index_type_t<Common>>>
-RAJA_HOST_DEVICE RAJA_INLINE TypedRangeStrideSegment<Common> range(
+template<
+    typename StorageT = void,
+    typename BeginT,
+    typename EndT,
+    typename StrideT,
+    typename Common = detail::selected_range_storage_t<
+        StorageT,
+        detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>>,
+    typename DiffT = detail::deduced_range_stride_diff_type_t<Common, StrideT>>
+RAJA_HOST_DEVICE RAJA_INLINE TypedRangeStrideSegment<Common, DiffT> range(
     BeginT&& begin,
     EndT&& end,
     StrideT&& stride)
@@ -646,11 +714,13 @@ RAJA_HOST_DEVICE RAJA_INLINE TypedRangeStrideSegment<Common> range(
  */
 template<typename BeginT,
          typename EndT,
-         typename Common = detail::common_type_t<BeginT, EndT>>
+         typename Common = detail::deduced_range_storage_type_t<BeginT, EndT>,
+         typename StripCommon = strip_index_type_t<Common>>
 RAJA_HOST_DEVICE TypedRangeSegment<Common> make_range(BeginT&& begin,
                                                       EndT&& end)
 {
-  return {begin, end};
+  return {static_cast<StripCommon>(stripIndexType(begin)),
+          static_cast<StripCommon>(stripIndexType(end))};
 }
 
 /*!
@@ -662,13 +732,14 @@ RAJA_HOST_DEVICE TypedRangeSegment<Common> make_range(BeginT&& begin,
  *          @begin, @end, and @stride. If there is no common
  *          type, then a compiler error will be produced.
  */
-template<typename BeginT,
-         typename EndT,
-         typename StrideT,
-         typename Common = detail::
-             common_type_t<BeginT, EndT, detail::range_stride_type_t<StrideT>>,
-         typename DiffT = make_signed_t<strip_index_type_t<Common>>>
-RAJA_HOST_DEVICE TypedRangeStrideSegment<Common> make_strided_range(
+template<
+    typename BeginT,
+    typename EndT,
+    typename StrideT,
+    typename Common =
+        detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>,
+    typename DiffT = detail::deduced_range_stride_diff_type_t<Common, StrideT>>
+RAJA_HOST_DEVICE TypedRangeStrideSegment<Common, DiffT> make_strided_range(
     BeginT&& begin,
     EndT&& end,
     StrideT&& stride)
@@ -686,11 +757,14 @@ namespace concepts
 
 template<typename T, typename U>
 struct RangeConstructible
-    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U>>()) {};
+    : DefineConcept(
+          camp::val<RAJA::detail::deduced_range_storage_type_t<T, U>>()) {};
 
 template<typename T, typename U, typename V>
 struct RangeStrideConstructible
-    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U, V>>()) {};
+    : DefineConcept(
+          camp::val<
+              RAJA::detail::deduced_range_stride_storage_type_t<T, U, V>>()) {};
 
 }  // namespace concepts
 
