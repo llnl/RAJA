@@ -54,8 +54,8 @@ variables:
   PROJECT_TIOGA_DEPS: ""
 
   # Tuolumne (flux) allocation settings
-  TUOLUMNE_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=90m --nodes=1 -o per-resource.count=2"
-  TUOLUMNE_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
+  TUOLUMNE_SHARED_ALLOC: "OFF"
+  TUOLUMNE_JOB_ALLOC: "--queue=pci --nodes=1 --time-limit=60m --begin-time=+5s"
   # Project specific variants for tuolumne
   PROJECT_TUOLUMNE_VARIANTS: "~shared +openmp +vectorization +tests"
   # Project specific deps for tuolumne
