@@ -47,7 +47,7 @@ variables:
 
   # Tioga (flux) allocation settings
   TIOGA_SHARED_ALLOC: "OFF"
-  TIOGA_JOB_ALLOC: "--queue=pci --nodes=1 --timelimit=30m --begin-time=+5s"
+  TIOGA_JOB_ALLOC: "--queue=pci --nodes=1 --time-limit=30m --begin-time=+5s"
   # Project specific variants for tioga
   PROJECT_TIOGA_VARIANTS: "~shared +openmp +vectorization +tests"
   # Project specific deps for tioga
