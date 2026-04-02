@@ -19,7 +19,7 @@ include(CMakeDependentOption)
 # Set version number
 set(RAJA_VERSION_MAJOR 2025)
 set(RAJA_VERSION_MINOR 12)
-set(RAJA_VERSION_PATCHLEVEL 1)
+set(RAJA_VERSION_PATCHLEVEL 2)
 
 if (RAJA_LOADED AND (NOT RAJA_LOADED STREQUAL "${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}"))
   message(FATAL_ERROR "You are mixing RAJA versions. Loaded is ${RAJA_LOADED}, expected ${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}")
@@ -328,6 +328,10 @@ install(FILES
 
 # Setup internal RAJA configuration options
 include(cmake/SetupRajaConfig.cmake)
+
+if (RAJA_ENABLE_JIT)
+  include(cmake/SetupProteus.cmake)
+endif()
 
 if(RAJA_ENABLE_TESTS)
   add_subdirectory(test)
