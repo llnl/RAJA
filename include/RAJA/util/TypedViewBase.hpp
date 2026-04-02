@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -744,9 +746,9 @@ public:
 
   using Base         = ViewBase<ValueType, PointerType, LayoutType>;
   using Self         = TypedViewBase<value_type,
-                             pointer_type,
-                             layout_type,
-                             camp::list<IndexTypes...>>;
+                                     pointer_type,
+                                     layout_type,
+                                     camp::list<IndexTypes...>>;
   using NonConstView = TypedViewBase<nc_value_type,
                                      nc_pointer_type,
                                      layout_type,
@@ -754,9 +756,9 @@ public:
 
   using shifted_layout_type = typename add_offset<layout_type>::type;
   using ShiftedView         = TypedViewBase<value_type,
-                                    pointer_type,
-                                    shifted_layout_type,
-                                    camp::list<IndexTypes...>>;
+                                            pointer_type,
+                                            shifted_layout_type,
+                                            camp::list<IndexTypes...>>;
 
   static constexpr size_t n_dims = sizeof...(IndexTypes);
 

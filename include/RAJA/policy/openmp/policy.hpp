@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -19,6 +21,7 @@
 #define policy_openmp_HPP
 
 #include <type_traits>
+#include <omp.h>
 
 #include "RAJA/policy/PolicyBase.hpp"
 
@@ -37,8 +40,6 @@ typedef enum omp_sched_t
   // schedule modifier
   omp_sched_monotonic = 0x80000000u
 } omp_sched_t;
-#else
-#include <omp.h>
 #endif
 
 namespace RAJA
@@ -343,6 +344,8 @@ struct omp_atomic
 
 #endif
 
+struct omp_thread
+{};
 
 template<RAJA::omp::multi_reduce_algorithm algorithm>
 using omp_multi_reduce_tuning =
@@ -384,6 +387,11 @@ using omp_multi_reduce = omp_multi_reduce_unordered;
 /// Type alias for atomics
 ///
 using policy::omp::omp_atomic;
+
+///
+/// Type alias for thread
+///
+using policy::omp::omp_thread;
 
 ///
 /// Type aliases to simplify common omp parallel for loop execution

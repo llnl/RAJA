@@ -9,8 +9,10 @@
 */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -177,7 +179,7 @@ inline void sort(Sorter sorter, Iter begin, Iter end, Compare comp)
         std::min((n + iterates_per_task - 1) / iterates_per_task, max_threads);
     RAJA_UNUSED_VAR(requested_num_threads);  // avoid warning in hip device code
 
-#pragma omp parallel num_threads(static_cast <int>(requested_num_threads))
+#pragma omp parallel num_threads(static_cast<int>(requested_num_threads))
 #pragma omp master
     {
       sort_task(sorter, begin, 0, n, iterates_per_task, comp);
@@ -189,7 +191,7 @@ inline void sort(Sorter sorter, Iter begin, Iter end, Compare comp)
         (n + min_iterates_per_task - 1) / min_iterates_per_task, max_threads);
     RAJA_UNUSED_VAR(requested_num_threads);  // avoid warning in hip device code
 
-#pragma omp parallel num_threads(static_cast <int>(requested_num_threads))
+#pragma omp parallel num_threads(static_cast<int>(requested_num_threads))
     {
       sort_parallel_region(sorter, begin, n, comp);
     }

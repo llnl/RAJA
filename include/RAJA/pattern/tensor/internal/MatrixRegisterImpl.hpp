@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -23,9 +25,6 @@
 #include "RAJA/pattern/tensor/MatrixRegister.hpp"
 #include "RAJA/pattern/tensor/internal/MatrixMatrixMultiply.hpp"
 #include "RAJA/util/BitMask.hpp"
-
-//#define DEBUG_MATRIX_LOAD_STORE
-
 
 namespace RAJA
 {
@@ -79,9 +78,9 @@ public:
                                         layout_type,
                                         camp::idx_seq<COL_SIZE, ROW_SIZE>>;
   using product_type   = TensorRegister<REGISTER_POLICY,
-                                      T,
-                                      layout_type,
-                                      camp::idx_seq<ROW_SIZE, ROW_SIZE>>;
+                                        T,
+                                        layout_type,
+                                        camp::idx_seq<ROW_SIZE, ROW_SIZE>>;
 
   static constexpr camp::idx_t s_num_rows    = ROW_SIZE;
   static constexpr camp::idx_t s_num_columns = COL_SIZE;
@@ -1670,7 +1669,7 @@ public:
             reg++;
 
           }  // rowreg
-        }    // col
+        }  // col
       }
     }
     return result;

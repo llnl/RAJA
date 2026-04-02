@@ -1,7 +1,11 @@
-# and RAJA project contributors. See the RAJA/LICENSE file for details.
+###############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other
+# RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+# files for dates and other details. No copyright assignment is required
+# to contribute to RAJA.
 #
 # SPDX-License-Identifier: (BSD-3-Clause)
-###############################################################################
+################################################################################
 
 raja_add_executable(
   NAME make_permuted_view
@@ -18,6 +22,12 @@ raja_add_executable(
 raja_add_executable(
   NAME dynamic-forall
   SOURCES dynamic-forall.cpp)
+
+if (RAJA_ENABLE_JIT)
+  raja_add_executable(
+    NAME forall-jit
+    SOURCES forall-jit.cpp)
+endif()
 
 raja_add_executable(
   NAME forall-param-reductions
@@ -70,6 +80,10 @@ raja_add_executable(
 raja_add_executable(
   NAME raja-launch
   SOURCES raja-launch.cpp)
+
+raja_add_executable(
+  NAME gpu-launch-context-indices
+  SOURCES gpu-launch-context-indices.cpp)
 
 raja_add_executable(
   NAME launch_matrix-multiply

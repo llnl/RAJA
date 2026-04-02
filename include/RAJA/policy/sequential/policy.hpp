@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -124,6 +126,9 @@ struct seq_multi_reduce_policy : make_policy_pattern_launch_platform_t<
 struct seq_atomic
 {};
 
+struct seq_thread
+{};
+
 template<RAJA::sequential::multi_reduce_algorithm algorithm>
 using seq_multi_reduce_tuning =
     seq_multi_reduce_policy<RAJA::sequential::MultiReduceTuning<algorithm>>;
@@ -147,6 +152,7 @@ using policy::sequential::seq_multi_reduce;
 using policy::sequential::seq_reduce;
 using policy::sequential::seq_region;
 using policy::sequential::seq_segit;
+using policy::sequential::seq_thread;
 using policy::sequential::seq_work;
 
 

@@ -1,0 +1,38 @@
+###############################################################################
+# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and RADIUSS
+# project contributors. See the RAJA/LICENSE file for details.
+#
+# SPDX-License-Identifier: (MIT)
+###############################################################################
+
+# This file defines JOB TEMPLATES ONLY.
+# It is included in CHILD pipelines (via trigger: include:) to provide
+# templates that your jobs can extend.
+
+###############################################################################
+# JOB CUSTOMIZATION TEMPLATES
+###############################################################################
+
+# Configuration shared by build and test jobs specific to this project.
+# Not all configuration can be shared. Here projects can fine tune the
+# CI behavior.
+.custom_job:
+  artifacts:
+    reports:
+      junit: junit.xml
+    name: "${CI_PROJECT_NAME}-${CI_MACHINE}-${CI_JOB_NAME}-${CI_PIPELINE_ID}"
+    paths:
+      - ./*.cmake
+
+.reproducer_vars:
+  script:
+    - |
+      echo -e "
+      # Required variables \n
+      export MODULE_LIST=\"${MODULE_LIST}\" \n
+      export SPEC=\"${SPEC//\"/\\\"}\" \n
+      export CMAKE_EXTRA_ARGS=\"${CMAKE_EXTRA_ARGS}\" \n
+      # Allow to set job script for debugging (only this differs from CI) \n
+      export DEBUG_MODE=true \n
+      # Using the CI build cache is optional and requires a token. Set it like so: \n
+      # export REGISTRY_TOKEN=\"<your token here>\" \n"

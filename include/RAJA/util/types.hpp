@@ -11,8 +11,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -271,7 +273,7 @@ using Real_type = double;
 
 #elif defined(RAJA_USE_FLOAT)
 ///
-using Real_type         = float;
+using Real_type = float;
 
 #else
 #error RAJA Real_type is undefined!
@@ -885,8 +887,8 @@ using UnalignedReal_ptr       = Real_type*;
 using const_UnalignedReal_ptr = const Real_type*;
 
 #elif defined(RAJA_USE_RESTRICT_PTR)
-using Real_ptr          = Real_type* RAJA_RESTRICT;
-using const_Real_ptr    = const Real_type* RAJA_RESTRICT;
+using Real_ptr       = Real_type* RAJA_RESTRICT;
+using const_Real_ptr = const Real_type* RAJA_RESTRICT;
 
 #if defined(RAJA_USE_COMPLEX)
 using Complex_ptr       = Complex_type* RAJA_RESTRICT;
@@ -897,24 +899,24 @@ using UnalignedReal_ptr       = Real_type* RAJA_RESTRICT;
 using const_UnalignedReal_ptr = const Real_type* RAJA_RESTRICT;
 
 #elif defined(RAJA_USE_RESTRICT_ALIGNED_PTR)
-using Real_ptr           = TDRAReal_ptr;
-using const_Real_ptr     = const_TDRAReal_ptr;
+using Real_ptr       = TDRAReal_ptr;
+using const_Real_ptr = const_TDRAReal_ptr;
 
 #if defined(RAJA_USE_COMPLEX)
-using Complex_ptr        = Complex_type* RAJA_RESTRICT;
-using const_Complex_ptr  = const Complex_type* RAJA_RESTRICT;
+using Complex_ptr       = Complex_type* RAJA_RESTRICT;
+using const_Complex_ptr = const Complex_type* RAJA_RESTRICT;
 #endif
 
 using UnalignedReal_ptr       = Real_type* RAJA_RESTRICT;
 using const_UnalignedReal_ptr = const Real_type* RAJA_RESTRICT;
 
 #elif defined(RAJA_USE_PTR_CLASS)
-using Real_ptr           = RestrictAlignedRealPtr;
-using const_Real_ptr     = ConstRestrictAlignedRealPtr;
+using Real_ptr       = RestrictAlignedRealPtr;
+using const_Real_ptr = ConstRestrictAlignedRealPtr;
 
 #if defined(RAJA_USE_COMPLEX)
-using Complex_ptr        = RestrictComplexPtr;
-using const_Complex_ptr  = ConstRestrictComplexPtr;
+using Complex_ptr       = RestrictComplexPtr;
+using const_Complex_ptr = ConstRestrictComplexPtr;
 #endif
 
 using UnalignedReal_ptr       = RestrictRealPtr;

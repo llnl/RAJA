@@ -11,8 +11,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -772,13 +774,11 @@ template<typename Function,
          typename Arg2 = Arg1>
 struct BinaryFunction
     : DefineConcept(::RAJA::concepts::convertible_to<Return>(
-          camp::val<Function>()(camp::val<Arg1>(), camp::val<Arg2>())))
-{};
+          camp::val<Function>()(camp::val<Arg1>(), camp::val<Arg2>()))) {};
 
 template<typename Function, typename Return, typename Arg = Return>
 struct UnaryFunction : DefineConcept(::RAJA::concepts::convertible_to<Return>(
-                           camp::val<Function>()(camp::val<Arg>())))
-{};
+                           camp::val<Function>()(camp::val<Arg>()))) {};
 
 namespace detail
 {

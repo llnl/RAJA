@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -24,9 +26,9 @@
 #include <cstdlib>
 #include <list>
 #include <map>
+#include <mutex>
 
 #include "RAJA/util/align.hpp"
-#include "RAJA/util/mutex.hpp"
 
 namespace RAJA
 {
@@ -329,9 +331,7 @@ public:
   /// Free all backing allocations, even if they are currently in use
   void free_chunks()
   {
-#if defined(RAJA_ENABLE_OPENMP)
-    lock_guard<omp::mutex> lock(m_mutex);
-#endif
+    std::lock_guard<std::mutex> lock(m_mutex);
 
     while (!m_arenas.empty())
     {
@@ -343,18 +343,14 @@ public:
 
   size_t arena_size()
   {
-#if defined(RAJA_ENABLE_OPENMP)
-    lock_guard<omp::mutex> lock(m_mutex);
-#endif
+    std::lock_guard<std::mutex> lock(m_mutex);
 
     return m_default_arena_size;
   }
 
   size_t arena_size(size_t new_size)
   {
-#if defined(RAJA_ENABLE_OPENMP)
-    lock_guard<omp::mutex> lock(m_mutex);
-#endif
+    std::lock_guard<std::mutex> lock(m_mutex);
 
     size_t prev_size     = m_default_arena_size;
     m_default_arena_size = new_size;
@@ -364,9 +360,7 @@ public:
   template<typename T>
   T* malloc(size_t nTs, size_t alignment = alignof(T))
   {
-#if defined(RAJA_ENABLE_OPENMP)
-    lock_guard<omp::mutex> lock(m_mutex);
-#endif
+    std::lock_guard<std::mutex> lock(m_mutex);
 
     const size_t size                  = nTs * sizeof(T);
     void* ptr                          = nullptr;
@@ -398,9 +392,7 @@ public:
 
   void free(const void* cptr)
   {
-#if defined(RAJA_ENABLE_OPENMP)
-    lock_guard<omp::mutex> lock(m_mutex);
-#endif
+    std::lock_guard<std::mutex> lock(m_mutex);
 
     void* ptr                          = const_cast<void*>(cptr);
     arena_container_type::iterator end = m_arenas.end();
@@ -422,9 +414,7 @@ public:
 private:
   using arena_container_type = std::list<detail::MemoryArena>;
 
-#if defined(RAJA_ENABLE_OPENMP)
-  omp::mutex m_mutex;
-#endif
+  std::mutex m_mutex;
 
   arena_container_type m_arenas;
   size_t m_default_arena_size;

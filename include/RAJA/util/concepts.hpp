@@ -11,8 +11,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -34,8 +36,7 @@ using namespace camp::concepts;
 
 template<typename From, typename To>
 struct ConvertibleTo
-    : DefineConcept(::RAJA::concepts::convertible_to<To>(camp::val<From>()))
-{};
+    : DefineConcept(::RAJA::concepts::convertible_to<To>(camp::val<From>())) {};
 
 }  // namespace concepts
 

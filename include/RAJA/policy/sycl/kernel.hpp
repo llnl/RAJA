@@ -10,8 +10,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -23,11 +25,11 @@
 #include "RAJA/policy/sycl/kernel/SyclKernel.hpp"
 #include "RAJA/policy/sycl/kernel/For.hpp"
 #include "RAJA/policy/sycl/kernel/ForICount.hpp"
-//#include "RAJA/policy/sycl/kernel/Hyperplane.hpp"
-//#include "RAJA/policy/sycl/kernel/InitLocalMem.hpp"
+// #include "RAJA/policy/sycl/kernel/Hyperplane.hpp"
+// #include "RAJA/policy/sycl/kernel/InitLocalMem.hpp"
 #include "RAJA/policy/sycl/kernel/Lambda.hpp"
-//#include "RAJA/policy/sycl/kernel/Reduce.hpp"
-//#include "RAJA/policy/sycl/kernel/Sync.hpp"
+// #include "RAJA/policy/sycl/kernel/Reduce.hpp"
+// #include "RAJA/policy/sycl/kernel/Sync.hpp"
 #include "RAJA/policy/sycl/kernel/Tile.hpp"
 #include "RAJA/policy/sycl/kernel/TileTCount.hpp"
 #include "RAJA/policy/sycl/kernel/internal.hpp"

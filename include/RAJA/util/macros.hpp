@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -115,11 +117,10 @@
  *******************************************************************************
  */
 template<typename... T>
-RAJA_HOST_DEVICE RAJA_INLINE void RAJA_UNUSED_VAR(T&&...) noexcept
-{}
+RAJA_HOST_DEVICE RAJA_INLINE void RAJA_UNUSED_VAR(T&&...) noexcept {}
 
 #define RAJA_DIVIDE_CEILING_INT(dividend, divisor)                             \
-  (((dividend) + (divisor)-1) / (divisor))
+  (((dividend) + (divisor) - 1) / (divisor))
 
 /*!
  * OpenMP helper for the new RAJA reducer interface.
@@ -139,8 +140,7 @@ RAJA_HOST_DEVICE RAJA_INLINE void RAJA_UNUSED_VAR(T&&...) noexcept
 #endif
 
 
-RAJA_HOST_DEVICE
-inline void RAJA_ABORT_OR_THROW(const char* str)
+RAJA_HOST_DEVICE inline void RAJA_ABORT_OR_THROW(const char* str)
 {
 #if defined(__SYCL_DEVICE_ONLY__)
   RAJA_UNUSED_VAR(str);
@@ -222,6 +222,19 @@ inline void RAJA_ABORT_OR_THROW(const char* str)
 #define RAJA_DEPRECATE(Msg) __attribute__((deprecated(Msg)))
 #define RAJA_DEPRECATE_ALIAS(Msg)
 
+#endif
+
+#if defined RAJA_ENABLE_JIT
+// This macro accepts a list of integers as its arguments, corresponding to the
+// 1-indexed arguments for which to specialize a function's IR.
+#define RAJA_JIT_COMPILE_ARGS(...) __attribute__((annotate("jit", __VA_ARGS__)))
+#define RAJA_JIT_COMPILE           __attribute__((annotate("jit")))
+#define RAJA_JIT_VARIABLE(a)       proteus::jit_variable(a)
+#else
+// When JIT is not enabled, simply pass through.
+#define RAJA_JIT_COMPILE_ARGS(...)
+#define RAJA_JIT_COMPILE
+#define RAJA_JIT_VARIABLE(a) a
 #endif
 
 #endif /* RAJA_INTERNAL_MACROS_HPP */

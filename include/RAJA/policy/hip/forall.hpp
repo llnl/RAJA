@@ -13,8 +13,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -35,8 +37,7 @@
 
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
-
-#include "RAJA/internal/fault_tolerance.hpp"
+#include "RAJA/util/Jit.hpp"
 
 #include "RAJA/policy/hip/MemUtils_HIP.hpp"
 #include "RAJA/policy/hip/policy.hpp"
@@ -374,10 +375,10 @@ template<typename EXEC_POL,
                               (IterationGetter::block_size > 0),
                           size_t> BlockSize = IterationGetter::block_size>
 __launch_bounds__(BlockSize, 1) __global__
-    void forallp_hip_kernel(const LOOP_BODY loop_body,
-                            const Iterator idx,
-                            const IndexType length,
-                            ForallParam f_params)
+    RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(const LOOP_BODY loop_body,
+                                                     const Iterator idx,
+                                                     const IndexType length,
+                                                     ForallParam f_params)
 {
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
@@ -403,10 +404,11 @@ template<typename EXEC_POL,
                                           IterationMapping>::value &&
                               (IterationGetter::block_size <= 0),
                           size_t> RAJA_UNUSED_ARG(BlockSize) = 0>
-__global__ void forallp_hip_kernel(const LOOP_BODY loop_body,
-                                   const Iterator idx,
-                                   const IndexType length,
-                                   ForallParam f_params)
+__global__ RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(
+    const LOOP_BODY loop_body,
+    const Iterator idx,
+    const IndexType length,
+    ForallParam f_params)
 {
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
@@ -435,10 +437,10 @@ template<
                          (IterationGetter::block_size > 0),
                      size_t> BlockSize = IterationGetter::block_size>
 __launch_bounds__(BlockSize, 1) __global__
-    void forallp_hip_kernel(const LOOP_BODY loop_body,
-                            const Iterator idx,
-                            const IndexType length,
-                            ForallParam f_params)
+    RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(const LOOP_BODY loop_body,
+                                                     const Iterator idx,
+                                                     const IndexType length,
+                                                     ForallParam f_params)
 {
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
@@ -466,10 +468,11 @@ template<
                                          IterationMapping>::value &&
                          (IterationGetter::block_size <= 0),
                      size_t> RAJA_UNUSED_ARG(BlockSize) = 0>
-__global__ void forallp_hip_kernel(const LOOP_BODY loop_body,
-                                   const Iterator idx,
-                                   const IndexType length,
-                                   ForallParam f_params)
+__global__ RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(
+    const LOOP_BODY loop_body,
+    const Iterator idx,
+    const IndexType length,
+    ForallParam f_params)
 {
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
@@ -536,7 +539,7 @@ forall_impl(resources::Hip hip_res,
   // Only launch kernel if we have something to iterate over
   if (len > 0)
   {
-
+    RAJA::internal::jit::register_lambda(loop_body);
     auto func = reinterpret_cast<const void*>(
         &impl::forallp_hip_kernel<EXEC_POL, Iterator, LOOP_BODY, IndexType,
                                   camp::decay<ForallParam>>);
@@ -552,7 +555,6 @@ forall_impl(resources::Hip hip_res,
     internal::HipDims dims(1);
     DimensionCalculator::set_dimensions(dims, len, func, shmem);
 
-    RAJA_FT_BEGIN;
 
     RAJA::hip::detail::hipInfo launch_info;
     launch_info.gridDim  = dims.blocks;
@@ -580,8 +582,6 @@ forall_impl(resources::Hip hip_res,
       RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params,
                                                       launch_info);
     }
-
-    RAJA_FT_END;
   }
 
   return resources::EventProxy<resources::Hip>(hip_res);
@@ -620,6 +620,7 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
     const TypedIndexSet<SegmentTypes...>& iset,
     LoopBody&& loop_body)
 {
+  RAJA::internal::jit::register_lambda(loop_body);
   int num_seg = iset.getNumSegments();
   for (int isi = 0; isi < num_seg; ++isi)
   {

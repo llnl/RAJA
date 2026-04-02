@@ -10,8 +10,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -28,11 +30,12 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
+#include <mutex>
 #include <type_traits>
 #include <unordered_map>
 
+
 #include "RAJA/util/basic_mempool.hpp"
-#include "RAJA/util/mutex.hpp"
 #include "RAJA/util/types.hpp"
 
 #include "RAJA/policy/sycl/policy.hpp"
@@ -53,15 +56,11 @@ struct syclInfo
   sycl_dim_t blockDim {0};
   ::sycl::queue qu    = ::sycl::queue();
   bool setup_reducers = false;
-#if defined(RAJA_ENABLE_OPENMP)
-  syclInfo* thread_states = nullptr;
-  omp::mutex lock;
-#endif
 };
 
 extern syclInfo g_status;
 
-extern syclInfo tl_status;
+thread_local extern syclInfo tl_status;
 
 extern std::unordered_map<::sycl::queue, bool> g_queue_info_map;
 

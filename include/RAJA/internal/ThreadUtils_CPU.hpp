@@ -10,8 +10,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -21,9 +23,11 @@
 
 #include "RAJA/config.hpp"
 
+#include "RAJA/pattern/thread.hpp"
 #if defined(RAJA_ENABLE_OPENMP)
-#include <omp.h>
+#include "RAJA/policy/openmp/thread.hpp"
 #endif
+#include "RAJA/policy/sequential/thread.hpp"
 
 namespace RAJA
 {
@@ -35,16 +39,10 @@ namespace RAJA
 *
 *************************************************************************
 */
-RAJA_INLINE
-int getMaxOMPThreadsCPU()
+template<typename ThreadPolicy = RAJA::detail::active_auto_thread>
+RAJA_INLINE int getMaxOMPThreadsCPU()
 {
-  int nthreads = 1;
-
-#if defined(RAJA_ENABLE_OPENMP)
-  nthreads = omp_get_max_threads();
-#endif
-
-  return nthreads;
+  return RAJA::get_max_threads<ThreadPolicy>();
 }
 
 }  // namespace RAJA

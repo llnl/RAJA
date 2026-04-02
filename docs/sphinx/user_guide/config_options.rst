@@ -1,7 +1,8 @@
 .. ##
-.. ## Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-.. ## and RAJA project contributors. See the RAJA/LICENSE file
-.. ## for details.
+.. ## Copyright (c) Lawrence Livermore National Security, LLC and other
+.. ## RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+.. ## files for dates and other details. No copyright assignment is required
+.. ## to contribute to RAJA.
 .. ##
 .. ## SPDX-License-Identifier: (BSD-3-Clause)
 .. ##
@@ -174,9 +175,37 @@ Some RAJA features are enabled by RAJA-specific CMake variables.
       RAJA_ENABLE_DESUL_ATOMICS     Replace RAJA atomic implementations
                                     with Desul variants at compile-time.
                                     Default is off.
+      RAJA_ENABLE_JIT               Enable Proteus-based JIT compilation
+                                    support for RAJA kernels. Default is off.
       RAJA_ENABLE_VECTORIZATION     Enable SIMD/SIMT intrinsics support.
                                     Default is on.
       ===========================   =======================================
+
+JIT compilation (Proteus)
+--------------------------
+
+When ``RAJA_ENABLE_JIT=On``, RAJA requires a Clang-family compiler
+(``CMAKE_CXX_COMPILER_ID`` must match ``Clang``). RAJA will also attempt to
+locate Proteus:
+
+      ===========================   =======================================
+      Variable                      Meaning
+      ===========================   =======================================
+      LLVM_INSTALL_DIR              LLVM installation prefix used by Proteus.
+                                    Unless you provide a Proteus installation
+                                    that is statically linked with LLVM,
+                                    Proteus support requires LLVM 18, 19, or 20
+                                    and this variable must be set to that LLVM
+                                    installation.
+      PROTEUS_INSTALL_DIR           Optional Proteus install prefix. If set,
+                                    RAJA configures Proteus via
+                                    ``find_package(proteus ...)`` using this
+                                    prefix. If not set, RAJA will fetch Proteus
+                                    via CMake ``FetchContent`` at configure time.
+      ===========================   =======================================
+
+See :ref:`feat-jit-label` for usage of ``RAJA_JIT_COMPILE`` and
+``proteus::jit_variable``.
  
 Programming model back-end support
 -------------------------------------
@@ -334,25 +363,6 @@ in units of **bytes**.
 
 For details on the options in this section are used, please see the 
 header file ``RAJA/include/RAJA/util/types.hpp``.
-
-Other RAJA Features
--------------------
-   
-RAJA contains some features that are used mainly for development or may
-not be of general interest to RAJA users. These are turned off be default.
-They are described here for reference and completeness.
-
-      ===========================   =======================================
-      Variable                      Meaning
-      ===========================   =======================================
-      RAJA_ENABLE_FT                Enable/disable RAJA experimental
-                                    loop-level fault-tolerance mechanism
-      RAJA_REPORT_FT                Enable/disable a report of fault-
-                                    tolerance enabled run (e.g., number of 
-                                    faults detected, recovered from, 
-                                    recovery overhead, etc.)
-      ===========================   =======================================
-
 
 .. _configopt-raja-backends-label:
 

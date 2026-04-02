@@ -1,0 +1,62 @@
+###############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other
+# RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+# files for dates and other details. No copyright assignment is required
+# to contribute to RAJA.
+#
+# SPDX-License-Identifier: (BSD-3-Clause)
+###############################################################################
+
+# This file defines project-specific VARIABLES ONLY.
+# It is included in the PARENT pipeline (.gitlab-ci.yml) to provide
+# variables that are passed as component inputs and forwarded to child pipelines.
+
+###############################################################################
+# MACHINE-SPECIFIC ALLOCATION VARIABLES
+###############################################################################
+
+variables:
+  # Allocation name (used for shared allocations)
+  ALLOC_NAME: ${CI_PROJECT_NAME}_ci_${CI_PIPELINE_ID}
+
+  # Dane (SLURM) allocation settings
+  DANE_SHARED_ALLOC: "--exclusive --reservation=ci --time=120 --nodes=1"
+  # Note: we repeat the reservation, helpful when jobs are manually re-triggered.
+  DANE_JOB_ALLOC: "--reservation=ci --nodes=1"
+  # Project specific variants for dane
+  PROJECT_DANE_VARIANTS: "~shared +openmp +vectorization +tests"
+  # Project specific deps for dane
+  PROJECT_DANE_DEPS: ""
+
+  # Matrix (SLURM) allocation settings
+  MATRIX_SHARED_ALLOC: "--exclusive --partition=pci --time=60 --nodes=1"
+  # Note: we repeat the reservation, helpful when jobs are manually re-triggered.
+  MATRIX_JOB_ALLOC: "--partition=pci --nodes=1"
+  # Project specific variants for matrix
+  PROJECT_MATRIX_VARIANTS: "~shared +cuda cuda_arch=90 +tests"
+  # Project specific deps for matrix
+  PROJECT_MATRIX_DEPS: ""
+
+  # Corona (flux) allocation settings
+  CORONA_SHARED_ALLOC: "--exclusive --time-limit=60m --nodes=1 -o per-resource.count=2"
+  CORONA_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
+  # Project specific variants for corona
+  PROJECT_CORONA_VARIANTS: "~shared ~openmp +vectorization +tests"
+  # Project specific deps for corona
+  PROJECT_CORONA_DEPS: ""
+
+  # Tioga (flux) allocation settings
+  TIOGA_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=70m --nodes=1 -o per-resource.count=2"
+  TIOGA_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
+  # Project specific variants for tioga
+  PROJECT_TIOGA_VARIANTS: "~shared +openmp +vectorization +tests"
+  # Project specific deps for tioga
+  PROJECT_TIOGA_DEPS: ""
+
+  # Tuolumne (flux) allocation settings
+  TUOLUMNE_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=90m --nodes=1 -o per-resource.count=2"
+  TUOLUMNE_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
+  # Project specific variants for tuolumne
+  PROJECT_TUOLUMNE_VARIANTS: "~shared +openmp +vectorization +tests"
+  # Project specific deps for tuolumne
+  PROJECT_TUOLUMNE_DEPS: ""

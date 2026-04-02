@@ -10,8 +10,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -30,6 +32,7 @@
 
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
+#include "RAJA/util/Jit.hpp"
 
 #include "RAJA/pattern/kernel.hpp"
 #include "RAJA/pattern/kernel/For.hpp"
@@ -211,7 +214,8 @@ namespace internal
  * CUDA global function for launching CudaKernel policies
  */
 template<typename Data, typename Exec>
-__global__ void CudaKernelLauncher(const RAJA_CUDA_GRID_CONSTANT Data data)
+__global__ RAJA_JIT_COMPILE void CudaKernelLauncher(
+    const RAJA_CUDA_GRID_CONSTANT Data data)
 {
 
   using data_t        = camp::decay<Data>;
@@ -231,7 +235,7 @@ __global__ void CudaKernelLauncher(const RAJA_CUDA_GRID_CONSTANT Data data)
  * This launcher is used by the CudaKerelFixed policies.
  */
 template<int BlockSize, int BlocksPerSM, typename Data, typename Exec>
-__launch_bounds__(BlockSize, BlocksPerSM) __global__
+__launch_bounds__(BlockSize, BlocksPerSM) __global__ RAJA_JIT_COMPILE
     void CudaKernelLauncherFixed(const RAJA_CUDA_GRID_CONSTANT Data data)
 {
 
@@ -681,7 +685,7 @@ struct StatementExecutor<
         auto cuda_data = RAJA::cuda::make_launch_body(
             func, launch_dims.dims.blocks, launch_dims.dims.threads, shmem, res,
             data);
-
+        RAJA::internal::jit::register_lambda(func);
         //
         // Launch the kernel
         //

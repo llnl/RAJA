@@ -12,8 +12,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -26,6 +28,7 @@
 #if defined(RAJA_ENABLE_CUDA)
 
 #include <type_traits>
+#include <mutex>
 
 #include <cuda.h>
 
@@ -33,7 +36,6 @@
 #include "RAJA/util/SoAArray.hpp"
 #include "RAJA/util/SoAPtr.hpp"
 #include "RAJA/util/basic_mempool.hpp"
-#include "RAJA/util/mutex.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA/util/reduce.hpp"
 
@@ -600,9 +602,7 @@ public:
   //! get new value for use in resource
   auto new_value(::RAJA::resources::Cuda res) -> T (&)[num_slots]
   {
-#if defined(RAJA_ENABLE_OPENMP)
-    lock_guard<omp::mutex> lock(m_mutex);
-#endif
+    std::lock_guard<std::mutex> lock(m_mutex);
     ResourceNode* rn = resource_list;
     while (rn)
     {
@@ -652,9 +652,7 @@ public:
 
   ~PinnedTally() { free_list(); }
 
-#if defined(RAJA_ENABLE_OPENMP)
-  omp::mutex m_mutex;
-#endif
+  std::mutex m_mutex;
 
 private:
   ResourceNode* resource_list;
@@ -1099,9 +1097,7 @@ public:
     {
       if (val.value != val.identity)
       {
-#if defined(RAJA_ENABLE_OPENMP)
-        lock_guard<omp::mutex> lock(tally_or_val_ptr.list->m_mutex);
-#endif
+        std::lock_guard<std::mutex> lock(tally_or_val_ptr.list->m_mutex);
         parent->combine(val.value);
       }
     }
@@ -1132,8 +1128,8 @@ public:
     if (n != end)
     {
       tally_or_val_ptr.list->synchronize_resources();
-      ::RAJA::detail::HighAccuracyReduce<T, typename Combiner::operator_type>
-          reducer(std::move(val.value));
+      ::RAJA::HighAccuracyReduce<T, typename Combiner::operator_type> reducer(
+          std::move(val.value));
       for (; n != end; ++n)
       {
         T(&values)[tally_slots] = *n;
@@ -1142,7 +1138,7 @@ public:
           reducer.combine(std::move(values[r]));
         }
       }
-      val.value = reducer.get_and_clear();
+      val.value = reducer.get_and_reset();
       tally_or_val_ptr.list->free_list();
     }
     return val.value;
