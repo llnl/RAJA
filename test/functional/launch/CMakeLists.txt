@@ -47,6 +47,10 @@ add_subdirectory(nested_direct)
 
 add_subdirectory(nested_loop)
 
+add_subdirectory(perfect_loop)
+
+add_subdirectory(perfect_loop_runtime)
+
 add_subdirectory(tile_icount_tcount_direct_unchecked)
 
 add_subdirectory(tile_icount_tcount_direct)
@@ -61,4 +65,3 @@ add_subdirectory(nested_tile_loop)
 
 unset( LAUNCH_BACKENDS )
 unset( LAUNCH_DIRECT_UNCHECKED_BACKENDS )
-

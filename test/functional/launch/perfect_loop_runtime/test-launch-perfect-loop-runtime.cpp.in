@@ -1,0 +1,25 @@
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
+//
+// SPDX-License-Identifier: (BSD-3-Clause)
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+#include "RAJA_test-base.hpp"
+#include "RAJA_test-camp.hpp"
+#include "RAJA_test-index-types.hpp"
+
+#include "RAJA_test-forall-data.hpp"
+#include "RAJA_test-launch-perfect-loop-runtime-execpol.hpp"
+
+#include "test-launch-perfect-loop-runtime.hpp"
+
+using @BACKEND@LaunchPerfectLoopRuntimeTypes =
+    Test<camp::cartesian_product<IdxTypeList,
+                                 @BACKEND@_launch_perfect_loop_runtime_policies>>::Types;
+
+INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@,
+                               LaunchPerfectLoopRuntimeTest,
+                               @BACKEND@LaunchPerfectLoopRuntimeTypes);

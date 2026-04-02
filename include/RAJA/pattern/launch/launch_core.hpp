@@ -42,6 +42,7 @@
 #include "camp/concepts.hpp"
 #include "camp/tuple.hpp"
 
+#include <iterator>
 
 #if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_SYCL_ACTIVE)
 #define RAJA_TEAM_SHARED __shared__
@@ -92,6 +93,48 @@ struct LaunchPolicy
 #if defined(RAJA_GPU_ACTIVE)
   using device_policy_t = DEVICE_POLICY;
 #endif
+};
+
+template<typename... SEGMENTS>
+struct MultiRange
+{
+  using tuple_type = camp::tuple<SEGMENTS...>;
+
+  static constexpr camp::idx_t size = sizeof...(SEGMENTS);
+
+  tuple_type segments;
+
+  RAJA_HOST_DEVICE constexpr MultiRange(SEGMENTS const&... segs)
+      : segments(segs...)
+  {}
+
+  template<camp::idx_t Idx>
+  RAJA_HOST_DEVICE RAJA_INLINE auto const& get() const
+  {
+    return camp::get<Idx>(segments);
+  }
+};
+
+template<typename... SEGMENTS>
+RAJA_HOST_DEVICE RAJA_INLINE auto make_multi_range(SEGMENTS const&... segments)
+{
+  return MultiRange<SEGMENTS...>(segments...);
+}
+
+template<typename... LOOP_POLICIES>
+struct PerfectLoopPolicy
+{
+  using host_policy_t = camp::list<typename LOOP_POLICIES::host_policy_t...>;
+#if defined(RAJA_GPU_ACTIVE)
+  using device_policy_t =
+      camp::list<typename LOOP_POLICIES::device_policy_t...>;
+#endif
+};
+
+template<camp::idx_t... Indices>
+struct PerfectLoopInterchange
+{
+  using index_seq = camp::idx_seq<Indices...>;
 };
 
 struct Teams
@@ -482,6 +525,216 @@ struct LoopExecute;
 template<typename POLICY, typename SEGMENT>
 struct LoopICountExecute;
 
+namespace launch_detail
+{
+
+template<typename ORDER, camp::idx_t N>
+struct perfect_loop_order
+{
+  using type = camp::make_idx_seq_t<N>;
+};
+
+template<camp::idx_t... Indices, camp::idx_t N>
+struct perfect_loop_order<PerfectLoopInterchange<Indices...>, N>
+{
+  using type = camp::idx_seq<Indices...>;
+};
+
+template<camp::idx_t I, typename INDEX_SEQ>
+struct idx_seq_at;
+
+template<camp::idx_t I, camp::idx_t Head, camp::idx_t... Tail>
+struct idx_seq_at<I, camp::idx_seq<Head, Tail...>>
+    : idx_seq_at<I - 1, camp::idx_seq<Tail...>>
+{};
+
+template<camp::idx_t Head, camp::idx_t... Tail>
+struct idx_seq_at<0, camp::idx_seq<Head, Tail...>> : camp::num<Head>
+{};
+
+template<camp::idx_t Want, camp::idx_t Pos, typename INDEX_SEQ>
+struct idx_seq_find;
+
+template<camp::idx_t Want, camp::idx_t Pos, camp::idx_t Head, camp::idx_t... Tail>
+struct idx_seq_find<Want, Pos, camp::idx_seq<Head, Tail...>>
+    : camp::num<(Head == Want
+                     ? Pos
+                     : idx_seq_find<Want, Pos + 1, camp::idx_seq<Tail...>>::value)>
+{};
+
+template<camp::idx_t Want, camp::idx_t Pos, camp::idx_t Head>
+struct idx_seq_find<Want, Pos, camp::idx_seq<Head>>
+    : camp::num<(Head == Want ? Pos : -1)>
+{};
+
+template<typename BODY, typename ARG_TUPLE, camp::idx_t... Indices>
+RAJA_HOST_DEVICE RAJA_INLINE void invoke_with_tuple_args(
+    BODY const& body,
+    ARG_TUPLE const& args,
+    camp::idx_seq<Indices...>)
+{
+  body(camp::get<Indices>(args)...);
+}
+
+template<typename BODY, typename ARG_TUPLE>
+RAJA_HOST_DEVICE RAJA_INLINE void invoke_with_tuple_args(BODY const& body,
+                                                         ARG_TUPLE const& args)
+{
+  using arg_tuple_t = camp::decay<ARG_TUPLE>;
+
+  invoke_with_tuple_args(
+      body, args, camp::make_idx_seq_t<camp::tuple_size<arg_tuple_t>::value> {});
+}
+
+template<typename ORDER_SEQ,
+         typename BODY,
+         typename ARG_TUPLE,
+         camp::idx_t... Indices>
+RAJA_HOST_DEVICE RAJA_INLINE void invoke_with_ordered_tuple_args(
+    BODY const& body,
+    ARG_TUPLE const& args,
+    camp::idx_seq<Indices...>)
+{
+  body(camp::get<idx_seq_find<Indices, 0, ORDER_SEQ>::value>(args)...);
+}
+
+template<typename ORDER_SEQ, typename BODY, typename ARG_TUPLE>
+RAJA_HOST_DEVICE RAJA_INLINE void invoke_with_ordered_tuple_args(
+    BODY const& body,
+    ARG_TUPLE const& args)
+{
+  using arg_tuple_t = camp::decay<ARG_TUPLE>;
+
+  invoke_with_ordered_tuple_args<ORDER_SEQ>(
+      body, args, camp::make_idx_seq_t<camp::tuple_size<arg_tuple_t>::value> {});
+}
+
+template<typename ORDER_SEQ,
+         typename BODY,
+         typename VALUE_TUPLE,
+         typename INDEX_TUPLE,
+         camp::idx_t... Indices>
+RAJA_HOST_DEVICE RAJA_INLINE void invoke_with_ordered_icount_args(
+    BODY const& body,
+    VALUE_TUPLE const& values,
+    INDEX_TUPLE const& indices,
+    camp::idx_seq<Indices...>)
+{
+  body(camp::get<idx_seq_find<Indices, 0, ORDER_SEQ>::value>(values)...,
+       camp::get<idx_seq_find<Indices, 0, ORDER_SEQ>::value>(indices)...);
+}
+
+template<typename ORDER_SEQ, typename BODY, typename VALUE_TUPLE, typename INDEX_TUPLE>
+RAJA_HOST_DEVICE RAJA_INLINE void invoke_with_ordered_icount_args(
+    BODY const& body,
+    VALUE_TUPLE const& values,
+    INDEX_TUPLE const& indices)
+{
+  using value_tuple_t = camp::decay<VALUE_TUPLE>;
+
+  invoke_with_ordered_icount_args<ORDER_SEQ>(
+      body,
+      values,
+      indices,
+      camp::make_idx_seq_t<camp::tuple_size<value_tuple_t>::value> {});
+}
+
+template<camp::idx_t I,
+         camp::idx_t N,
+         typename ORDER_SEQ,
+         typename EXEC_POLICY_LIST,
+         typename CONTEXT,
+         typename RANGE_TUPLE,
+         typename VALUE_TUPLE,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop_impl(camp::num<I>,
+                                                    CONTEXT const& ctx,
+                                                    RANGE_TUPLE const& ranges,
+                                                    VALUE_TUPLE const& values,
+                                                    BODY const& body)
+{
+  if constexpr (I == N)
+  {
+    invoke_with_ordered_tuple_args<ORDER_SEQ>(body, values);
+  }
+  else
+  {
+    using range_tuple_t = camp::decay<RANGE_TUPLE>;
+    static constexpr camp::idx_t order_idx = idx_seq_at<I, ORDER_SEQ>::value;
+    using exec_policy =
+        typename camp::at<EXEC_POLICY_LIST, camp::num<order_idx>>::type;
+    using segment_t = typename camp::tuple_element<order_idx, range_tuple_t>::type;
+    using value_t =
+        typename std::iterator_traits<typename segment_t::iterator>::value_type;
+
+    auto const& segment = camp::get<order_idx>(ranges);
+
+    LoopExecute<exec_policy, segment_t>::exec(
+        ctx, segment, [=](value_t value) {
+          auto next_values =
+              camp::tuple_cat_pair(values, camp::make_tuple(value));
+          perfect_loop_impl<camp::idx_t(I + 1), N, ORDER_SEQ, EXEC_POLICY_LIST>(
+              camp::num<I + 1> {}, ctx, ranges, next_values, body);
+        });
+  }
+}
+
+template<camp::idx_t I,
+         camp::idx_t N,
+         typename ORDER_SEQ,
+         typename EXEC_POLICY_LIST,
+         typename CONTEXT,
+         typename RANGE_TUPLE,
+         typename VALUE_TUPLE,
+         typename INDEX_TUPLE,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop_icount_impl(
+    camp::num<I>,
+    CONTEXT const& ctx,
+    RANGE_TUPLE const& ranges,
+    VALUE_TUPLE const& values,
+    INDEX_TUPLE const& indices,
+    BODY const& body)
+{
+  if constexpr (I == N)
+  {
+    invoke_with_ordered_icount_args<ORDER_SEQ>(body, values, indices);
+  }
+  else
+  {
+    using range_tuple_t = camp::decay<RANGE_TUPLE>;
+    static constexpr camp::idx_t order_idx = idx_seq_at<I, ORDER_SEQ>::value;
+    using exec_policy =
+        typename camp::at<EXEC_POLICY_LIST, camp::num<order_idx>>::type;
+    using segment_t = typename camp::tuple_element<order_idx, range_tuple_t>::type;
+    using value_t =
+        typename std::iterator_traits<typename segment_t::iterator>::value_type;
+    using index_t = typename std::iterator_traits<
+        typename segment_t::iterator>::difference_type;
+
+    auto const& segment = camp::get<order_idx>(ranges);
+
+    LoopICountExecute<exec_policy, segment_t>::exec(
+        ctx, segment, [=](value_t value, index_t idx) {
+          auto next_values =
+              camp::tuple_cat_pair(values, camp::make_tuple(value));
+          auto next_indices =
+              camp::tuple_cat_pair(indices, camp::make_tuple(idx));
+          perfect_loop_icount_impl<camp::idx_t(I + 1),
+                                   N,
+                                   ORDER_SEQ,
+                                   EXEC_POLICY_LIST>(camp::num<I + 1> {},
+                                                     ctx,
+                                                     ranges,
+                                                     next_values,
+                                                     next_indices,
+                                                     body);
+        });
+  }
+}
+
+}  // namespace launch_detail
+
 RAJA_SUPPRESS_HD_WARN
 template<typename POLICY_LIST,
          typename CONTEXT,
@@ -506,6 +759,292 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
 
   LoopICountExecute<loop_policy<POLICY_LIST>, SEGMENT>::exec(ctx, segment,
                                                              body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename... SEGMENTS,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop(
+    CONTEXT const& ctx,
+    MultiRange<SEGMENTS...> const& ranges,
+    BODY const& body)
+{
+  using exec_policies = loop_policy<POLICY_LIST>;
+  using order_seq =
+      typename launch_detail::perfect_loop_order<ORDER, sizeof...(SEGMENTS)>::type;
+
+  static_assert(camp::size<exec_policies>::value == sizeof...(SEGMENTS),
+                "RAJA::perfect_loop requires one loop policy per segment.");
+  static_assert(camp::size<order_seq>::value == sizeof...(SEGMENTS),
+                "RAJA::perfect_loop interchange must match the segment count.");
+
+  launch_detail::perfect_loop_impl<0,
+                                   sizeof...(SEGMENTS),
+                                   order_seq,
+                                   exec_policies>(camp::num<0> {},
+                                                  ctx,
+                                                  ranges.segments,
+                                                  camp::make_tuple(),
+                                                  body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop(CONTEXT const& ctx,
+                                               SEGMENT0 const& segment0,
+                                               BODY const& body)
+{
+  perfect_loop<POLICY_LIST, ORDER>(ctx, make_multi_range(segment0), body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename SEGMENT1,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop(CONTEXT const& ctx,
+                                               SEGMENT0 const& segment0,
+                                               SEGMENT1 const& segment1,
+                                               BODY const& body)
+{
+  perfect_loop<POLICY_LIST, ORDER>(
+      ctx, make_multi_range(segment0, segment1), body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename SEGMENT1,
+         typename SEGMENT2,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop(CONTEXT const& ctx,
+                                               SEGMENT0 const& segment0,
+                                               SEGMENT1 const& segment1,
+                                               SEGMENT2 const& segment2,
+                                               BODY const& body)
+{
+  perfect_loop<POLICY_LIST, ORDER>(
+      ctx, make_multi_range(segment0, segment1, segment2), body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename SEGMENT1,
+         typename SEGMENT2,
+         typename SEGMENT3,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop(CONTEXT const& ctx,
+                                               SEGMENT0 const& segment0,
+                                               SEGMENT1 const& segment1,
+                                               SEGMENT2 const& segment2,
+                                               SEGMENT3 const& segment3,
+                                               BODY const& body)
+{
+  perfect_loop<POLICY_LIST, ORDER>(
+      ctx, make_multi_range(segment0, segment1, segment2, segment3), body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename SEGMENT1,
+         typename SEGMENT2,
+         typename SEGMENT3,
+         typename SEGMENT4,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop(CONTEXT const& ctx,
+                                               SEGMENT0 const& segment0,
+                                               SEGMENT1 const& segment1,
+                                               SEGMENT2 const& segment2,
+                                               SEGMENT3 const& segment3,
+                                               SEGMENT4 const& segment4,
+                                               BODY const& body)
+{
+  perfect_loop<POLICY_LIST, ORDER>(
+      ctx,
+      make_multi_range(segment0, segment1, segment2, segment3, segment4),
+      body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename SEGMENT1,
+         typename SEGMENT2,
+         typename SEGMENT3,
+         typename SEGMENT4,
+         typename SEGMENT5,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop(CONTEXT const& ctx,
+                                               SEGMENT0 const& segment0,
+                                               SEGMENT1 const& segment1,
+                                               SEGMENT2 const& segment2,
+                                               SEGMENT3 const& segment3,
+                                               SEGMENT4 const& segment4,
+                                               SEGMENT5 const& segment5,
+                                               BODY const& body)
+{
+  perfect_loop<POLICY_LIST, ORDER>(
+      ctx,
+      make_multi_range(
+          segment0, segment1, segment2, segment3, segment4, segment5),
+      body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename... SEGMENTS,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop_icount(
+    CONTEXT const& ctx,
+    MultiRange<SEGMENTS...> const& ranges,
+    BODY const& body)
+{
+  using exec_policies = loop_policy<POLICY_LIST>;
+  using order_seq =
+      typename launch_detail::perfect_loop_order<ORDER, sizeof...(SEGMENTS)>::type;
+
+  static_assert(camp::size<exec_policies>::value == sizeof...(SEGMENTS),
+                "RAJA::perfect_loop_icount requires one loop policy per "
+                "segment.");
+  static_assert(camp::size<order_seq>::value == sizeof...(SEGMENTS),
+                "RAJA::perfect_loop_icount interchange must match the segment "
+                "count.");
+
+  launch_detail::perfect_loop_icount_impl<0,
+                                          sizeof...(SEGMENTS),
+                                          order_seq,
+                                          exec_policies>(camp::num<0> {},
+                                                         ctx,
+                                                         ranges.segments,
+                                                         camp::make_tuple(),
+                                                         camp::make_tuple(),
+                                                         body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop_icount(CONTEXT const& ctx,
+                                                      SEGMENT0 const& segment0,
+                                                      BODY const& body)
+{
+  perfect_loop_icount<POLICY_LIST, ORDER>(
+      ctx, make_multi_range(segment0), body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename SEGMENT1,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop_icount(CONTEXT const& ctx,
+                                                      SEGMENT0 const& segment0,
+                                                      SEGMENT1 const& segment1,
+                                                      BODY const& body)
+{
+  perfect_loop_icount<POLICY_LIST, ORDER>(
+      ctx, make_multi_range(segment0, segment1), body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename SEGMENT1,
+         typename SEGMENT2,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop_icount(CONTEXT const& ctx,
+                                                      SEGMENT0 const& segment0,
+                                                      SEGMENT1 const& segment1,
+                                                      SEGMENT2 const& segment2,
+                                                      BODY const& body)
+{
+  perfect_loop_icount<POLICY_LIST, ORDER>(
+      ctx, make_multi_range(segment0, segment1, segment2), body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename SEGMENT1,
+         typename SEGMENT2,
+         typename SEGMENT3,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop_icount(CONTEXT const& ctx,
+                                                      SEGMENT0 const& segment0,
+                                                      SEGMENT1 const& segment1,
+                                                      SEGMENT2 const& segment2,
+                                                      SEGMENT3 const& segment3,
+                                                      BODY const& body)
+{
+  perfect_loop_icount<POLICY_LIST, ORDER>(
+      ctx, make_multi_range(segment0, segment1, segment2, segment3), body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename SEGMENT1,
+         typename SEGMENT2,
+         typename SEGMENT3,
+         typename SEGMENT4,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop_icount(CONTEXT const& ctx,
+                                                      SEGMENT0 const& segment0,
+                                                      SEGMENT1 const& segment1,
+                                                      SEGMENT2 const& segment2,
+                                                      SEGMENT3 const& segment3,
+                                                      SEGMENT4 const& segment4,
+                                                      BODY const& body)
+{
+  perfect_loop_icount<POLICY_LIST, ORDER>(
+      ctx,
+      make_multi_range(segment0, segment1, segment2, segment3, segment4),
+      body);
+}
+
+template<typename POLICY_LIST,
+         typename ORDER = void,
+         typename CONTEXT,
+         typename SEGMENT0,
+         typename SEGMENT1,
+         typename SEGMENT2,
+         typename SEGMENT3,
+         typename SEGMENT4,
+         typename SEGMENT5,
+         typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void perfect_loop_icount(CONTEXT const& ctx,
+                                                      SEGMENT0 const& segment0,
+                                                      SEGMENT1 const& segment1,
+                                                      SEGMENT2 const& segment2,
+                                                      SEGMENT3 const& segment3,
+                                                      SEGMENT4 const& segment4,
+                                                      SEGMENT5 const& segment5,
+                                                      BODY const& body)
+{
+  perfect_loop_icount<POLICY_LIST, ORDER>(
+      ctx,
+      make_multi_range(
+          segment0, segment1, segment2, segment3, segment4, segment5),
+      body);
 }
 
 namespace expt

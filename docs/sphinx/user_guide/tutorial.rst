@@ -420,6 +420,7 @@ as nested loops.
    :maxdepth: 1
 
    tutorial/launch_basic.rst
+   tutorial/launch_perfect_loop.rst
    tutorial/launch_exec_pols.rst
    tutorial/launch_naming_kernels.rst
 

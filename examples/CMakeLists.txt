@@ -16,6 +16,14 @@ raja_add_executable(
   SOURCES tut_launch_basic.cpp)
 
 raja_add_executable(
+  NAME tut_launch_perfect_loop
+  SOURCES tut_launch_perfect_loop.cpp)
+
+raja_add_executable(
+  NAME tut_launch_perfect_loop_interchange
+  SOURCES tut_launch_perfect_loop_interchange.cpp)
+
+raja_add_executable(
   NAME resource-forall
   SOURCES resource-forall.cpp)
 
