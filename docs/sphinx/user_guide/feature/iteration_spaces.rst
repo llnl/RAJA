@@ -94,3 +94,68 @@ and two types:
 
 Thus, any iterable type that defines these methods and types appropriately
 can be used as a segment with RAJA kernel execution templates.
+
+Python-like Range Helpers
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+RAJA also provides ``RAJA::range(...)`` helpers that construct the segment
+type for common half-open iteration patterns. These helpers are intended to
+mirror the shape of Python's ``range`` while returning RAJA segment objects
+that can be passed directly to ``RAJA::forall`` and other execution
+interfaces.
+
+The supported forms are::
+
+  RAJA::range(end)                 // [0, end)
+  RAJA::range<IndexT>(end)         // [0, end) with explicit storage type
+  RAJA::range(begin, end)          // [begin, end)
+  RAJA::range(begin, end, stride)  // [begin, end) with stride
+
+The return type depends on the arguments:
+
+* ``RAJA::range(end)`` and ``RAJA::range(begin, end)`` return a
+  ``RAJA::TypedRangeSegment``.
+* ``RAJA::range(begin, end, stride)`` returns a
+  ``RAJA::TypedRangeStrideSegment``.
+* When one of the bounds is a RAJA strong index type, such as a type created
+  with ``RAJA_INDEX_VALUE``, that strong type is preserved for the loop
+  variable when possible.
+* Providing an explicit template argument, such as
+  ``RAJA::range<MyIndex>(end)``, overrides the deduced storage type.
+
+For example::
+
+  RAJA_INDEX_VALUE(CellIndex, "CellIndex");
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(N), [=](RAJA::Index_type i) {
+    values[i] = i * i;
+  });
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::range<CellIndex>(N), [=](CellIndex i) {
+    typed_values[*i] = *i + 10;
+  });
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(2, 6), [=](int i) {
+    subrange_values[i] = i;
+  });
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(CellIndex {1}, N, 2),
+                               [=](CellIndex i) {
+                                 strided_values[*i] = *i;
+                               });
+
+Strided ranges follow the same half-open interval convention as
+``RAJA::TypedRangeStrideSegment``. Positive strides move forward, and negative
+strides move backward. For example, ``RAJA::range(N - 1, -1, -2)`` visits
+``N - 1, N - 3, ...`` down to the first value that remains greater than
+``-1``. A zero stride is invalid and causes RAJA to abort or throw, depending
+on the build configuration.
+
+The older ``RAJA::make_range`` and ``RAJA::make_strided_range`` helpers remain
+available. Use ``RAJA::range(...)`` when the Python-like spelling improves
+readability or when you want the one-argument ``[0, end)`` shorthand.
+
+The complete example added in this branch is shown below:
+
+.. literalinclude:: ../../../../examples/raja-ranges.cpp
+   :language: c++
