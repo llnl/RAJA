@@ -42,7 +42,7 @@ void LaunchOnceTestImpl()
       RAJA::LaunchParams(RAJA::Teams(num_teams), RAJA::Threads(threads_per_team)),
       [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx) {
         RAJA::loop<TEAM_POLICY>(ctx, RAJA::RangeSegment(0, num_teams), [&](int team) {
-          RAJA::loop<THREAD_POLICY>(ctx, RAJA::Once(), [&](int) {
+          RAJA::loop<THREAD_POLICY>(ctx, RAJA::once(), [&](int) {
             working_array[team] = team + 1;
           });
         });

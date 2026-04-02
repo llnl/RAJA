@@ -100,7 +100,7 @@ equivalent of the kernel body using the policy shown above is:
    :language: C++
 
 When only one logical thread should execute a piece of work inside a launch
-loop, use ``RAJA::Once()``. It returns ``RAJA::RangeSegment{0, 1}``, which is
+loop, use ``RAJA::once()``. It returns ``RAJA::RangeSegment{0, 1}``, which is
 useful for per-team setup before a synchronization point:
 
 .. literalinclude:: ../../../../examples/raja-launch.cpp

@@ -536,7 +536,7 @@ using RangeStrideSegment = TypedRangeStrideSegment<Index_type>;
  * Useful in RAJA::launch kernels when exactly one logical thread per team
  * should perform setup work.
  */
-RAJA_HOST_DEVICE inline RAJA::RangeSegment Once() noexcept
+RAJA_HOST_DEVICE inline RAJA::RangeSegment once() noexcept
 {
   return RAJA::RangeSegment {0, 1};
 }

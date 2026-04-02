@@ -164,7 +164,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
            // __once_loop_start
            // Use a single logical thread per team for shared initialization.
-           RAJA::loop<threads_x>(ctx, RAJA::Once(), [&](int c) {
+           RAJA::loop<threads_x>(ctx, RAJA::once(), [&](int c) {
               s_A[c] = r;
            });  // loop c
            // __once_loop_end
