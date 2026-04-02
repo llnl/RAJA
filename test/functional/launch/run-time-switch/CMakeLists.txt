@@ -10,7 +10,7 @@
 #
 # List of segment types for generating test files.
 #
-set(TEST_TYPES BasicShared)
+set(TEST_TYPES BasicShared Once)
 
 foreach( BACKEND ${LAUNCH_BACKENDS} )
   foreach( TESTTYPE ${TEST_TYPES} )

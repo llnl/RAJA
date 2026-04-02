@@ -56,6 +56,11 @@ execute as a unit for a kernel. RAJA provides the following Segment types:
    * ``RAJA::TypedRangeStrideSegment`` represents a (non-unit) stride range
    * ``RAJA::TypedListSegment`` represents an arbitrary set of indices
 
+RAJA also provides a convenience function ``RAJA::Once()`` that returns
+``RAJA::RangeSegment{0, 1}``. This is mainly useful in ``RAJA::launch``
+kernels when one logical iteration should execute setup work, such as a single
+thread in each team initializing shared state before ``ctx.teamSync()``.
+
 A ``RAJA::TypedIndexSet`` is a container that can hold an arbitrary collection
 of segments to compose iteration patterns in a single kernel invocation.
 

@@ -98,3 +98,12 @@ equivalent of the kernel body using the policy shown above is:
    :start-after: // _device_loop_start
    :end-before: // _device_loop_end
    :language: C++
+
+When only one logical thread should execute a piece of work inside a launch
+loop, use ``RAJA::Once()``. It returns ``RAJA::RangeSegment{0, 1}``, which is
+useful for per-team setup before a synchronization point:
+
+.. literalinclude:: ../../../../examples/raja-launch.cpp
+   :start-after: // __once_loop_start
+   :end-before: // __once_loop_end
+   :language: C++
