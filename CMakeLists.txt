@@ -78,6 +78,14 @@ else() #check BLT_CXX_STD is high enough by disallowing the only invalid option
   endif()
 endif(NOT DEFINED BLT_CXX_STD)
 
+set(RAJA_MIN_CXX_STANDARD 20)
+
+if(DEFINED CMAKE_CXX_STANDARD
+   AND NOT CMAKE_CXX_STANDARD STREQUAL ""
+   AND ((CMAKE_CXX_STANDARD LESS RAJA_MIN_CXX_STANDARD) OR (CMAKE_CXX_STANDARD EQUAL 98)) )
+  message(FATAL_ERROR "RAJA requires minimum C++ standard of C++${RAJA_MIN_CXX_STANDARD}")
+endif()
+
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (NOT BLT_LOADED)
