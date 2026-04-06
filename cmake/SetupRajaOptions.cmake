@@ -37,6 +37,7 @@ option(RAJA_ENABLE_RUNTIME_PLUGINS "Enable support for loading plugins at runtim
 option(RAJA_ALLOW_INCONSISTENT_OPTIONS "Enable inconsistent values for ENABLE_X and RAJA_ENABLE_X options" Off)
 
 option(RAJA_ENABLE_DESUL_ATOMICS "Enable support of desul atomics" Off)
+option(RAJA_ENABLE_JIT "Enable JIT compilation for RAJA kernels" Off)
 set(DESUL_ENABLE_TESTS Off CACHE BOOL "")
 
 set(TEST_DRIVER "" CACHE STRING "driver used to wrap test commands")
