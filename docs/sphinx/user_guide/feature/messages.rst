@@ -31,6 +31,7 @@ a single message can be thought of:
 * ``msg_args``: a tuple of arguments needed to pass to the function  
 
 To create the ``message_manager``: 
+
 .. literalinclude:: ../../../../examples/messages-forall.cpp
     :start-after: _raja_msg_manager_start
     :end-before: _raja_msg_manager_end
@@ -118,8 +119,8 @@ Here is a complete example using the ``RAJA::messages`` with multiple resources.
 
 Message queue policies
 ^^^^^^^^^^^^^^^^^^^^^^
-Message queues can support various policies depending on the requirements of that queue. Currently, the supported
-policies include:
+Message queues can support various policies depending on the requirements of that queue, such as
+the number of producers/consumers or the type of atomic operations.
 
  ======================= ============================
  Message queue Policies  Brief description
@@ -129,8 +130,11 @@ policies include:
                          atomic operations 
  mpsc                    Supports multiple producers,
                          a single consumer; i.e., 
-                         requires atomic operations
- ======================= ====================
+                         requires atomic operations. 
+                         Automiatically determines 
+                         which atomic operations to 
+                         use.
+ ======================= ============================
 
 .. note:: Producers and consumers can not operate at the same time
 
