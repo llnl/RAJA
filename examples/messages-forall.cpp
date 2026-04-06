@@ -194,7 +194,6 @@ const int GPU_BLOCK_SIZE = 256;
 //----------------------------------------------------------------------------//
 {
   std::cout << "\n Running RAJA GPU vector addition on RAJA's default streams...\n";
-  // _raja_msg_gpu1_start
 #if defined(RAJA_ENABLE_CUDA)
   using gpu_policy = RAJA::cuda_exec_async<GPU_BLOCK_SIZE>;
 #elif defined(RAJA_ENABLE_HIP)
@@ -202,7 +201,16 @@ const int GPU_BLOCK_SIZE = 256;
 #elif defined(RAJA_ENABLE_SYCL)
   using gpu_policy = RAJA::sycl_exec<GPU_BLOCK_SIZE>;
 #endif
-  auto res         = RAJA::resources::get_default_resource<gpu_policy>(); 
+  auto res  = RAJA::resources::get_default_resource<gpu_policy>(); 
+
+  int* d_a1 = res.allocate<int>(N);
+  int* d_b1 = res.allocate<int>(N);
+  int* d_c1 = res.allocate<int>(N);
+
+  res.memcpy(d_a1, a, sizeof(int)* N);
+  res.memcpy(d_b1, b, sizeof(int)* N);
+
+  // _raja_msg_gpu1_start
   auto msg_manager = RAJA::make_message_manager<gpu_policy>(message_sz*10);
 
   auto log = [](const my_string<32>& str, int idx, int value) {
@@ -220,13 +228,6 @@ const int GPU_BLOCK_SIZE = 256;
   );
   auto msg_queue2 = msg_manager.subscribe<RAJA::mpsc_queue>(log);
 
-  int* d_a1 = res.allocate<int>(N);
-  int* d_b1 = res.allocate<int>(N);
-  int* d_c1 = res.allocate<int>(N);
-
-  res.memcpy(d_a1, a, sizeof(int)* N);
-  res.memcpy(d_b1, b, sizeof(int)* N);
-
   RAJA::forall<gpu_policy>(RAJA::RangeSegment(0, N), 
     [=] RAJA_DEVICE (int i) { 
     if (d_a1[i] < 0 && i == 1) { 
@@ -237,15 +238,15 @@ const int GPU_BLOCK_SIZE = 256;
     }
     d_c1[i] = d_a1[i] + d_b1[i]; 
   });    
+  msg_manager.wait_all();
+  // _raja_msg_gpu1_end
 
   res.memcpy(c, d_c1, sizeof(int)*N );
-
-  msg_manager.wait_all();
+  res.wait();
 
   res.deallocate(d_a1);
   res.deallocate(d_b1);
   res.deallocate(d_c1);
-  // _raja_msg_gpu1_end
   
   checkResult(c, N);
 }
@@ -256,7 +257,6 @@ const int GPU_BLOCK_SIZE = 256;
 //----------------------------------------------------------------------------//
 {
   std::cout << "\n Running RAJA GPU vector with dependency between two seperate streams...\n";
-  // _raja_msg_gpu2_start
 #if defined(RAJA_ENABLE_CUDA)
   RAJA::resources::Cuda res_gpu1;
   RAJA::resources::Cuda res_gpu2;
@@ -276,6 +276,12 @@ const int GPU_BLOCK_SIZE = 256;
 
   using EXEC_POLICY = RAJA::sycl_exec<GPU_BLOCK_SIZE>;
 #endif
+
+  int* d_array1 = res_gpu1.allocate<int>(N);
+  int* d_array2 = res_gpu2.allocate<int>(N);
+  int* h_array  = res_host.allocate<int>(N);
+
+  // _raja_msg_gpu2_start
   auto gpu_logger1    = RAJA::make_message_manager(buf_sz, res_gpu1); 
   auto gpu_msg_queue1 = gpu_logger1.subscribe<RAJA::mpsc_queue>(
     [](int* ptr, int idx, int value) {
@@ -289,10 +295,6 @@ const int GPU_BLOCK_SIZE = 256;
       std::cout << "\n gpu stream 2: pointer (" << ptr << ") d_array2[" << idx << "] = " << value << "\n";
     }
   );
-
-  int* d_array1 = res_gpu1.allocate<int>(N);
-  int* d_array2 = res_gpu2.allocate<int>(N);
-  int* h_array  = res_host.allocate<int>(N);
 
   RAJA::forall<EXEC_POLICY>(res_gpu1, RAJA::RangeSegment(0,N),
     [=] RAJA_HOST_DEVICE (int i) {
@@ -320,15 +322,16 @@ const int GPU_BLOCK_SIZE = 256;
 
   // Log message for stream 2
   gpu_logger2.wait_all();   
-  
-  res_gpu1.memcpy(h_array, d_array1, sizeof(int) * N);
 
   // Log message for stream 1 
   gpu_logger1.wait_all();   
+  // _raja_msg_gpu2_end
+  
+  res_gpu1.memcpy(h_array, d_array1, sizeof(int) * N);
+  res_gpu1.wait();
 
   res_gpu1.deallocate(d_array1);
   res_gpu2.deallocate(d_array2);
-  // _raja_msg_gpu2_end
 
   bool check = true;
   RAJA::forall<RAJA::seq_exec>(res_host, RAJA::RangeSegment(0,N),

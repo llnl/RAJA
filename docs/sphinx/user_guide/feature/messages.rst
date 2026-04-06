@@ -47,8 +47,8 @@ To create a specific message type, callbacks must subscribe first. This can be d
 
 * ``subscribe(Callable)``: Subscribing with just a callable will create a new type of message with the
   type depending on the parameters.
-* ``subscribe(msg_id, Callable)``: Subscribing with ``msg_id`` and a callable will append the new callback to
-  the already existing callback list.
+* ``subscribe(msg_queue_id, Callable)``: Subscribing with ``msg_queue_id`` and a callable will append the new 
+  callback to the already existing callback list.
 
 As an example for subscribing with both methods:
 
@@ -62,9 +62,9 @@ Unsubscribing callbacks
 If a particular callback no longer needs to be subscribed to a message type, then the callback can be 
 unsubcribed. This can be achieved in three ways:
 
-* ``unsubscribe(msg_id, Callable)``: Looks for a specific callback that is subscribed to a particular message. If 
+* ``unsubscribe(msg_queue_id, Callable)``: Looks for a specific callback that is subscribed to a particular message. If 
   the callback is subscribed, remove from callback list. Otherwise, throws an exception.  
-* ``unsubscribe_all(msg_id)``: Removes all callbacks subscribed to a particular message
+* ``unsubscribe_all(msg_queue_id)``: Removes all callbacks subscribed to a particular message
 * ``unsubscribe_all()``: Removes all callbacks and messages.
 
 An example for unsubscribing a callback:
@@ -79,7 +79,7 @@ Publishing messages
 ^^^^^^^^^^^^^^^^^^^
 Messages can be published/stored in a ``msg_queue``. These are non-owning adapters to the ``msg_bus``, which is 
 responsible for storing all messages. The ``msg_queue`` will contain additional type information as well as 
-the ``msg_id``. A queue is created once a callback is subscribed to a new message type. Since ``msg_queue`` is 
+the ``msg_queue_id``. A queue is created once a callback is subscribed to a new message type. Since ``msg_queue`` is 
 non-owning, these can be copied. 
 
 Here is how the ``msg_queue`` can be used to publish messages:
@@ -108,14 +108,25 @@ Here is a complete example using the ``RAJA::messages`` with a GPU kernel.
     :end-before: _raja_msg_gpu1_end
     :language: C++
 
+.. note::
+  In this example, ``gpu_policy`` depends on the build (i.e., CUDA, HIP), ``res`` is the default resource for
+  ``gpu_policy``, and ``d_*`` arrays are allocated for the device. These are removed above from the example to just 
+  show the ``RAJA::messages`` interface.
+
 Handling messages across multiple streams
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Here is a complete example using the ``RAJA::messages`` with multiple resources.
 
 .. literalinclude:: ../../../../examples/messages-forall.cpp
-    :start-after: _raja_msg_gpu1_start
-    :end-before: _raja_msg_gpu1_end
+    :start-after: _raja_msg_gpu2_start
+    :end-before: _raja_msg_gpu2_end
     :language: C++
+
+.. note::
+  In this example, ``res_gpu1`` and ``res_gpu2`` depend on the build (i.e., CUDA, HIP), ``EXEC_POLICY`` the
+  exeuction policy for the loops (also depends on the build), and ``d_*`` arrays are allocated for the device
+  while ``h_*`` are allocated for the host. These are removed from the example above to just show the 
+  ``RAJA::messages`` interface.
 
 Message queue policies
 ^^^^^^^^^^^^^^^^^^^^^^
