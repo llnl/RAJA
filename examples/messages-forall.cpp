@@ -67,7 +67,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
   std::cout << "\n\nRAJA RAJA::messages with vector addition example...\n";
 
-  RAJA::resources::Host host{};
+  RAJA::resources::Host res_host{};
 
 //
 // Define number of messages that can be stored
@@ -82,7 +82,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 // Allocate and initialize message handler and queue
 //
 // _raja_msg_manager_start
-  auto msg_manager = RAJA::make_message_manager(buf_sz, host);
+  auto msg_manager = RAJA::make_message_manager(buf_sz, res_host);
 // _raja_msg_manager_end
 
 // _raja_msg_subscribe_start
@@ -105,13 +105,13 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   
   constexpr int N = 100000;
 
-  int *a = host.allocate<int>(N);
-  int *b = host.allocate<int>(N);
-  int *c = host.allocate<int>(N);
+  int *a = res_host.allocate<int>(N);
+  int *b = res_host.allocate<int>(N);
+  int *c = res_host.allocate<int>(N);
 
-  int *a_ = host.allocate<int>(N);
-  int *b_ = host.allocate<int>(N);
-  int *c_ = host.allocate<int>(N);
+  int *a_ = res_host.allocate<int>(N);
+  int *b_ = res_host.allocate<int>(N);
+  int *c_ = res_host.allocate<int>(N);
 
 
   for (int i = 0; i < N; ++i) {
@@ -150,7 +150,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
 
 // _raja_msg_k2_start
-  RAJA::forall<RAJA::seq_exec>(host, RAJA::RangeSegment(0, N), [=] (int i) { 
+  RAJA::forall<RAJA::seq_exec>(res_host, RAJA::RangeSegment(0, N), [=] (int i) { 
     if (a[i] < 0) { 
       cpu_msg_queue.try_post_message("message from RAJA seq_exec loop", a, i, a[i]); 
     }
@@ -168,7 +168,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
   std::cout << "\n Running RAJA omp_parallel_for_exec vector addition...\n";
 
-  RAJA::forall<RAJA::omp_parallel_for_exec>(host, RAJA::RangeSegment(0, N),
+  RAJA::forall<RAJA::omp_parallel_for_exec>(res_host, RAJA::RangeSegment(0, N),
   [=] (int i) {
     if (a[i] < 0) { 
       cpu_msg_queue.try_post_message("message from RAJA omp_parallel_for_exec loop", a, i, a[i]); 
@@ -260,19 +260,16 @@ const int GPU_BLOCK_SIZE = 256;
 #if defined(RAJA_ENABLE_CUDA)
   RAJA::resources::Cuda res_gpu1;
   RAJA::resources::Cuda res_gpu2;
-  RAJA::resources::Host res_host;
 
   using EXEC_POLICY = RAJA::cuda_exec_async<GPU_BLOCK_SIZE>;
 #elif defined(RAJA_ENABLE_HIP)
   RAJA::resources::Hip res_gpu1;
   RAJA::resources::Hip res_gpu2;
-  RAJA::resources::Host res_host;
 
   using EXEC_POLICY = RAJA::hip_exec_async<GPU_BLOCK_SIZE>;
 #elif defined(RAJA_ENABLE_SYCL)
   RAJA::resources::Sycl res_gpu1;
   RAJA::resources::Sycl res_gpu2;
-  RAJA::resources::Host res_host;
 
   using EXEC_POLICY = RAJA::sycl_exec<GPU_BLOCK_SIZE>;
 #endif
@@ -351,13 +348,13 @@ const int GPU_BLOCK_SIZE = 256;
 //
 // Clean up.
 //
-  host.deallocate(a);
-  host.deallocate(b);
-  host.deallocate(c);
+  res_host.deallocate(a);
+  res_host.deallocate(b);
+  res_host.deallocate(c);
 
-  host.deallocate(a_);
-  host.deallocate(b_);
-  host.deallocate(c_);
+  res_host.deallocate(a_);
+  res_host.deallocate(b_);
+  res_host.deallocate(c_);
 
   std::cout << "\n DONE!...\n";
 
