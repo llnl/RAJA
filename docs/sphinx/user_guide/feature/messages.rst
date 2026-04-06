@@ -43,12 +43,14 @@ this is ``PINNED`` memory.
 Subscribing callbacks
 ^^^^^^^^^^^^^^^^^^^^^
 To create a specific message type, callbacks must subscribe first. This can be done in two ways:
+
 * ``subscribe(Callable)``: Subscribing with just a callable will create a new type of message with the
   type depending on the parameters.
 * ``subscribe(msg_id, Callable)``: Subscribing with ``msg_id`` and a callable will append the new callback to
   the already existing callback list.
 
 As an example for subscribing with both methods:
+
 .. literalinclude:: ../../../../examples/messages-forall.cpp
     :start-after: _raja_msg_subscribe_start
     :end-before: _raja_msg_subscribe_end
@@ -58,12 +60,14 @@ Unsubscribing callbacks
 ^^^^^^^^^^^^^^^^^^^^^^^
 If a particular callback no longer needs to be subscribed to a message type, then the callback can be 
 unsubcribed. This can be achieved in three ways:
+
 * ``unsubscribe(msg_id, Callable)``: Looks for a specific callback that is subscribed to a particular message. If 
   the callback is subscribed, remove from callback list. Otherwise, throws an exception.  
 * ``unsubscribe_all(msg_id)``: Removes all callbacks subscribed to a particular message
 * ``unsubscribe_all()``: Removes all callbacks and messages.
 
 An example for unsubscribing a callback:
+
 .. literalinclude:: ../../../../examples/messages-forall.cpp
     :start-after: _raja_msg_unsubscribe_start
     :end-before: _raja_msg_unsubscribe_end
@@ -78,6 +82,7 @@ the ``msg_id``. A queue is created once a callback is subscribed to a new messag
 non-owning, these can be copied. 
 
 Here is how the ``msg_queue`` can be used to publish messages:
+
 .. literalinclude:: ../../../../examples/messages-forall.cpp
     :start-after: _raja_msg_k2_start
     :end-before: _raja_msg_k2_end
@@ -136,7 +141,7 @@ The example ``examples/messages-forall.cpp`` is built from the RAJA source tree 
 
 * ``ENABLE_EXAMPLES=On``
 
-The example takes four command-line arguments:
+To run the example:
 
 .. code-block:: bash
 
