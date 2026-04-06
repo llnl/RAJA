@@ -15,20 +15,17 @@
 #include "RAJA/util/resource.hpp"
 
 /*
- *  Vector Addition Example
+ *  RAJA::messages example
  *
- *  Computes c = a + b, where a, b, c are vectors of ints.
- *  It illustrates similarities between a  C-style for-loop and a RAJA 
- *  forall loop with using RAJA messages to print out if a value is 
- *  negative.
- *
- *  Note: this example is the same as resource-forall.cpp with
- *  some additional logger to store how the message handler can
- *  be used as a basic logger for both host and device. 
- *
- *  RAJA features shown:
- *    - `forall` loop iteration with messages
- *    -  Create message handler with Resource argument
+ *  The purpose of this example to show how RAJA::messages can be used.
+ *  For this example, the kernels will be launched using RAJA::forall 
+ *  along with a vector addition calculation. This will show how messages
+ *  can be used:
+ *  - to store messages on various execution policies (serial, OpenMP, GPU)
+ *  - to print to a file on the GPU using the RAJA::messages
+ *  - to interact with multiple GPU streams
+ *  - to create custom types that can be stored (note: these not to be
+ *    trivially destructible and copyable.
  *
  */
 
@@ -167,40 +164,6 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
   checkResult(c, N);
   logger.wait_all();
-
-//----------------------------------------------------------------------------//
-// RAJA::omp_parallel_for_static_exec policy execution.... 
-//----------------------------------------------------------------------------//
-
-  std::cout << "\n Running RAJA omp_parallel_for_static_exec (default chunksize) vector addition...\n";
-
-  RAJA::forall<RAJA::omp_parallel_for_static_exec< >>(host, RAJA::RangeSegment(0, N),
-  [=] (int i) {
-    if (a[i] < 0) { 
-      cpu_msg_queue.try_post_message("message from RAJA omp_parallel_for_static_exec loop", a, i, a[i]); 
-    }
-    c[i] = a[i] + b[i]; 
-  });
-
-  checkResult(c, N);
-  logger.wait_all();
-
-//----------------------------------------------------------------------------//
-// RAJA::omp_parallel_for_dynamic_exec policy execution.... 
-//----------------------------------------------------------------------------//
-
-  std::cout << "\n Running RAJA omp_for_dynamic_exec (chunksize = 16) vector addition...\n";
-
-  RAJA::forall<RAJA::omp_parallel_for_dynamic_exec<16>>(host, RAJA::RangeSegment(0, N),
-  [=] (int i) {
-    if (a[i] < 0) { 
-      cpu_msg_queue.try_post_message("message from RAJA omp_parallel_for_dynamic_exec<16> loop", a, i, a[i]); 
-    }
-    c[i] = a[i] + b[i]; 
-  });
-
-  checkResult(c, N);
-  logger.wait_all();
 #endif
 
 
@@ -216,82 +179,59 @@ const int GPU_BLOCK_SIZE = 256;
 // RAJA::cuda/hip_exec policy execution.... 
 //----------------------------------------------------------------------------//
 {
-  std::cout << "\n Running RAJA GPU vector addition on 2 seperate streams...\n";
+  std::cout << "\n Running RAJA GPU vector addition on RAJA's default streams...\n";
 #if defined(RAJA_ENABLE_CUDA)
-  RAJA::resources::Cuda res_gpu1;
-  RAJA::resources::Cuda res_gpu2;
-  using EXEC_POLICY = RAJA::cuda_exec_async<GPU_BLOCK_SIZE>;
+  using gpu_policy = RAJA::cuda_exec_async<GPU_BLOCK_SIZE>;
 #elif defined(RAJA_ENABLE_HIP)
-  RAJA::resources::Hip res_gpu1;
-  RAJA::resources::Hip res_gpu2;
-  using EXEC_POLICY = RAJA::hip_exec_async<GPU_BLOCK_SIZE>;
+  using gpu_policy = RAJA::hip_exec_async<GPU_BLOCK_SIZE>;
 #elif defined(RAJA_ENABLE_SYCL)
-  RAJA::resources::Sycl res_gpu1;
-  RAJA::resources::Sycl res_gpu2;
-  using EXEC_POLICY = RAJA::sycl_exec<GPU_BLOCK_SIZE>;
+  using gpu_policy = RAJA::sycl_exec<GPU_BLOCK_SIZE>;
 #endif
-  auto gpu_logger1    = RAJA::make_message_manager(buf_sz, res_gpu1);
-  auto gpu_msg_queue1 = gpu_logger1.subscribe<RAJA::mpsc_queue>(
-    [](const my_string<128>& str, int* ptr, int idx, int value) {
-      std::cout << "\n " << str.c_str() << " " << ptr << " a[" << idx << "] = " << value << "\n";
+  auto res         = RAJA::resources::get_default_resource<gpu_policy>(); 
+  auto msg_manager = RAJA::make_message_manager<gpu_policy>(message_sz*10);
+
+  auto log = [](const my_string<32>& str, int idx, int value) {
+    std::cout << "[INFO]: " << str.c_str() << "[" << idx << "] = " << value << "\n";
+  };
+
+  // Create two types of messages:
+  // queue1 stores one message type and prints with one callback
+  // queue2 stores the other types of messages and forwards the message to multiple callbacks
+  auto msg_queue1 = msg_manager.subscribe<RAJA::mpsc_queue>(log);
+  msg_manager.subscribe(msg_queue1.get_id(),
+    [](const my_string<32>& str, int idx, int value) {
+      std::cout << "echo msg: " << str.c_str() << "[" << idx << "] = " << value << "\n";
     }
   );
+  auto msg_queue2 = msg_manager.subscribe<RAJA::mpsc_queue>(log);
 
-  auto gpu_logger2    = RAJA::make_message_manager(buf_sz, res_gpu2); 
-  auto gpu_msg_queue2 = gpu_logger2.subscribe<RAJA::mpsc_queue>(
-    [](const my_string<128>& str, int* ptr, int idx, int value) {
-      std::cout << "\n " << str.c_str() << " " << ptr << " a[" << idx << "] = " << value << "\n";
-    }
-  );
+  int* d_a1 = res.allocate<int>(N);
+  int* d_b1 = res.allocate<int>(N);
+  int* d_c1 = res.allocate<int>(N);
 
-  int* d_a1 = res_gpu1.allocate<int>(N);
-  int* d_b1 = res_gpu1.allocate<int>(N);
-  int* d_c1 = res_gpu1.allocate<int>(N);
+  res.memcpy(d_a1, a, sizeof(int)* N);
+  res.memcpy(d_b1, b, sizeof(int)* N);
 
-  int* d_a2 = res_gpu2.allocate<int>(N);
-  int* d_b2 = res_gpu2.allocate<int>(N);
-  int* d_c2 = res_gpu2.allocate<int>(N);
-
-  res_gpu1.memcpy(d_a1, a, sizeof(int)* N);
-  res_gpu1.memcpy(d_b1, b, sizeof(int)* N);
-
-  res_gpu2.memcpy(d_a2, a, sizeof(int)* N);
-  res_gpu2.memcpy(d_b2, b, sizeof(int)* N);
-
-
-  RAJA::forall<EXEC_POLICY>(res_gpu1, RAJA::RangeSegment(0, N), 
+  RAJA::forall<gpu_policy>(RAJA::RangeSegment(0, N), 
     [=] RAJA_DEVICE (int i) { 
-    if (d_a1[i] < 0) { 
-      gpu_msg_queue1.try_post_message("message from GPU stream 1: pointer =", d_a1, i, d_a1[i]); 
+    if (d_a1[i] < 0 && i == 1) { 
+      msg_queue1.try_post_message("d_a1", i, d_a1[i]); 
+    }
+    if (d_b1[i] > 0 && i == 1) { 
+      msg_queue2.try_post_message("d_b1", i, d_b1[i]); 
     }
     d_c1[i] = d_a1[i] + d_b1[i]; 
   });    
 
-  RAJA::forall<EXEC_POLICY>(res_gpu2, RAJA::RangeSegment(0, N), 
-    [=] RAJA_DEVICE (int i) { 
-    if (d_a2[i] < 0) { 
-      gpu_msg_queue2.try_post_message("message from GPU stream 2: pointer =", d_a2, i, d_a2[i]); 
-    }
-    d_c2[i] = d_a2[i] + d_b2[i]; 
-  }); 
-
-  res_gpu1.memcpy(c, d_c1, sizeof(int)*N );
-
-  res_gpu2.memcpy(c_, d_c2, sizeof(int)*N );
+  res.memcpy(c, d_c1, sizeof(int)*N );
 
   checkResult(c, N);
-  checkResult(c_, N);
 
-  gpu_logger1.wait_all();
-  gpu_logger2.wait_all();
+  msg_manager.wait_all();
 
-  res_gpu1.deallocate(d_a1);
-  res_gpu1.deallocate(d_b1);
-  res_gpu1.deallocate(d_c1);
-
-  res_gpu2.deallocate(d_a2);
-  res_gpu2.deallocate(d_b2);
-  res_gpu2.deallocate(d_c2);
+  res.deallocate(d_a1);
+  res.deallocate(d_b1);
+  res.deallocate(d_c1);
 }
 
 
