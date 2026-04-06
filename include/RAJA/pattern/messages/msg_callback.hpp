@@ -24,6 +24,7 @@
 #include <type_traits>
 
 #include "RAJA/pattern/messages/msg_header.hpp"
+#include "RAJA/util/FunctionTypeTraits.hpp"
 
 namespace RAJA
 {
@@ -68,44 +69,17 @@ private:
   Callable m_callable;
 };
 
-template<typename Fn>
-struct get_signature;
-
-template<typename R, typename C, typename... Args>
-struct get_signature<R (C::*)(Args...)>
-{
-  using type = R(Args...);
-};
-
-template<typename R, typename C, typename... Args>
-struct get_signature<R (C::*)(Args...) const>
-{
-  using type = R(Args...);
-};
-
-template<typename R, typename C, typename... Args>
-struct get_signature<R (C::*)(Args...) noexcept>
-{
-  using type = R(Args...);
-};
-
-template<typename R, typename C, typename... Args>
-struct get_signature<R (C::*)(Args...) const noexcept>
-{
-  using type = R(Args...);
-};
-
 template<typename R, typename... Args>
 msg_callback(R (*)(Args...)) -> msg_callback<R (*)(Args...), R(Args...)>;
 
-template<typename Object,
-         typename Signature =
-             typename get_signature<decltype(&Object::operator())>::type>
+template<
+    typename Object,
+    typename Signature = internal::signature_t<decltype(&Object::operator())>>
 msg_callback(const Object&) -> msg_callback<Object, Signature>;
 
-template<typename Object,
-         typename Signature =
-             typename get_signature<decltype(&Object::operator())>::type>
+template<
+    typename Object,
+    typename Signature = internal::signature_t<decltype(&Object::operator())>>
 msg_callback(Object&&) -> msg_callback<Object, Signature>;
 }  // namespace RAJA
 
