@@ -288,10 +288,10 @@ public:
   template<typename Callable>
   void subscribe(msg_id id, Callable&& c)
   {
-    auto callback = RAJA::msg_callback {std::forward<Callable>(c)};
+    RAJA::msg_callback callback {std::forward<Callable>(c)};
     auto& fn_list = m_callback_map.at(id);
     auto it = std::find_if(fn_list.begin(), fn_list.end(), [](const auto& fn) {
-      return typeid(Callable).hash_code() == fn->hash();
+      return std::type_index {typeid(Callable)} == fn->get_type();
     });
 
     using msg_callback_t = decltype(callback);
@@ -312,7 +312,7 @@ public:
   {
     auto& fn_list = m_callback_map.at(id);
     auto it = std::find_if(fn_list.begin(), fn_list.end(), [](const auto& fn) {
-      return typeid(Callable).hash_code() == fn->hash();
+      return std::type_index {typeid(Callable)} == fn->get_type();
     });
 
     if (it != fn_list.end())

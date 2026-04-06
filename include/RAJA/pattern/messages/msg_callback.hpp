@@ -20,6 +20,7 @@
 #ifndef RAJA_MSG_CALLBACK_HPP
 #define RAJA_MSG_CALLBACK_HPP
 
+#include <typeindex>
 #include <type_traits>
 
 #include "RAJA/pattern/messages/msg_header.hpp"
@@ -31,7 +32,7 @@ class imsg_callback
 public:
   virtual ~imsg_callback() = default;
 
-  virtual std::size_t hash() const { return typeid(void).hash_code(); }
+  virtual std::type_index get_type() const { return typeid(void); }
 
   virtual void operator()(char*) const = 0;
 };
@@ -53,10 +54,7 @@ public:
   explicit msg_callback(Object&& obj) : m_callable {std::move(obj)}
   {}
 
-  std::size_t hash() const final override
-  {
-    return typeid(Callable).hash_code();
-  }
+  std::type_index get_type() const final override { return typeid(Callable); }
 
   void operator()(char* args_buf) const final override
   {
