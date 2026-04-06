@@ -65,7 +65,7 @@ void printResult(int* res, int len);
 int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 {
 
-  std::cout << "\n\nRAJA vector addition example...\n";
+  std::cout << "\n\nRAJA RAJA::messages with vector addition example...\n";
 
   RAJA::resources::Host host{};
 
@@ -103,7 +103,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   msg_manager.unsubscribe(cpu_msg_queue.get_id(), err_callback);
 // _raja_msg_unsubscribe_end
   
-  const int N = 100000;
+  constexpr int N = 100000;
 
   int *a = host.allocate<int>(N);
   int *b = host.allocate<int>(N);
