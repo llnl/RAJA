@@ -81,21 +81,29 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 //
 // Allocate and initialize message handler and queue
 //
-  auto logger = RAJA::make_message_manager(buf_sz, host);
-  auto cpu_msg_queue = logger.subscribe<RAJA::mpsc_queue>(
+// _raja_msg_manager_start
+  auto msg_manager = RAJA::make_message_manager(buf_sz, host);
+// _raja_msg_manager_end
+
+// _raja_msg_subscribe_start
+  auto cpu_msg_queue = msg_manager.subscribe<RAJA::mpsc_queue>(
     [](const my_string<128>& str, int* ptr, int idx, int value) {
       std::cout << "\n " << str.c_str() << " " << ptr << " a[" << idx << "] = " << value << "\n";
     }
   );
 
-//
-// Define vector length
-//
-  const int N = 100000;
+  auto err_callback = [] (const my_string<128>& str, int* ptr, int idx, int value) {
+      std::cerr << "\n " << str.c_str() << " " << ptr << " a[" << idx << "] = " << value << "\n";
+    };
+  msg_manager.subscribe(cpu_msg_queue.get_id(), err_callback);
+// _raja_msg_subscribe_end
 
-//
-// Allocate and initialize vector data
-//
+
+// _raja_msg_unsubscribe_start
+  msg_manager.unsubscribe(cpu_msg_queue.get_id(), err_callback);
+// _raja_msg_unsubscribe_end
+  
+  const int N = 100000;
 
   int *a = host.allocate<int>(N);
   int *b = host.allocate<int>(N);
@@ -119,15 +127,19 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
   std::cout << "\n Running C-style vector addition...\n";
 
+// _raja_msg_k1_start
   for (int i = 0; i < N; ++i) {
     if (a[i] < 0) { 
       cpu_msg_queue.try_post_message("message from C-style loop", a, i, a[i]); 
     }
     c[i] = a[i] + b[i];
   }
+// _raja_msg_k1_end
 
   checkResult(c, N);
-  logger.wait_all();
+// _raja_msg_wait_start
+  msg_manager.wait_all();
+// _raja_msg_wait_end
 
 
 //----------------------------------------------------------------------------//
@@ -137,15 +149,17 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   std::cout << "\n Running RAJA sequential vector addition...\n";
 
 
+// _raja_msg_k2_start
   RAJA::forall<RAJA::seq_exec>(host, RAJA::RangeSegment(0, N), [=] (int i) { 
     if (a[i] < 0) { 
       cpu_msg_queue.try_post_message("message from RAJA seq_exec loop", a, i, a[i]); 
     }
     c[i] = a[i] + b[i]; 
   });
+// _raja_msg_k2_end
 
   checkResult(c, N);
-  logger.wait_all();
+  msg_manager.wait_all();
 
 #if defined(RAJA_ENABLE_OPENMP)
 //----------------------------------------------------------------------------//
@@ -163,7 +177,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   });
 
   checkResult(c, N);
-  logger.wait_all();
+  msg_manager.wait_all();
 #endif
 
 
@@ -180,6 +194,7 @@ const int GPU_BLOCK_SIZE = 256;
 //----------------------------------------------------------------------------//
 {
   std::cout << "\n Running RAJA GPU vector addition on RAJA's default streams...\n";
+  // _raja_msg_gpu1_start
 #if defined(RAJA_ENABLE_CUDA)
   using gpu_policy = RAJA::cuda_exec_async<GPU_BLOCK_SIZE>;
 #elif defined(RAJA_ENABLE_HIP)
@@ -225,13 +240,14 @@ const int GPU_BLOCK_SIZE = 256;
 
   res.memcpy(c, d_c1, sizeof(int)*N );
 
-  checkResult(c, N);
-
   msg_manager.wait_all();
 
   res.deallocate(d_a1);
   res.deallocate(d_b1);
   res.deallocate(d_c1);
+  // _raja_msg_gpu1_end
+  
+  checkResult(c, N);
 }
 
 
@@ -240,14 +256,13 @@ const int GPU_BLOCK_SIZE = 256;
 //----------------------------------------------------------------------------//
 {
   std::cout << "\n Running RAJA GPU vector with dependency between two seperate streams...\n";
+  // _raja_msg_gpu2_start
 #if defined(RAJA_ENABLE_CUDA)
-  // _raja_res_defres_start
   RAJA::resources::Cuda res_gpu1;
   RAJA::resources::Cuda res_gpu2;
   RAJA::resources::Host res_host;
 
   using EXEC_POLICY = RAJA::cuda_exec_async<GPU_BLOCK_SIZE>;
-  // _raja_res_defres_end
 #elif defined(RAJA_ENABLE_HIP)
   RAJA::resources::Hip res_gpu1;
   RAJA::resources::Hip res_gpu2;
@@ -275,74 +290,57 @@ const int GPU_BLOCK_SIZE = 256;
     }
   );
 
-  // _raja_res_alloc_start
   int* d_array1 = res_gpu1.allocate<int>(N);
   int* d_array2 = res_gpu2.allocate<int>(N);
   int* h_array  = res_host.allocate<int>(N);
-  // _raja_res_alloc_end
 
-  // _raja_res_k1_start
   RAJA::forall<EXEC_POLICY>(res_gpu1, RAJA::RangeSegment(0,N),
     [=] RAJA_HOST_DEVICE (int i) {
       d_array1[i] = i;
       gpu_msg_queue1.try_post_message(d_array1, i, d_array1[i]);
     }
   );
-  // _raja_res_k1_end
    
   // Log message for stream 1 
   gpu_logger1.wait_all();   
 
-  // _raja_res_k2_start
-  RAJA::resources::Event e = RAJA::forall<EXEC_POLICY>(res_gpu2, RAJA::RangeSegment(0,N),
+  RAJA::forall<EXEC_POLICY>(res_gpu2, RAJA::RangeSegment(0,N),
     [=] RAJA_HOST_DEVICE (int i) {
       d_array2[i] = -1;
       gpu_msg_queue2.try_post_message(d_array2, i, d_array2[i]);
     }
   );
-  // _raja_res_k2_end
 
-  // _raja_res_wait_start
-  res_gpu2.wait_for(&e);
-  // _raja_res_wait_end
-
-  // _raja_res_k3_start
   RAJA::forall<EXEC_POLICY>(res_gpu1, RAJA::RangeSegment(0,N),
     [=] RAJA_HOST_DEVICE (int i) {
       d_array1[i] *= -1;
       gpu_msg_queue1.try_post_message(d_array1, i, d_array1[i]);
     }
   );
-  // _raja_res_k3_end
 
   // Log message for stream 2
   gpu_logger2.wait_all();   
   
-  // _raja_res_memcpy_start
   res_gpu1.memcpy(h_array, d_array1, sizeof(int) * N);
-  // _raja_res_memcpy_end
 
   // Log message for stream 1 
   gpu_logger1.wait_all();   
 
-  // _raja_res_k4_start
+  res_gpu1.deallocate(d_array1);
+  res_gpu2.deallocate(d_array2);
+  // _raja_msg_gpu2_end
+
   bool check = true;
   RAJA::forall<RAJA::seq_exec>(res_host, RAJA::RangeSegment(0,N),
     [&check, h_array] (int i) {
       if(h_array[i] != -i) {check = false;} 
     }
   );
-  // _raja_res_k4_end
+  res_host.deallocate(h_array);
   
   std::cout << "\n         result -- ";
   if (check) std::cout << "PASS\n";
   else std::cout << "FAIL\n";
-
-
-  res_gpu1.deallocate(d_array1);
-  res_gpu2.deallocate(d_array2);
-  res_host.deallocate(h_array);
-
 }
 
 #endif
