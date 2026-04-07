@@ -90,10 +90,6 @@ TEST(message_handler, try_post_message_overflow) {
   ASSERT_EQ(test, 0);
 } 
 
-TEST(message_handler, try_post_message_overwrite) {
-  // TODO: implement
-} 
-
 TEST(message_handler, wait_all) {
   constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
                                  RAJA::align_sz(sizeof(RAJA::msg_args<int>));
@@ -156,7 +152,22 @@ TEST(message_handler, wait_all_array) {
 }
 
 TEST(message_handler, wait_all_overflow) {
-  // TODO: implement 
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
+                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+
+  auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
+
+  int test = 0;
+  auto q = msg_manager.subscribe<RAJA::spsc_queue>([&](int val) {
+    test = val;   
+  });
+
+  ASSERT_EQ(q.try_post_message(5), true);
+  ASSERT_EQ(q.try_post_message(7), false);
+
+  msg_manager.wait_all();
+
+  ASSERT_EQ(test, 5);
 }
 
 TEST(message_handler, subscribe) {
