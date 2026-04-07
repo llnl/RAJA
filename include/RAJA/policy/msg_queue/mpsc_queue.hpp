@@ -108,6 +108,14 @@ private:
 
 // TODO: turning off for now
 // need to relook at logic
+// Previously, this logic was expecting a different msg_queue
+// per type of message. In other words, this expected all messages
+// to be the same size. Since a more generic version is being
+// used, messages cannot easily overwrite old messages with different
+// sizes. Therefore, this was commented out for now.
+//
+// The goal with the `_overwrite` type is to use a circular buffer
+// to overwrite old messages if the buffer is full. (4/7/2026)
 #if 0
 template<typename Container>
 class queue<Container, RAJA::mpsc_queue_overwrite>
