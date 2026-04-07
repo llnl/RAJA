@@ -13,7 +13,7 @@
 Messages
 ===============================
 
-RAJA provides a portable interface and type-safe way to store function arguments that
+RAJA provides a portable interface and type-safe way to store function arguments that are
 passed to a function at a later time. For example, from a GPU, arguments can be stored
 and passed to function that prints to a file on the CPU. 
 
@@ -38,7 +38,7 @@ To create the ``message_manager``:
     :language: C++
 
 ``buf_sz`` is the size of the buffer that stores messages. ``res_host`` is the resource of the 
-execution policy, which determines what type of memory to store messages with. For GPU resources,
+execution policy, which determines the memory space in which messages will be stored. For GPU resources, for example,
 this is ``PINNED`` memory.
 
 Subscribing callbacks
@@ -91,7 +91,7 @@ Here is how the ``msg_queue`` can be used to publish messages:
 
 Handling messages
 ^^^^^^^^^^^^^^^^^
-Lastly, there needs to be a way to "handle" messages. In others, direct the messages to the corresponding callback(s).
+Lastly, there needs to be a way to direct messages to the corresponding callback(s).
 This is handled with the ``message_manager``, which forces a synchronize on the resource provided.
 
 .. literalinclude:: ../../../../examples/messages-forall.cpp
@@ -170,7 +170,7 @@ this example, output for messages will be printed using ``std::cout``.
 Application considerations
 --------------------------
 
-Things to consider when using ``RAJA::messages`` in an application.
+There are several things to consider when using ``RAJA::messages`` in an application.
 
 * The ``msg_queue`` with the correct argument types is created when a callback subscribes. Certain
   patterns will cause this storage to slowly grow overtime. For example, creating a new
