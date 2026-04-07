@@ -61,8 +61,8 @@ struct spsc_queue
 }  // namespace messages
 }  // namespace policy
 
-using spsc_queue           = policy::messages::spsc_queue<false>;
-using mpsc_queue           = policy::messages::mpsc_queue<false>;
+using spsc_queue = policy::messages::spsc_queue<false>;
+using mpsc_queue = policy::messages::mpsc_queue<false>;
 
 }  // namespace RAJA
 
