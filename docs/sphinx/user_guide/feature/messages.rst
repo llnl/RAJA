@@ -37,7 +37,7 @@ To create the ``message_manager``:
     :end-before: _raja_msg_manager_end
     :language: C++
 
-``buf_sz`` is the size of the buffer that stores messages. ``host`` is the resource of the 
+``buf_sz`` is the size of the buffer that stores messages. ``res_host`` is the resource of the 
 execution policy, which determines what type of memory to store messages with. For GPU resources,
 this is ``PINNED`` memory.
 
