@@ -24,8 +24,8 @@
  *  - to store messages on various execution policies (serial, OpenMP, GPU)
  *  - to print to a file on the GPU using the RAJA::messages
  *  - to interact with multiple GPU streams
- *  - to create custom types that can be stored (note: these not to be
- *    trivially destructible and copyable.
+ *  - to create custom types that can be stored (note: these types should be
+ *    trivially destructible and trivially copyable)
  *
  */
 

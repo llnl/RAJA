@@ -17,7 +17,7 @@ RAJA provides a portable interface and type-safe way to store function arguments
 passed to a function at a later time. For example, from a GPU, arguments can be stored
 and passed to function that prints to a file on the CPU. 
 
-.. warning:: This capability is new and should be considered experimental.
+.. warning:: This capability is new. We would like users to try it out and give feedback to improve it.
 
 
 --------------------------
