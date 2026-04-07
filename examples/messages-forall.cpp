@@ -29,7 +29,7 @@
  *
  */
 
-// This is a simplified example fixed string to show how
+// This is a simplified example fixed length string to show how
 // custom types can be used with the message queue.
 template <std::size_t N>
 class my_string
