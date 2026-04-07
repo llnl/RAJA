@@ -165,3 +165,20 @@ To run the example:
 This example will show how callbacks can be subscribed to various types of messages as
 well as how to publish messages on multiple different platforms. For the purposes of 
 this example, output for messages will be printed using ``std::cout``.
+
+--------------------------
+Application considerations
+--------------------------
+
+Things to consider when using ``RAJA::messages`` in an application.
+
+* The ``msg_queue`` with the correct argument types is created when a callback subscribes. Certain
+  patterns will cause this storage to slowly grow overtime. For example, creating a new
+  ``msg_queue`` every function call within a loop. Therefore, applications that use this pattern
+  will want to unsubscribe at some point to avoid running out of memory. 
+* Upon creation of the ``message_manager``, the ``message_bus`` will be allocated with some size. This
+  can be resized; however, resizing will force a synchronize and will loss any messages currently stored.
+  Also, the allocation is done through the resource, which can be less performant depending on the resource. 
+* Since the ``msg_queue`` is a fixed size, there is a chance of lossing messages. The ``try_post_message`` function
+  will return a ``boolean``. This will be ``true`` if the message is successfully added to the queue; otherwise, this
+  is ``false``. 
