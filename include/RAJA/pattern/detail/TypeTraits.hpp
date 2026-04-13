@@ -21,6 +21,7 @@
 #ifndef RAJA_TYPETRAITS_HPP
 #define RAJA_TYPETRAITS_HPP
 
+#include "RAJA/policy/PolicyBase.hpp"
 #include <type_traits>
 #include <camp/camp.hpp>
 
@@ -96,6 +97,16 @@ struct tuple_contains_Reducers<camp::tuple<Params...>>
 {};
 
 }  // namespace expt
+
+namespace type_traits
+{
+template<typename Policy>
+consteval bool is_policy_forall()
+{
+  return std::is_base_of_v<PolicyBase, Policy> &&
+         Policy {}.pattern == RAJA::Pattern::forall;
+}
+}  // namespace type_traits
 }  // namespace RAJA
 
 #endif  //  RAJA_TYPETRAITS_HPP

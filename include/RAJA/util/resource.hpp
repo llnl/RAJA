@@ -23,6 +23,7 @@
 #define RAJA_resource_HPP
 
 #include "camp/resource.hpp"
+#include <type_traits>
 #if defined(RAJA_CUDA_ACTIVE)
 #include "RAJA/policy/cuda/policy.hpp"
 #endif
@@ -245,6 +246,9 @@ struct is_resource<resources::Omp> : std::true_type
 {};
 #endif
 }  // end namespace type_traits
+
+template<typename T>
+concept Resource = type_traits::is_resource<T>::value;
 
 }  // end namespace RAJA
 
