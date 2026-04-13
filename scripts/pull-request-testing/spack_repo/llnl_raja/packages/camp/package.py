@@ -16,20 +16,20 @@ class Camp(CMakePackage, CudaPackage, ROCmPackage):
     type operations and tuples for C++ and cuda
     """
 
-    #homepage = "https://github.com/LLNL/camp"
-    #git = "https://github.com/LLNL/camp.git"
-    #url = "https://github.com/LLNL/camp/archive/v0.1.0.tar.gz"
-
-    # SGS Hacking for CUDA 13 testing
-    homepage = "https://github.com/smithsg/camp"
-    git = "https://github.com/smithsg/camp.git"
-    url = "https://github.com/LLNL/smithsg/archive/v0.1.0.tar.gz"
+    homepage = "https://github.com/LLNL/camp"
+    git = "https://github.com/LLNL/camp.git"
+    url = "https://github.com/LLNL/camp/archive/v0.1.0.tar.gz"
 
     maintainers("adrienbernede", "kab163", "trws")
 
     license("BSD-3-Clause")
 
-    version("main", branch="feature/smith84/cuda-13-support", submodules=False)
+    # SGS Hacking for CUDA 13 testing
+    version("test",
+            branch="feature/smith84/cuda-13-support",
+            git = "https://github.com/smithsg/camp.git",
+            submodules=False)
+    version("main", branch="main", submodules=False)
     version(
         "2025.12.0",
         tag="v2025.12.0",
