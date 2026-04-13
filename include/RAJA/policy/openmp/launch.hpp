@@ -102,7 +102,7 @@ struct LaunchExecute<RAJA::omp_launch_t>
   }
 };
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct LoopExecute<omp_parallel_for_exec, SEGMENT>
 {
 
@@ -188,7 +188,7 @@ struct LoopExecute<omp_parallel_for_exec, SEGMENT>
   }
 };
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct LoopExecute<omp_for_exec, SEGMENT>
 {
 
@@ -261,7 +261,7 @@ struct LoopExecute<omp_for_exec, SEGMENT>
 //
 // Return local index
 //
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct LoopICountExecute<omp_for_exec, SEGMENT>
 {
 
@@ -334,7 +334,7 @@ struct LoopICountExecute<omp_for_exec, SEGMENT>
 // policy for perfectly nested loops
 struct omp_parallel_nested_for_exec;
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct LoopExecute<omp_parallel_nested_for_exec, SEGMENT>
 {
 
@@ -401,7 +401,7 @@ struct LoopExecute<omp_parallel_nested_for_exec, SEGMENT>
 };
 
 // Return local index
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct LoopICountExecute<omp_parallel_nested_for_exec, SEGMENT>
 {
 
@@ -467,7 +467,7 @@ struct LoopICountExecute<omp_parallel_nested_for_exec, SEGMENT>
   }
 };
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct TileExecute<omp_parallel_for_exec, SEGMENT>
 {
 
@@ -494,7 +494,7 @@ struct TileExecute<omp_parallel_for_exec, SEGMENT>
   }
 };
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct TileTCountExecute<omp_parallel_for_exec, SEGMENT>
 {
 
@@ -523,7 +523,7 @@ struct TileTCountExecute<omp_parallel_for_exec, SEGMENT>
   }
 };
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct TileExecute<omp_for_exec, SEGMENT>
 {
 
@@ -544,7 +544,7 @@ struct TileExecute<omp_for_exec, SEGMENT>
   }
 };
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct TileTCountExecute<omp_for_exec, SEGMENT>
 {
 

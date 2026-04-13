@@ -22,6 +22,7 @@
 
 #include "RAJA/config.hpp"
 #include "RAJA/internal/get_platform.hpp"
+#include "RAJA/pattern/launch-concepts.hpp"
 #include "RAJA/pattern/launch/launch_context_policy.hpp"
 #include "RAJA/util/StaticLayout.hpp"
 #include "RAJA/util/macros.hpp"
@@ -264,7 +265,7 @@ struct LaunchExecute;
 
 // Duplicate of code above on account that we need to support the case in which
 // a kernel_name is not given
-template<typename LAUNCH_POLICY, typename... ReduceParams>
+template<LaunchPolicyList LAUNCH_POLICY, typename... ReduceParams>
 void launch(LaunchParams const& launch_params,
             ReduceParams&&... rest_of_launch_args)
 {
@@ -306,7 +307,7 @@ void launch(LaunchParams const& launch_params,
 //=================================================
 // Run time based policy launch
 //=================================================
-template<typename POLICY_LIST, typename BODY>
+template<LaunchPolicyList POLICY_LIST, typename BODY>
 void launch(ExecPlace place, LaunchParams const& params, BODY const& body)
 {
   launch<POLICY_LIST>(place, params, body);
@@ -314,7 +315,7 @@ void launch(ExecPlace place, LaunchParams const& params, BODY const& body)
 
 // Run-time API for new reducer interface with support of the case without a new
 // kernel name
-template<typename POLICY_LIST, typename... ReduceParams>
+template<LaunchPolicyList POLICY_LIST, typename... ReduceParams>
 void launch(ExecPlace place,
             const LaunchParams& launch_params,
             ReduceParams&&... rest_of_launch_args)
@@ -385,7 +386,7 @@ RAJA::resources::Resource Get_Host_Resource(T host_res, RAJA::ExecPlace device)
 
 // Duplicate of API above on account that we need to handle the case that a
 // kernel name is not provided
-template<typename POLICY_LIST, typename... ReduceParams>
+template<LaunchPolicyList POLICY_LIST, typename... ReduceParams>
 resources::EventProxy<resources::Resource> launch(
     RAJA::resources::Resource res,
     LaunchParams const& launch_params,
@@ -469,23 +470,23 @@ resources::EventProxy<resources::Resource> launch(
   return resources::EventProxy<resources::Resource>(res);
 }
 
-template<typename POLICY_LIST>
+template<LoopPolicyList POLICY_LIST>
 #if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
 using loop_policy = typename POLICY_LIST::device_policy_t;
 #else
 using loop_policy = typename POLICY_LIST::host_policy_t;
 #endif
 
-template<typename POLICY, typename SEGMENT>
+template<typename POLICY, Range SEGMENT>
 struct LoopExecute;
 
-template<typename POLICY, typename SEGMENT>
+template<typename POLICY, Range SEGMENT>
 struct LoopICountExecute;
 
 RAJA_SUPPRESS_HD_WARN
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
                                        SEGMENT const& segment,
@@ -495,9 +496,9 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
   LoopExecute<loop_policy<POLICY_LIST>, SEGMENT>::exec(ctx, segment, body);
 }
 
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
                                               SEGMENT const& segment,
@@ -512,9 +513,9 @@ namespace expt
 {
 
 RAJA_SUPPRESS_HD_WARN
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
                                        SEGMENT const& segment0,
@@ -527,9 +528,9 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
 }
 
 RAJA_SUPPRESS_HD_WARN
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
                                               SEGMENT const& segment0,
@@ -542,9 +543,9 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
 }
 
 RAJA_SUPPRESS_HD_WARN
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
                                        SEGMENT const& segment0,
@@ -558,9 +559,9 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
 }
 
 RAJA_SUPPRESS_HD_WARN
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
                                               SEGMENT const& segment0,
@@ -575,16 +576,16 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
 
 }  // namespace expt
 
-template<typename POLICY, typename SEGMENT>
+template<typename POLICY, Range SEGMENT>
 struct TileExecute;
 
-template<typename POLICY, typename SEGMENT>
+template<typename POLICY, Range SEGMENT>
 struct TileTCountExecute;
 
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
          typename TILE_T,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void tile(CONTEXT const& ctx,
                                        TILE_T tile_size,
@@ -596,10 +597,10 @@ RAJA_HOST_DEVICE RAJA_INLINE void tile(CONTEXT const& ctx,
                                                        body);
 }
 
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
          typename TILE_T,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void tile_tcount(CONTEXT const& ctx,
                                               TILE_T tile_size,
@@ -613,10 +614,10 @@ RAJA_HOST_DEVICE RAJA_INLINE void tile_tcount(CONTEXT const& ctx,
 namespace expt
 {
 
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
          typename TILE_T,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void tile(CONTEXT const& ctx,
                                        TILE_T tile_size0,
@@ -630,10 +631,10 @@ RAJA_HOST_DEVICE RAJA_INLINE void tile(CONTEXT const& ctx,
       ctx, tile_size0, tile_size1, segment0, segment1, body);
 }
 
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
          typename TILE_T,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void tile_tcount(CONTEXT const& ctx,
                                               TILE_T tile_size0,
@@ -647,10 +648,10 @@ RAJA_HOST_DEVICE RAJA_INLINE void tile_tcount(CONTEXT const& ctx,
       ctx, tile_size0, tile_size1, segment0, segment1, body);
 }
 
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
          typename TILE_T,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void tile(CONTEXT const& ctx,
                                        TILE_T tile_size0,
@@ -667,10 +668,10 @@ RAJA_HOST_DEVICE RAJA_INLINE void tile(CONTEXT const& ctx,
       body);
 }
 
-template<typename POLICY_LIST,
+template<LoopPolicyList POLICY_LIST,
          typename CONTEXT,
          typename TILE_T,
-         typename SEGMENT,
+         Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void tile_tcount(CONTEXT const& ctx,
                                               TILE_T tile_size0,

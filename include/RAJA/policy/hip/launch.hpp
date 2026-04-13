@@ -272,7 +272,7 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
 /*
    HIP generic loop implementations
 */
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct LoopExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::DirectUnchecked,
                                    kernel_sync_requirement::none,
@@ -296,7 +296,7 @@ struct LoopExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct LoopExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::DirectUnchecked,
                                    kernel_sync_requirement::none,
@@ -324,7 +324,7 @@ struct LoopExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -360,7 +360,7 @@ struct LoopExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct LoopExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::Direct,
                                    kernel_sync_requirement::none,
@@ -388,7 +388,7 @@ struct LoopExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct LoopExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::Direct,
                                    kernel_sync_requirement::none,
@@ -422,7 +422,7 @@ struct LoopExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -465,7 +465,7 @@ struct LoopExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct LoopExecute<
     RAJA::policy::hip::hip_indexer<
         RAJA::iteration_mapping::StridedLoop<named_usage::unspecified>,
@@ -496,7 +496,7 @@ struct LoopExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct LoopExecute<
     RAJA::policy::hip::hip_indexer<
         RAJA::iteration_mapping::StridedLoop<named_usage::unspecified>,
@@ -541,7 +541,7 @@ struct LoopExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -604,7 +604,7 @@ struct LoopExecute<
 /*
    HIP generic loop_icount implementations
 */
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct LoopICountExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::DirectUnchecked,
                                    kernel_sync_requirement::none,
@@ -628,7 +628,7 @@ struct LoopICountExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct LoopICountExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::DirectUnchecked,
                                    kernel_sync_requirement::none,
@@ -656,7 +656,7 @@ struct LoopICountExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -692,7 +692,7 @@ struct LoopICountExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct LoopICountExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::Direct,
                                    kernel_sync_requirement::none,
@@ -720,7 +720,7 @@ struct LoopICountExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct LoopICountExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::Direct,
                                    kernel_sync_requirement::none,
@@ -754,7 +754,7 @@ struct LoopICountExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -797,7 +797,7 @@ struct LoopICountExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct LoopICountExecute<
     RAJA::policy::hip::hip_indexer<
         RAJA::iteration_mapping::StridedLoop<named_usage::unspecified>,
@@ -828,7 +828,7 @@ struct LoopICountExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct LoopICountExecute<
     RAJA::policy::hip::hip_indexer<
         RAJA::iteration_mapping::StridedLoop<named_usage::unspecified>,
@@ -873,7 +873,7 @@ struct LoopICountExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -936,7 +936,7 @@ struct LoopICountExecute<
 /*
    HIP generic flattened loop implementations
 */
-template<typename SEGMENT, kernel_sync_requirement sync, typename IndexMapper0>
+template<Range SEGMENT, kernel_sync_requirement sync, typename IndexMapper0>
 struct LoopExecute<RAJA::policy::hip::hip_flatten_indexer<
                        RAJA::iteration_mapping::DirectUnchecked,
                        sync,
@@ -949,7 +949,7 @@ struct LoopExecute<RAJA::policy::hip::hip_flatten_indexer<
                   SEGMENT>
 {};
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct LoopExecute<RAJA::policy::hip::hip_flatten_indexer<
                        RAJA::iteration_mapping::DirectUnchecked,
                        kernel_sync_requirement::none,
@@ -980,7 +980,7 @@ struct LoopExecute<RAJA::policy::hip::hip_flatten_indexer<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -1019,7 +1019,7 @@ struct LoopExecute<RAJA::policy::hip::hip_flatten_indexer<
   }
 };
 
-template<typename SEGMENT, kernel_sync_requirement sync, typename IndexMapper0>
+template<Range SEGMENT, kernel_sync_requirement sync, typename IndexMapper0>
 struct LoopExecute<
     RAJA::policy::hip::hip_flatten_indexer<RAJA::iteration_mapping::Direct,
                                            sync,
@@ -1031,7 +1031,7 @@ struct LoopExecute<
           SEGMENT>
 {};
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct LoopExecute<
     RAJA::policy::hip::hip_flatten_indexer<RAJA::iteration_mapping::Direct,
                                            kernel_sync_requirement::none,
@@ -1067,7 +1067,7 @@ struct LoopExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -1111,7 +1111,7 @@ struct LoopExecute<
   }
 };
 
-template<typename SEGMENT, kernel_sync_requirement sync, typename IndexMapper0>
+template<Range SEGMENT, kernel_sync_requirement sync, typename IndexMapper0>
 struct LoopExecute<
     RAJA::policy::hip::hip_flatten_indexer<
         RAJA::iteration_mapping::StridedLoop<named_usage::unspecified>,
@@ -1126,7 +1126,7 @@ struct LoopExecute<
           SEGMENT>
 {};
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct LoopExecute<
     RAJA::policy::hip::hip_flatten_indexer<
         RAJA::iteration_mapping::StridedLoop<named_usage::unspecified>,
@@ -1163,7 +1163,7 @@ struct LoopExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -1212,7 +1212,7 @@ struct LoopExecute<
 /*
    HIP generic tile implementations
 */
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct TileExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::DirectUnchecked,
                                    kernel_sync_requirement::none,
@@ -1238,7 +1238,7 @@ struct TileExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct TileExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::DirectUnchecked,
                                    kernel_sync_requirement::none,
@@ -1271,7 +1271,7 @@ struct TileExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -1314,7 +1314,7 @@ struct TileExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct TileExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::Direct,
                                    kernel_sync_requirement::none,
@@ -1344,7 +1344,7 @@ struct TileExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct TileExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::Direct,
                                    kernel_sync_requirement::none,
@@ -1383,7 +1383,7 @@ struct TileExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -1433,7 +1433,7 @@ struct TileExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct TileExecute<
     RAJA::policy::hip::hip_indexer<
         RAJA::iteration_mapping::StridedLoop<named_usage::unspecified>,
@@ -1467,7 +1467,7 @@ struct TileExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct TileExecute<
     RAJA::policy::hip::hip_indexer<
         RAJA::iteration_mapping::StridedLoop<named_usage::unspecified>,
@@ -1517,7 +1517,7 @@ struct TileExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -1587,7 +1587,7 @@ struct TileExecute<
 /*
    HIP generic tile_tcount implementations
 */
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct TileTCountExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::DirectUnchecked,
                                    kernel_sync_requirement::none,
@@ -1613,7 +1613,7 @@ struct TileTCountExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct TileTCountExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::DirectUnchecked,
                                    kernel_sync_requirement::none,
@@ -1647,7 +1647,7 @@ struct TileTCountExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -1691,7 +1691,7 @@ struct TileTCountExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct TileTCountExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::Direct,
                                    kernel_sync_requirement::none,
@@ -1721,7 +1721,7 @@ struct TileTCountExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct TileTCountExecute<
     RAJA::policy::hip::hip_indexer<RAJA::iteration_mapping::Direct,
                                    kernel_sync_requirement::none,
@@ -1761,7 +1761,7 @@ struct TileTCountExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>
@@ -1812,7 +1812,7 @@ struct TileTCountExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper>
+template<Range SEGMENT, typename IndexMapper>
 struct TileTCountExecute<
     RAJA::policy::hip::hip_indexer<
         RAJA::iteration_mapping::StridedLoop<named_usage::unspecified>,
@@ -1846,7 +1846,7 @@ struct TileTCountExecute<
   }
 };
 
-template<typename SEGMENT, typename IndexMapper0, typename IndexMapper1>
+template<Range SEGMENT, typename IndexMapper0, typename IndexMapper1>
 struct TileTCountExecute<
     RAJA::policy::hip::hip_indexer<
         RAJA::iteration_mapping::StridedLoop<named_usage::unspecified>,
@@ -1900,7 +1900,7 @@ struct TileTCountExecute<
   }
 };
 
-template<typename SEGMENT,
+template<Range SEGMENT,
          typename IndexMapper0,
          typename IndexMapper1,
          typename IndexMapper2>

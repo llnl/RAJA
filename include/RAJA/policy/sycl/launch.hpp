@@ -191,7 +191,7 @@ using sycl_global_item_0 = sycl_global_item<0>;
 using sycl_global_item_1 = sycl_global_item<1>;
 using sycl_global_item_2 = sycl_global_item<2>;
 
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct LoopExecute<sycl_global_item<DIM>, SEGMENT>
 {
 
@@ -218,7 +218,7 @@ using sycl_global_item_12 = sycl_global_item<1, 2>;
 using sycl_global_item_20 = sycl_global_item<2, 0>;
 using sycl_global_item_21 = sycl_global_item<2, 1>;
 
-template<typename SEGMENT, int DIM0, int DIM1>
+template<Range SEGMENT, int DIM0, int DIM1>
 struct LoopExecute<sycl_global_item<DIM0, DIM1>, SEGMENT>
 {
 
@@ -251,7 +251,7 @@ using sycl_global_item_120 = sycl_global_item<1, 2, 0>;
 using sycl_global_item_201 = sycl_global_item<2, 0, 1>;
 using sycl_global_item_210 = sycl_global_item<2, 1, 0>;
 
-template<typename SEGMENT, int DIM0, int DIM1, int DIM2>
+template<Range SEGMENT, int DIM0, int DIM1, int DIM2>
 struct LoopExecute<sycl_global_item<DIM0, DIM1, DIM2>, SEGMENT>
 {
 
@@ -339,7 +339,7 @@ using sycl_flatten_group_local_201_loop =
 using sycl_flatten_group_local_210_loop =
     sycl_flatten_group_local_loop<2, 1, 0>;
 
-template<typename SEGMENT, int DIM0, int DIM1>
+template<Range SEGMENT, int DIM0, int DIM1>
 struct LoopExecute<sycl_flatten_group_local_direct<DIM0, DIM1>, SEGMENT>
 {
   template<typename BODY>
@@ -360,7 +360,7 @@ struct LoopExecute<sycl_flatten_group_local_direct<DIM0, DIM1>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM0, int DIM1>
+template<Range SEGMENT, int DIM0, int DIM1>
 struct LoopExecute<sycl_flatten_group_local_loop<DIM0, DIM1>, SEGMENT>
 {
   template<typename BODY>
@@ -383,7 +383,7 @@ struct LoopExecute<sycl_flatten_group_local_loop<DIM0, DIM1>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM0, int DIM1, int DIM2>
+template<Range SEGMENT, int DIM0, int DIM1, int DIM2>
 struct LoopExecute<sycl_flatten_group_local_direct<DIM0, DIM1, DIM2>, SEGMENT>
 {
   template<typename BODY>
@@ -406,7 +406,7 @@ struct LoopExecute<sycl_flatten_group_local_direct<DIM0, DIM1, DIM2>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM0, int DIM1, int DIM2>
+template<Range SEGMENT, int DIM0, int DIM1, int DIM2>
 struct LoopExecute<sycl_flatten_group_local_loop<DIM0, DIM1, DIM2>, SEGMENT>
 {
   template<typename BODY>
@@ -433,7 +433,7 @@ struct LoopExecute<sycl_flatten_group_local_loop<DIM0, DIM1, DIM2>, SEGMENT>
 /*
   SYCL thread loops with block strides
 */
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct LoopExecute<sycl_local_012_loop<DIM>, SEGMENT>
 {
 
@@ -456,7 +456,7 @@ struct LoopExecute<sycl_local_012_loop<DIM>, SEGMENT>
 /*
   SYCL thread direct mappings
 */
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct LoopExecute<sycl_local_012_direct<DIM>, SEGMENT>
 {
 
@@ -477,7 +477,7 @@ struct LoopExecute<sycl_local_012_direct<DIM>, SEGMENT>
 /*
   SYCL block loops with grid strides
 */
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct LoopExecute<sycl_group_012_loop<DIM>, SEGMENT>
 {
 
@@ -500,7 +500,7 @@ struct LoopExecute<sycl_group_012_loop<DIM>, SEGMENT>
 /*
   SYCL block direct mappings
 */
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct LoopExecute<sycl_group_012_direct<DIM>, SEGMENT>
 {
 
@@ -521,7 +521,7 @@ struct LoopExecute<sycl_group_012_direct<DIM>, SEGMENT>
 /*
   SYCL thread loops with block strides + Return Index
 */
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct LoopICountExecute<sycl_local_012_loop<DIM>, SEGMENT>
 {
 
@@ -544,7 +544,7 @@ struct LoopICountExecute<sycl_local_012_loop<DIM>, SEGMENT>
 /*
   SYCL thread direct mappings
 */
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct LoopICountExecute<sycl_local_012_direct<DIM>, SEGMENT>
 {
 
@@ -565,7 +565,7 @@ struct LoopICountExecute<sycl_local_012_direct<DIM>, SEGMENT>
 /*
   SYCL block loops with grid strides
 */
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct LoopICountExecute<sycl_group_012_loop<DIM>, SEGMENT>
 {
 
@@ -588,7 +588,7 @@ struct LoopICountExecute<sycl_group_012_loop<DIM>, SEGMENT>
 /*
   SYCL block direct mappings
 */
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct LoopICountExecute<sycl_group_012_direct<DIM>, SEGMENT>
 {
 
@@ -621,7 +621,7 @@ using sycl_group_120_nested_direct = sycl_group_012_direct<1, 2, 0>;
 using sycl_group_201_nested_direct = sycl_group_012_direct<2, 0, 1>;
 using sycl_group_210_nested_direct = sycl_group_012_direct<2, 1, 0>;
 
-template<typename SEGMENT, int DIM0, int DIM1>
+template<Range SEGMENT, int DIM0, int DIM1>
 struct LoopExecute<sycl_group_012_direct<DIM0, DIM1>, SEGMENT>
 {
 
@@ -642,7 +642,7 @@ struct LoopExecute<sycl_group_012_direct<DIM0, DIM1>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM0, int DIM1, int DIM2>
+template<Range SEGMENT, int DIM0, int DIM1, int DIM2>
 struct LoopExecute<sycl_group_012_direct<DIM0, DIM1, DIM2>, SEGMENT>
 {
 
@@ -671,7 +671,7 @@ struct LoopExecute<sycl_group_012_direct<DIM0, DIM1, DIM2>, SEGMENT>
   Perfectly nested sycl direct policies
   Return local index
 */
-template<typename SEGMENT, int DIM0, int DIM1>
+template<Range SEGMENT, int DIM0, int DIM1>
 struct LoopICountExecute<sycl_group_012_direct<DIM0, DIM1>, SEGMENT>
 {
 
@@ -692,7 +692,7 @@ struct LoopICountExecute<sycl_group_012_direct<DIM0, DIM1>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM0, int DIM1, int DIM2>
+template<Range SEGMENT, int DIM0, int DIM1, int DIM2>
 struct LoopICountExecute<sycl_group_012_direct<DIM0, DIM1, DIM2>, SEGMENT>
 {
 
@@ -732,7 +732,7 @@ using sycl_group_120_nested_loop = sycl_group_012_loop<1, 2, 0>;
 using sycl_group_201_nested_loop = sycl_group_012_loop<2, 0, 1>;
 using sycl_group_210_nested_loop = sycl_group_012_loop<2, 1, 0>;
 
-template<typename SEGMENT, int DIM0, int DIM1>
+template<Range SEGMENT, int DIM0, int DIM1>
 struct LoopExecute<sycl_group_012_loop<DIM0, DIM1>, SEGMENT>
 {
 
@@ -759,7 +759,7 @@ struct LoopExecute<sycl_group_012_loop<DIM0, DIM1>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM0, int DIM1, int DIM2>
+template<Range SEGMENT, int DIM0, int DIM1, int DIM2>
 struct LoopExecute<sycl_group_012_loop<DIM0, DIM1, DIM2>, SEGMENT>
 {
 
@@ -797,7 +797,7 @@ struct LoopExecute<sycl_group_012_loop<DIM0, DIM1, DIM2>, SEGMENT>
 /*
   perfectly nested sycl loop policies + returns local index
 */
-template<typename SEGMENT, int DIM0, int DIM1>
+template<Range SEGMENT, int DIM0, int DIM1>
 struct LoopICountExecute<sycl_group_012_loop<DIM0, DIM1>, SEGMENT>
 {
 
@@ -825,7 +825,7 @@ struct LoopICountExecute<sycl_group_012_loop<DIM0, DIM1>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM0, int DIM1, int DIM2>
+template<Range SEGMENT, int DIM0, int DIM1, int DIM2>
 struct LoopICountExecute<sycl_group_012_loop<DIM0, DIM1, DIM2>, SEGMENT>
 {
 
@@ -860,7 +860,7 @@ struct LoopICountExecute<sycl_group_012_loop<DIM0, DIM1, DIM2>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct TileExecute<sycl_local_012_loop<DIM>, SEGMENT>
 {
 
@@ -881,7 +881,7 @@ struct TileExecute<sycl_local_012_loop<DIM>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct TileExecute<sycl_local_012_direct<DIM>, SEGMENT>
 {
 
@@ -902,7 +902,7 @@ struct TileExecute<sycl_local_012_direct<DIM>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct TileExecute<sycl_group_012_loop<DIM>, SEGMENT>
 {
 
@@ -926,7 +926,7 @@ struct TileExecute<sycl_group_012_loop<DIM>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct TileExecute<sycl_group_012_direct<DIM>, SEGMENT>
 {
 
@@ -948,7 +948,7 @@ struct TileExecute<sycl_group_012_direct<DIM>, SEGMENT>
 };
 
 // Tile execute + return index
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct TileTCountExecute<sycl_local_012_loop<DIM>, SEGMENT>
 {
 
@@ -969,7 +969,7 @@ struct TileTCountExecute<sycl_local_012_loop<DIM>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct TileTCountExecute<sycl_local_012_direct<DIM>, SEGMENT>
 {
 
@@ -990,7 +990,7 @@ struct TileTCountExecute<sycl_local_012_direct<DIM>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct TileTCountExecute<sycl_group_012_loop<DIM>, SEGMENT>
 {
 
@@ -1011,7 +1011,7 @@ struct TileTCountExecute<sycl_group_012_loop<DIM>, SEGMENT>
   }
 };
 
-template<typename SEGMENT, int DIM>
+template<Range SEGMENT, int DIM>
 struct TileTCountExecute<sycl_group_012_direct<DIM>, SEGMENT>
 {
 

@@ -88,7 +88,7 @@ struct LaunchExecute<RAJA::seq_launch_t>
   }
 };
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct LoopExecute<seq_exec, SEGMENT>
 {
 
@@ -170,7 +170,7 @@ struct LoopExecute<seq_exec, SEGMENT>
   }
 };
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct LoopICountExecute<seq_exec, SEGMENT>
 {
 
@@ -239,7 +239,7 @@ struct LoopICountExecute<seq_exec, SEGMENT>
 
 // Tile Execute + variants
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct TileExecute<seq_exec, SEGMENT>
 {
 
@@ -260,7 +260,7 @@ struct TileExecute<seq_exec, SEGMENT>
   }
 };
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct TileTCountExecute<seq_exec, SEGMENT>
 {
 

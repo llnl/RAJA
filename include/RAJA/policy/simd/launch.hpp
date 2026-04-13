@@ -26,7 +26,7 @@
 namespace RAJA
 {
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct LoopExecute<simd_exec, SEGMENT>
 {
 
@@ -59,7 +59,7 @@ struct LoopExecute<simd_exec, SEGMENT>
   }
 };
 
-template<typename SEGMENT>
+template<Range SEGMENT>
 struct LoopICountExecute<simd_exec, SEGMENT>
 {
 
