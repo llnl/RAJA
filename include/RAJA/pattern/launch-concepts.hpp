@@ -11,6 +11,9 @@
 namespace RAJA
 {
 
+template<typename LaunchContextPolicy>
+class LaunchContextT;
+
 template<typename T>
 concept HostPolicyList = requires {
   typename camp::decay<T>::host_policy_t;
@@ -33,6 +36,23 @@ concept LaunchPolicyList = HostDevicePolicyList<T>;
 
 template<typename T>
 concept LoopPolicyList = HostDevicePolicyList<T>;
+
+template<typename T>
+concept LaunchContextConcept = requires(camp::decay<T> ctx,
+                                        std::size_t bytes,
+                                        void* mem) {
+  ctx.shared_mem_offset;
+  ctx.shared_mem_ptr;
+  ctx.shared_mem_offset = bytes;
+  ctx.shared_mem_ptr    = mem;
+  ctx.template getSharedMemory<int>(bytes);
+  ctx.releaseSharedMemory();
+  ctx.teamSync();
+};
+
+template<typename T>
+concept LaunchContextPolicyConcept =
+    LaunchContextConcept<LaunchContextT<camp::decay<T>>>;
 
 template<typename Mapper, typename IndicesAndDims, typename IdxT = std::ptrdiff_t>
 concept LaunchIndexMapperFor = requires(IndicesAndDims const& idxNDims) {

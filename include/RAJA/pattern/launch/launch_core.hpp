@@ -485,7 +485,7 @@ struct LoopICountExecute;
 
 RAJA_SUPPRESS_HD_WARN
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
@@ -497,7 +497,7 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
 }
 
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
@@ -514,7 +514,7 @@ namespace expt
 
 RAJA_SUPPRESS_HD_WARN
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
@@ -529,7 +529,7 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
 
 RAJA_SUPPRESS_HD_WARN
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
@@ -544,7 +544,7 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
 
 RAJA_SUPPRESS_HD_WARN
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
@@ -560,7 +560,7 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop(CONTEXT const& ctx,
 
 RAJA_SUPPRESS_HD_WARN
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          Range SEGMENT,
          typename BODY>
 RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
@@ -583,7 +583,7 @@ template<typename POLICY, Range SEGMENT>
 struct TileTCountExecute;
 
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          typename TILE_T,
          Range SEGMENT,
          typename BODY>
@@ -598,7 +598,7 @@ RAJA_HOST_DEVICE RAJA_INLINE void tile(CONTEXT const& ctx,
 }
 
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          typename TILE_T,
          Range SEGMENT,
          typename BODY>
@@ -615,7 +615,7 @@ namespace expt
 {
 
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          typename TILE_T,
          Range SEGMENT,
          typename BODY>
@@ -632,7 +632,7 @@ RAJA_HOST_DEVICE RAJA_INLINE void tile(CONTEXT const& ctx,
 }
 
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          typename TILE_T,
          Range SEGMENT,
          typename BODY>
@@ -649,7 +649,7 @@ RAJA_HOST_DEVICE RAJA_INLINE void tile_tcount(CONTEXT const& ctx,
 }
 
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          typename TILE_T,
          Range SEGMENT,
          typename BODY>
@@ -669,7 +669,7 @@ RAJA_HOST_DEVICE RAJA_INLINE void tile(CONTEXT const& ctx,
 }
 
 template<LoopPolicyList POLICY_LIST,
-         typename CONTEXT,
+         LaunchContextConcept CONTEXT,
          typename TILE_T,
          Range SEGMENT,
          typename BODY>

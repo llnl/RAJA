@@ -283,7 +283,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -310,7 +310,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -342,7 +342,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -373,7 +373,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -404,7 +404,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -442,7 +442,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -481,7 +481,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -515,7 +515,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -564,7 +564,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -621,7 +621,7 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -648,7 +648,7 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -680,7 +680,7 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -711,7 +711,7 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -742,7 +742,7 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -780,7 +780,7 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -819,7 +819,7 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -853,7 +853,7 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -902,7 +902,7 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
@@ -976,7 +976,7 @@ struct LoopExecute<RAJA::policy::hip::hip_flatten_indexer<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -1011,7 +1011,7 @@ struct LoopExecute<RAJA::policy::hip::hip_flatten_indexer<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -1062,7 +1062,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -1102,7 +1102,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -1162,7 +1162,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -1203,7 +1203,7 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
@@ -1247,7 +1247,7 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
@@ -1276,7 +1276,7 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
@@ -1313,7 +1313,7 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
@@ -1351,7 +1351,7 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
@@ -1384,7 +1384,7 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
@@ -1427,7 +1427,7 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
@@ -1473,7 +1473,7 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
@@ -1510,7 +1510,7 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
@@ -1564,7 +1564,7 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
@@ -1628,7 +1628,7 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
@@ -1657,7 +1657,7 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
@@ -1695,7 +1695,7 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
@@ -1734,7 +1734,7 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
@@ -1767,7 +1767,7 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
@@ -1811,7 +1811,7 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
@@ -1858,7 +1858,7 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
@@ -1895,7 +1895,7 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
@@ -1953,7 +1953,7 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,

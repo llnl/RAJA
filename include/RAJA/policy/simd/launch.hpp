@@ -43,7 +43,7 @@ struct LoopExecute<simd_exec, SEGMENT>
     }
   }
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
@@ -76,7 +76,7 @@ struct LoopICountExecute<simd_exec, SEGMENT>
     }
   }
 
-  template<typename LaunchContextPolicy, typename BODY>
+  template<LaunchContextPolicyConcept LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
       LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
