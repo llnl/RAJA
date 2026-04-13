@@ -57,7 +57,7 @@ jobs:
           build-dir: build
           options:
             ENABLE_WARNINGS_AS_ERRORS=Off
-            BLT_CXX_STD=""
+            BLT_CXX_STD="c++20"
             CMAKE_CXX_STANDARD=20
             CMAKE_BUILD_TYPE=Release
             ${{ matrix.shared.args }}
