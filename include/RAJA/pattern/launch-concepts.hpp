@@ -1,6 +1,8 @@
 #ifndef RAJA_launch_concepts_HPP
 #define RAJA_launch_concepts_HPP
 
+#include <cstddef>
+
 #include "RAJA/config.hpp"
 
 #include "RAJA/pattern/forall-concepts.hpp"
@@ -31,6 +33,24 @@ concept LaunchPolicyList = HostDevicePolicyList<T>;
 
 template<typename T>
 concept LoopPolicyList = HostDevicePolicyList<T>;
+
+template<typename Mapper, typename IndicesAndDims, typename IdxT = std::ptrdiff_t>
+concept LaunchIndexMapperFor = requires(IndicesAndDims const& idxNDims) {
+  camp::decay<Mapper>::template index<IdxT>(idxNDims);
+  camp::decay<Mapper>::template size<IdxT>(idxNDims);
+};
+
+#if defined(RAJA_CUDA_ACTIVE)
+template<typename Mapper, typename IdxT = std::ptrdiff_t>
+concept CudaLaunchIndexMapper =
+    LaunchIndexMapperFor<Mapper, cuda::NonCachedIndicesAndDims, IdxT>;
+#endif
+
+#if defined(RAJA_HIP_ACTIVE)
+template<typename Mapper, typename IdxT = std::ptrdiff_t>
+concept HipLaunchIndexMapper =
+    LaunchIndexMapperFor<Mapper, hip::NonCachedIndicesAndDims, IdxT>;
+#endif
 
 }  // namespace RAJA
 
