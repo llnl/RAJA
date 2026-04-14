@@ -250,6 +250,9 @@ struct is_resource<resources::Omp> : std::true_type
 template<typename T>
 concept Resource = type_traits::is_resource<T>::value;
 
+template<typename T>
+concept NonResource = !Resource<T>;
+
 }  // end namespace RAJA
 
 #endif  // RAJA_resources_HPP#

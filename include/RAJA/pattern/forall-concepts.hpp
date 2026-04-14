@@ -42,6 +42,71 @@ template<typename T>
 concept ForallParameterPack =
     RAJA::expt::type_traits::is_ForallParamPack<camp::decay<T>>::value;
 
+
+
+// Concept for strongly typed index types.
+template < typename T >
+concept StrongIndexType = !std::integral<T> && requires (T val)
+    {
+      { stripIndexType(val) } -> std::integral;
+    };
+
+// Concept index types or strongly typed index types.
+// TODO: improve the name
+template < typename T >
+concept IndexTypeConcept = std::integral<T> || StrongIndexType<T>;
+
+// Concept for types that may be callable.
+// Use std::invokable when the full set of arguments is known.
+template < typename B >
+concept PotentialInvokable =
+    std::is_class_v<std::remove_cvref_t<B>> ||
+    std::is_union_v<std::remove_cvref_t<B>> ||
+    std::is_function_v<std::remove_cvref_t<B>> ||
+    ( std::is_pointer_v<std::remove_cvref_t<B>> &&
+      std::is_function_v<std::remove_cv_t<std::remove_pointer_t<std::remove_cvref_t<B>>>> );
+
+consteval bool testPotentialInvokable() noexcept
+{
+  using I = int;
+  using F = int();
+  struct S{};
+  union U{};
+  using L = decltype([]{});
+  static_assert(!PotentialInvokable<I>);
+  static_assert(!PotentialInvokable<I&>);
+  static_assert(!PotentialInvokable<I*>);
+  static_assert(!PotentialInvokable<I[]>);
+  static_assert(PotentialInvokable<F>);
+  static_assert(PotentialInvokable<F&>);
+  static_assert(PotentialInvokable<F*>);
+  static_assert(PotentialInvokable<F*&>);
+  static_assert(!PotentialInvokable<F**>);
+  static_assert(!PotentialInvokable<F*[]>);
+  static_assert(PotentialInvokable<S>);
+  static_assert(PotentialInvokable<S&>);
+  static_assert(!PotentialInvokable<S*>);
+  static_assert(!PotentialInvokable<S[]>);
+  static_assert(PotentialInvokable<U>);
+  static_assert(PotentialInvokable<U&>);
+  static_assert(!PotentialInvokable<U*>);
+  static_assert(!PotentialInvokable<U[]>);
+  static_assert(PotentialInvokable<L>);
+  static_assert(PotentialInvokable<L&>);
+  static_assert(!PotentialInvokable<L*>);
+  static_assert(!PotentialInvokable<L[]>);
+  return true;
+}
+static_assert(testPotentialInvokable());
+
+// Concept for forall param objects.
+template < typename Arg >
+concept ForallParam = std::is_base_of_v<expt::detail::ForallParamBase, std::remove_cvref_t<Arg>>;
+
+// Concept for forall arguments that may be forall param objects or callables.
+template < typename Arg >
+concept ForallParamsAndBody = ForallParam<Arg> || PotentialInvokable<Arg>;
+
 }  // namespace RAJA
 
 #endif
