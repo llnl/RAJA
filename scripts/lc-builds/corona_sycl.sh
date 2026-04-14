@@ -69,7 +69,7 @@ cmake \
   -DCMAKE_C_COMPILER=clang \
   -DCMAKE_CXX_COMPILER=clang++ \
   -DCMAKE_LINKER=clang++ \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -DENABLE_TESTS=On \
   -DENABLE_EXAMPLES=On \
   "$@" \
