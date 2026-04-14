@@ -31,7 +31,7 @@ class Camp(CMakePackage, CudaPackage, ROCmPackage):
         # CUDA 13 modifications.
         branch="feature/smith84/cuda-13-support",
         git = "https://github.com/smithsg/camp.git",
-        submodules=False)
+        submodules=False,
         #tag="v2025.12.0",
         #commit="a8caefa9f4c811b1a114b4ed2c9b681d40f12325",
         #submodules=False,
