@@ -24,17 +24,17 @@ class Camp(CMakePackage, CudaPackage, ROCmPackage):
 
     license("BSD-3-Clause")
 
-    # SGS Hacking for CUDA 13 testing
-    version("test",
-            branch="feature/smith84/cuda-13-support",
-            git = "https://github.com/smithsg/camp.git",
-            submodules=False)
     version("main", branch="main", submodules=False)
     version(
         "2025.12.0",
-        tag="v2025.12.0",
-        commit="a8caefa9f4c811b1a114b4ed2c9b681d40f12325",
-        submodules=False,
+        # SGS Hacking for CUDA 13 testing; redirect CAMP to temporary version with
+        # CUDA 13 modifications.
+        branch="feature/smith84/cuda-13-support",
+        git = "https://github.com/smithsg/camp.git",
+        submodules=False)
+        #tag="v2025.12.0",
+        #commit="a8caefa9f4c811b1a114b4ed2c9b681d40f12325",
+        #submodules=False,
     )
     version(
         "2025.09.2",
