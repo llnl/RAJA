@@ -24,6 +24,7 @@
 
 #include "RAJA/config.hpp"
 #include "RAJA/util/macros.hpp"
+#include "RAJA/util/builtin_compat.hpp"
 #include "RAJA/pattern/tensor/internal/RegisterBase.hpp"
 
 // Include SIMD intrinsics header file
@@ -88,6 +89,25 @@ private:
                             N >= 4 ? 3 : 0, N >= 2 ? 2 : 0);
   }
 
+  RAJA_INLINE
+  static register_type load_register(element_type const* ptr)
+  {
+    return _mm256_loadu_si256(reinterpret_cast<__m256i const*>(ptr));
+  }
+
+  RAJA_INLINE
+  static void store_register(element_type* ptr, register_type value)
+  {
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(ptr), value);
+  }
+
+  RAJA_INLINE
+  self_type& assign_register(register_type value)
+  {
+    RAJA_BUILTIN_MEMCPY(&m_value, &value, sizeof(m_value));
+    return *this;
+  }
+
 public:
   static constexpr camp::idx_t s_num_elem = 8;
 
@@ -122,7 +142,10 @@ public:
    * @brief Copy constructor
    */
   RAJA_INLINE
-  Register(self_type const& c) : base_type(), m_value(c.m_value) {}
+  Register(self_type const& c) : base_type(), m_value(_mm256_setzero_si256())
+  {
+    assign_register(c.m_value);
+  }
 
   /*!
    * @brief Copy assignment constructor
@@ -130,8 +153,7 @@ public:
   RAJA_INLINE
   self_type& operator=(self_type const& c)
   {
-    m_value = c.m_value;
-    return *this;
+    return assign_register(c.m_value);
   }
 
   /*!
@@ -338,8 +360,7 @@ public:
   RAJA_INLINE
   self_type& copy(self_type const& src)
   {
-    m_value = src.m_value;
-    return *this;
+    return assign_register(src.m_value);
   }
 
   RAJA_HOST_DEVICE

@@ -24,6 +24,7 @@
 
 #include "RAJA/config.hpp"
 #include "RAJA/util/macros.hpp"
+#include "RAJA/util/builtin_compat.hpp"
 #include "RAJA/pattern/tensor/internal/RegisterBase.hpp"
 
 // Include SIMD intrinsics header file
@@ -52,6 +53,19 @@ public:
 
 private:
   register_type m_value;
+
+  RAJA_INLINE
+  static register_type make_register(element_type x0,
+                                     element_type x1,
+                                     element_type x2,
+                                     element_type x3,
+                                     element_type x4,
+                                     element_type x5,
+                                     element_type x6,
+                                     element_type x7)
+  {
+    return _mm256_set_ps(x7, x6, x5, x4, x3, x2, x1, x0);
+  }
 
   RAJA_INLINE
   __m256i createMask(camp::idx_t N) const
@@ -88,6 +102,48 @@ private:
                             N >= 4 ? 3 : 0, N >= 2 ? 2 : 0);
   }
 
+  static RAJA_NOINLINE element_type load_scalar(
+      element_type const* ptr)
+  {
+    element_type value;
+    RAJA_BUILTIN_MEMCPY(&value, ptr, sizeof(value));
+    return value;
+  }
+
+  RAJA_INLINE
+  static register_type load_register(element_type const* ptr)
+  {
+    return make_register(load_scalar(ptr + 0),
+                         load_scalar(ptr + 1),
+                         load_scalar(ptr + 2),
+                         load_scalar(ptr + 3),
+                         load_scalar(ptr + 4),
+                         load_scalar(ptr + 5),
+                         load_scalar(ptr + 6),
+                         load_scalar(ptr + 7));
+  }
+
+  RAJA_INLINE
+  static void store_register(element_type* ptr, register_type value)
+  {
+    _mm256_storeu_ps(ptr, value);
+  }
+
+  RAJA_INLINE
+  self_type& assign_register(register_type value)
+  {
+    RAJA_BUILTIN_MEMCPY(&m_value, &value, sizeof(m_value));
+    return *this;
+  }
+
+  RAJA_INLINE
+  static element_type lane(register_type value, camp::idx_t i)
+  {
+    element_type lanes[s_num_elem];
+    store_register(lanes, value);
+    return lanes[i];
+  }
+
 public:
   static constexpr camp::idx_t s_num_elem = 8;
 
@@ -122,7 +178,10 @@ public:
    * @brief Copy constructor
    */
   RAJA_INLINE
-  Register(self_type const& c) : base_type(c), m_value(c.m_value) {}
+  Register(self_type const& c) : base_type(c), m_value(_mm256_setzero_ps())
+  {
+    assign_register(c.m_value);
+  }
 
   /*!
    * @brief Copy assignment constructor
@@ -130,8 +189,7 @@ public:
   RAJA_INLINE
   self_type& operator=(self_type const& c)
   {
-    m_value = c.m_value;
-    return *this;
+    return assign_register(c.m_value);
   }
 
   /*!
@@ -154,8 +212,7 @@ public:
   RAJA_INLINE
   self_type& load_packed(element_type const* ptr)
   {
-    m_value = _mm256_loadu_ps(ptr);
-    return *this;
+    return assign_register(load_register(ptr));
   }
 
   /*!
@@ -227,9 +284,11 @@ public:
   RAJA_INLINE
   self_type const& store_strided(element_type* ptr, camp::idx_t stride) const
   {
+    element_type lanes[s_num_elem];
+    store_register(lanes, m_value);
     for (camp::idx_t i = 0; i < 8; ++i)
     {
-      ptr[i * stride] = m_value[i];
+      ptr[i * stride] = lanes[i];
     }
     return *this;
   }
@@ -243,9 +302,11 @@ public:
                                    camp::idx_t stride,
                                    camp::idx_t N) const
   {
+    element_type lanes[s_num_elem];
+    store_register(lanes, m_value);
     for (camp::idx_t i = 0; i < N; ++i)
     {
-      ptr[i * stride] = m_value[i];
+      ptr[i * stride] = lanes[i];
     }
     return *this;
   }
@@ -256,7 +317,7 @@ public:
    * @return Returns scalar value at i
    */
   RAJA_INLINE
-  element_type get(camp::idx_t i) const { return m_value[i]; }
+  element_type get(camp::idx_t i) const { return lane(m_value, i); }
 
   /*!
    * @brief Set scalar value in vector register
@@ -266,7 +327,10 @@ public:
   RAJA_INLINE
   self_type& set(element_type value, camp::idx_t i)
   {
-    m_value[i] = value;
+    element_type lanes[s_num_elem];
+    store_register(lanes, m_value);
+    lanes[i] = value;
+    m_value = load_register(lanes);
     return *this;
   }
 
@@ -284,8 +348,7 @@ public:
   RAJA_INLINE
   self_type& copy(self_type const& src)
   {
-    m_value = src.m_value;
-    return *this;
+    return assign_register(src.m_value);
   }
 
   RAJA_HOST_DEVICE
@@ -367,7 +430,7 @@ public:
     auto sh2  = _mm256_permute_ps(red1, 0x4E);
     auto red2 = _mm256_add_ps(red1, sh2);
 
-    return red2[0] + red2[4];
+    return lane(red2, 0) + lane(red2, 4);
   }
 
   /*!
@@ -386,7 +449,7 @@ public:
     auto sh2  = _mm256_permutevar8x32_ps(red1, createPermute2(8));
     auto red2 = _mm256_max_ps(red1, sh2);
 
-    return std::max<element_type>(red2[0], red2[4]);
+    return std::max<element_type>(lane(red2, 0), lane(red2, 4));
   }
 
   /*!
@@ -403,11 +466,11 @@ public:
     }
     if (N == 1)
     {
-      return m_value[0];
+      return get(0);
     }
     if (N == 2)
     {
-      return std::max<element_type>(m_value[0], m_value[1]);
+      return std::max<element_type>(get(0), get(1));
     }
 
     // swap odd-even pairs and add
@@ -416,18 +479,18 @@ public:
 
     if (N == 3)
     {
-      return std::max<element_type>(red1[0], m_value[2]);
+      return std::max<element_type>(lane(red1, 0), get(2));
     }
     if (N == 4)
     {
-      return std::max<element_type>(red1[0], red1[2]);
+      return std::max<element_type>(lane(red1, 0), lane(red1, 2));
     }
 
     // swap odd-even quads and add
     auto sh2  = _mm256_permutevar8x32_ps(red1, createPermute2(N));
     auto red2 = _mm256_max_ps(red1, sh2);
 
-    return std::max<element_type>(red2[0], red2[4]);
+    return std::max<element_type>(lane(red2, 0), lane(red2, 4));
   }
 
   /*!
@@ -456,7 +519,7 @@ public:
     auto sh2  = _mm256_permutevar8x32_ps(red1, createPermute2(8));
     auto red2 = _mm256_min_ps(red1, sh2);
 
-    return std::min<element_type>(red2[0], red2[4]);
+    return std::min<element_type>(lane(red2, 0), lane(red2, 4));
   }
 
   /*!
@@ -473,11 +536,11 @@ public:
     }
     if (N == 1)
     {
-      return m_value[0];
+      return get(0);
     }
     if (N == 2)
     {
-      return std::min<element_type>(m_value[0], m_value[1]);
+      return std::min<element_type>(get(0), get(1));
     }
 
     // swap odd-even pairs and add
@@ -486,18 +549,18 @@ public:
 
     if (N == 3)
     {
-      return std::min<element_type>(red1[0], m_value[2]);
+      return std::min<element_type>(lane(red1, 0), get(2));
     }
     if (N == 4)
     {
-      return std::min<element_type>(red1[0], red1[2]);
+      return std::min<element_type>(lane(red1, 0), lane(red1, 2));
     }
 
     // swap odd-even quads and add
     auto sh2  = _mm256_permutevar8x32_ps(red1, createPermute2(N));
     auto red2 = _mm256_min_ps(red1, sh2);
 
-    return std::min<element_type>(red2[0], red2[4]);
+    return std::min<element_type>(lane(red2, 0), lane(red2, 4));
   }
 
   /*!
