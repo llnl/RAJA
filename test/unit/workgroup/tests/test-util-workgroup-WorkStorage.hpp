@@ -20,16 +20,17 @@
 #include <array>
 #include <cstddef>
 #include <type_traits>
+#include <cstring>
 
 
 template < typename T >
 struct TestCallable
 {
-  static __attribute__((noinline)) void copy_value(void* dst,
-                                                   void const* src,
-                                                   size_t size)
+  static RAJA_NOINLINE void copy_value(void* dst,
+                                       void const* src,
+                                       size_t size)
   {
-    __builtin_memmove(dst, src, size);
+    std::memmove(dst, src, size);
   }
 
   TestCallable(T _val)
