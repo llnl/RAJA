@@ -89,8 +89,7 @@ private:
     return _mm256_castpd_si256(_mm256_permute_pd(_mm256_castsi256_pd(x), perm));
   }
 
-  static RAJA_NOINLINE element_type load_scalar(
-      element_type const* ptr)
+  static RAJA_NOINLINE element_type load_scalar(element_type const* ptr)
   {
     element_type value;
     RAJA_BUILTIN_MEMCPY(&value, ptr, sizeof(value));
@@ -100,10 +99,8 @@ private:
   RAJA_INLINE
   static register_type load_register(element_type const* ptr)
   {
-    return make_register(load_scalar(ptr + 0),
-                         load_scalar(ptr + 1),
-                         load_scalar(ptr + 2),
-                         load_scalar(ptr + 3));
+    return make_register(load_scalar(ptr + 0), load_scalar(ptr + 1),
+                         load_scalar(ptr + 2), load_scalar(ptr + 3));
   }
 
   RAJA_INLINE
@@ -385,10 +382,7 @@ public:
   RAJA_HOST_DEVICE
 
   RAJA_INLINE
-  self_type& copy(self_type const& src)
-  {
-    return assign_register(src.m_value);
-  }
+  self_type& copy(self_type const& src) { return assign_register(src.m_value); }
 
   RAJA_HOST_DEVICE
 

@@ -279,7 +279,7 @@ public:
     element_type lanes[s_num_elem];
     store_register(lanes, m_value);
     lanes[i] = value;
-    m_value = load_register(lanes);
+    m_value  = load_register(lanes);
     return *this;
   }
 
@@ -295,10 +295,7 @@ public:
   RAJA_HOST_DEVICE
 
   RAJA_INLINE
-  self_type& copy(self_type const& src)
-  {
-    return assign_register(src.m_value);
-  }
+  self_type& copy(self_type const& src) { return assign_register(src.m_value); }
 
   RAJA_HOST_DEVICE
 

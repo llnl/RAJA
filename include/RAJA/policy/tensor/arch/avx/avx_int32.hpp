@@ -358,10 +358,7 @@ public:
   RAJA_HOST_DEVICE
 
   RAJA_INLINE
-  self_type& copy(self_type const& src)
-  {
-    return assign_register(src.m_value);
-  }
+  self_type& copy(self_type const& src) { return assign_register(src.m_value); }
 
   RAJA_HOST_DEVICE
 

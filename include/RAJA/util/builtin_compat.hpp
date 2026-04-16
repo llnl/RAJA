@@ -24,7 +24,7 @@
 #if defined(_MSC_VER)
 #include <cstring>
 #define RAJA_BUILTIN_MEMCPY(a, b, c) std::memcpy(a, b, c)
-   
+
 #else
 #define RAJA_BUILTIN_MEMCPY(a, b, c) __builtin_memcpy(a, b, c)
 #endif

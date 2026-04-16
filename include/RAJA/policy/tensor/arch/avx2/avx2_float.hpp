@@ -102,8 +102,7 @@ private:
                             N >= 4 ? 3 : 0, N >= 2 ? 2 : 0);
   }
 
-  static RAJA_NOINLINE element_type load_scalar(
-      element_type const* ptr)
+  static RAJA_NOINLINE element_type load_scalar(element_type const* ptr)
   {
     element_type value;
     RAJA_BUILTIN_MEMCPY(&value, ptr, sizeof(value));
@@ -113,14 +112,10 @@ private:
   RAJA_INLINE
   static register_type load_register(element_type const* ptr)
   {
-    return make_register(load_scalar(ptr + 0),
-                         load_scalar(ptr + 1),
-                         load_scalar(ptr + 2),
-                         load_scalar(ptr + 3),
-                         load_scalar(ptr + 4),
-                         load_scalar(ptr + 5),
-                         load_scalar(ptr + 6),
-                         load_scalar(ptr + 7));
+    return make_register(load_scalar(ptr + 0), load_scalar(ptr + 1),
+                         load_scalar(ptr + 2), load_scalar(ptr + 3),
+                         load_scalar(ptr + 4), load_scalar(ptr + 5),
+                         load_scalar(ptr + 6), load_scalar(ptr + 7));
   }
 
   RAJA_INLINE
@@ -330,7 +325,7 @@ public:
     element_type lanes[s_num_elem];
     store_register(lanes, m_value);
     lanes[i] = value;
-    m_value = load_register(lanes);
+    m_value  = load_register(lanes);
     return *this;
   }
 
@@ -346,10 +341,7 @@ public:
   RAJA_HOST_DEVICE
 
   RAJA_INLINE
-  self_type& copy(self_type const& src)
-  {
-    return assign_register(src.m_value);
-  }
+  self_type& copy(self_type const& src) { return assign_register(src.m_value); }
 
   RAJA_HOST_DEVICE
 
