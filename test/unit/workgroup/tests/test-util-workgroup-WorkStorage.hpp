@@ -30,7 +30,7 @@ struct TestCallable
                                        void const* src,
                                        size_t size)
   {
-    std::memmove(dst, src, size);
+    std::memcpy(dst, src, size);
   }
 
   TestCallable(T _val)
