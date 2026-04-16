@@ -119,7 +119,8 @@ struct icount_adapter
   template<typename T, typename... Params>
   RAJA_HOST_DEVICE void operator()(T const& i, Params&&... params) const
   {
-    body(static_cast<index_type>(i + icount), begin_it[i], std::forward<Params>(params)...);
+    body(static_cast<index_type>(i + icount), begin_it[i],
+         std::forward<Params>(params)...);
   }
 };
 
