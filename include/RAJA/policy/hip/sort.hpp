@@ -142,20 +142,20 @@ resources::EventProxy<resources::Hip> sort(
   {
 #if defined(__HIPCC__)
     CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
-                                  temp_storage_bytes, d_keys.current(), d_keys.alternate(), len, comp,
-                                  stream);
+                                  temp_storage_bytes, d_keys.current(),
+                                  d_keys.alternate(), len, comp, stream);
 #elif defined(__CUDACC__)
     if constexpr (Stable)
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortKeys,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), len, comp, stream);
     }
     else
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::SortKeys,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), len, comp, stream);
     }
 #endif
   }
@@ -196,21 +196,21 @@ resources::EventProxy<resources::Hip> sort(
   {
 #if defined(__HIPCC__)
     CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
-                                  temp_storage_bytes, d_keys.current(), d_keys.alternate(), len, comp,
-                                  stream);
+                                  temp_storage_bytes, d_keys.current(),
+                                  d_keys.alternate(), len, comp, stream);
     d_keys.swap();
 #elif defined(__CUDACC__)
     if constexpr (Stable)
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortKeys,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), len, comp, stream);
     }
     else
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::SortKeys,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), len, comp, stream);
     }
 #endif
   }
@@ -308,21 +308,22 @@ resources::EventProxy<resources::Hip> sort_pairs(
   {
 #if defined(__HIPCC__)
     CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
-                                  temp_storage_bytes, d_keys.current(), d_keys.alternate(),
-                                  d_vals.current(), d_vals.alternate(), len, comp,
-                                  stream);
+                                  temp_storage_bytes, d_keys.current(),
+                                  d_keys.alternate(), d_vals.current(),
+                                  d_vals.alternate(), len, comp, stream);
 #elif defined(__CUDACC__)
     if constexpr (Stable)
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortPairs,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     d_vals.Current(), len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), d_vals.Current(), len,
+                                     comp, stream);
     }
     else
     {
-      CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::SortPairs,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     d_vals.Current(), len, comp, stream);
+      CAMP_CUDA_API_INVOKE_AND_CHECK(
+          cub::DeviceMergeSort::SortPairs, d_temp_storage, temp_storage_bytes,
+          d_keys.Current(), d_vals.Current(), len, comp, stream);
     }
 #endif
   }
@@ -365,23 +366,24 @@ resources::EventProxy<resources::Hip> sort_pairs(
   {
 #if defined(__HIPCC__)
     CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
-                                  temp_storage_bytes, d_keys.current(), d_keys.alternate(),
-                                  d_vals.current(), d_vals.alternate(), len, comp,
-                                  stream);
+                                  temp_storage_bytes, d_keys.current(),
+                                  d_keys.alternate(), d_vals.current(),
+                                  d_vals.alternate(), len, comp, stream);
     d_keys.swap();
     d_vals.swap();
 #elif defined(__CUDACC__)
     if constexpr (Stable)
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortPairs,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     d_vals.Current(), len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), d_vals.Current(), len,
+                                     comp, stream);
     }
     else
     {
-      CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::SortPairs,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     d_vals.Current(), len, comp, stream);
+      CAMP_CUDA_API_INVOKE_AND_CHECK(
+          cub::DeviceMergeSort::SortPairs, d_temp_storage, temp_storage_bytes,
+          d_keys.Current(), d_vals.Current(), len, comp, stream);
     }
 #endif
   }

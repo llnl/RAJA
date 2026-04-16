@@ -109,14 +109,14 @@ resources::EventProxy<resources::Cuda> sort(
     if (Stable)
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortKeys,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), len, comp, stream);
     }
     else
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::SortKeys,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), len, comp, stream);
     }
   }
   // Allocate temporary storage
@@ -145,14 +145,14 @@ resources::EventProxy<resources::Cuda> sort(
     if (Stable)
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortKeys,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), len, comp, stream);
     }
     else
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::SortKeys,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), len, comp, stream);
     }
   }
   // Free temporary storage
@@ -242,14 +242,15 @@ resources::EventProxy<resources::Cuda> sort_pairs(
     if (Stable)
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortPairs,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     d_vals.Current(), len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), d_vals.Current(), len,
+                                     comp, stream);
     }
     else
     {
-      CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::SortPairs,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     d_vals.Current(), len, comp, stream);
+      CAMP_CUDA_API_INVOKE_AND_CHECK(
+          ::cub::DeviceMergeSort::SortPairs, d_temp_storage, temp_storage_bytes,
+          d_keys.Current(), d_vals.Current(), len, comp, stream);
     }
   }
   // Allocate temporary storage
@@ -280,14 +281,15 @@ resources::EventProxy<resources::Cuda> sort_pairs(
     if (Stable)
     {
       CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortPairs,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     d_vals.Current(), len, comp, stream);
+                                     d_temp_storage, temp_storage_bytes,
+                                     d_keys.Current(), d_vals.Current(), len,
+                                     comp, stream);
     }
     else
     {
-      CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::SortPairs,
-                                     d_temp_storage, temp_storage_bytes, d_keys.Current(),
-                                     d_vals.Current(), len, comp, stream);
+      CAMP_CUDA_API_INVOKE_AND_CHECK(
+          ::cub::DeviceMergeSort::SortPairs, d_temp_storage, temp_storage_bytes,
+          d_keys.Current(), d_vals.Current(), len, comp, stream);
     }
   }
   // Free temporary storage
