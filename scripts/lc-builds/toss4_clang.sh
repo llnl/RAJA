@@ -52,7 +52,7 @@ cmake \
   -DCMAKE_CXX_COMPILER=/usr/tce/packages/clang/clang-${COMP_VER}/bin/clang++ \
   -DBLT_CXX_STD=c++20 \
   -DENABLE_CLANGFORMAT=On \
-  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-14.0.6/bin/clang-format \
+  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-19.1.3/bin/clang-format \
   -C ../host-configs/lc-builds/toss4/clang_X.cmake \
   -DENABLE_OPENMP=On \
   -DENABLE_BENCHMARKS=On \
