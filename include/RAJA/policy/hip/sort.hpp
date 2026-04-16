@@ -73,18 +73,17 @@ R* get_current(double_buffer<R>& d_bufs)
 #endif
 }
 
-}  // namespace detail
-
 /*!
-        \brief stable sort given range
+        \brief sort given range
 */
-template<typename IterationMapping,
+template<bool Stable,
+         typename IterationMapping,
          typename IterationGetter,
          typename Concretizer,
          bool Async,
          typename Iter,
          typename Compare>
-resources::EventProxy<resources::Hip> stable(
+resources::EventProxy<resources::Hip> sort(
     resources::Hip hip_res,
     ::RAJA::policy::hip::
         hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
@@ -92,6 +91,8 @@ resources::EventProxy<resources::Hip> stable(
     Iter end,
     Compare comp)
 {
+  RAJA_UNUSED_VAR(Stable);
+
   hipStream_t stream = hip_res.get_stream();
 
   using R = RAJA::detail::IterVal<Iter>;
@@ -105,7 +106,7 @@ resources::EventProxy<resources::Hip> stable(
 
   // use cub double buffer to reduce temporary memory requirements
   // by allowing cub to write to the begin buffer
-  detail::double_buffer<R> d_keys(begin, d_out);
+  double_buffer<R> d_keys(begin, d_out);
 
   // Determine temporary device storage requirements
   void* d_temp_storage      = nullptr;
@@ -144,9 +145,18 @@ resources::EventProxy<resources::Hip> stable(
                                   temp_storage_bytes, d_keys, len, comp,
                                   stream);
 #elif defined(__CUDACC__)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortKeys,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   len, comp, stream);
+    if constexpr (Stable)
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortKeys,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     len, comp, stream);
+    }
+    else
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::SortKeys,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     len, comp, stream);
+    }
 #endif
   }
   // Allocate temporary storage
@@ -189,15 +199,24 @@ resources::EventProxy<resources::Hip> stable(
                                   temp_storage_bytes, d_keys, len, comp,
                                   stream);
 #elif defined(__CUDACC__)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortKeys,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   len, comp, stream);
+    if constexpr (Stable)
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortKeys,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     len, comp, stream);
+    }
+    else
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::SortKeys,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     len, comp, stream);
+    }
 #endif
   }
   // Free temporary storage
   hip::device_mempool_type::getInstance().free(d_temp_storage);
 
-  if (detail::get_current(d_keys) == d_out)
+  if (get_current(d_keys) == d_out)
   {
 
     // copy
@@ -210,6 +229,204 @@ resources::EventProxy<resources::Hip> stable(
   hip::launch(hip_res, Async);
 
   return resources::EventProxy<resources::Hip>(hip_res);
+}
+
+/*!
+        \brief stable sort given range of pairs in order of keys
+*/
+template<bool Stable,
+         typename IterationMapping,
+         typename IterationGetter,
+         typename Concretizer,
+         bool Async,
+         typename KeyIter,
+         typename ValIter,
+         typename Compare>
+resources::EventProxy<resources::Hip> sort_pairs(
+    resources::Hip hip_res,
+    ::RAJA::policy::hip::
+        hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
+    KeyIter keys_begin,
+    KeyIter keys_end,
+    ValIter vals_begin,
+    Compare comp)
+{
+  RAJA_UNUSED_VAR(Stable);
+
+  hipStream_t stream = hip_res.get_stream();
+
+  using K = RAJA::detail::IterVal<KeyIter>;
+  using V = RAJA::detail::IterVal<ValIter>;
+
+  const int len           = std::distance(keys_begin, keys_end);
+  constexpr int begin_bit = 0;
+  constexpr int end_bit   = sizeof(K) * CHAR_BIT;
+
+  // Allocate temporary storage for the output arrays
+  K* d_keys_out = hip::device_mempool_type::getInstance().malloc<K>(len);
+  V* d_vals_out = hip::device_mempool_type::getInstance().malloc<V>(len);
+
+  // use cub double buffer to reduce temporary memory requirements
+  // by allowing cub to write to the keys_begin and vals_begin buffers
+  double_buffer<K> d_keys(keys_begin, d_keys_out);
+  double_buffer<V> d_vals(vals_begin, d_vals_out);
+
+  // Determine temporary device storage requirements
+  void* d_temp_storage      = nullptr;
+  size_t temp_storage_bytes = 0;
+  if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
+                std::is_pointer_v<ValIter> &&
+                std::is_same_v<std::decay_t<Compare>, operators::less<K>>)
+  {
+#if defined(__HIPCC__)
+    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs, d_temp_storage,
+                                  temp_storage_bytes, d_keys, d_vals, len,
+                                  begin_bit, end_bit, stream);
+#elif defined(__CUDACC__)
+    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairs,
+                                   d_temp_storage, temp_storage_bytes, d_keys,
+                                   d_vals, len, begin_bit, end_bit, stream);
+#endif
+  }
+  else if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
+                     std::is_pointer_v<ValIter> &&
+                     std::is_same_v<std::decay_t<Compare>,
+                                    operators::greater<K>>)
+  {
+#if defined(__HIPCC__)
+    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs_desc,
+                                  d_temp_storage, temp_storage_bytes, d_keys,
+                                  d_vals, len, begin_bit, end_bit, stream);
+#elif defined(__CUDACC__)
+    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairsDescending,
+                                   d_temp_storage, temp_storage_bytes, d_keys,
+                                   d_vals, len, begin_bit, end_bit, stream);
+#endif
+  }
+  else
+  {
+#if defined(__HIPCC__)
+    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
+                                  temp_storage_bytes, d_keys, d_vals, len, comp,
+                                  stream);
+#elif defined(__CUDACC__)
+    if constexpr (Stable)
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortPairs,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     d_vals, len, comp, stream);
+    }
+    else
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::SortPairs,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     d_vals, len, comp, stream);
+    }
+#endif
+  }
+  // Allocate temporary storage
+  d_temp_storage =
+      hip::device_mempool_type::getInstance().malloc<unsigned char>(
+          temp_storage_bytes);
+
+  // Run
+  if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
+                std::is_pointer_v<ValIter> &&
+                std::is_same_v<std::decay_t<Compare>, operators::less<K>>)
+  {
+#if defined(__HIPCC__)
+    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs, d_temp_storage,
+                                  temp_storage_bytes, d_keys, d_vals, len,
+                                  begin_bit, end_bit, stream);
+#elif defined(__CUDACC__)
+    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairs,
+                                   d_temp_storage, temp_storage_bytes, d_keys,
+                                   d_vals, len, begin_bit, end_bit, stream);
+#endif
+  }
+  else if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
+                     std::is_pointer_v<ValIter> &&
+                     std::is_same_v<std::decay_t<Compare>,
+                                    operators::greater<K>>)
+  {
+#if defined(__HIPCC__)
+    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs_desc,
+                                  d_temp_storage, temp_storage_bytes, d_keys,
+                                  d_vals, len, begin_bit, end_bit, stream);
+#elif defined(__CUDACC__)
+    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairsDescending,
+                                   d_temp_storage, temp_storage_bytes, d_keys,
+                                   d_vals, len, begin_bit, end_bit, stream);
+#endif
+  }
+  else
+  {
+#if defined(__HIPCC__)
+    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
+                                  temp_storage_bytes, d_keys, d_vals, len, comp,
+                                  stream);
+#elif defined(__CUDACC__)
+    if constexpr (Stable)
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortPairs,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     d_vals, len, comp, stream);
+    }
+    else
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::SortPairs,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     d_vals, len, comp, stream);
+    }
+#endif
+  }
+  // Free temporary storage
+  hip::device_mempool_type::getInstance().free(d_temp_storage);
+
+  if (get_current(d_keys) == d_keys_out)
+  {
+
+    // copy keys
+    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, keys_begin, d_keys_out,
+                                  len * sizeof(K), hipMemcpyDefault, stream);
+  }
+  if (get_current(d_vals) == d_vals_out)
+  {
+
+    // copy vals
+    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, vals_begin, d_vals_out,
+                                  len * sizeof(V), hipMemcpyDefault, stream);
+  }
+
+  hip::device_mempool_type::getInstance().free(d_keys_out);
+  hip::device_mempool_type::getInstance().free(d_vals_out);
+
+  hip::launch(hip_res, Async);
+
+  return resources::EventProxy<resources::Hip>(hip_res);
+}
+
+}  // namespace detail
+
+/*!
+        \brief stable sort given range
+*/
+template<typename IterationMapping,
+         typename IterationGetter,
+         typename Concretizer,
+         bool Async,
+         typename Iter,
+         typename Compare>
+resources::EventProxy<resources::Hip> stable(
+    resources::Hip hip_res,
+    ::RAJA::policy::hip::
+        hip_exec<IterationMapping, IterationGetter, Concretizer, Async> p,
+    Iter begin,
+    Iter end,
+    Compare comp)
+{
+  constexpr bool stable = true;
+  return detail::sort<stable>(hip_res, p, begin, end, comp);
 }
 
 /*!
@@ -229,7 +446,8 @@ resources::EventProxy<resources::Hip> unstable(
     Iter end,
     Compare comp)
 {
-  return stable(hip_res, p, begin, end, comp);
+  constexpr bool stable = true;
+  return detail::sort<!stable>(hip_res, p, begin, end, comp);
 }
 
 /*!
@@ -245,145 +463,15 @@ template<typename IterationMapping,
 resources::EventProxy<resources::Hip> stable_pairs(
     resources::Hip hip_res,
     ::RAJA::policy::hip::
-        hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
+        hip_exec<IterationMapping, IterationGetter, Concretizer, Async> p,
     KeyIter keys_begin,
     KeyIter keys_end,
     ValIter vals_begin,
     Compare comp)
 {
-  hipStream_t stream = hip_res.get_stream();
-
-  using K = RAJA::detail::IterVal<KeyIter>;
-  using V = RAJA::detail::IterVal<ValIter>;
-
-  const int len           = std::distance(keys_begin, keys_end);
-  constexpr int begin_bit = 0;
-  constexpr int end_bit   = sizeof(K) * CHAR_BIT;
-
-  // Allocate temporary storage for the output arrays
-  K* d_keys_out = hip::device_mempool_type::getInstance().malloc<K>(len);
-  V* d_vals_out = hip::device_mempool_type::getInstance().malloc<V>(len);
-
-  // use cub double buffer to reduce temporary memory requirements
-  // by allowing cub to write to the keys_begin and vals_begin buffers
-  detail::double_buffer<K> d_keys(keys_begin, d_keys_out);
-  detail::double_buffer<V> d_vals(vals_begin, d_vals_out);
-
-  // Determine temporary device storage requirements
-  void* d_temp_storage      = nullptr;
-  size_t temp_storage_bytes = 0;
-  if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
-                std::is_pointer_v<ValIter> &&
-                std::is_same_v<std::decay_t<Compare>, operators::less<K>>)
-  {
-#if defined(__HIPCC__)
-    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs, d_temp_storage,
-                                  temp_storage_bytes, d_keys, d_vals, len,
-                                  begin_bit, end_bit, stream);
-#elif defined(__CUDACC__)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairs,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   d_vals, len, begin_bit, end_bit, stream);
-#endif
-  }
-  else if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
-                     std::is_pointer_v<ValIter> &&
-                     std::is_same_v<std::decay_t<Compare>,
-                                    operators::greater<K>>)
-  {
-#if defined(__HIPCC__)
-    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs_desc,
-                                  d_temp_storage, temp_storage_bytes, d_keys,
-                                  d_vals, len, begin_bit, end_bit, stream);
-#elif defined(__CUDACC__)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairsDescending,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   d_vals, len, begin_bit, end_bit, stream);
-#endif
-  }
-  else
-  {
-#if defined(__HIPCC__)
-    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
-                                  temp_storage_bytes, d_keys, d_vals, len, comp,
-                                  stream);
-#elif defined(__CUDACC__)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortPairs,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   d_vals, len, comp, stream);
-#endif
-  }
-  // Allocate temporary storage
-  d_temp_storage =
-      hip::device_mempool_type::getInstance().malloc<unsigned char>(
-          temp_storage_bytes);
-
-  // Run
-  if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
-                std::is_pointer_v<ValIter> &&
-                std::is_same_v<std::decay_t<Compare>, operators::less<K>>)
-  {
-#if defined(__HIPCC__)
-    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs, d_temp_storage,
-                                  temp_storage_bytes, d_keys, d_vals, len,
-                                  begin_bit, end_bit, stream);
-#elif defined(__CUDACC__)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairs,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   d_vals, len, begin_bit, end_bit, stream);
-#endif
-  }
-  else if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
-                     std::is_pointer_v<ValIter> &&
-                     std::is_same_v<std::decay_t<Compare>,
-                                    operators::greater<K>>)
-  {
-#if defined(__HIPCC__)
-    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs_desc,
-                                  d_temp_storage, temp_storage_bytes, d_keys,
-                                  d_vals, len, begin_bit, end_bit, stream);
-#elif defined(__CUDACC__)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairsDescending,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   d_vals, len, begin_bit, end_bit, stream);
-#endif
-  }
-  else
-  {
-#if defined(__HIPCC__)
-    CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
-                                  temp_storage_bytes, d_keys, d_vals, len, comp,
-                                  stream);
-#elif defined(__CUDACC__)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortPairs,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   d_vals, len, comp, stream);
-#endif
-  }
-  // Free temporary storage
-  hip::device_mempool_type::getInstance().free(d_temp_storage);
-
-  if (detail::get_current(d_keys) == d_keys_out)
-  {
-
-    // copy keys
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, keys_begin, d_keys_out,
-                                  len * sizeof(K), hipMemcpyDefault, stream);
-  }
-  if (detail::get_current(d_vals) == d_vals_out)
-  {
-
-    // copy vals
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, vals_begin, d_vals_out,
-                                  len * sizeof(V), hipMemcpyDefault, stream);
-  }
-
-  hip::device_mempool_type::getInstance().free(d_keys_out);
-  hip::device_mempool_type::getInstance().free(d_vals_out);
-
-  hip::launch(hip_res, Async);
-
-  return resources::EventProxy<resources::Hip>(hip_res);
+  constexpr bool stable = true;
+  return detail::sort_pairs<stable>(hip_res, p, keys_begin, keys_end,
+                                    vals_begin, comp);
 }
 
 /*!
@@ -405,7 +493,9 @@ resources::EventProxy<resources::Hip> unstable_pairs(
     ValIter vals_begin,
     Compare comp)
 {
-  return stable_pairs(hip_res, p, keys_begin, keys_end, vals_begin, comp);
+  constexpr bool stable = true;
+  return detail::sort_pairs<!stable>(hip_res, p, keys_begin, keys_end,
+                                     vals_begin, comp);
 }
 
 }  // namespace sort

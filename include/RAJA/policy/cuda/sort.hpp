@@ -44,17 +44,21 @@ namespace impl
 namespace sort
 {
 
+namespace detail
+{
+
 /*!
-        \brief stable sort given range
+        \brief sort given range
 */
-template<typename IterationMapping,
+template<bool Stable,
+         typename IterationMapping,
          typename IterationGetter,
          typename Concretizer,
          size_t BLOCKS_PER_SM,
          bool Async,
          typename Iter,
          typename Compare>
-resources::EventProxy<resources::Cuda> stable(
+resources::EventProxy<resources::Cuda> sort(
     resources::Cuda cuda_res,
     ::RAJA::policy::cuda::cuda_exec_explicit<IterationMapping,
                                              IterationGetter,
@@ -65,6 +69,8 @@ resources::EventProxy<resources::Cuda> stable(
     Iter end,
     Compare comp)
 {
+  RAJA_UNUSED_VAR(Stable);
+
   cudaStream_t stream = cuda_res.get_stream();
 
   using R = RAJA::detail::IterVal<Iter>;
@@ -100,9 +106,18 @@ resources::EventProxy<resources::Cuda> stable(
   }
   else
   {
-    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortKeys,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   len, comp, stream);
+    if (Stable)
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortKeys,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     len, comp, stream);
+    }
+    else
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::SortKeys,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     len, comp, stream);
+    }
   }
   // Allocate temporary storage
   d_temp_storage =
@@ -127,9 +142,18 @@ resources::EventProxy<resources::Cuda> stable(
   }
   else
   {
-    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortKeys,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   len, comp, stream);
+    if (Stable)
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortKeys,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     len, comp, stream);
+    }
+    else
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::SortKeys,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     len, comp, stream);
+    }
   }
   // Free temporary storage
   cuda::device_mempool_type::getInstance().free(d_temp_storage);
@@ -150,33 +174,10 @@ resources::EventProxy<resources::Cuda> stable(
 }
 
 /*!
-        \brief sort given range
+        \brief sort given range of pairs in order of keys
 */
-template<typename IterationMapping,
-         typename IterationGetter,
-         typename Concretizer,
-         size_t BLOCKS_PER_SM,
-         bool Async,
-         typename Iter,
-         typename Compare>
-resources::EventProxy<resources::Cuda> unstable(
-    resources::Cuda cuda_res,
-    ::RAJA::policy::cuda::cuda_exec_explicit<IterationMapping,
-                                             IterationGetter,
-                                             Concretizer,
-                                             BLOCKS_PER_SM,
-                                             Async> p,
-    Iter begin,
-    Iter end,
-    Compare comp)
-{
-  return stable(cuda_res, p, begin, end, comp);
-}
-
-/*!
-        \brief stable sort given range of pairs in order of keys
-*/
-template<typename IterationMapping,
+template<bool Stable,
+         typename IterationMapping,
          typename IterationGetter,
          typename Concretizer,
          size_t BLOCKS_PER_SM,
@@ -184,7 +185,7 @@ template<typename IterationMapping,
          typename KeyIter,
          typename ValIter,
          typename Compare>
-resources::EventProxy<resources::Cuda> stable_pairs(
+resources::EventProxy<resources::Cuda> sort_pairs(
     resources::Cuda cuda_res,
     ::RAJA::policy::cuda::cuda_exec_explicit<IterationMapping,
                                              IterationGetter,
@@ -196,6 +197,8 @@ resources::EventProxy<resources::Cuda> stable_pairs(
     ValIter vals_begin,
     Compare comp)
 {
+  RAJA_UNUSED_VAR(Stable);
+
   cudaStream_t stream = cuda_res.get_stream();
 
   using K = RAJA::detail::IterVal<KeyIter>;
@@ -236,9 +239,18 @@ resources::EventProxy<resources::Cuda> stable_pairs(
   }
   else
   {
-    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortPairs,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   d_vals, len, comp, stream);
+    if (Stable)
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortPairs,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     d_vals, len, comp, stream);
+    }
+    else
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::SortPairs,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     d_vals, len, comp, stream);
+    }
   }
   // Allocate temporary storage
   d_temp_storage =
@@ -265,9 +277,18 @@ resources::EventProxy<resources::Cuda> stable_pairs(
   }
   else
   {
-    CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortPairs,
-                                   d_temp_storage, temp_storage_bytes, d_keys,
-                                   d_vals, len, comp, stream);
+    if (Stable)
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortPairs,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     d_vals, len, comp, stream);
+    }
+    else
+    {
+      CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::SortPairs,
+                                     d_temp_storage, temp_storage_bytes, d_keys,
+                                     d_vals, len, comp, stream);
+    }
   }
   // Free temporary storage
   cuda::device_mempool_type::getInstance().free(d_temp_storage);
@@ -295,6 +316,86 @@ resources::EventProxy<resources::Cuda> stable_pairs(
   return resources::EventProxy<resources::Cuda>(cuda_res);
 }
 
+}  // namespace detail
+
+/*!
+        \brief sort given range
+*/
+template<typename IterationMapping,
+         typename IterationGetter,
+         typename Concretizer,
+         size_t BLOCKS_PER_SM,
+         bool Async,
+         typename Iter,
+         typename Compare>
+resources::EventProxy<resources::Cuda> stable(
+    resources::Cuda cuda_res,
+    ::RAJA::policy::cuda::cuda_exec_explicit<IterationMapping,
+                                             IterationGetter,
+                                             Concretizer,
+                                             BLOCKS_PER_SM,
+                                             Async> p,
+    Iter begin,
+    Iter end,
+    Compare comp)
+{
+  constexpr bool stable = true;
+  return detail::sort<stable>(cuda_res, p, begin, end, comp);
+}
+
+/*!
+        \brief sort given range
+*/
+template<typename IterationMapping,
+         typename IterationGetter,
+         typename Concretizer,
+         size_t BLOCKS_PER_SM,
+         bool Async,
+         typename Iter,
+         typename Compare>
+resources::EventProxy<resources::Cuda> unstable(
+    resources::Cuda cuda_res,
+    ::RAJA::policy::cuda::cuda_exec_explicit<IterationMapping,
+                                             IterationGetter,
+                                             Concretizer,
+                                             BLOCKS_PER_SM,
+                                             Async> p,
+    Iter begin,
+    Iter end,
+    Compare comp)
+{
+  constexpr bool stable = true;
+  return detail::sort<!stable>(cuda_res, p, begin, end, comp);
+}
+
+/*!
+        \brief stable sort given range of pairs in order of keys
+*/
+template<typename IterationMapping,
+         typename IterationGetter,
+         typename Concretizer,
+         size_t BLOCKS_PER_SM,
+         bool Async,
+         typename KeyIter,
+         typename ValIter,
+         typename Compare>
+resources::EventProxy<resources::Cuda> stable_pairs(
+    resources::Cuda cuda_res,
+    ::RAJA::policy::cuda::cuda_exec_explicit<IterationMapping,
+                                             IterationGetter,
+                                             Concretizer,
+                                             BLOCKS_PER_SM,
+                                             Async> p,
+    KeyIter keys_begin,
+    KeyIter keys_end,
+    ValIter vals_begin,
+    Compare comp)
+{
+  constexpr bool stable = true;
+  return detail::sort_pairs<stable>(cuda_res, p, keys_begin, keys_end,
+                                    vals_begin, comp);
+}
+
 /*!
         \brief stable sort given range of pairs in order of keys
 */
@@ -318,7 +419,9 @@ resources::EventProxy<resources::Cuda> unstable_pairs(
     ValIter vals_begin,
     Compare comp)
 {
-  return stable_pairs(cuda_res, p, keys_begin, keys_end, vals_begin, comp);
+  constexpr bool stable = true;
+  return detail::sort_pairs<!stable>(cuda_res, p, keys_begin, keys_end,
+                                     vals_begin, comp);
 }
 
 }  // namespace sort
