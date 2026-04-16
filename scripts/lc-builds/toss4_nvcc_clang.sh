@@ -64,7 +64,7 @@ cmake \
   -DBLT_CXX_STD=c++20 \
   -C ../host-configs/lc-builds/toss4/nvcc_clang_X.cmake \
   -DENABLE_CLANGFORMAT=Off \
-  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-14.0.6/bin/clang-format \
+  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-19.1.3/bin/clang-format \
   -DENABLE_OPENMP=On \
   -DENABLE_CUDA=On \
   -DRAJA_ENABLE_NVTX=On \
