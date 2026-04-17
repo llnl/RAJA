@@ -399,7 +399,7 @@ resources::EventProxy<resources::Cuda> stable_pairs(
 }
 
 /*!
-        \brief stable sort given range of pairs in order of keys
+        \brief unstable sort given range of pairs in order of keys
 */
 template<typename IterationMapping,
          typename IterationGetter,
