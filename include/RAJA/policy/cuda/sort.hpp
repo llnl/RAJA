@@ -84,20 +84,21 @@ resources::EventProxy<resources::Cuda> sort(
   void* d_temp_storage      = nullptr;
   size_t temp_storage_bytes = 0;
 
-  auto call_impl = [&, d_out = static_cast<R*>(nullptr)](auto phase) mutable
-  {
+  auto call_impl = [&, d_out = static_cast<R*>(nullptr)](auto phase) mutable {
     RAJA_UNUSED_VAR(phase);
     RAJA_UNUSED_VAR(d_out);
 
     if constexpr (std::is_arithmetic_v<R> && std::is_pointer_v<Iter> &&
-                  ( std::is_same_v<std::decay_t<Compare>, operators::less<R>> ||
-                    std::is_same_v<std::decay_t<Compare>, operators::greater<R>> ))
+                  (std::is_same_v<std::decay_t<Compare>, operators::less<R>> ||
+                   std::is_same_v<std::decay_t<Compare>,
+                                  operators::greater<R>>))
     {
       // The begin iterator is a pointer in this constexpr conditional
       // so we can use DoubleBuffer
 
       // Setup temporary storage for the output array
-      if constexpr (phase == 0) {
+      if constexpr (phase == 0)
+      {
         d_out = cuda::device_mempool_type::getInstance().malloc<R>(len);
       }
 
@@ -108,14 +109,15 @@ resources::EventProxy<resources::Cuda> sort(
       if constexpr (std::is_same_v<std::decay_t<Compare>, operators::less<R>>)
       {
         CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortKeys,
-                                       d_temp_storage, temp_storage_bytes, d_keys,
-                                       len, begin_bit, end_bit, stream);
+                                       d_temp_storage, temp_storage_bytes,
+                                       d_keys, len, begin_bit, end_bit, stream);
       }
-      else if constexpr (std::is_same_v<std::decay_t<Compare>, operators::greater<R>>)
+      else if constexpr (std::is_same_v<std::decay_t<Compare>,
+                                        operators::greater<R>>)
       {
-        CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortKeysDescending,
-                                       d_temp_storage, temp_storage_bytes, d_keys,
-                                       len, begin_bit, end_bit, stream);
+        CAMP_CUDA_API_INVOKE_AND_CHECK(
+            ::cub::DeviceRadixSort::SortKeysDescending, d_temp_storage,
+            temp_storage_bytes, d_keys, len, begin_bit, end_bit, stream);
       }
 
       // Tear-down temporary storage for the output array
@@ -125,7 +127,8 @@ resources::EventProxy<resources::Cuda> sort(
         if (d_keys.Current() == d_out)
         {
           CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, begin, d_out,
-                                         len * sizeof(R), cudaMemcpyDefault, stream);
+                                         len * sizeof(R), cudaMemcpyDefault,
+                                         stream);
         }
 
         // Free temporary output array
@@ -150,7 +153,7 @@ resources::EventProxy<resources::Cuda> sort(
   };
 
   // Determine temporary device storage requirements
-  call_impl(std::integral_constant<int, 0>{});
+  call_impl(std::integral_constant<int, 0> {});
 
   // Allocate temporary storage
   d_temp_storage =
@@ -158,7 +161,7 @@ resources::EventProxy<resources::Cuda> sort(
           temp_storage_bytes);
 
   // Run
-  call_impl(std::integral_constant<int, 1>{});
+  call_impl(std::integral_constant<int, 1> {});
 
   // Free temporary storage
   cuda::device_mempool_type::getInstance().free(d_temp_storage);
@@ -210,22 +213,23 @@ resources::EventProxy<resources::Cuda> sort_pairs(
   size_t temp_storage_bytes = 0;
 
   auto call_impl = [&, d_keys_out = static_cast<K*>(nullptr),
-                       d_vals_out = static_cast<V*>(nullptr)](auto phase) mutable
-  {
+                    d_vals_out = static_cast<V*>(nullptr)](auto phase) mutable {
     RAJA_UNUSED_VAR(phase);
     RAJA_UNUSED_VAR(d_keys_out);
     RAJA_UNUSED_VAR(d_vals_out);
 
     if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
                   std::is_pointer_v<ValIter> &&
-                  ( std::is_same_v<std::decay_t<Compare>, operators::less<K>> ||
-                    std::is_same_v<std::decay_t<Compare>, operators::greater<K>> ))
+                  (std::is_same_v<std::decay_t<Compare>, operators::less<K>> ||
+                   std::is_same_v<std::decay_t<Compare>,
+                                  operators::greater<K>>))
     {
       // The begin iterators are pointers in this constexpr conditional
       // so we can use DoubleBuffer
 
       // Setup temporary storage for the output arrays
-      if constexpr (phase == 0) {
+      if constexpr (phase == 0)
+      {
         d_keys_out = cuda::device_mempool_type::getInstance().malloc<K>(len);
         d_vals_out = cuda::device_mempool_type::getInstance().malloc<V>(len);
       }
@@ -238,14 +242,17 @@ resources::EventProxy<resources::Cuda> sort_pairs(
       if constexpr (std::is_same_v<std::decay_t<Compare>, operators::less<K>>)
       {
         CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairs,
-                                       d_temp_storage, temp_storage_bytes, d_keys,
-                                       d_vals, len, begin_bit, end_bit, stream);
+                                       d_temp_storage, temp_storage_bytes,
+                                       d_keys, d_vals, len, begin_bit, end_bit,
+                                       stream);
       }
-      else if constexpr (std::is_same_v<std::decay_t<Compare>, operators::greater<K>>)
+      else if constexpr (std::is_same_v<std::decay_t<Compare>,
+                                        operators::greater<K>>)
       {
-        CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairsDescending,
-                                       d_temp_storage, temp_storage_bytes, d_keys,
-                                       d_vals, len, begin_bit, end_bit, stream);
+        CAMP_CUDA_API_INVOKE_AND_CHECK(
+            ::cub::DeviceRadixSort::SortPairsDescending, d_temp_storage,
+            temp_storage_bytes, d_keys, d_vals, len, begin_bit, end_bit,
+            stream);
       }
 
       // Tear-down temporary storage for the output array
@@ -255,26 +262,27 @@ resources::EventProxy<resources::Cuda> sort_pairs(
         if (d_keys.Current() == d_keys_out && d_vals.Current() == d_vals_out)
         {
           // Copy keys and values back via kernel for performance
-          forall_impl(cuda_res,
-              ::RAJA::policy::cuda::cuda_exec_explicit<IterationMapping,
-                                                       IterationGetter,
-                                                       Concretizer,
-                                                       BLOCKS_PER_SM,
-                                                       true>{},
+          forall_impl(
+              cuda_res,
+              ::RAJA::policy::cuda::cuda_exec_explicit<
+                  IterationMapping, IterationGetter, Concretizer, BLOCKS_PER_SM,
+                  true> {},
               TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-              ::RAJA::detail::Copy2Functor{keys_begin, d_keys_out,
-                                           vals_begin, d_vals_out},
+              ::RAJA::detail::Copy2Functor {keys_begin, d_keys_out, vals_begin,
+                                            d_vals_out},
               expt::get_empty_forall_param_pack());
         }
         else if (d_keys.Current() == d_keys_out)
         {
-          CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, keys_begin, d_keys_out,
-                                         len * sizeof(K), cudaMemcpyDefault, stream);
+          CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, keys_begin,
+                                         d_keys_out, len * sizeof(K),
+                                         cudaMemcpyDefault, stream);
         }
         else if (d_vals.Current() == d_vals_out)
         {
-          CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, vals_begin, d_vals_out,
-                                         len * sizeof(V), cudaMemcpyDefault, stream);
+          CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, vals_begin,
+                                         d_vals_out, len * sizeof(V),
+                                         cudaMemcpyDefault, stream);
         }
 
         // Free temporary output arrays
@@ -286,22 +294,21 @@ resources::EventProxy<resources::Cuda> sort_pairs(
     {
       if (Stable)
       {
-        CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortPairs,
-                                       d_temp_storage, temp_storage_bytes,
-                                       keys_begin, vals_begin, len,
-                                       comp, stream);
+        CAMP_CUDA_API_INVOKE_AND_CHECK(
+            ::cub::DeviceMergeSort::StableSortPairs, d_temp_storage,
+            temp_storage_bytes, keys_begin, vals_begin, len, comp, stream);
       }
       else
       {
         CAMP_CUDA_API_INVOKE_AND_CHECK(
-            ::cub::DeviceMergeSort::SortPairs, d_temp_storage, temp_storage_bytes,
-            keys_begin, vals_begin, len, comp, stream);
+            ::cub::DeviceMergeSort::SortPairs, d_temp_storage,
+            temp_storage_bytes, keys_begin, vals_begin, len, comp, stream);
       }
     }
   };
 
   // Determine temporary device storage requirements
-  call_impl(std::integral_constant<int, 0>{});
+  call_impl(std::integral_constant<int, 0> {});
 
   // Allocate temporary storage
   d_temp_storage =
@@ -309,7 +316,7 @@ resources::EventProxy<resources::Cuda> sort_pairs(
           temp_storage_bytes);
 
   // Run
-  call_impl(std::integral_constant<int, 1>{});
+  call_impl(std::integral_constant<int, 1> {});
 
   // Free temporary storage
   cuda::device_mempool_type::getInstance().free(d_temp_storage);

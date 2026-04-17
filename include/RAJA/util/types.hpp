@@ -1056,15 +1056,14 @@ private:
 /*!
  * \brief Functor that copies src to dst.
  */
-template < typename DestIter, typename SrcIter >
+template<typename DestIter, typename SrcIter>
 struct Copy1Functor
 {
   DestIter dst;
   SrcIter src;
 
-  template < typename IndexType >
-  RAJA_HOST_DEVICE
-  constexpr void operator()(IndexType i) const
+  template<typename IndexType>
+  RAJA_HOST_DEVICE constexpr void operator()(IndexType i) const
   {
     dst[i] = src[i];
   }
@@ -1073,8 +1072,10 @@ struct Copy1Functor
 /*!
  * \brief Functor that copies src1 to dst1 and src2 to dst2.
  */
-template < typename DestIter1, typename SrcIter1,
-           typename DestIter2, typename SrcIter2 >
+template<typename DestIter1,
+         typename SrcIter1,
+         typename DestIter2,
+         typename SrcIter2>
 struct Copy2Functor
 {
   DestIter1 dst1;
@@ -1083,9 +1084,8 @@ struct Copy2Functor
   DestIter2 dst2;
   SrcIter2 src2;
 
-  template < typename IndexType >
-  RAJA_HOST_DEVICE
-  constexpr void operator()(IndexType i) const
+  template<typename IndexType>
+  RAJA_HOST_DEVICE constexpr void operator()(IndexType i) const
   {
     dst1[i] = src1[i];
     dst2[i] = src2[i];
