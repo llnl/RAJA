@@ -152,7 +152,7 @@ resources::EventProxy<resources::Cuda> sort(
     }
   };
 
-  // Determine temporary device storage requirements
+  // Determine temporary storage requirements
   call_impl(std::integral_constant<int, 0> {});
 
   // Allocate temporary storage
@@ -160,7 +160,7 @@ resources::EventProxy<resources::Cuda> sort(
       cuda::device_mempool_type::getInstance().malloc<unsigned char>(
           temp_storage_bytes);
 
-  // Run
+  // Run implementation
   call_impl(std::integral_constant<int, 1> {});
 
   // Free temporary storage
