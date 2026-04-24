@@ -104,7 +104,7 @@ resources::EventProxy<resources::Cuda> sort(
 
       // Use DoubleBuffers to reduce temporary memory requirements
       // by allowing cub to write to the begin buffer
-      cub::DoubleBuffer<R> d_keys(begin, d_out);
+      ::cub::DoubleBuffer<R> d_keys(begin, d_out);
 
       if constexpr (std::is_same_v<std::decay_t<Compare>, operators::less<R>>)
       {
@@ -236,8 +236,8 @@ resources::EventProxy<resources::Cuda> sort_pairs(
 
       // Use DoubleBuffers to reduce temporary memory requirements
       // by allowing cub to write to the keys_begin and vals_begin buffers
-      cub::DoubleBuffer<K> d_keys(keys_begin, d_keys_out);
-      cub::DoubleBuffer<V> d_vals(vals_begin, d_vals_out);
+      ::cub::DoubleBuffer<K> d_keys(keys_begin, d_keys_out);
+      ::cub::DoubleBuffer<V> d_vals(vals_begin, d_vals_out);
 
       if constexpr (std::is_same_v<std::decay_t<Compare>, operators::less<K>>)
       {

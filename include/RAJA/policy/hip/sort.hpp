@@ -200,13 +200,13 @@ resources::EventProxy<resources::Hip> sort(
 #elif defined(__CUDACC__)
       if constexpr (Stable)
       {
-        CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::StableSortKeys,
+        CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortKeys,
                                        d_temp_storage, temp_storage_bytes,
                                        begin, len, comp, stream);
       }
       else
       {
-        CAMP_CUDA_API_INVOKE_AND_CHECK(cub::DeviceMergeSort::SortKeys,
+        CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::SortKeys,
                                        d_temp_storage, temp_storage_bytes,
                                        begin, len, comp, stream);
       }
@@ -397,13 +397,13 @@ resources::EventProxy<resources::Hip> sort_pairs(
       if constexpr (Stable)
       {
         CAMP_CUDA_API_INVOKE_AND_CHECK(
-            cub::DeviceMergeSort::StableSortPairs, d_temp_storage,
+            ::cub::DeviceMergeSort::StableSortPairs, d_temp_storage,
             temp_storage_bytes, keys_begin, vals_begin, len, comp, stream);
       }
       else
       {
         CAMP_CUDA_API_INVOKE_AND_CHECK(
-            cub::DeviceMergeSort::SortPairs, d_temp_storage, temp_storage_bytes,
+            ::cub::DeviceMergeSort::SortPairs, d_temp_storage, temp_storage_bytes,
             keys_begin, vals_begin, len, comp, stream);
       }
 #endif
