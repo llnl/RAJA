@@ -1069,6 +1069,9 @@ struct Copy1Functor
   }
 };
 
+template<typename DestIter, typename SrcIter>
+Copy1Functor(DestIter, SrcIter) -> Copy1Functor<DestIter, SrcIter>;
+
 /*!
  * \brief Functor that copies src1 to dst1 and src2 to dst2.
  */
@@ -1091,6 +1094,13 @@ struct Copy2Functor
     dst2[i] = src2[i];
   }
 };
+
+template<typename DestIter1,
+         typename SrcIter1,
+         typename DestIter2,
+         typename SrcIter2>
+Copy2Functor(DestIter1, SrcIter1, DestIter2, SrcIter2)
+    -> Copy2Functor<DestIter1, SrcIter1, DestIter2, SrcIter2>;
 
 }  // namespace detail
 
