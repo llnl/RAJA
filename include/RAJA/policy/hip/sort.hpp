@@ -339,8 +339,8 @@ resources::EventProxy<resources::Hip> sort_pairs(
               ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
                                             Concretizer, true> {},
               TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-              ::RAJA::detail::TwoCopiesFunctor {keys_begin, d_keys_out, vals_begin,
-                                            d_vals_out},
+              ::RAJA::detail::TwoCopiesFunctor {keys_begin, d_keys_out,
+                                                vals_begin, d_vals_out},
               expt::get_empty_forall_param_pack());
         }
         else if (get_current(d_keys) == d_keys_out)
@@ -385,8 +385,8 @@ resources::EventProxy<resources::Hip> sort_pairs(
             ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
                                           Concretizer, true> {},
             TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-            ::RAJA::detail::TwoCopiesFunctor {keys_begin, d_keys_out, vals_begin,
-                                          d_vals_out},
+            ::RAJA::detail::TwoCopiesFunctor {keys_begin, d_keys_out,
+                                              vals_begin, d_vals_out},
             expt::get_empty_forall_param_pack());
 
         // Free temporary output arrays
@@ -403,8 +403,8 @@ resources::EventProxy<resources::Hip> sort_pairs(
       else
       {
         CAMP_CUDA_API_INVOKE_AND_CHECK(
-            ::cub::DeviceMergeSort::SortPairs, d_temp_storage, temp_storage_bytes,
-            keys_begin, vals_begin, len, comp, stream);
+            ::cub::DeviceMergeSort::SortPairs, d_temp_storage,
+            temp_storage_bytes, keys_begin, vals_begin, len, comp, stream);
       }
 #endif
     }
@@ -495,7 +495,7 @@ resources::EventProxy<resources::Hip> stable_pairs(
 {
   constexpr bool require_stable = true;
   return detail::sort_pairs<require_stable>(hip_res, p, keys_begin, keys_end,
-                                    vals_begin, comp);
+                                            vals_begin, comp);
 }
 
 /*!
@@ -519,7 +519,7 @@ resources::EventProxy<resources::Hip> unstable_pairs(
 {
   constexpr bool require_stable = true;
   return detail::sort_pairs<!require_stable>(hip_res, p, keys_begin, keys_end,
-                                     vals_begin, comp);
+                                             vals_begin, comp);
 }
 
 }  // namespace sort

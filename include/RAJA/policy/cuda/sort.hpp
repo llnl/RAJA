@@ -268,8 +268,8 @@ resources::EventProxy<resources::Cuda> sort_pairs(
                   IterationMapping, IterationGetter, Concretizer, BLOCKS_PER_SM,
                   true> {},
               TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-              ::RAJA::detail::TwoCopiesFunctor {keys_begin, d_keys_out, vals_begin,
-                                            d_vals_out},
+              ::RAJA::detail::TwoCopiesFunctor {keys_begin, d_keys_out,
+                                                vals_begin, d_vals_out},
               expt::get_empty_forall_param_pack());
         }
         else if (d_keys.Current() == d_keys_out)
@@ -404,7 +404,7 @@ resources::EventProxy<resources::Cuda> stable_pairs(
 {
   constexpr bool require_stable = true;
   return detail::sort_pairs<require_stable>(cuda_res, p, keys_begin, keys_end,
-                                    vals_begin, comp);
+                                            vals_begin, comp);
 }
 
 /*!
@@ -432,7 +432,7 @@ resources::EventProxy<resources::Cuda> unstable_pairs(
 {
   constexpr bool require_stable = true;
   return detail::sort_pairs<!require_stable>(cuda_res, p, keys_begin, keys_end,
-                                     vals_begin, comp);
+                                             vals_begin, comp);
 }
 
 }  // namespace sort
