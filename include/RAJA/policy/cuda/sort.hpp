@@ -268,7 +268,7 @@ resources::EventProxy<resources::Cuda> sort_pairs(
                   IterationMapping, IterationGetter, Concretizer, BLOCKS_PER_SM,
                   true> {},
               TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-              ::RAJA::detail::Copy2Functor {keys_begin, d_keys_out, vals_begin,
+              ::RAJA::detail::TwoCopiesFunctor {keys_begin, d_keys_out, vals_begin,
                                             d_vals_out},
               expt::get_empty_forall_param_pack());
         }
