@@ -137,7 +137,7 @@ resources::EventProxy<resources::Cuda> sort(
     }
     else
     {
-      if (Stable)
+      if constexpr (Stable)
       {
         CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortKeys,
                                        d_temp_storage, temp_storage_bytes,
@@ -292,7 +292,7 @@ resources::EventProxy<resources::Cuda> sort_pairs(
     }
     else
     {
-      if (Stable)
+      if constexpr (Stable)
       {
         CAMP_CUDA_API_INVOKE_AND_CHECK(
             ::cub::DeviceMergeSort::StableSortPairs, d_temp_storage,
