@@ -50,7 +50,7 @@ namespace detail
 /*!
         \brief sort given range
 */
-template<bool Stable,
+template<bool RequireStable,
          typename IterationMapping,
          typename IterationGetter,
          typename Concretizer,
@@ -69,7 +69,7 @@ resources::EventProxy<resources::Cuda> sort(
     Iter end,
     Compare comp)
 {
-  RAJA_UNUSED_VAR(Stable);
+  RAJA_UNUSED_VAR(RequireStable);
 
   cudaStream_t stream = cuda_res.get_stream();
 
@@ -137,7 +137,7 @@ resources::EventProxy<resources::Cuda> sort(
     }
     else
     {
-      if constexpr (Stable)
+      if constexpr (RequireStable)
       {
         CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortKeys,
                                        d_temp_storage, temp_storage_bytes,
@@ -175,7 +175,7 @@ resources::EventProxy<resources::Cuda> sort(
 /*!
         \brief sort given range of pairs in order of keys
 */
-template<bool Stable,
+template<bool RequireStable,
          typename IterationMapping,
          typename IterationGetter,
          typename Concretizer,
@@ -196,7 +196,7 @@ resources::EventProxy<resources::Cuda> sort_pairs(
     ValIter vals_begin,
     Compare comp)
 {
-  RAJA_UNUSED_VAR(Stable);
+  RAJA_UNUSED_VAR(RequireStable);
 
   cudaStream_t stream = cuda_res.get_stream();
 
@@ -292,7 +292,7 @@ resources::EventProxy<resources::Cuda> sort_pairs(
     }
     else
     {
-      if constexpr (Stable)
+      if constexpr (RequireStable)
       {
         CAMP_CUDA_API_INVOKE_AND_CHECK(
             ::cub::DeviceMergeSort::StableSortPairs, d_temp_storage,
@@ -350,8 +350,8 @@ resources::EventProxy<resources::Cuda> stable(
     Iter end,
     Compare comp)
 {
-  constexpr bool stable = true;
-  return detail::sort<stable>(cuda_res, p, begin, end, comp);
+  constexpr bool require_stable = true;
+  return detail::sort<require_stable>(cuda_res, p, begin, end, comp);
 }
 
 /*!
@@ -375,8 +375,8 @@ resources::EventProxy<resources::Cuda> unstable(
     Iter end,
     Compare comp)
 {
-  constexpr bool stable = true;
-  return detail::sort<!stable>(cuda_res, p, begin, end, comp);
+  constexpr bool require_stable = true;
+  return detail::sort<!require_stable>(cuda_res, p, begin, end, comp);
 }
 
 /*!
@@ -402,8 +402,8 @@ resources::EventProxy<resources::Cuda> stable_pairs(
     ValIter vals_begin,
     Compare comp)
 {
-  constexpr bool stable = true;
-  return detail::sort_pairs<stable>(cuda_res, p, keys_begin, keys_end,
+  constexpr bool require_stable = true;
+  return detail::sort_pairs<require_stable>(cuda_res, p, keys_begin, keys_end,
                                     vals_begin, comp);
 }
 
@@ -430,8 +430,8 @@ resources::EventProxy<resources::Cuda> unstable_pairs(
     ValIter vals_begin,
     Compare comp)
 {
-  constexpr bool stable = true;
-  return detail::sort_pairs<!stable>(cuda_res, p, keys_begin, keys_end,
+  constexpr bool require_stable = true;
+  return detail::sort_pairs<!require_stable>(cuda_res, p, keys_begin, keys_end,
                                      vals_begin, comp);
 }
 
