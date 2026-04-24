@@ -30,7 +30,7 @@ A few important notes:
 
 Also:
 
-.. note:: * For sorts using the CUDA or HIP back-end, RAJA implementation uses
+.. note:: * For sorts using the CUDA or HIP back-end, RAJA uses
             the NVIDIA CUB library or AMD rocPRIM library, respectively.
             Typically, the CMake variable ``CUB_DIR`` or ``ROCPRIM_DIR`` will
             be automatically set to the location of the CUB or rocPRIM library
