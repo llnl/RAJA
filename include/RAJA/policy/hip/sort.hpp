@@ -393,7 +393,7 @@ resources::EventProxy<resources::Hip> sort_pairs(
 
         // Free temporary output arrays
         hip::device_mempool_type::getInstance().free(tmp_keys_begin);
-        hip::device_mempool_type::getInstance().free(dst_vals_begin);
+        hip::device_mempool_type::getInstance().free(tmp_vals_begin);
       }
 #elif defined(__CUDACC__)
       if constexpr (RequireStable)
