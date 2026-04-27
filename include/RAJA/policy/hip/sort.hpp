@@ -106,9 +106,9 @@ resources::EventProxy<resources::Hip> sort(
   void* d_temp_storage      = nullptr;
   size_t temp_storage_bytes = 0;
 
-  auto call_impl = [&, d_out = static_cast<R*>(nullptr)](auto phase) mutable {
+  auto call_impl = [&, tmp_begin = static_cast<R*>(nullptr)](auto phase) mutable {
     RAJA_UNUSED_VAR(phase);
-    RAJA_UNUSED_VAR(d_out);
+    RAJA_UNUSED_VAR(tmp_begin);
 
     if constexpr (std::is_arithmetic_v<R> && std::is_pointer_v<Iter> &&
                   (std::is_same_v<std::decay_t<Compare>, operators::less<R>> ||
@@ -121,12 +121,12 @@ resources::EventProxy<resources::Hip> sort(
       // Setup temporary storage for the output array
       if constexpr (phase == 0)
       {
-        d_out = hip::device_mempool_type::getInstance().malloc<R>(len);
+        tmp_begin = hip::device_mempool_type::getInstance().malloc<R>(len);
       }
 
       // Use double_buffers to reduce temporary memory requirements
       // by allowing cub to write to the begin buffer
-      double_buffer<R> d_keys(begin, d_out);
+      double_buffer<R> d_keys(begin, tmp_begin);
 
       if constexpr (std::is_same_v<std::decay_t<Compare>, operators::less<R>>)
       {
@@ -158,15 +158,15 @@ resources::EventProxy<resources::Hip> sort(
       if constexpr (phase == 1)
       {
         // Copy result back if necessary
-        if (get_current(d_keys) == d_out)
+        if (get_current(d_keys) == tmp_begin)
         {
-          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, begin, d_out,
+          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, begin, tmp_begin,
                                         len * sizeof(R), hipMemcpyDefault,
                                         stream);
         }
 
         // Free temporary output array
-        hip::device_mempool_type::getInstance().free(d_out);
+        hip::device_mempool_type::getInstance().free(tmp_begin);
       }
     }
     else
@@ -175,11 +175,11 @@ resources::EventProxy<resources::Hip> sort(
       // Setup temporary storage for the output array
       if constexpr (phase == 0)
       {
-        d_out = hip::device_mempool_type::getInstance().malloc<R>(len);
+        tmp_begin = hip::device_mempool_type::getInstance().malloc<R>(len);
       }
 
       CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
-                                    temp_storage_bytes, begin, d_out, len, comp,
+                                    temp_storage_bytes, begin, tmp_begin, len, comp,
                                     stream);
 
       // Tear-down temporary storage for the output array
@@ -191,11 +191,11 @@ resources::EventProxy<resources::Hip> sort(
             ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
                                           Concretizer, true> {},
             TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-            ::RAJA::detail::CopyFunctorOneRange {begin, d_out},
+            ::RAJA::detail::CopyFunctorOneRange {begin, tmp_begin},
             expt::get_empty_forall_param_pack());
 
         // Free temporary output array
-        hip::device_mempool_type::getInstance().free(d_out);
+        hip::device_mempool_type::getInstance().free(tmp_begin);
       }
 #elif defined(__CUDACC__)
       if constexpr (RequireStable)
@@ -270,11 +270,11 @@ resources::EventProxy<resources::Hip> sort_pairs(
   void* d_temp_storage      = nullptr;
   size_t temp_storage_bytes = 0;
 
-  auto call_impl = [&, d_keys_out = static_cast<K*>(nullptr),
-                    d_vals_out = static_cast<V*>(nullptr)](auto phase) mutable {
+  auto call_impl = [&, tmp_keys_begin = static_cast<K*>(nullptr),
+                    tmp_vals_begin = static_cast<V*>(nullptr)](auto phase) mutable {
     RAJA_UNUSED_VAR(phase);
-    RAJA_UNUSED_VAR(d_keys_out);
-    RAJA_UNUSED_VAR(d_vals_out);
+    RAJA_UNUSED_VAR(tmp_keys_begin);
+    RAJA_UNUSED_VAR(tmp_vals_begin);
 
     if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
                   std::is_pointer_v<ValIter> &&
@@ -288,14 +288,14 @@ resources::EventProxy<resources::Hip> sort_pairs(
       // Setup temporary storage for the output arrays
       if constexpr (phase == 0)
       {
-        d_keys_out = hip::device_mempool_type::getInstance().malloc<K>(len);
-        d_vals_out = hip::device_mempool_type::getInstance().malloc<V>(len);
+        tmp_keys_begin = hip::device_mempool_type::getInstance().malloc<K>(len);
+        tmp_vals_begin = hip::device_mempool_type::getInstance().malloc<V>(len);
       }
 
       // Use double_buffers to reduce temporary memory requirements
       // by allowing cub to write to the keys_begin and vals_begin buffers
-      double_buffer<K> d_keys(keys_begin, d_keys_out);
-      double_buffer<V> d_vals(vals_begin, d_vals_out);
+      double_buffer<K> d_keys(keys_begin, tmp_keys_begin);
+      double_buffer<V> d_vals(vals_begin, tmp_vals_begin);
 
       if constexpr (std::is_same_v<std::decay_t<Compare>, operators::less<K>>)
       {
@@ -330,8 +330,8 @@ resources::EventProxy<resources::Hip> sort_pairs(
       if constexpr (phase == 1)
       {
         // copy keys and values back if necessary
-        if (get_current(d_keys) == d_keys_out &&
-            get_current(d_vals) == d_vals_out)
+        if (get_current(d_keys) == tmp_keys_begin &&
+            get_current(d_vals) == tmp_vals_begin)
         {
           // Copy keys and values back via kernel for performance
           forall_impl(
@@ -339,26 +339,26 @@ resources::EventProxy<resources::Hip> sort_pairs(
               ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
                                             Concretizer, true> {},
               TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-              ::RAJA::detail::CopyFunctorTwoRanges {keys_begin, d_keys_out,
-                                                    vals_begin, d_vals_out},
+              ::RAJA::detail::CopyFunctorTwoRanges {keys_begin, tmp_keys_begin,
+                                                    vals_begin, tmp_vals_begin},
               expt::get_empty_forall_param_pack());
         }
-        else if (get_current(d_keys) == d_keys_out)
+        else if (get_current(d_keys) == tmp_keys_begin)
         {
-          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, keys_begin, d_keys_out,
+          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, keys_begin, tmp_keys_begin,
                                         len * sizeof(K), hipMemcpyDefault,
                                         stream);
         }
-        else if (get_current(d_vals) == d_vals_out)
+        else if (get_current(d_vals) == tmp_vals_begin)
         {
-          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, vals_begin, d_vals_out,
+          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, vals_begin, tmp_vals_begin,
                                         len * sizeof(V), hipMemcpyDefault,
                                         stream);
         }
 
         // Free temporary output arrays
-        hip::device_mempool_type::getInstance().free(d_keys_out);
-        hip::device_mempool_type::getInstance().free(d_vals_out);
+        hip::device_mempool_type::getInstance().free(tmp_keys_begin);
+        hip::device_mempool_type::getInstance().free(tmp_vals_begin);
       }
     }
     else
@@ -367,13 +367,13 @@ resources::EventProxy<resources::Hip> sort_pairs(
       // Setup temporary storage for the output arrays
       if constexpr (phase == 0)
       {
-        d_keys_out = hip::device_mempool_type::getInstance().malloc<K>(len);
-        d_vals_out = hip::device_mempool_type::getInstance().malloc<V>(len);
+        tmp_keys_begin = hip::device_mempool_type::getInstance().malloc<K>(len);
+        tmp_vals_begin = hip::device_mempool_type::getInstance().malloc<V>(len);
       }
 
       CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
-                                    temp_storage_bytes, keys_begin, d_keys_out,
-                                    vals_begin, d_vals_out, len, comp, stream);
+                                    temp_storage_bytes, keys_begin, tmp_keys_begin,
+                                    vals_begin, tmp_vals_begin, len, comp, stream);
 
       // Tear-down temporary storage for the output array
       if constexpr (phase == 1)
@@ -385,13 +385,13 @@ resources::EventProxy<resources::Hip> sort_pairs(
             ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
                                           Concretizer, true> {},
             TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-            ::RAJA::detail::CopyFunctorTwoRanges {keys_begin, d_keys_out,
-                                                  vals_begin, d_vals_out},
+            ::RAJA::detail::CopyFunctorTwoRanges {keys_begin, tmp_keys_begin,
+                                                  vals_begin, tmp_vals_begin},
             expt::get_empty_forall_param_pack());
 
         // Free temporary output arrays
-        hip::device_mempool_type::getInstance().free(d_keys_out);
-        hip::device_mempool_type::getInstance().free(d_vals_out);
+        hip::device_mempool_type::getInstance().free(tmp_keys_begin);
+        hip::device_mempool_type::getInstance().free(dst_vals_begin);
       }
 #elif defined(__CUDACC__)
       if constexpr (RequireStable)

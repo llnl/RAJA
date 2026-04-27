@@ -84,9 +84,9 @@ resources::EventProxy<resources::Cuda> sort(
   void* d_temp_storage      = nullptr;
   size_t temp_storage_bytes = 0;
 
-  auto call_impl = [&, d_out = static_cast<R*>(nullptr)](auto phase) mutable {
+  auto call_impl = [&, tmp_begin = static_cast<R*>(nullptr)](auto phase) mutable {
     RAJA_UNUSED_VAR(phase);
-    RAJA_UNUSED_VAR(d_out);
+    RAJA_UNUSED_VAR(tmp_begin);
 
     if constexpr (std::is_arithmetic_v<R> && std::is_pointer_v<Iter> &&
                   (std::is_same_v<std::decay_t<Compare>, operators::less<R>> ||
@@ -99,12 +99,12 @@ resources::EventProxy<resources::Cuda> sort(
       // Setup temporary storage for the output array
       if constexpr (phase == 0)
       {
-        d_out = cuda::device_mempool_type::getInstance().malloc<R>(len);
+        tmp_begin = cuda::device_mempool_type::getInstance().malloc<R>(len);
       }
 
       // Use DoubleBuffers to reduce temporary memory requirements
       // by allowing cub to write to the begin buffer
-      ::cub::DoubleBuffer<R> d_keys(begin, d_out);
+      ::cub::DoubleBuffer<R> d_keys(begin, tmp_begin);
 
       if constexpr (std::is_same_v<std::decay_t<Compare>, operators::less<R>>)
       {
@@ -124,15 +124,15 @@ resources::EventProxy<resources::Cuda> sort(
       if constexpr (phase == 1)
       {
         // Copy result back if necessary
-        if (d_keys.Current() == d_out)
+        if (d_keys.Current() == tmp_begin)
         {
-          CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, begin, d_out,
+          CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, begin, tmp_begin,
                                          len * sizeof(R), cudaMemcpyDefault,
                                          stream);
         }
 
         // Free temporary output array
-        cuda::device_mempool_type::getInstance().free(d_out);
+        cuda::device_mempool_type::getInstance().free(tmp_begin);
       }
     }
     else
@@ -212,11 +212,11 @@ resources::EventProxy<resources::Cuda> sort_pairs(
   void* d_temp_storage      = nullptr;
   size_t temp_storage_bytes = 0;
 
-  auto call_impl = [&, d_keys_out = static_cast<K*>(nullptr),
-                    d_vals_out = static_cast<V*>(nullptr)](auto phase) mutable {
+  auto call_impl = [&, tmp_keys_begin = static_cast<K*>(nullptr),
+                    tmp_vals_begin = static_cast<V*>(nullptr)](auto phase) mutable {
     RAJA_UNUSED_VAR(phase);
-    RAJA_UNUSED_VAR(d_keys_out);
-    RAJA_UNUSED_VAR(d_vals_out);
+    RAJA_UNUSED_VAR(tmp_keys_begin);
+    RAJA_UNUSED_VAR(tmp_vals_begin);
 
     if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
                   std::is_pointer_v<ValIter> &&
@@ -230,14 +230,14 @@ resources::EventProxy<resources::Cuda> sort_pairs(
       // Setup temporary storage for the output arrays
       if constexpr (phase == 0)
       {
-        d_keys_out = cuda::device_mempool_type::getInstance().malloc<K>(len);
-        d_vals_out = cuda::device_mempool_type::getInstance().malloc<V>(len);
+        tmp_keys_begin = cuda::device_mempool_type::getInstance().malloc<K>(len);
+        tmp_vals_begin = cuda::device_mempool_type::getInstance().malloc<V>(len);
       }
 
       // Use DoubleBuffers to reduce temporary memory requirements
       // by allowing cub to write to the keys_begin and vals_begin buffers
-      ::cub::DoubleBuffer<K> d_keys(keys_begin, d_keys_out);
-      ::cub::DoubleBuffer<V> d_vals(vals_begin, d_vals_out);
+      ::cub::DoubleBuffer<K> d_keys(keys_begin, tmp_keys_begin);
+      ::cub::DoubleBuffer<V> d_vals(vals_begin, tmp_vals_begin);
 
       if constexpr (std::is_same_v<std::decay_t<Compare>, operators::less<K>>)
       {
@@ -259,7 +259,7 @@ resources::EventProxy<resources::Cuda> sort_pairs(
       if constexpr (phase == 1)
       {
         // copy keys and values back if necessary
-        if (d_keys.Current() == d_keys_out && d_vals.Current() == d_vals_out)
+        if (d_keys.Current() == tmp_keys_begin && d_vals.Current() == tmp_vals_begin)
         {
           // Copy keys and values back via kernel for performance
           forall_impl(
@@ -268,26 +268,26 @@ resources::EventProxy<resources::Cuda> sort_pairs(
                   IterationMapping, IterationGetter, Concretizer, BLOCKS_PER_SM,
                   true> {},
               TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-              ::RAJA::detail::CopyFunctorTwoRanges {keys_begin, d_keys_out,
-                                                    vals_begin, d_vals_out},
+              ::RAJA::detail::CopyFunctorTwoRanges {keys_begin, tmp_keys_begin,
+                                                    vals_begin, tmp_vals_begin},
               expt::get_empty_forall_param_pack());
         }
-        else if (d_keys.Current() == d_keys_out)
+        else if (d_keys.Current() == tmp_keys_begin)
         {
           CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, keys_begin,
-                                         d_keys_out, len * sizeof(K),
+                                         tmp_keys_begin, len * sizeof(K),
                                          cudaMemcpyDefault, stream);
         }
-        else if (d_vals.Current() == d_vals_out)
+        else if (d_vals.Current() == tmp_vals_begin)
         {
           CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemcpyAsync, vals_begin,
-                                         d_vals_out, len * sizeof(V),
+                                         tmp_vals_begin, len * sizeof(V),
                                          cudaMemcpyDefault, stream);
         }
 
         // Free temporary output arrays
-        cuda::device_mempool_type::getInstance().free(d_keys_out);
-        cuda::device_mempool_type::getInstance().free(d_vals_out);
+        cuda::device_mempool_type::getInstance().free(tmp_keys_begin);
+        cuda::device_mempool_type::getInstance().free(tmp_vals_begin);
       }
     }
     else
