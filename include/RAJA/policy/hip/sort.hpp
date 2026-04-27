@@ -191,7 +191,7 @@ resources::EventProxy<resources::Hip> sort(
             ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
                                           Concretizer, true> {},
             TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-            ::RAJA::detail::OneCopyFunctor {begin, d_out},
+            ::RAJA::detail::CopyFunctorOneRange {begin, d_out},
             expt::get_empty_forall_param_pack());
 
         // Free temporary output array
@@ -339,8 +339,8 @@ resources::EventProxy<resources::Hip> sort_pairs(
               ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
                                             Concretizer, true> {},
               TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-              ::RAJA::detail::TwoCopiesFunctor {keys_begin, d_keys_out,
-                                                vals_begin, d_vals_out},
+              ::RAJA::detail::CopyFunctorTwoRanges {keys_begin, d_keys_out,
+                                                    vals_begin, d_vals_out},
               expt::get_empty_forall_param_pack());
         }
         else if (get_current(d_keys) == d_keys_out)
@@ -385,8 +385,8 @@ resources::EventProxy<resources::Hip> sort_pairs(
             ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
                                           Concretizer, true> {},
             TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
-            ::RAJA::detail::TwoCopiesFunctor {keys_begin, d_keys_out,
-                                              vals_begin, d_vals_out},
+            ::RAJA::detail::CopyFunctorTwoRanges {keys_begin, d_keys_out,
+                                                  vals_begin, d_vals_out},
             expt::get_empty_forall_param_pack());
 
         // Free temporary output arrays

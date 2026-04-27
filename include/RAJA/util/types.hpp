@@ -1057,7 +1057,7 @@ private:
  * \brief Functor that copies src to dst.
  */
 template<typename DestIter, typename SrcIter>
-struct OneCopyFunctor
+struct CopyFunctorOneRange
 {
   DestIter dst;
   SrcIter src;
@@ -1070,7 +1070,8 @@ struct OneCopyFunctor
 };
 
 template<typename DestIter, typename SrcIter>
-OneCopyFunctor(DestIter, SrcIter) -> OneCopyFunctor<DestIter, SrcIter>;
+CopyFunctorOneRange(DestIter, SrcIter)
+    -> CopyFunctorOneRange<DestIter, SrcIter>;
 
 /*!
  * \brief Functor that copies src1 to dst1 and src2 to dst2.
@@ -1079,7 +1080,7 @@ template<typename DestIter1,
          typename SrcIter1,
          typename DestIter2,
          typename SrcIter2>
-struct TwoCopiesFunctor
+struct CopyFunctorTwoRanges
 {
   DestIter1 dst1;
   SrcIter1 src1;
@@ -1099,8 +1100,8 @@ template<typename DestIter1,
          typename SrcIter1,
          typename DestIter2,
          typename SrcIter2>
-TwoCopiesFunctor(DestIter1, SrcIter1, DestIter2, SrcIter2)
-    -> TwoCopiesFunctor<DestIter1, SrcIter1, DestIter2, SrcIter2>;
+CopyFunctorTwoRanges(DestIter1, SrcIter1, DestIter2, SrcIter2)
+    -> CopyFunctorTwoRanges<DestIter1, SrcIter1, DestIter2, SrcIter2>;
 
 }  // namespace detail
 
