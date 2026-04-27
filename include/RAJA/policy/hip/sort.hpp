@@ -106,7 +106,8 @@ resources::EventProxy<resources::Hip> sort(
   void* d_temp_storage      = nullptr;
   size_t temp_storage_bytes = 0;
 
-  auto call_impl = [&, tmp_begin = static_cast<R*>(nullptr)](auto phase) mutable {
+  auto call_impl = [&,
+                    tmp_begin = static_cast<R*>(nullptr)](auto phase) mutable {
     RAJA_UNUSED_VAR(phase);
     RAJA_UNUSED_VAR(tmp_begin);
 
@@ -179,8 +180,8 @@ resources::EventProxy<resources::Hip> sort(
       }
 
       CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
-                                    temp_storage_bytes, begin, tmp_begin, len, comp,
-                                    stream);
+                                    temp_storage_bytes, begin, tmp_begin, len,
+                                    comp, stream);
 
       // Tear-down temporary storage for the output array
       if constexpr (phase == 1)
@@ -271,7 +272,8 @@ resources::EventProxy<resources::Hip> sort_pairs(
   size_t temp_storage_bytes = 0;
 
   auto call_impl = [&, tmp_keys_begin = static_cast<K*>(nullptr),
-                    tmp_vals_begin = static_cast<V*>(nullptr)](auto phase) mutable {
+                    tmp_vals_begin =
+                        static_cast<V*>(nullptr)](auto phase) mutable {
     RAJA_UNUSED_VAR(phase);
     RAJA_UNUSED_VAR(tmp_keys_begin);
     RAJA_UNUSED_VAR(tmp_vals_begin);
@@ -345,15 +347,15 @@ resources::EventProxy<resources::Hip> sort_pairs(
         }
         else if (get_current(d_keys) == tmp_keys_begin)
         {
-          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, keys_begin, tmp_keys_begin,
-                                        len * sizeof(K), hipMemcpyDefault,
-                                        stream);
+          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, keys_begin,
+                                        tmp_keys_begin, len * sizeof(K),
+                                        hipMemcpyDefault, stream);
         }
         else if (get_current(d_vals) == tmp_vals_begin)
         {
-          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, vals_begin, tmp_vals_begin,
-                                        len * sizeof(V), hipMemcpyDefault,
-                                        stream);
+          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, vals_begin,
+                                        tmp_vals_begin, len * sizeof(V),
+                                        hipMemcpyDefault, stream);
         }
 
         // Free temporary output arrays
@@ -371,9 +373,9 @@ resources::EventProxy<resources::Hip> sort_pairs(
         tmp_vals_begin = hip::device_mempool_type::getInstance().malloc<V>(len);
       }
 
-      CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
-                                    temp_storage_bytes, keys_begin, tmp_keys_begin,
-                                    vals_begin, tmp_vals_begin, len, comp, stream);
+      CAMP_HIP_API_INVOKE_AND_CHECK(
+          ::rocprim::merge_sort, d_temp_storage, temp_storage_bytes, keys_begin,
+          tmp_keys_begin, vals_begin, tmp_vals_begin, len, comp, stream);
 
       // Tear-down temporary storage for the output array
       if constexpr (phase == 1)

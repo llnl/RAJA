@@ -84,7 +84,8 @@ resources::EventProxy<resources::Cuda> sort(
   void* d_temp_storage      = nullptr;
   size_t temp_storage_bytes = 0;
 
-  auto call_impl = [&, tmp_begin = static_cast<R*>(nullptr)](auto phase) mutable {
+  auto call_impl = [&,
+                    tmp_begin = static_cast<R*>(nullptr)](auto phase) mutable {
     RAJA_UNUSED_VAR(phase);
     RAJA_UNUSED_VAR(tmp_begin);
 
@@ -213,7 +214,8 @@ resources::EventProxy<resources::Cuda> sort_pairs(
   size_t temp_storage_bytes = 0;
 
   auto call_impl = [&, tmp_keys_begin = static_cast<K*>(nullptr),
-                    tmp_vals_begin = static_cast<V*>(nullptr)](auto phase) mutable {
+                    tmp_vals_begin =
+                        static_cast<V*>(nullptr)](auto phase) mutable {
     RAJA_UNUSED_VAR(phase);
     RAJA_UNUSED_VAR(tmp_keys_begin);
     RAJA_UNUSED_VAR(tmp_vals_begin);
@@ -230,8 +232,10 @@ resources::EventProxy<resources::Cuda> sort_pairs(
       // Setup temporary storage for the output arrays
       if constexpr (phase == 0)
       {
-        tmp_keys_begin = cuda::device_mempool_type::getInstance().malloc<K>(len);
-        tmp_vals_begin = cuda::device_mempool_type::getInstance().malloc<V>(len);
+        tmp_keys_begin =
+            cuda::device_mempool_type::getInstance().malloc<K>(len);
+        tmp_vals_begin =
+            cuda::device_mempool_type::getInstance().malloc<V>(len);
       }
 
       // Use DoubleBuffers to reduce temporary memory requirements
@@ -259,7 +263,8 @@ resources::EventProxy<resources::Cuda> sort_pairs(
       if constexpr (phase == 1)
       {
         // copy keys and values back if necessary
-        if (d_keys.Current() == tmp_keys_begin && d_vals.Current() == tmp_vals_begin)
+        if (d_keys.Current() == tmp_keys_begin &&
+            d_vals.Current() == tmp_vals_begin)
         {
           // Copy keys and values back via kernel for performance
           forall_impl(
