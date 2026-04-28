@@ -60,7 +60,7 @@ cmake \
   -DHIP_ARCH=${HIP_ARCH} \
   -DCMAKE_C_COMPILER="/usr/tce/packages/cce/cce-${COMP_VER}/bin/craycc" \
   -DCMAKE_CXX_COMPILER="/usr/tce/packages/cce/cce-${COMP_VER}/bin/crayCC" \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -DENABLE_CLANGFORMAT=Off \
   -C "../host-configs/lc-builds/toss4/${HOSTCONFIG}.cmake" \
   -DENABLE_HIP=OFF \
