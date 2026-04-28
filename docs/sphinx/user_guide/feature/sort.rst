@@ -30,13 +30,17 @@ A few important notes:
 
 Also:
 
-.. note:: For sorts using the CUDA or HIP back-end, RAJA implementation uses
-          the NVIDIA CUB library or AMD rocPRIM library, respectively.
-          Typically, the CMake variable ``CUB_DIR`` or ``ROCPRIM_DIR`` will
-          be automatically set to the location of the CUB or rocPRIM library
-          for the CUDA or rocPRIM installation specified when either back-end
-          is enabled. More details for configuring the CUB or rocPRIM library
-          for a RAJA build can be found :ref:`getting_started_depend-label`.
+.. note:: * For sorts using the CUDA or HIP back-end, RAJA uses
+            the NVIDIA CUB library or AMD rocPRIM library, respectively.
+            Typically, the CMake variable ``CUB_DIR`` or ``ROCPRIM_DIR`` will
+            be automatically set to the location of the CUB or rocPRIM library
+            for the CUDA or rocPRIM installation specified when either back-end
+            is enabled. More details for configuring the CUB or rocPRIM library
+            for a RAJA build can be found :ref:`getting_started_depend-label`.
+          * The RAJA CUDA and HIP sort back-ends support user provided operators,
+            but special case the RAJA operators 'less' and 'greater' when used
+            with raw pointers to arithmetic types for performance as a more
+            performant radix sort implementation is available in those cases.
 
 Please see the following tutorial sections for detailed examples that use
 RAJA scan operations:
