@@ -32,7 +32,12 @@ void testWorkGroupWorkStorageInsertCall()
 
   using callable = TestCallable<double>;
 
+  // MSVC ran into an "Internal Compiler Error" with the static keyword
+#if !defined(RAJA_COMPILER_MSVC)
   static constexpr auto platform = RAJA::Platform::host;
+#else
+  constexpr auto platform = RAJA::Platform::host;
+#endif
   using DispatchPolicy = typename DispatchTyper::template type<callable>;
   using Dispatcher_type = RAJA::detail::Dispatcher<
       platform, DispatchPolicy, void, void*, bool*, bool*>;

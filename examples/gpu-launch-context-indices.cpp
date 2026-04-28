@@ -106,7 +106,7 @@ int run_example()
         // the launch context. With the "all cached" policy, those values are
         // cached in `ctx` the first time they are needed.
 
-        RAJA::loop<teams_x>(ctx, RAJA::RangeSegment(0, GRID_DIM), [&](int bx) {
+        RAJA::loop<teams_x>(ctx, RAJA::RangeSegment(0, GRID_DIM), [&](int RAJA_UNUSED_ARG(bx)) {
 
           // Iterate over more logical thread-iterations than the physical
           // thread dimension to exercise the *_thread_x_loop mapping.
