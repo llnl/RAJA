@@ -50,7 +50,7 @@ module load cmake/${CMAKE_VER}
 cmake \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_CXX_COMPILER=/usr/tce/packages/clang/clang-${COMP_VER}/bin/clang++ \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -C ../host-configs/lc-builds/toss4/clang_X.cmake \
   -DENABLE_CLANGFORMAT=On \
   -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-${COMP_VER}/bin/clang-format \
