@@ -62,8 +62,8 @@ raja_add_executable(
   SOURCES launch_flatten.cpp)
 
 raja_add_executable(
-  NAME forall_nd_layout
-  SOURCES forall_nd_layout.cpp)
+  NAME launch_nd
+  SOURCES launch_nd.cpp)
 
 raja_add_executable(
   NAME launch_reductions
