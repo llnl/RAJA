@@ -348,6 +348,13 @@ struct ViewReturnHelper<
            : -1)...);
 
 
+  using new_stride_seq =
+      camp::int_seq<LinIdx,
+                    (LinIdx)LayoutType().template get_dim_stride<
+                        GetTensorArgIdx<VecHead, index_list>::value>(),
+                    (LinIdx)LayoutType().template get_dim_stride<
+                        GetTensorArgIdx<VecSeq, index_list>::value>()...>;
+
   using new_begin_seq =
       camp::int_seq<LinIdx,
                     (LinIdx)get_tensor_args_begin<VecHead>(
@@ -376,7 +383,7 @@ struct ViewReturnHelper<
       internal::expt::StaticTensorRef<ElementType*,
                                       LinIdx,
                                       internal::expt::TENSOR_MULTIPLE,
-                                      stride_seq,
+                                      new_stride_seq,
                                       new_begin_seq,
                                       new_size_seq,
                                       s_stride_one_dim>;
