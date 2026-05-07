@@ -24,7 +24,6 @@
 
 #include "RAJA/util/concepts.hpp"
 #include "RAJA/util/macros.hpp"
-#include "camp/concepts.hpp"
 
 namespace RAJA
 {
