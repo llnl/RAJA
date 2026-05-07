@@ -3,7 +3,7 @@
  *
  * \file
  *
- * \brief   Header file for RAJA CombingAdapter.
+ * \brief   Header file for RAJA HashCombiner.
  *
  ******************************************************************************
  */
