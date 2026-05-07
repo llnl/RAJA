@@ -49,13 +49,12 @@ inline namespace policy_by_value_interface
 ******************************************************************************
 */
 template<
-    typename ExecPolicy,
+    concepts::ExecutionPolicy ExecPolicy,
     typename Res,
-    typename Container,
+    concepts::Range Container,
     typename Function = operators::plus<RAJA::detail::ContainerVal<Container>>>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
-    type_traits::is_execution_policy<ExecPolicy>,
     type_traits::is_resource<Res>,
     std::is_constructible<camp::resources::Resource, Res>,
     type_traits::is_range<Container>>
@@ -81,14 +80,12 @@ inclusive_scan_inplace(ExecPolicy&& p,
 
 ///
 template<
-    typename ExecPolicy,
-    typename Container,
+    concepts::ExecutionPolicy ExecPolicy,
+    concepts::Range Container,
     typename Function = operators::plus<RAJA::detail::ContainerVal<Container>>,
     typename Res      = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
-    type_traits::is_execution_policy<ExecPolicy>,
-    type_traits::is_range<Container>,
     concepts::negate<
         std::is_constructible<camp::resources::Resource, Container>>>
 inclusive_scan_inplace(ExecPolicy&& p,
@@ -112,14 +109,13 @@ inclusive_scan_inplace(ExecPolicy&& p,
 *
 ******************************************************************************
 */
-template<typename ExecPolicy,
+template<concepts::ExecutionPolicy ExecPolicy,
          typename Res,
-         typename Container,
+         concepts::Range Container,
          typename T        = RAJA::detail::ContainerVal<Container>,
          typename Function = operators::plus<T>>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
-    type_traits::is_execution_policy<ExecPolicy>,
     type_traits::is_resource<Res>,
     std::is_constructible<camp::resources::Resource, Res>,
     type_traits::is_range<Container>>
@@ -145,15 +141,13 @@ exclusive_scan_inplace(ExecPolicy&& p,
 }
 
 ///
-template<typename ExecPolicy,
-         typename Container,
+template<concepts::ExecutionPolicy ExecPolicy,
+         concepts::Range Container,
          typename T        = RAJA::detail::ContainerVal<Container>,
          typename Function = operators::plus<T>,
          typename Res      = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
-    type_traits::is_execution_policy<ExecPolicy>,
-    type_traits::is_range<Container>,
     concepts::negate<
         std::is_constructible<camp::resources::Resource, Container>>>
 exclusive_scan_inplace(ExecPolicy&& p,
@@ -182,7 +176,7 @@ exclusive_scan_inplace(ExecPolicy&& p,
 *begin))}
 ******************************************************************************
 */
-template<typename ExecPolicy,
+template<concepts::ExecutionPolicy ExecPolicy,
          typename Res,
          typename InContainer,
          typename OutContainer,
@@ -190,7 +184,6 @@ template<typename ExecPolicy,
              operators::plus<RAJA::detail::ContainerVal<InContainer>>>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
-    type_traits::is_execution_policy<ExecPolicy>,
     type_traits::is_resource<Res>,
     std::is_constructible<camp::resources::Resource, Res>,
     type_traits::is_range<InContainer>,
@@ -220,7 +213,7 @@ inclusive_scan(ExecPolicy&& p,
 }
 
 ///
-template<typename ExecPolicy,
+template<concepts::ExecutionPolicy ExecPolicy,
          typename InContainer,
          typename OutContainer,
          typename Function =
@@ -228,7 +221,6 @@ template<typename ExecPolicy,
          typename Res = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
-    type_traits::is_execution_policy<ExecPolicy>,
     type_traits::is_range<InContainer>,
     concepts::negate<
         std::is_constructible<camp::resources::Resource, InContainer>>,
@@ -260,7 +252,7 @@ inclusive_scan(ExecPolicy&& p,
 *begin))}
 ******************************************************************************
 */
-template<typename ExecPolicy,
+template<concepts::ExecutionPolicy ExecPolicy,
          typename Res,
          typename InContainer,
          typename OutContainer,
@@ -268,7 +260,6 @@ template<typename ExecPolicy,
          typename Function = operators::plus<T>>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
-    type_traits::is_execution_policy<ExecPolicy>,
     type_traits::is_resource<Res>,
     std::is_constructible<camp::resources::Resource, Res>,
     type_traits::is_range<InContainer>,
@@ -299,7 +290,7 @@ exclusive_scan(ExecPolicy&& p,
 }
 
 ///
-template<typename ExecPolicy,
+template<concepts::ExecutionPolicy ExecPolicy,
          typename InContainer,
          typename OutContainer,
          typename T        = RAJA::detail::ContainerVal<InContainer>,
@@ -307,7 +298,6 @@ template<typename ExecPolicy,
          typename Res      = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
-    type_traits::is_execution_policy<ExecPolicy>,
     type_traits::is_range<InContainer>,
     concepts::negate<
         std::is_constructible<camp::resources::Resource, InContainer>>,
@@ -332,12 +322,11 @@ exclusive_scan(ExecPolicy&& p,
  *
  * this reduces implementation overhead and perfectly forwards all arguments
  */
-template<typename ExecPolicy,
+template<concepts::ExecutionPolicy ExecPolicy,
          typename... Args,
          typename Res = typename resources::get_resource<ExecPolicy>::type>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>,
-                                  type_traits::is_execution_policy<ExecPolicy>>
-exclusive_scan(Args&&... args)
+RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>> exclusive_scan(
+    Args&&... args)
 {
   Res r = Res::get_default();
   return ::RAJA::policy_by_value_interface::exclusive_scan<ExecPolicy>(
@@ -345,9 +334,8 @@ exclusive_scan(Args&&... args)
 }
 
 ///
-template<typename ExecPolicy, typename Res, typename... Args>
+template<concepts::ExecutionPolicy ExecPolicy, typename Res, typename... Args>
 RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>,
-                                  type_traits::is_execution_policy<ExecPolicy>,
                                   type_traits::is_resource<Res>>
 exclusive_scan(Res r, Args&&... args)
 {
@@ -361,12 +349,11 @@ exclusive_scan(Res r, Args&&... args)
  *
  * this reduces implementation overhead and perfectly forwards all arguments
  */
-template<typename ExecPolicy,
+template<concepts::ExecutionPolicy ExecPolicy,
          typename... Args,
          typename Res = typename resources::get_resource<ExecPolicy>::type>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>,
-                                  type_traits::is_execution_policy<ExecPolicy>>
-inclusive_scan(Args&&... args)
+RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>> inclusive_scan(
+    Args&&... args)
 {
   Res r = Res::get_default();
   return ::RAJA::policy_by_value_interface::inclusive_scan<ExecPolicy>(
@@ -374,9 +361,8 @@ inclusive_scan(Args&&... args)
 }
 
 ///
-template<typename ExecPolicy, typename Res, typename... Args>
+template<concepts::ExecutionPolicy ExecPolicy, typename Res, typename... Args>
 RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>,
-                                  type_traits::is_execution_policy<ExecPolicy>,
                                   type_traits::is_resource<Res>>
 inclusive_scan(Res r, Args&&... args)
 {
@@ -390,11 +376,10 @@ inclusive_scan(Res r, Args&&... args)
  *
  * this reduces implementation overhead and perfectly forwards all arguments
  */
-template<typename ExecPolicy,
+template<concepts::ExecutionPolicy ExecPolicy,
          typename... Args,
          typename Res = typename resources::get_resource<ExecPolicy>::type>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>,
-                                  type_traits::is_execution_policy<ExecPolicy>>
+RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>>
 exclusive_scan_inplace(Args&&... args)
 {
   Res r = Res::get_default();
@@ -403,9 +388,8 @@ exclusive_scan_inplace(Args&&... args)
 }
 
 ///
-template<typename ExecPolicy, typename Res, typename... Args>
+template<concepts::ExecutionPolicy ExecPolicy, typename Res, typename... Args>
 RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>,
-                                  type_traits::is_execution_policy<ExecPolicy>,
                                   type_traits::is_resource<Res>>
 exclusive_scan_inplace(Res r, Args&&... args)
 {
@@ -419,11 +403,10 @@ exclusive_scan_inplace(Res r, Args&&... args)
  *
  * this reduces implementation overhead and perfectly forwards all arguments
  */
-template<typename ExecPolicy,
+template<concepts::ExecutionPolicy ExecPolicy,
          typename... Args,
          typename Res = typename resources::get_resource<ExecPolicy>::type>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>,
-                                  type_traits::is_execution_policy<ExecPolicy>>
+RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>>
 inclusive_scan_inplace(Args&&... args)
 {
   Res r = Res::get_default();
@@ -432,9 +415,8 @@ inclusive_scan_inplace(Args&&... args)
 }
 
 ///
-template<typename ExecPolicy, typename Res, typename... Args>
+template<concepts::ExecutionPolicy ExecPolicy, typename Res, typename... Args>
 RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>,
-                                  type_traits::is_execution_policy<ExecPolicy>,
                                   type_traits::is_resource<Res>>
 inclusive_scan_inplace(Res r, Args&&... args)
 {

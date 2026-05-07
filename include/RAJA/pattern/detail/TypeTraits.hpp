@@ -96,6 +96,17 @@ struct tuple_contains_Reducers<camp::tuple<Params...>>
 {};
 
 }  // namespace expt
+
+namespace type_traits
+{
+template<typename U, typename V>
+struct is_same_strip_const
+    : std::is_same<std::remove_const_t<U>, std::remove_const_t<V>>
+{};
+
+template<typename U, typename V>
+static constexpr bool is_same_strip_const_v = is_same_strip_const<U, V>::value;
+}  // namespace type_traits
 }  // namespace RAJA
 
 #endif  //  RAJA_TYPETRAITS_HPP

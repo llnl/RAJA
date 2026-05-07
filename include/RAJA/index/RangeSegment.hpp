@@ -553,7 +553,7 @@ using common_type_t = typename common_type<Ts...>::type;
  * \brief Function to make a TypedRangeSegment for the interval [begin, end)
  *
  *  \return a newly constructed TypedRangeSegment where the
- *          value_type is equivilent to the common type of
+ *          value_type is equivalent to the common type of
  *          @begin and @end. If there is no common type, then
  *          a compiler error will be produced.
  */
@@ -596,23 +596,23 @@ namespace concepts
 {
 
 template<typename T, typename U>
-struct RangeConstructible
-    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U>>()) {};
+concept RangeConstructible = std::common_with<T, U>;
 
 template<typename T, typename U, typename V>
-struct RangeStrideConstructible
-    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U, V>>()) {};
+concept RangeStrideConstructible = RAJA::detail::common_type_t<T, U, V>::value;
 
 }  // namespace concepts
 
 namespace type_traits
 {
 
-DefineTypeTraitFromConcept(is_range_constructible,
-                           RAJA::concepts::RangeConstructible);
+DefineTypeTraitFromConceptTwoTypeParams(is_range_constructible,
+                                        RAJA::concepts::RangeConstructible);
 
-DefineTypeTraitFromConcept(is_range_stride_constructible,
-                           RAJA::concepts::RangeStrideConstructible);
+
+DefineTypeTraitFromConceptThreeTypeParams(
+    is_range_stride_constructible,
+    RAJA::concepts::RangeStrideConstructible);
 
 }  // namespace type_traits
 
