@@ -19,11 +19,23 @@
 #include <random>
 #include <array>
 #include <cstddef>
+#include <type_traits>
+#include <cstring>
 
 
 template < typename T >
 struct TestCallable
 {
+  static_assert(std::is_trivially_copyable_v<T>,
+                "TestCallable requires trivially copyable values");
+
+  static RAJA_NOINLINE void copy_value(void* dst,
+                                       void const* src,
+                                       size_t size)
+  {
+    std::memcpy(dst, src, size);
+  }
+
   TestCallable(T _val)
     : val(_val)
   { }
@@ -48,7 +60,7 @@ struct TestCallable
   RAJA_HOST_DEVICE void operator()(
       void* val_ptr, bool* move_constructed_ptr, bool* moved_from_ptr) const
   {
-    *static_cast<T*>(val_ptr) = val;
+    copy_value(val_ptr, &val, sizeof(T));
     *move_constructed_ptr = move_constructed;
     *moved_from_ptr = moved_from;
   }
