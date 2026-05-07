@@ -29,7 +29,8 @@ namespace RAJA
 struct msg_header
 {
   std::size_t sz;
-  std::size_t id;
+  std::size_t type;
+  std::size_t hash;
   char* args;
 };
 

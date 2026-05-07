@@ -306,7 +306,7 @@ TEST(message_handler, handle_all_sort) {
 
   // Forces all q2 messages to the end
   std::sort(msg_list.begin(), msg_list.end(), [] (auto msg1, auto msg2) {
-    return msg1->id < msg2->id;
+    return msg1->type < msg2->type;
   });
   msg_manager.handle_all(msg_list);
 

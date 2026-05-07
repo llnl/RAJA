@@ -24,8 +24,10 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 #include "RAJA/util/align.hpp"
+#include "RAJA/util/HashCombiner.hpp"
 
 #include "RAJA/pattern/messages/msg_header.hpp"
 #include "RAJA/pattern/messages/msg_callback.hpp"
@@ -212,14 +214,14 @@ public:
   }
 
   template<typename Policy, typename... Args>
-  auto get_queue(std::size_t id) noexcept
+  auto get_queue(std::pair<std::size_t, std::size_t> id) noexcept
   {
     return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {
         id, m_bus.get()};
   }
 
   template<typename Policy, typename... Args>
-  auto get_queue(std::size_t id) const noexcept
+  auto get_queue(std::pair<std::size_t, std::size_t> id) const noexcept
   {
     return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {
         id, m_bus.get()};
@@ -255,7 +257,7 @@ class message_manager
 public:
   using msg_callback_t = std::unique_ptr<RAJA::imsg_callback>;
   using msg_fn_list_t  = std::vector<msg_callback_t>;
-  using msg_id         = std::size_t;
+  using msg_id         = std::pair<std::size_t, std::size_t>;
   using msg_bus        = message_bus<char>;
 
 public:
@@ -276,10 +278,8 @@ public:
   template<typename Policy, typename Callable>
   auto subscribe(Callable&& c)
   {
-    msg_id id = m_callback_map.size();
-
-    // Create new callback list
-    m_callback_map.emplace_back();
+    msg_id id =
+        std::make_pair(m_callback_map.size(), typeid(Callable).hash_code());
 
     return get_queue_impl<Policy>(
         id, RAJA::msg_callback {std::forward<Callable>(c)});
@@ -359,7 +359,8 @@ public:
     {
       for (const auto& msg : messages)
       {
-        for (auto& callback : m_callback_map[msg->id])
+        msg_id id = std::make_pair(msg->type, msg->hash);
+        for (auto& callback : m_callback_map[id])
         {
           (*callback)(msg->args);
         }
@@ -377,7 +378,8 @@ public:
       auto messages = get_messages();
       for (const auto& msg : messages)
       {
-        for (auto& callback : m_callback_map[msg->id])
+        msg_id id = std::make_pair(msg->type, msg->hash);
+        for (auto& callback : m_callback_map[id])
         {
           (*callback)(msg->args);
         }
@@ -401,7 +403,7 @@ private:
   }
 
   msg_bus m_bus;
-  std::vector<msg_fn_list_t> m_callback_map;
+  std::unordered_map<msg_id, msg_fn_list_t, RAJA::PairHash> m_callback_map;
 };
 
 template<typename Resource>
