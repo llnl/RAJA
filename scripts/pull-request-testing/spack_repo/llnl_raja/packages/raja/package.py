@@ -4,6 +4,8 @@
 
 import re
 import socket
+from pathlib import Path
+import os
 
 from spack_repo.builtin.build_systems.cached_cmake import (
     CachedCMakePackage,
@@ -252,12 +254,13 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
 
     variant(
         "cxxstd",
-        default="17",
+        default="20",
         values=("11", "14", "17", "20"),
         description="C++ standard to build with",
     )
     conflicts("cxxstd=11", when="@0.14.0:")
     conflicts("cxxstd=14", when="@2025.09.0:")
+    conflicts("cxxstd=17", when="@2026.03.0:")
     conflicts("+sycl cxxstd=14", when="@2024.07.0:")
 
     depends_on("cxx", type="build")
@@ -572,28 +575,26 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
     def cmake_args(self):
         return []
 
-    @property
-    def build_relpath(self):
-        """Relative path to the cmake build subdirectory."""
-        return join_path("..", self.build_dirname)
+
+    def build_test_cache_dir(self):
+        return join_path(install_test_root(self), "build")
 
     @run_after("install")
     def setup_build_tests(self):
-        """Copy the build test files after the package is installed to a
-        relative install test subdirectory for use during `spack test run`."""
-        # Now copy the relative files
-        cache_extra_test_sources(self, self.build_relpath)
+        """Copy selected build-generated test files for `spack test run`."""
 
-        # Ensure the path exists since relying on a relative path at the
-        # same level as the normal stage source path.
-        mkdirp(install_test_root(self))
+        src = join_path(self.build_directory, "bin")
+        dst = join_path(self.build_test_cache_dir(), "bin")
+
+        if os.path.isdir(src):
+            install_tree(src, dst)
 
     @property
     def _extra_tests_path(self):
         # TODO: The tests should be converted to re-build and run examples
         # TODO: using the installed libraries.
-        return join_path(install_test_root(self), self.build_relpath, "bin")
-
+        return join_path(self.build_test_cache_dir(), "bin")
+    
     def run_example(self, exe, expected):
         """run and check outputs of the example"""
         with working_dir(self._extra_tests_path):
