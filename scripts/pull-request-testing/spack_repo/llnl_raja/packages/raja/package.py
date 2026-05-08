@@ -4,8 +4,8 @@
 
 import re
 import socket
-from pathlib import Path
 import os
+from pathlib import Path
 
 from spack_repo.builtin.build_systems.cached_cmake import (
     CachedCMakePackage,
@@ -316,10 +316,13 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
             )
         conflicts("+openmp", when="@:2022.03")
 
+    conflicts("^cuda@13:", when="@:2025.12.2 +cuda", msg="CUDA 13+ unsupported before 2025.12.3")        
     with when("+cuda @0.12.0:"):
         depends_on("camp+cuda")
         for sm_ in CudaPackage.cuda_arch_values:
             depends_on("camp +cuda cuda_arch={0}".format(sm_), when="cuda_arch={0}".format(sm_))
+
+            
 
     conflicts("+gpu-profiling", when="~cuda~rocm", msg="GPU profiling requires CUDA or ROCm")
     conflicts("+gpu-profiling +cuda", when="@:2022.02.99")
@@ -335,9 +338,6 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
         "please use a newer release.",
     )
 
-    # https://github.com/spack/spack-packages/pull/2059#issuecomment-3443184517
-    # SGS removing for testing with CUDA 13
-    # conflicts("^cuda@13:", when="+cuda")
 
     def _get_sys_type(self, spec):
         sys_type = spec.architecture
@@ -575,13 +575,13 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
     def cmake_args(self):
         return []
 
-
     def build_test_cache_dir(self):
+        "Directory where stand-alone (smoke) tests are cached"
         return join_path(install_test_root(self), "build")
 
     @run_after("install")
     def setup_build_tests(self):
-        """Copy selected build-generated test files for `spack test run`."""
+        """Copy selected build-generated test files for `spack test run` stand-alone (smoke) tests."""
 
         src = join_path(self.build_directory, "bin")
         dst = join_path(self.build_test_cache_dir(), "bin")
@@ -591,6 +591,7 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
 
     @property
     def _extra_tests_path(self):
+        "Directory where stand-alone (smoke) test executables are cached."
         # TODO: The tests should be converted to re-build and run examples
         # TODO: using the installed libraries.
         return join_path(self.build_test_cache_dir(), "bin")
