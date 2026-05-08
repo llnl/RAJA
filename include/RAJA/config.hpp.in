@@ -391,6 +391,8 @@ const int DATA_ALIGN = @RAJA_DATA_ALIGN@;
 //
 //     RAJA_INLINE - macro to enforce method inlining
 //
+//     RAJA_NOINLINE - macro to enforce noninline method
+//
 //     RAJA_ALIGN_DATA(<variable>) - macro to express alignment of data,
 //                              loop bounds, etc.
 //
@@ -399,6 +401,12 @@ const int DATA_ALIGN = @RAJA_DATA_ALIGN@;
 //
 //     RAJA_ALIGNED_ATTR(<alignment>) - macro to express type or variable alignments
 //
+
+#if defined(_MSC_VER)
+#define RAJA_NOINLINE __declspec(noinline)
+#else
+#define RAJA_NOINLINE __attribute__((noinline))
+#endif
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(RAJA_WIN_STATIC_BUILD)
 #ifdef RAJA_EXPORTS
