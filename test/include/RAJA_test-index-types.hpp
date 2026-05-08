@@ -25,7 +25,9 @@
 //
 // Strongly typed indexes
 //
-RAJA_INDEX_VALUE(StrongIndexType, "StrongIndexType");
+// TODO(bowen): Did we ever support passing these types to Span?  They do not
+// model Integral
+RAJA_INDEX_VALUE_T(StrongIndexType, int, "StrongIndexType");
 RAJA_INDEX_VALUE_T(StrongInt, int, "StrongIntType");
 RAJA_INDEX_VALUE_T(StrongULL, unsigned long long , "StrongULLType");
 
@@ -36,7 +38,7 @@ using IdxTypeList = camp::list<RAJA::Index_type,
                                int,
 #if defined(RAJA_TEST_EXHAUSTIVE)
                                unsigned int,
-// short int types will break a bunch of tests due to assumpitons made in 
+// short int types will break a bunch of tests due to assumptions made in
 // the test implementations.
 //                             short,
 //                             unsigned short,
@@ -58,11 +60,11 @@ using SignedIdxTypeList = camp::list<RAJA::Index_type,
 //
 using StrongIdxTypeList = camp::list<RAJA::Index_type,
                                      int,
-                                     StrongIndexType,
+                                    //  StrongIndexType,
 #if defined(RAJA_TEST_EXHAUSTIVE)
                                      //StrongInt,
                                      unsigned int,
-// short int types will break a bunch of tests due to assumpitons made in 
+// short int types will break a bunch of tests due to assumpitons made in
 // the test implementations.
 //                                   short,
 //                                   unsigned short,
