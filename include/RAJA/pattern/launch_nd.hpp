@@ -77,6 +77,25 @@ struct launch_nd_grid_policy
 namespace detail
 {
 
+template<typename Policy>
+RAJA_INLINE auto make_launch_nd_context(std::string&& kernel_name)
+{
+  return util::make_context<Policy>(std::move(kernel_name));
+}
+
+#if defined(RAJA_GPU_ACTIVE)
+template<typename PolicyList>
+RAJA_INLINE auto make_launch_nd_context(RAJA::resources::Resource resource,
+                                        std::string&& kernel_name)
+{
+  return resource.get_platform() == RAJA::Platform::host
+             ? util::make_context<typename PolicyList::host_policy_t>(
+                   std::move(kernel_name))
+             : util::make_context<typename PolicyList::device_policy_t>(
+                   std::move(kernel_name));
+}
+#endif
+
 template<typename Seq>
 struct reverse_idx_seq;
 
@@ -389,64 +408,143 @@ resources::EventProxy<resources::Resource> launch_nd_grid_execute(
 template<typename ExecPolicy,
          typename LayoutTag,
          typename... IdxTs,
-         typename Lambda>
+         typename... Params>
 void launch_nd(launch_nd_flattened_policy<ExecPolicy, LayoutTag>,
                TypedRangeSegmentPack<IdxTs...> const& segs,
-               Lambda&& body)
+               Params&&... params)
 {
+  auto f_params = expt::make_forall_param_pack(std::forward<Params>(params)...);
+  std::string kernel_name =
+      expt::get_kernel_name(std::forward<Params>(params)...);
+  auto&& loop_body = expt::get_lambda(std::forward<Params>(params)...);
+  expt::check_forall_optional_args(loop_body, f_params);
+
+  util::PluginContext context {
+      detail::make_launch_nd_context<ExecPolicy>(std::move(kernel_name))};
+  util::callPreCapturePlugins(context);
+
+  using RAJA::util::trigger_updates_before;
+  auto body = trigger_updates_before(loop_body);
+
+  util::callPostCapturePlugins(context);
+  util::callPreLaunchPlugins(context);
+
   detail::launch_nd_flattened_execute<ExecPolicy, LayoutTag>(
-      segs, std::forward<Lambda>(body));
+      segs, std::move(body));
+
+  util::callPostLaunchPlugins(context);
 }
 
 template<typename ExecPolicy,
          typename LayoutTag,
          typename... IdxTs,
-         typename Lambda>
+         typename... Params>
 resources::EventProxy<resources::Resource> launch_nd(
     RAJA::resources::Resource resource,
     launch_nd_flattened_policy<ExecPolicy, LayoutTag>,
     TypedRangeSegmentPack<IdxTs...> const& segs,
-    Lambda&& body)
+    Params&&... params)
 {
-  return detail::launch_nd_flattened_execute<ExecPolicy, LayoutTag>(
-      resource, segs, std::forward<Lambda>(body));
+  auto f_params = expt::make_forall_param_pack(std::forward<Params>(params)...);
+  std::string kernel_name =
+      expt::get_kernel_name(std::forward<Params>(params)...);
+  auto&& loop_body = expt::get_lambda(std::forward<Params>(params)...);
+  expt::check_forall_optional_args(loop_body, f_params);
+
+  util::PluginContext context {
+      detail::make_launch_nd_context<ExecPolicy>(std::move(kernel_name))};
+  util::callPreCapturePlugins(context);
+
+  using RAJA::util::trigger_updates_before;
+  auto body = trigger_updates_before(loop_body);
+
+  util::callPostCapturePlugins(context);
+  util::callPreLaunchPlugins(context);
+
+  auto event = detail::launch_nd_flattened_execute<ExecPolicy, LayoutTag>(
+      resource, segs, std::move(body));
+
+  util::callPostLaunchPlugins(context);
+  return event;
 }
 
 template<typename LaunchPolicy,
          typename... LoopPolicies,
          typename... IdxTs,
-         typename Lambda>
+         typename... Params>
 void launch_nd(launch_nd_grid_policy<LaunchPolicy, LoopPolicies...> policy,
                TypedRangeSegmentPack<IdxTs...> const& segs,
-               Lambda&& body)
+               Params&&... params)
 {
   static_assert(sizeof...(IdxTs) == sizeof...(LoopPolicies),
                 "RAJA::launch_nd launch backend requires one loop policy per "
                 "segment");
 
+  auto f_params = expt::make_forall_param_pack(std::forward<Params>(params)...);
+  std::string kernel_name =
+      expt::get_kernel_name(std::forward<Params>(params)...);
+  auto&& loop_body = expt::get_lambda(std::forward<Params>(params)...);
+  expt::check_forall_optional_args(loop_body, f_params);
+
+  util::PluginContext context {detail::make_launch_nd_context<
+      typename LaunchPolicy::host_policy_t>(std::move(kernel_name))};
+  util::callPreCapturePlugins(context);
+
+  using RAJA::util::trigger_updates_before;
+  auto body = trigger_updates_before(loop_body);
+
+  util::callPostCapturePlugins(context);
+  util::callPreLaunchPlugins(context);
+
   detail::launch_nd_grid_execute<LaunchPolicy, camp::list<LoopPolicies...>>(
-      policy.launch_params, segs, std::forward<Lambda>(body),
+      policy.launch_params, segs, std::move(body),
       camp::num<sizeof...(IdxTs)> {});
+
+  util::callPostLaunchPlugins(context);
 }
 
 template<typename LaunchPolicy,
          typename... LoopPolicies,
          typename... IdxTs,
-         typename Lambda>
+         typename... Params>
 resources::EventProxy<resources::Resource> launch_nd(
     RAJA::resources::Resource resource,
     launch_nd_grid_policy<LaunchPolicy, LoopPolicies...> policy,
     TypedRangeSegmentPack<IdxTs...> const& segs,
-    Lambda&& body)
+    Params&&... params)
 {
   static_assert(sizeof...(IdxTs) == sizeof...(LoopPolicies),
                 "RAJA::launch_nd launch backend requires one loop policy per "
                 "segment");
 
-  return detail::launch_nd_grid_execute<LaunchPolicy,
-                                        camp::list<LoopPolicies...>>(
-      resource, policy.launch_params, segs, std::forward<Lambda>(body),
+  auto f_params = expt::make_forall_param_pack(std::forward<Params>(params)...);
+  std::string kernel_name =
+      expt::get_kernel_name(std::forward<Params>(params)...);
+  auto&& loop_body = expt::get_lambda(std::forward<Params>(params)...);
+  expt::check_forall_optional_args(loop_body, f_params);
+
+#if defined(RAJA_GPU_ACTIVE)
+  util::PluginContext context {detail::make_launch_nd_context<LaunchPolicy>(
+      resource, std::move(kernel_name))};
+#else
+  util::PluginContext context {detail::make_launch_nd_context<
+      typename LaunchPolicy::host_policy_t>(std::move(kernel_name))};
+#endif
+  util::callPreCapturePlugins(context);
+
+  using RAJA::util::trigger_updates_before;
+  auto body = trigger_updates_before(loop_body);
+
+  util::callPostCapturePlugins(context);
+  util::callPreLaunchPlugins(context);
+
+  auto event = detail::launch_nd_grid_execute<LaunchPolicy,
+                                              camp::list<LoopPolicies...>>(
+      resource, policy.launch_params, segs, std::move(body),
       camp::num<sizeof...(IdxTs)> {});
+
+  util::callPostLaunchPlugins(context);
+  return event;
 }
 
 }  // namespace RAJA

@@ -11,6 +11,7 @@
 
 # Default CMake version if not provided
 DEFAULT_CMAKE_VER=3.24.2
+DEFAULT_CALIPER_DIR="$(pwd)/../install-caliper/share/cmake/caliper"
 
 if [[ $# -lt 2 ]]; then
   echo
@@ -22,6 +23,7 @@ if [[ $# -lt 2 ]]; then
   echo "For example: "
   echo "    toss4_amdclang.sh 4.1.0 gfx906 [3.27.4]"
   echo "If no CMake version is provided, version ${DEFAULT_CMAKE_VER} will be used."
+  echo "Set CALIPER_DIR to override the default Caliper package location."
   exit 1
 fi
 
@@ -52,10 +54,26 @@ else
 fi
 
 BUILD_SUFFIX=lc_toss4-amdclang-${COMP_VER}-${COMP_ARCH}
+CRAY_RPATH="${CRAY_LD_LIBRARY_PATH//:/;}"
+
+CALIPER_DIR_TO_USE="${CALIPER_DIR:-${DEFAULT_CALIPER_DIR}}"
+if [[ ! -d "${CALIPER_DIR_TO_USE}" ]]; then
+  echo "Caliper is required for this build."
+  echo "Set CALIPER_DIR to a valid Caliper CMake package directory."
+  echo "Expected to find: ${CALIPER_DIR_TO_USE}"
+  exit 1
+fi
+
+CALIPER_ARGS=(
+  -DRAJA_ENABLE_RUNTIME_PLUGINS=ON
+  -DRAJA_ENABLE_CALIPER=ON
+  -Dcaliper_DIR="${CALIPER_DIR_TO_USE}"
+)
 
 echo
 echo "Creating build directory build_${BUILD_SUFFIX} and generating configuration in it"
 echo "Using CMake version: ${CMAKE_VER}"
+echo "Caliper support: required (${CALIPER_DIR_TO_USE})"
 echo "Configuration extra arguments:"
 echo "   $@"
 echo
@@ -86,6 +104,8 @@ cmake \
   -DCMAKE_HIP_ARCHITECTURES="${COMP_ARCH}" \
   -DGPU_TARGETS="${COMP_ARCH}" \
   -DAMDGPU_TARGETS="${COMP_ARCH}" \
+  -DCMAKE_BUILD_RPATH="${CRAY_RPATH}" \
+  -DCMAKE_INSTALL_RPATH="${CRAY_RPATH}" \
   -DBLT_CXX_STD=c++20 \
   -C "../host-configs/lc-builds/toss4/${HOSTCONFIG}.cmake" \
   -DENABLE_HIP=ON \
@@ -93,6 +113,7 @@ cmake \
   -DENABLE_CUDA=OFF \
   -DENABLE_BENCHMARKS=On \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \
+  "${CALIPER_ARGS[@]}" \
   "$@" \
   ..
 
