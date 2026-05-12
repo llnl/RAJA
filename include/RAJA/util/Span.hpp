@@ -58,8 +58,7 @@ namespace RAJA
  *   compile time extents
  *
  */
- template<concepts::RandomAccessIterator IterType, concepts::Integral IndexType>
-// template<typename IterType, typename IndexType>
+template<concepts::RandomAccessIterator IterType, concepts::Integral IndexType>
 struct Span
 {
   using element_type    = typename std::iterator_traits<IterType>::value_type;
