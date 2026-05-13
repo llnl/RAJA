@@ -100,13 +100,11 @@ struct tuple_contains_Reducers<camp::tuple<Params...>>
 namespace type_traits
 {
 template<typename U, typename V>
-struct is_same_remove_const
-    : std::is_same<std::remove_const_t<U>, std::remove_const_t<V>>
+struct is_same_decay : std::is_same<std::decay_t<U>, std::decay_t<V>>
 {};
 
 template<typename U, typename V>
-static constexpr bool is_same_remove_const_v =
-    is_same_remove_const<U, V>::value;
+static constexpr bool is_same_decay_v = is_same_decay<U, V>::value;
 }  // namespace type_traits
 }  // namespace RAJA
 

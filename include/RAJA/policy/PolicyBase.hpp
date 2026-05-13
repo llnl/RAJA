@@ -189,14 +189,12 @@ namespace concepts
 
 template<typename Pol>
 concept ExecutionPolicy =
-    RAJA::type_traits::is_same_remove_const_v<decltype(Pol::policy),
-                                              ::RAJA::Policy> &&
-    RAJA::type_traits::is_same_remove_const_v<decltype(Pol::pattern),
-                                              ::RAJA::Pattern> &&
-    RAJA::type_traits::is_same_remove_const_v<decltype(Pol::launch),
-                                              ::RAJA::Launch> &&
-    RAJA::type_traits::is_same_remove_const_v<decltype(Pol::platform),
-                                              ::RAJA::Platform>;
+    RAJA::type_traits::is_same_decay_v<decltype(Pol::policy), ::RAJA::Policy> &&
+    RAJA::type_traits::is_same_decay_v<decltype(Pol::pattern),
+                                       ::RAJA::Pattern> &&
+    RAJA::type_traits::is_same_decay_v<decltype(Pol::launch), ::RAJA::Launch> &&
+    RAJA::type_traits::is_same_decay_v<decltype(Pol::platform),
+                                       ::RAJA::Platform>;
 
 }  // end namespace concepts
 
