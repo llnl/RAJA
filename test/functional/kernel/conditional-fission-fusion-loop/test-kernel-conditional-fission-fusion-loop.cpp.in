@@ -182,7 +182,7 @@ using SyclKernelExecPols = camp::list<
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@KernelConditionalFissionFusionLoopTypes =
-    Test<camp::cartesian_product<StrongIdxTypeList,
+    Test<camp::cartesian_product<SignedIdxTypeList,
                                  @BACKEND@ResourceList,
                                  @BACKEND@KernelExecPols>>::Types;
 

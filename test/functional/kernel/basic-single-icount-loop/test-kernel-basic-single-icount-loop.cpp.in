@@ -200,7 +200,7 @@ camp::list<
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@KernelBasicSingleICountLoopTypes =
-  Test< camp::cartesian_product<StrongIdxTypeList,
+  Test< camp::cartesian_product<SignedIdxTypeList,
                                 @BACKEND@ResourceList,
                                 @BACKEND@KernelExecPols>>::Types;
 

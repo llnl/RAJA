@@ -791,11 +791,11 @@ inline constexpr bool is_binary_function_v =
 
 template<class Function, class Return, class Arg = Return>
 struct is_unary_function
-    : std::bool_constant<RAJA::concepts::BinaryFunction<Function, Return, Arg>>
+    : std::bool_constant<RAJA::concepts::UnaryFunction<Function, Return, Arg>>
 {};
 template<class Function, class Return, class Arg1 = Return>
 inline constexpr bool is_unary_function_v =
-    is_binary_function<Function, Return, Arg1>::value;
+    is_unary_function<Function, Return, Arg1>::value;
 }  // namespace type_traits
 
 

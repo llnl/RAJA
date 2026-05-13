@@ -592,30 +592,6 @@ RAJA_HOST_DEVICE TypedRangeStrideSegment<Common> make_strided_range(
   return {begin, end, stride};
 }
 
-namespace concepts
-{
-
-template<typename T, typename U>
-concept RangeConstructible = std::common_with<T, U>;
-
-template<typename T, typename U, typename V>
-concept RangeStrideConstructible = RAJA::detail::common_type_t<T, U, V>::value;
-
-}  // namespace concepts
-
-namespace type_traits
-{
-
-DefineTypeTraitFromConceptTwoTypeParams(is_range_constructible,
-                                        RAJA::concepts::RangeConstructible);
-
-
-DefineTypeTraitFromConceptThreeTypeParams(
-    is_range_stride_constructible,
-    RAJA::concepts::RangeStrideConstructible);
-
-}  // namespace type_traits
-
 }  // namespace RAJA
 
 namespace std
