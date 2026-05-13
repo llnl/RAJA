@@ -29,6 +29,7 @@
 #include "RAJA/util/concepts.hpp"
 #include "RAJA/util/Operators.hpp"
 #include "RAJA/pattern/detail/algorithm.hpp"
+#include "camp/concepts.hpp"
 
 namespace RAJA
 {
@@ -48,11 +49,11 @@ inline namespace policy_by_value_interface
 *
 ******************************************************************************
 */
-template<
-    concepts::ExecutionPolicy ExecPolicy,
-    concepts::Resource Res,
-    concepts::Range Container,
-    typename Function = operators::plus<RAJA::detail::ContainerVal<Container>>>
+template<concepts::ExecutionPolicy ExecPolicy,
+         concepts::Resource Res,
+         concepts::RandomAccessRange Container,
+         typename R = RAJA::detail::ContainerVal<Container>,
+         concepts::BinaryFunction<R, R, R> Function = operators::plus<R>>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
     std::is_constructible<camp::resources::Resource, Res>>
@@ -63,11 +64,6 @@ inclusive_scan_inplace(ExecPolicy&& p,
 {
   using std::begin;
   using std::end;
-  using R = RAJA::detail::ContainerVal<Container>;
-  static_assert(type_traits::is_binary_function<Function, R, R, R>::value,
-                "Function must model BinaryFunction");
-  static_assert(type_traits::is_random_access_range<Container>::value,
-                "Container must model RandomAccessRange");
   if (begin(c) == end(c))
   {
     return resources::EventProxy<Res>(r);
@@ -109,9 +105,9 @@ inclusive_scan_inplace(ExecPolicy&& p,
 */
 template<concepts::ExecutionPolicy ExecPolicy,
          concepts::Resource Res,
-         concepts::Range Container,
-         typename T        = RAJA::detail::ContainerVal<Container>,
-         typename Function = operators::plus<T>>
+         concepts::RandomAccessRange Container,
+         typename T = RAJA::detail::ContainerVal<Container>,
+         concepts::BinaryFunction<T, T, T> Function = operators::plus<T>>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
     std::is_constructible<camp::resources::Resource, Res>>
@@ -123,11 +119,6 @@ exclusive_scan_inplace(ExecPolicy&& p,
 {
   using std::begin;
   using std::end;
-  using R = RAJA::detail::ContainerVal<Container>;
-  static_assert(type_traits::is_binary_function<Function, R, T, R>::value,
-                "Function must model BinaryFunction");
-  static_assert(type_traits::is_random_access_range<Container>::value,
-                "Container must model RandomAccessRange");
   if (begin(c) == end(c))
   {
     return resources::EventProxy<Res>(r);
@@ -174,13 +165,13 @@ exclusive_scan_inplace(ExecPolicy&& p,
 */
 template<concepts::ExecutionPolicy ExecPolicy,
          concepts::Resource Res,
-         concepts::Range InContainer,
-         concepts::Range OutContainer,
-         typename Function =
-             operators::plus<RAJA::detail::ContainerVal<InContainer>>>
+         concepts::RandomAccessRange InContainer,
+         concepts::RandomAccessRange OutContainer,
+         typename T = RAJA::detail::ContainerVal<InContainer>,
+         typename R = RAJA::detail::ContainerVal<OutContainer>,
+         concepts::BinaryFunction<R, T, R> Function = operators::plus<T>>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
-    type_traits::is_resource<Res>,
     std::is_constructible<camp::resources::Resource, Res>>
 inclusive_scan(ExecPolicy&& p,
                Res r,
@@ -190,14 +181,6 @@ inclusive_scan(ExecPolicy&& p,
 {
   using std::begin;
   using std::end;
-  using T = RAJA::detail::ContainerVal<InContainer>;
-  using R = RAJA::detail::ContainerVal<OutContainer>;
-  static_assert(type_traits::is_binary_function<Function, R, T, R>::value,
-                "Function must model BinaryFunction");
-  static_assert(type_traits::is_random_access_range<InContainer>::value,
-                "InContainer must model RandomAccessRange");
-  static_assert(type_traits::is_random_access_range<OutContainer>::value,
-                "OutContainer must model RandomAccessRange");
   if (begin(in) == end(in))
   {
     return resources::EventProxy<Res>(r);
@@ -246,10 +229,11 @@ inclusive_scan(ExecPolicy&& p,
 */
 template<concepts::ExecutionPolicy ExecPolicy,
          concepts::Resource Res,
-         concepts::Range InContainer,
-         concepts::Range OutContainer,
-         typename T        = RAJA::detail::ContainerVal<InContainer>,
-         typename Function = operators::plus<T>>
+         concepts::RandomAccessRange InContainer,
+         concepts::RandomAccessRange OutContainer,
+         typename T = RAJA::detail::ContainerVal<InContainer>,
+         typename R = RAJA::detail::ContainerVal<OutContainer>,
+         concepts::BinaryFunction<R, T, T> Function = operators::plus<T>>
 RAJA_INLINE concepts::enable_if_t<
     resources::EventProxy<Res>,
     std::is_constructible<camp::resources::Resource, Res>>
@@ -262,14 +246,6 @@ exclusive_scan(ExecPolicy&& p,
 {
   using std::begin;
   using std::end;
-  using U = RAJA::detail::ContainerVal<InContainer>;
-  using R = RAJA::detail::ContainerVal<OutContainer>;
-  static_assert(type_traits::is_binary_function<Function, R, T, U>::value,
-                "Function must model BinaryFunction");
-  static_assert(type_traits::is_random_access_range<InContainer>::value,
-                "InContainer must model RandomAccessRange");
-  static_assert(type_traits::is_random_access_range<OutContainer>::value,
-                "OutContainer must model RandomAccessRange");
   if (begin(in) == end(in))
   {
     return resources::EventProxy<Res>(r);
