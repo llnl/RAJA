@@ -288,8 +288,7 @@ exclusive_scan(ExecPolicy&& p,
 template<concepts::ExecutionPolicy ExecPolicy,
          typename... Args,
          typename Res = typename resources::get_resource<ExecPolicy>::type>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>> exclusive_scan(
-    Args&&... args)
+RAJA_INLINE resources::EventProxy<Res> exclusive_scan(Args&&... args)
 {
   Res r = Res::get_default();
   return ::RAJA::policy_by_value_interface::exclusive_scan<ExecPolicy>(
@@ -300,9 +299,7 @@ RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>> exclusive_scan(
 template<concepts::ExecutionPolicy ExecPolicy,
          concepts::Resource Res,
          typename... Args>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>> exclusive_scan(
-    Res r,
-    Args&&... args)
+RAJA_INLINE resources::EventProxy<Res> exclusive_scan(Res r, Args&&... args)
 {
   return ::RAJA::policy_by_value_interface::exclusive_scan(
       ExecPolicy(), r, std::forward<Args>(args)...);
@@ -317,8 +314,7 @@ RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>> exclusive_scan(
 template<concepts::ExecutionPolicy ExecPolicy,
          typename... Args,
          typename Res = typename resources::get_resource<ExecPolicy>::type>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>> inclusive_scan(
-    Args&&... args)
+RAJA_INLINE resources::EventProxy<Res> inclusive_scan(Args&&... args)
 {
   Res r = Res::get_default();
   return ::RAJA::policy_by_value_interface::inclusive_scan<ExecPolicy>(
@@ -329,9 +325,7 @@ RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>> inclusive_scan(
 template<concepts::ExecutionPolicy ExecPolicy,
          concepts::Resource Res,
          typename... Args>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>> inclusive_scan(
-    Res r,
-    Args&&... args)
+RAJA_INLINE resources::EventProxy<Res> inclusive_scan(Res r, Args&&... args)
 {
   return ::RAJA::policy_by_value_interface::inclusive_scan(
       ExecPolicy(), r, std::forward<Args>(args)...);
@@ -346,8 +340,7 @@ RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>> inclusive_scan(
 template<concepts::ExecutionPolicy ExecPolicy,
          typename... Args,
          typename Res = typename resources::get_resource<ExecPolicy>::type>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>>
-exclusive_scan_inplace(Args&&... args)
+RAJA_INLINE resources::EventProxy<Res> exclusive_scan_inplace(Args&&... args)
 {
   Res r = Res::get_default();
   return ::RAJA::policy_by_value_interface::exclusive_scan_inplace<ExecPolicy>(
@@ -358,8 +351,8 @@ exclusive_scan_inplace(Args&&... args)
 template<concepts::ExecutionPolicy ExecPolicy,
          concepts::Resource Res,
          typename... Args>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>>
-exclusive_scan_inplace(Res r, Args&&... args)
+RAJA_INLINE resources::EventProxy<Res> exclusive_scan_inplace(Res r,
+                                                              Args&&... args)
 {
   return ::RAJA::policy_by_value_interface::exclusive_scan_inplace(
       ExecPolicy(), r, std::forward<Args>(args)...);
@@ -374,8 +367,7 @@ exclusive_scan_inplace(Res r, Args&&... args)
 template<concepts::ExecutionPolicy ExecPolicy,
          typename... Args,
          typename Res = typename resources::get_resource<ExecPolicy>::type>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>>
-inclusive_scan_inplace(Args&&... args)
+RAJA_INLINE resources::EventProxy<Res> inclusive_scan_inplace(Args&&... args)
 {
   Res r = Res::get_default();
   return ::RAJA::policy_by_value_interface::inclusive_scan_inplace<ExecPolicy>(
@@ -386,8 +378,8 @@ inclusive_scan_inplace(Args&&... args)
 template<concepts::ExecutionPolicy ExecPolicy,
          concepts::Resource Res,
          typename... Args>
-RAJA_INLINE concepts::enable_if_t<resources::EventProxy<Res>>
-inclusive_scan_inplace(Res r, Args&&... args)
+RAJA_INLINE resources::EventProxy<Res> inclusive_scan_inplace(Res r,
+                                                              Args&&... args)
 {
   return ::RAJA::policy_by_value_interface::inclusive_scan_inplace(
       ExecPolicy(), r, std::forward<Args>(args)...);
