@@ -32,8 +32,10 @@ RAJA_INDEX_VALUE_T(StrongULL, unsigned long long , "StrongULLType");
 //
 // Standard index types list
 //
+// TODO(bowen): do we want to support StrongULL here?
 using IdxTypeList = camp::list<RAJA::Index_type,
                                int,
+                               //StrongULL,
 #if defined(RAJA_TEST_EXHAUSTIVE)
                                unsigned int,
 // short int types will break a bunch of tests due to assumptions made in
@@ -49,7 +51,9 @@ using IdxTypeList = camp::list<RAJA::Index_type,
 //
 // Signed index types list
 //
+// TODO(bowen): do we want to support StrongInt here?
 using SignedIdxTypeList = camp::list<RAJA::Index_type,
+                                     //StrongInt,
                                      int,
                                      long long>;
 

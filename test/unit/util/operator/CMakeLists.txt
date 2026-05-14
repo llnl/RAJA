@@ -27,3 +27,7 @@ raja_add_test(
   NAME test-operators-identity
   SOURCES test-operators-identity.cpp)
 
+add_executable(test-operators-rvalue-only-scan-example.exe EXCLUDE_FROM_ALL
+  rvalue-only-scan-example.cpp)
+
+target_link_libraries(test-operators-rvalue-only-scan-example.exe PRIVATE RAJA)

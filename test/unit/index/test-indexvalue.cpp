@@ -280,3 +280,9 @@ TYPED_TEST(IndexValueUnitTest, IndexTypeCompare)
   ASSERT_NE(x, x_lower);
   ASSERT_NE(x, x_higher);
 }
+
+TYPED_TEST(IndexValueUnitTest, IndexValueConcept)
+{
+  Tester<Index> test1; // should compile
+  // Tester<Ty> test2; // should not compile
+}

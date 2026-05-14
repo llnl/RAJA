@@ -33,21 +33,6 @@ namespace RAJA
 namespace concepts
 {
 using namespace camp::concepts;
-#define DefineTypeTraitFromConceptTwoTypeParams(TTName, ConceptName)           \
-  template<class T, class U>                                                   \
-  struct TTName : std::bool_constant<ConceptName<T, U>>                        \
-  {};                                                                          \
-  template<class T, class U>                                                   \
-  inline constexpr bool TTName##_v = TTName<T, U>::value;
-
-#define DefineTypeTraitFromConceptThreeTypeParams(TTName, ConceptName)         \
-  template<class T, class U, class V>                                          \
-  struct TTName : std::bool_constant<ConceptName<T, U, V>>                     \
-  {};                                                                          \
-  template<class T, class U, class V>                                          \
-  inline constexpr bool TTName##_v = TTName<T, U, V>::value;
-
-
 }  // namespace concepts
 
 namespace type_traits
