@@ -53,7 +53,7 @@ template<concepts::ExecutionPolicy ExecPolicy,
          concepts::Resource Res,
          concepts::RandomAccessRange Container,
          typename R = RAJA::detail::ContainerVal<Container>,
-         concepts::BinaryFunction<R, R, R> Function = operators::plus<R>>
+         concepts::BinaryFunction<R> Function = operators::plus<R>>
 RAJA_INLINE resources::EventProxy<Res> inclusive_scan_inplace(
     ExecPolicy&& p,
     Res r,
@@ -71,11 +71,11 @@ RAJA_INLINE resources::EventProxy<Res> inclusive_scan_inplace(
 }
 
 ///
-template<
-    concepts::ExecutionPolicy ExecPolicy,
-    concepts::RandomAccessRange Container,
-    typename Function = operators::plus<RAJA::detail::ContainerVal<Container>>,
-    typename Res      = typename resources::get_resource<ExecPolicy>::type>
+template<concepts::ExecutionPolicy ExecPolicy,
+         concepts::RandomAccessRange Container,
+         typename T = RAJA::detail::ContainerVal<Container>,
+         concepts::BinaryFunction<T> Function = operators::plus<T>,
+         concepts::Resource Res = resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE resources::EventProxy<Res> inclusive_scan_inplace(
     ExecPolicy&& p,
     Container&& c,
@@ -102,7 +102,7 @@ template<concepts::ExecutionPolicy ExecPolicy,
          concepts::Resource Res,
          concepts::RandomAccessRange Container,
          typename T = RAJA::detail::ContainerVal<Container>,
-         concepts::BinaryFunction<T, T, T> Function = operators::plus<T>>
+         concepts::BinaryFunction<T> Function = operators::plus<T>>
 RAJA_INLINE resources::EventProxy<Res> exclusive_scan_inplace(
     ExecPolicy&& p,
     Res r,
@@ -121,11 +121,12 @@ RAJA_INLINE resources::EventProxy<Res> exclusive_scan_inplace(
 }
 
 ///
-template<concepts::ExecutionPolicy ExecPolicy,
-         concepts::RandomAccessRange Container,
-         typename T        = RAJA::detail::ContainerVal<Container>,
-         typename Function = operators::plus<T>,
-         typename Res      = typename resources::get_resource<ExecPolicy>::type>
+template<
+    concepts::ExecutionPolicy ExecPolicy,
+    concepts::RandomAccessRange Container,
+    typename T = RAJA::detail::ContainerVal<Container>,
+    concepts::BinaryFunction<T> Function = operators::plus<T>,
+    concepts::Resource Res = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE resources::EventProxy<Res> exclusive_scan_inplace(
     ExecPolicy&& p,
     Container&& c,
@@ -159,7 +160,7 @@ template<concepts::ExecutionPolicy ExecPolicy,
          concepts::RandomAccessRange OutContainer,
          typename T = RAJA::detail::ContainerVal<InContainer>,
          typename R = RAJA::detail::ContainerVal<OutContainer>,
-         concepts::BinaryFunction<R, T, R> Function = operators::plus<T>>
+         concepts::BinaryFunction<T> Function = operators::plus<T>>
 RAJA_INLINE resources::EventProxy<Res> inclusive_scan(
     ExecPolicy&& p,
     Res r,
@@ -178,12 +179,13 @@ RAJA_INLINE resources::EventProxy<Res> inclusive_scan(
 }
 
 ///
-template<concepts::ExecutionPolicy ExecPolicy,
-         concepts::RandomAccessRange InContainer,
-         concepts::RandomAccessRange OutContainer,
-         typename Function =
-             operators::plus<RAJA::detail::ContainerVal<InContainer>>,
-         typename Res = typename resources::get_resource<ExecPolicy>::type>
+template<
+    concepts::ExecutionPolicy ExecPolicy,
+    concepts::RandomAccessRange InContainer,
+    concepts::RandomAccessRange OutContainer,
+    typename InIterator = RAJA::detail::ContainerVal<InContainer>,
+    concepts::BinaryFunction<InIterator> Function = operators::plus<InIterator>,
+    concepts::Resource Res = resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE resources::EventProxy<Res> inclusive_scan(
     ExecPolicy&& p,
     InContainer&& in,
@@ -218,7 +220,7 @@ template<concepts::ExecutionPolicy ExecPolicy,
          concepts::RandomAccessRange OutContainer,
          typename T = RAJA::detail::ContainerVal<InContainer>,
          typename R = RAJA::detail::ContainerVal<OutContainer>,
-         concepts::BinaryFunction<R, T, T> Function = operators::plus<T>>
+         concepts::BinaryFunction<T> Function = operators::plus<T>>
 RAJA_INLINE resources::EventProxy<Res> exclusive_scan(
     ExecPolicy&& p,
     Res r,
@@ -241,9 +243,9 @@ RAJA_INLINE resources::EventProxy<Res> exclusive_scan(
 template<concepts::ExecutionPolicy ExecPolicy,
          concepts::RandomAccessRange InContainer,
          concepts::RandomAccessRange OutContainer,
-         typename T        = RAJA::detail::ContainerVal<InContainer>,
-         typename Function = operators::plus<T>,
-         typename Res      = typename resources::get_resource<ExecPolicy>::type>
+         typename T = RAJA::detail::ContainerVal<InContainer>,
+         concepts::BinaryFunction<T> Function = operators::plus<T>,
+         concepts::Resource Res = resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE resources::EventProxy<Res> exclusive_scan(
     ExecPolicy&& p,
     InContainer&& in,
@@ -265,9 +267,10 @@ RAJA_INLINE resources::EventProxy<Res> exclusive_scan(
  *
  * this reduces implementation overhead and perfectly forwards all arguments
  */
-template<concepts::ExecutionPolicy ExecPolicy,
-         typename... Args,
-         typename Res = typename resources::get_resource<ExecPolicy>::type>
+template<
+    concepts::ExecutionPolicy ExecPolicy,
+    typename... Args,
+    concepts::Resource Res = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE resources::EventProxy<Res> exclusive_scan(Args&&... args)
 {
   Res r = Res::get_default();
@@ -291,9 +294,10 @@ RAJA_INLINE resources::EventProxy<Res> exclusive_scan(Res r, Args&&... args)
  *
  * this reduces implementation overhead and perfectly forwards all arguments
  */
-template<concepts::ExecutionPolicy ExecPolicy,
-         typename... Args,
-         typename Res = typename resources::get_resource<ExecPolicy>::type>
+template<
+    concepts::ExecutionPolicy ExecPolicy,
+    typename... Args,
+    concepts::Resource Res = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE resources::EventProxy<Res> inclusive_scan(Args&&... args)
 {
   Res r = Res::get_default();
@@ -317,9 +321,10 @@ RAJA_INLINE resources::EventProxy<Res> inclusive_scan(Res r, Args&&... args)
  *
  * this reduces implementation overhead and perfectly forwards all arguments
  */
-template<concepts::ExecutionPolicy ExecPolicy,
-         typename... Args,
-         typename Res = typename resources::get_resource<ExecPolicy>::type>
+template<
+    concepts::ExecutionPolicy ExecPolicy,
+    typename... Args,
+    concepts::Resource Res = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE resources::EventProxy<Res> exclusive_scan_inplace(Args&&... args)
 {
   Res r = Res::get_default();
@@ -344,9 +349,10 @@ RAJA_INLINE resources::EventProxy<Res> exclusive_scan_inplace(Res r,
  *
  * this reduces implementation overhead and perfectly forwards all arguments
  */
-template<concepts::ExecutionPolicy ExecPolicy,
-         typename... Args,
-         typename Res = typename resources::get_resource<ExecPolicy>::type>
+template<
+    concepts::ExecutionPolicy ExecPolicy,
+    typename... Args,
+    concepts::Resource Res = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE resources::EventProxy<Res> inclusive_scan_inplace(Args&&... args)
 {
   Res r = Res::get_default();
