@@ -281,8 +281,8 @@ TYPED_TEST(IndexValueUnitTest, IndexTypeCompare)
   ASSERT_NE(x, x_higher);
 }
 
-TYPED_TEST(IndexValueUnitTest, IndexValueConcept)
+TYPED_TEST(IndexValueUnitTest, IndexValueConcept) 
 {
-  Tester<Index> test1; // should compile
-  // Tester<Ty> test2; // should not compile
+  static_assert(Compiles<Index, Tester>, "Test that index value concept accepts IndexValue"); 
+  static_assert(!Compiles<Ty, Tester>, "Test that index value concept does not accept generic types"); 
 }
