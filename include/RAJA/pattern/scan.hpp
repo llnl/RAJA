@@ -71,11 +71,12 @@ RAJA_INLINE resources::EventProxy<Res> inclusive_scan_inplace(
 }
 
 ///
-template<concepts::ExecutionPolicy ExecPolicy,
-         concepts::RandomAccessRange Container,
-         typename T = RAJA::detail::ContainerVal<Container>,
-         concepts::BinaryFunction<T> Function = operators::plus<T>,
-         concepts::Resource Res = resources::get_resource<ExecPolicy>::type>
+template<
+    concepts::ExecutionPolicy ExecPolicy,
+    concepts::RandomAccessRange Container,
+    typename T = RAJA::detail::ContainerVal<Container>,
+    concepts::BinaryFunction<T> Function = operators::plus<T>,
+    concepts::Resource Res = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE resources::EventProxy<Res> inclusive_scan_inplace(
     ExecPolicy&& p,
     Container&& c,
@@ -185,7 +186,7 @@ template<
     concepts::RandomAccessRange OutContainer,
     typename InIterator = RAJA::detail::ContainerVal<InContainer>,
     concepts::BinaryFunction<InIterator> Function = operators::plus<InIterator>,
-    concepts::Resource Res = resources::get_resource<ExecPolicy>::type>
+    concepts::Resource Res = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE resources::EventProxy<Res> inclusive_scan(
     ExecPolicy&& p,
     InContainer&& in,
@@ -240,12 +241,13 @@ RAJA_INLINE resources::EventProxy<Res> exclusive_scan(
 }
 
 ///
-template<concepts::ExecutionPolicy ExecPolicy,
-         concepts::RandomAccessRange InContainer,
-         concepts::RandomAccessRange OutContainer,
-         typename T = RAJA::detail::ContainerVal<InContainer>,
-         concepts::BinaryFunction<T> Function = operators::plus<T>,
-         concepts::Resource Res = resources::get_resource<ExecPolicy>::type>
+template<
+    concepts::ExecutionPolicy ExecPolicy,
+    concepts::RandomAccessRange InContainer,
+    concepts::RandomAccessRange OutContainer,
+    typename T = RAJA::detail::ContainerVal<InContainer>,
+    concepts::BinaryFunction<T> Function = operators::plus<T>,
+    concepts::Resource Res = typename resources::get_resource<ExecPolicy>::type>
 RAJA_INLINE resources::EventProxy<Res> exclusive_scan(
     ExecPolicy&& p,
     InContainer&& in,
