@@ -33,6 +33,8 @@ spack_debug=${SPACK_DEBUG:-false}
 debug_mode=${DEBUG_MODE:-false}
 push_to_registry=${PUSH_TO_REGISTRY:-true}
 
+camp_version=${UPDATE_CAMP:-""}
+
 # Map CPU core allocations
 declare -A core_counts=(["lassen"]=40 ["poodle"]=28 ["dane"]=28 ["matrix"]=28 ["corona"]=32 ["rzansel"]=48 ["tioga"]=32 ["tuolumne"]=48)
 
@@ -112,6 +114,15 @@ then
         echo "[Error]: SPEC is undefined, aborting..."
         exit 1
     fi
+
+    extra_deps=""
+
+    if [[ -n ${camp_version} ]]
+    then
+        extra_deps="${extra_deps} ^camp@git.${camp_version}"
+    fi
+
+    [[ -n ${extra_deps} ]] && spec="${spec} ${extra_deps}"
 
     prefix_opt="--prefix=${prefix}"
 
