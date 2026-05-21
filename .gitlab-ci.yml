@@ -250,5 +250,5 @@ trigger-rajaperf:
   variables:
     UPDATE_RAJA: ${MP_BRANCH}
   trigger:
-    project: radiuss/rajaperf
+    project: radiuss/multi-project/rajaperf-trigger
     branch: develop
