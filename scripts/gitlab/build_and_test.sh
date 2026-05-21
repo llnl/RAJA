@@ -119,7 +119,7 @@ then
 
     if [[ -n ${camp_version} ]]
     then
-        extra_deps="${extra_deps} ^camp@git.${camp_version}"
+        extra_deps="${extra_deps} ^camp@git.${camp_version}=main"
     fi
 
     [[ -n ${extra_deps} ]] && spec="${spec} ${extra_deps}"
