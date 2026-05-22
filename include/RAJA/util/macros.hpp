@@ -117,8 +117,7 @@
  *******************************************************************************
  */
 template<typename... T>
-constexpr RAJA_HOST_DEVICE RAJA_INLINE void RAJA_UNUSED_VAR(T&&...) noexcept
-{}
+constexpr RAJA_HOST_DEVICE RAJA_INLINE void RAJA_UNUSED_VAR(T&&...) noexcept {}
 
 #define RAJA_DIVIDE_CEILING_INT(dividend, divisor)                             \
   (((dividend) + (divisor) - 1) / (divisor))

@@ -156,12 +156,12 @@ template<
                                  >>>>>
 struct MultiView
 {
-  using value_type      = ValueType;
-  using pointer_type    = PointerType;
-  using layout_type     = LayoutType;
+  using value_type        = ValueType;
+  using pointer_type      = PointerType;
+  using layout_type       = LayoutType;
   using linear_index_type = typename layout_type::IndexLinear;
-  using nc_value_type   = camp::decay<value_type>;
-  using nc_pointer_type = NonConstPointerType;
+  using nc_value_type     = camp::decay<value_type>;
+  using nc_pointer_type   = NonConstPointerType;
   using NonConstView =
       MultiView<nc_value_type, layout_type, P2Pidx, nc_pointer_type>;
 
@@ -239,15 +239,21 @@ struct MultiView
   }
 
   RAJA_HOST_DEVICE
+
   RAJA_INLINE
   constexpr linear_index_type size() const { return layout.size(); }
 
   RAJA_HOST_DEVICE
+
   RAJA_INLINE
-  constexpr linear_index_type size_noproj() const { return layout.size_noproj(); }
+  constexpr linear_index_type size_noproj() const
+  {
+    return layout.size_noproj();
+  }
 
   template<camp::idx_t DIM>
-  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_stride() const
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_stride()
+      const
   {
     return layout.template get_dim_stride<DIM>();
   }

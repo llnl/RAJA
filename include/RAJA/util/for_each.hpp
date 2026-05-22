@@ -44,12 +44,14 @@ namespace detail
 // compile time expansion applying func to each of the indices
 RAJA_SUPPRESS_HD_WARN
 template<typename UnaryFunc, camp::idx_t... Is>
-constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_index(camp::idx_seq<Is...>,
-                                                                UnaryFunc func)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc
+for_each_index(camp::idx_seq<Is...>, UnaryFunc func)
 {
   // braced init lists are evaluated in order
-  // create integral_constant type to allow UnaryFunc arguments to be used in compile-time context
-  int seq_unused_array[] = {0, (func(std::integral_constant<std::size_t, Is>{}), 0)...};
+  // create integral_constant type to allow UnaryFunc arguments to be used in
+  // compile-time context
+  int seq_unused_array[] = {
+      0, (func(std::integral_constant<std::size_t, Is> {}), 0)...};
   RAJA_UNUSED_VAR(seq_unused_array);
 
   return func;
@@ -73,8 +75,8 @@ constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each(Iter begin,
 // compile time expansion applying func to a each type in the list in order
 RAJA_SUPPRESS_HD_WARN
 template<typename UnaryFunc, typename... Ts>
-constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_type(camp::list<Ts...> const&,
-                                                               UnaryFunc func)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc
+for_each_type(camp::list<Ts...> const&, UnaryFunc func)
 {
   // braced init lists are evaluated in order
   int seq_unused_array[] = {0, (func(Ts {}), 0)...};
@@ -86,9 +88,8 @@ constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_type(camp::list<Ts...>
 // compile time expansion applying func to a each type in the tuple in order
 RAJA_SUPPRESS_HD_WARN
 template<typename Tuple, typename UnaryFunc, camp::idx_t... Is>
-constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_tuple(Tuple&& t,
-                                                                UnaryFunc func,
-                                                                camp::idx_seq<Is...>)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc
+for_each_tuple(Tuple&& t, UnaryFunc func, camp::idx_seq<Is...>)
 {
   using camp::get;
   // braced init lists are evaluated in order
@@ -101,14 +102,15 @@ constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_tuple(Tuple&& t,
 // compile time expansion applying func to a each type in the tuple in order
 RAJA_SUPPRESS_HD_WARN
 template<typename Tuple, typename BinaryFunc, camp::idx_t... Is>
-constexpr RAJA_HOST_DEVICE RAJA_INLINE BinaryFunc for_each_tuple_index(Tuple&& t,
-                                                                       BinaryFunc func,
-                                                                       camp::idx_seq<Is...>)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE BinaryFunc
+for_each_tuple_index(Tuple&& t, BinaryFunc func, camp::idx_seq<Is...>)
 {
   using camp::get;
   // braced init lists are evaluated in order
-  int seq_unused_array[] = {0, (func(get<Is>(std::forward<Tuple>(t)), 
-                                     std::integral_constant<std::size_t, Is>{}), 0)...};
+  int seq_unused_array[] = {0,
+                            (func(get<Is>(std::forward<Tuple>(t)),
+                                  std::integral_constant<std::size_t, Is> {}),
+                             0)...};
   RAJA_UNUSED_VAR(seq_unused_array);
 
   return func;
@@ -118,8 +120,7 @@ constexpr RAJA_HOST_DEVICE RAJA_INLINE BinaryFunc for_each_tuple_index(Tuple&& t
 
 RAJA_SUPPRESS_HD_WARN
 template<size_t N, typename UnaryFunc>
-constexpr RAJA_HOST_DEVICE RAJA_INLINE
-UnaryFunc for_each_index(UnaryFunc func)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_index(UnaryFunc func)
 {
   return detail::for_each_index(camp::make_idx_seq_t<N>(), std::move(func));
 }
@@ -132,7 +133,8 @@ UnaryFunc for_each_index(UnaryFunc func)
 RAJA_SUPPRESS_HD_WARN
 template<typename Container, typename UnaryFunc>
 constexpr RAJA_HOST_DEVICE RAJA_INLINE
-    camp::concepts::enable_if_t<UnaryFunc, camp::type_traits::is_range<Container>>
+    camp::concepts::enable_if_t<UnaryFunc,
+                                camp::type_traits::is_range<Container>>
     for_each(Container&& c, UnaryFunc func)
 {
   using std::begin;
@@ -147,8 +149,8 @@ constexpr RAJA_HOST_DEVICE RAJA_INLINE
 */
 RAJA_SUPPRESS_HD_WARN
 template<typename UnaryFunc, typename... Ts>
-constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_type(camp::list<Ts...> const& c,
-                                                               UnaryFunc func)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc
+for_each_type(camp::list<Ts...> const& c, UnaryFunc func)
 {
   return detail::for_each_type(c, std::move(func));
 }
@@ -159,7 +161,8 @@ constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_type(camp::list<Ts...>
 */
 RAJA_SUPPRESS_HD_WARN
 template<typename Tuple, typename UnaryFunc>
-constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_tuple(Tuple&& t, UnaryFunc func)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_tuple(Tuple&& t,
+                                                                UnaryFunc func)
 {
   return detail::for_each_tuple(
       std::forward<Tuple>(t), std::move(func),
@@ -167,13 +170,14 @@ constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_tuple(Tuple&& t, Unary
 }
 
 /*!
-  \brief Apply func to each object in the given tuple or tuple like type as well as 
-  the index of the tuple element in order using a compile-time expansion in O(N) 
-  operations and O(1) extra memory
+  \brief Apply func to each object in the given tuple or tuple like type as well
+  as the index of the tuple element in order using a compile-time expansion in
+  O(N) operations and O(1) extra memory
 */
 RAJA_SUPPRESS_HD_WARN
 template<typename Tuple, typename BinaryFunc>
-constexpr RAJA_HOST_DEVICE RAJA_INLINE BinaryFunc for_each_tuple_index(Tuple&& t, BinaryFunc func)
+constexpr RAJA_HOST_DEVICE RAJA_INLINE BinaryFunc
+for_each_tuple_index(Tuple&& t, BinaryFunc func)
 {
   return detail::for_each_tuple_index(
       std::forward<Tuple>(t), std::move(func),
