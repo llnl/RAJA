@@ -20,6 +20,7 @@
 #ifndef RAJA_POLICYBASE_HPP
 #define RAJA_POLICYBASE_HPP
 
+#include "RAJA/pattern/detail/TypeTraits.hpp"
 #include "RAJA/util/camp_aliases.hpp"
 #include "RAJA/util/concepts.hpp"
 
@@ -187,15 +188,13 @@ namespace concepts
 {
 
 template<typename Pol>
-struct ExecutionPolicy
-    : DefineConcept(::RAJA::concepts::has_type<::RAJA::Policy>(
-                        camp::decay<decltype(Pol::policy)>()),
-                    ::RAJA::concepts::has_type<::RAJA::Pattern>(
-                        camp::decay<decltype(Pol::pattern)>()),
-                    ::RAJA::concepts::has_type<::RAJA::Launch>(
-                        camp::decay<decltype(Pol::launch)>()),
-                    ::RAJA::concepts::has_type<::RAJA::Platform>(
-                        camp::decay<decltype(Pol::platform)>())) {};
+concept ExecutionPolicy =
+    RAJA::type_traits::is_same_decay_v<decltype(Pol::policy), ::RAJA::Policy> &&
+    RAJA::type_traits::is_same_decay_v<decltype(Pol::pattern),
+                                       ::RAJA::Pattern> &&
+    RAJA::type_traits::is_same_decay_v<decltype(Pol::launch), ::RAJA::Launch> &&
+    RAJA::type_traits::is_same_decay_v<decltype(Pol::platform),
+                                       ::RAJA::Platform>;
 
 }  // end namespace concepts
 
