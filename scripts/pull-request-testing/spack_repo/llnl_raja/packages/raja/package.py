@@ -276,6 +276,8 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
     depends_on("c", type="build")
 
     depends_on("blt", type="build")
+    # TODO(smith84): Edit the following line after the June 2026 RAJA suite release
+    depends_on("blt@0.7.2:", type="build", when="@develop")
     depends_on("blt@0.7.1:", type="build", when="@2025.09.0:")
     depends_on("blt@0.7.0:", type="build", when="@2025.03.0:")
     depends_on("blt@0.6.2:", type="build", when="@2024.02.1:")
@@ -287,12 +289,15 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
     depends_on("blt@0.4.0:0.4.1", type="build", when="@0.13.0")
     depends_on("blt@0.3.6:0.4.1", type="build", when="@:0.12.0")
     conflicts("^blt@:0.3.6", when="+rocm")
+    conflicts("^blt@:0.7.1", when="+cuda ^cuda@13:", msg="CUDA 13+ requires BLT 0.7.2 or newer")
 
     depends_on("camp")
     depends_on("camp+openmp", when="+openmp")
     depends_on("camp+omptarget", when="+omptarget")
     depends_on("camp+sycl", when="+sycl")
-    depends_on("camp@2025.12:", when="@2025.12:")
+    # TODO(johnbowen42): Remove the following line after the June 2026 RAJA suite release
+    depends_on("camp@main commit=e75ab64c029aa27c80593715cb2a3ccad7453c8c", when="@develop")
+    depends_on("camp@2025.12", when="@2025.12.0:2025.12.2")
     depends_on("camp@2025.09", when="@2025.09")
     depends_on("camp@2025.03", when="@2025.03")
     depends_on("camp@2024.07", when="@2024.07")
@@ -325,7 +330,6 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
             )
         conflicts("+openmp", when="@:2022.03")
 
-    conflicts("^cuda@13:", when="@:2025.12.2 +cuda", msg="CUDA 13+ unsupported before 2025.12.3")        
     with when("+cuda @0.12.0:"):
         depends_on("camp+cuda")
         for sm_ in CudaPackage.cuda_arch_values:
@@ -345,6 +349,11 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
         "please use a newer release.",
     )
 
+    conflicts(
+        "^cuda@13:",
+        when="@:2025.12.2 +cuda",
+        msg="RAJA versions up to and including 2025.12.2 do not support CUDA 13+",
+    )
 
     def _get_sys_type(self, spec):
         sys_type = spec.architecture
@@ -653,8 +662,8 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
         tty.msg(f"SGS DEBUG setup_install_tests\n")
         tty.msg(f"SGS DEBUG            self.examples_src_dir={self.examples_src_dir}\n")
         tty.msg(f"SGS DEBUG            install_test_root(self)={install_test_root(self)}\n")
-        tty.msg(f"SGS DEBUG src_dir    self.build_directory={self.build_directory}\n")
-        tty.msg(f"SGS DEBUG dst_dir    self.stage.source_path={self.stage.source_path}\n")
+        tty.msg(f"SGS DEBUG            self.build_directory={self.build_directory}\n")
+        tty.msg(f"SGS DEBUG            self.stage.source_path={self.stage.source_path}\n")
         tty.msg(f"SGS DEBUG            cwd={os.getcwd()}\n")
         tty.msg(f"SGS DEBUG            prefix={self.prefix}\n")
 
@@ -663,14 +672,18 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
 
         cache_extra_test_sources(self, [self.examples_src_dir])
 
-        src_dir = join_path(self.prefix, "examples", "RAJA", "using-with-cmake")
+        src_dir = join_path(self.stage.source_path, "test", "install", "using-with-cmake")
         dst_dir = join_path(install_test_root(self), self.using_with_cmake_dir)
 
-        tty.msg(f"SGS DEBUG Initial test_root tree\n")
-        print_tree(install_test_root(self))
-        
         if os.path.exists(src_dir):
             shutil.rmtree(dst_dir, ignore_errors=True)
+            install_tree(src_dir, dst_dir)
+            self._rewrite_host_config(join_path(dst_dir, "host-config.cmake"))
+
+        src_dir = join_path(self.build_directory, "examples", "using-with-cmake")
+        dst_dir = join_path(install_test_root(self), self.using_with_cmake_dir)
+
+        if os.path.exists(src_dir):
             install_tree(src_dir, dst_dir)
             self._rewrite_host_config(join_path(dst_dir, "host-config.cmake"))
         else:
