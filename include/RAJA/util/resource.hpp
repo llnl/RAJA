@@ -246,6 +246,11 @@ struct is_resource<resources::Omp> : std::true_type
 #endif
 }  // end namespace type_traits
 
+namespace concepts
+{
+template<typename T>
+concept Resource = RAJA::type_traits::is_resource<T>::value;
+}
 }  // end namespace RAJA
 
 #endif  // RAJA_resources_HPP#
