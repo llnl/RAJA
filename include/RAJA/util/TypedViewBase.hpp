@@ -635,6 +635,7 @@ public:
 #endif
 
   RAJA_HOST_DEVICE
+
   RAJA_INLINE
   constexpr ViewBase(pointer_type data, layout_type&& layout)
       : m_data(data),
@@ -676,11 +677,16 @@ public:
   }
 
   RAJA_HOST_DEVICE
+
   RAJA_INLINE
-  constexpr linear_index_type size_noproj() const { return m_layout.size_noproj(); }
+  constexpr linear_index_type size_noproj() const
+  {
+    return m_layout.size_noproj();
+  }
 
   template<camp::idx_t DIM>
-  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_stride() const
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_stride()
+      const
   {
     return m_layout.template get_dim_stride<DIM>();
   }
