@@ -21,14 +21,6 @@ from spack_repo.builtin.packages.blt.package import llnl_link_helpers
 
 from spack.package import *
 
-
-def print_tree(root_dir):
-    for dirpath, dirnames, filenames in os.walk(root_dir):
-        for d in dirnames:
-            print(os.path.join(dirpath, d))
-        for f in filenames:
-            print(os.path.join(dirpath, f))
-            
 # Starting with 2022.03.0, the only submodule we want to fetch is tpl/desul
 # since there is no package for it. Other RAJA submodules are defined as
 # dependencies.
@@ -594,6 +586,7 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
     @run_after("build")
     @on_package_attributes(run_tests=True)
     def check_build(self):
+        """Run RAJA's unit test target after build when tests are enabled."""
         with working_dir(self.build_directory):
             print("Running RAJA Unit Tests...")
             make("test")
@@ -617,59 +610,10 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
                     rf"set\({key}.*\)", f'set({key} "{value}" CACHE PATH "")', path, **kwargs
                 )
 
-    def _using_with_cmake_source_dir(self):
-        tty.msg(f"SGS DEBUG _using_with_cmake_source_dir\n")
-        tty.msg(f"SGS DEBUG self.test_suite = {self.test_suite}\n")
-        tty.msg(f"SGS DEBUG self.prefix.examples.RAJA = {self.prefix.examples.RAJA}\n")
-        
-        if self.test_suite:
-            return join_path(self.test_suite.current_test_cache_dir, self.using_with_cmake_dir)
-        return join_path(self.stage.source_path, "test", "install", "using-with-cmake")
-
-    # @run_after("install")
-    # def setup_install_tests(self):
-    #     """Cache sources needed by standalone `spack test run`."""
-
-    #     tty.msg(f"SGS DEBUG ******************************************************************\n")
-    #     tty.msg(f"SGS DEBUG setup_install_tests\n")
-    #     tty.msg(f"SGS DEBUG            self.examples_src_dir={self.examples_src_dir}\n")
-    #     tty.msg(f"SGS DEBUG            install_test_root(self)={install_test_root(self)}\n")
-    #     tty.msg(f"SGS DEBUG src_dir    self.build_directory={self.build_directory}\n")
-    #     tty.msg(f"SGS DEBUG dst_dir    self.stage.source_path={self.stage.source_path}\n")
-    #     tty.msg(f"SGS DEBUG            cwd={os.getcwd()}\n")
-    #     tty.msg(f"SGS DEBUG            prefix={self.prefix}\n")
-
-    #     cache_extra_test_sources(self, [self.examples_src_dir])
-        
-    #     dst_dir = join_path(self.stage.source_path, self.using_with_cmake_dir)
-    #     mkdirp(dst_dir)
-
-    #     src_dir = join_path(self.build_directory, self.using_with_cmake_dir)
-
-    #     shutil.rmtree(dst_dir, ignore_errors=True)
-        
-    #     if os.path.exists(src_dir):
-    #         install_tree(src_dir, dst_dir)
-    #         self._rewrite_host_config(join_path(dst_dir, "host-config.cmake"))
-    #     else:
-    #         tty.msg(f"SGS DEBUG Can't install host-config.cmake\n")
-
     @run_after("install")
     def setup_install_tests(self):
-        """Cache sources needed by standalone `spack test run`."""
-
-        tty.msg(f"SGS DEBUG ******************************************************************\n")
-        tty.msg(f"SGS DEBUG setup_install_tests\n")
-        tty.msg(f"SGS DEBUG            self.examples_src_dir={self.examples_src_dir}\n")
-        tty.msg(f"SGS DEBUG            install_test_root(self)={install_test_root(self)}\n")
-        tty.msg(f"SGS DEBUG            self.build_directory={self.build_directory}\n")
-        tty.msg(f"SGS DEBUG            self.stage.source_path={self.stage.source_path}\n")
-        tty.msg(f"SGS DEBUG            cwd={os.getcwd()}\n")
-        tty.msg(f"SGS DEBUG            prefix={self.prefix}\n")
-
-        tty.msg(f"SGS DEBUG Initial prefix tree\n")
-        print_tree(self.prefix)
-
+        """Install and cache standalone test sources, using staged or build outputs when available."""
+        
         cache_extra_test_sources(self, [self.examples_src_dir])
 
         src_dir = join_path(self.stage.source_path, "test", "install", "using-with-cmake")
@@ -687,22 +631,10 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
             install_tree(src_dir, dst_dir)
             self._rewrite_host_config(join_path(dst_dir, "host-config.cmake"))
         else:
-            tty.msg(f"SGS DEBUG Can't install host-config.cmake\n")
-
-        tty.msg(f"SGS DEBUG Post test_root tree\n")
-        print_tree(install_test_root(self))
+            tty.msg(f"Can't install host-config.cmake\n")
 
     def _run_common_check_install(self, test_dir):
-
-        """build example with cmake and run"""
-        tty.msg(f"SGS DEBUG ******************************************************************\n")
-        tty.msg(f"SGS DEBUG _run_common_check_install\n")
-        tty.msg(f"SGS DEBUG            test_dir={test_dir}\n")
-        tty.msg(f"SGS DEBUG            install_test_root(self)={install_test_root(self)}\n")
-        tty.msg(f"SGS DEBUG            cwd={os.getcwd()}\n")
-     
-        tty.msg(f"SGS DEBUG {test_dir} listing at start\n")
-        print_tree(test_dir)
+        """Verify that the using-with-cmake example can build against the installed RAJA package."""
         
         example_stage_dir = join_path(test_dir, "examples", "using-with-cmake")
         with working_dir(join_path(example_stage_dir, "build"), create=True):
@@ -717,53 +649,25 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
             example = Executable("./using-with-cmake")
             example()
             make_exe("clean")
-            tty.msg(f"SGS DEBUG using-with-cmake was run")
             
     @run_after("install")
     @on_package_attributes(run_tests=True)
     def check_install(self):
-        tty.msg(f"SGS DEBUG ******************************************************************\n")
-        tty.msg(f"SGS DEBUG check_install\n")
-
-        tty.msg(f"SGS DEBUG            self.examples_src_dir={self.examples_src_dir}\n")
-        tty.msg(f"SGS DEBUG            install_test_root(self)={install_test_root(self)}\n")
-        tty.msg(f"SGS DEBUG            self.build_directory={self.build_directory}\n")
-        tty.msg(f"SGS DEBUG            self.stage.source_path={self.stage.source_path}\n")
-        tty.msg(f"SGS DEBUG            self.stage.path={self.stage.path}\n")
-        tty.msg(f"SGS DEBUG            cwd={os.getcwd()}\n")
-        tty.msg(f"SGS DEBUG            prefix={self.prefix}\n")
-
+        """Installation-time verification that the using-with-cmake example can build against the installed RAJA package."""
+        
         src_dir=join_path(install_test_root(self))
         dst_dir=join_path(self.stage.path, "spack-test")
 
         if os.path.exists(src_dir):
             install_tree(src_dir, dst_dir)
-
-            tty.msg(f"SGS DEBUG {dst_dir} after copy\n")
-            print_tree(dst_dir)
-            
             self._run_common_check_install(dst_dir)
         else:
             raise SkipTest(f"examples directory not found, cannot build example")
 
     def test_check_install(self):
-        tty.msg(f"SGS DEBUG ******************************************************************\n")
-        tty.msg(f"SGS DEBUG test_check_install\n")
-
-        tty.msg(f"SGS DEBUG            self.examples_src_dir={self.examples_src_dir}\n")
-        tty.msg(f"SGS DEBUG            install_test_root(self)={install_test_root(self)}\n")
-        tty.msg(f"SGS DEBUG            self.stage.source_path={self.stage.source_path}\n")
-        tty.msg(f"SGS DEBUG            self.test_suite.current_test_cache_dir={self.test_suite.current_test_cache_dir}\n")
-
-        cache_dir = self.test_suite.current_test_cache_dir
-        timestamp = int(time.time())
-        save_dir = os.path.join("/tmp", f"SGS-DEBUG-{self.spec.name}-test-cache-{timestamp}")
-
-        if cache_dir and os.path.isdir(cache_dir):
-            shutil.copytree(cache_dir, save_dir)
+        """Stand-alone verification that the using-with-cmake example can build against the installed RAJA package."""
         
         self._run_common_check_install(self.test_suite.current_test_cache_dir)
-
 
     def _write_example_cmakelists(self, path, exe, source):
         with open(path, "w", encoding="utf-8") as f:
@@ -789,13 +693,10 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
             )
 
     def build_and_run_example(self, exe, expected):
-        """run and check outputs of the example"""
-        tty.msg(f"SGS DEBUG build_and_run_example\n")
+        """Build an example from the cached test sources and verify its output."""
         
         examples_dir = join_path(self.test_suite.current_test_cache_dir, self.examples_src_dir)
 
-        tty.msg(f"SGS DEBUG            install_test_root(self)={self.test_suite.current_test_cache_dir}\n")
-        
         build_dir = join_path(examples_dir, f"build-{exe}")
         with working_dir(build_dir, create=True):
             cmake = self.spec["cmake"].command
@@ -816,10 +717,11 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
             make_exe("clean")
 
     def test_daxpy(self):
-        """check daxpy tutorial"""
+        """Check daxpy tutorial"""
         self.build_and_run_example("tut_daxpy", [r"daxpy", r"result -- PASS"])
 
     # TODO: this test seems to hang or take a long time?
+    # SGS 2026-05-22: Did not see hangs/long execution times on LC systems or Redhat workstation; clarify with Cody where this was occuring.
     # def test_matrix_multiply(self):
     #     """check batched matrix multiple tutorial"""
     #     self.build_and_run_example(
@@ -827,7 +729,7 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
     #     )
 
     def test_launch_basic(self):
-        """check basic raja::launch tutorial"""
+        """Check basic raja::launch tutorial."""
         if "+cuda" in self.spec or "+rocm" in self.spec:
             self.build_and_run_example(
                 "tut_launch_basic", [r"Running RAJA-Teams", r"result -- PASS"]
@@ -836,11 +738,11 @@ class Raja(CachedCMakePackage, CudaPackage, ROCmPackage):
             raise SkipTest("CUDA or ROCm support is required to run this example")
 
     def test_halo_exchange(self):
-        """check halo exchange tutorial"""
+        """Check halo exchange tutorial."""
         self.build_and_run_example(
             "tut_halo-exchange", [r"RAJA halo exchange example", r"result -- PASS"]
         )
 
     def test_wave_equation(self):
-        """check wave equation"""
+        """Check wave equation."""
         self.build_and_run_example("wave-eqn", [r"Max Error = 2", r"Evolved solution to time"])
