@@ -19,7 +19,7 @@ include(CMakeDependentOption)
 # Set version number
 set(RAJA_VERSION_MAJOR 2025)
 set(RAJA_VERSION_MINOR 12)
-set(RAJA_VERSION_PATCHLEVEL 1)
+set(RAJA_VERSION_PATCHLEVEL 2)
 
 if (RAJA_LOADED AND (NOT RAJA_LOADED STREQUAL "${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}"))
   message(FATAL_ERROR "You are mixing RAJA versions. Loaded is ${RAJA_LOADED}, expected ${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}")
@@ -44,7 +44,7 @@ project(RAJA LANGUAGES CXX C
   VERSION ${RAJA_LOADED})
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/thirdparty" ${CMAKE_MODULE_PATH})
-set(BLT_REQUIRED_CLANGFORMAT_VERSION  "14" CACHE STRING "")
+set(BLT_REQUIRED_CLANGFORMAT_VERSION  "19" CACHE STRING "")
 include(cmake/SetupRajaOptions.cmake)
 
 cmake_minimum_required(VERSION 3.24)
@@ -77,6 +77,14 @@ else() #check BLT_CXX_STD is high enough by disallowing the only invalid option
     message(FATAL_ERROR "RAJA requires minimum C++ standard of c++20")
   endif()
 endif(NOT DEFINED BLT_CXX_STD)
+
+set(RAJA_MIN_CXX_STANDARD 20)
+
+if(DEFINED CMAKE_CXX_STANDARD
+   AND NOT CMAKE_CXX_STANDARD STREQUAL ""
+   AND ((CMAKE_CXX_STANDARD LESS RAJA_MIN_CXX_STANDARD) OR (CMAKE_CXX_STANDARD EQUAL 98)) )
+  message(FATAL_ERROR "RAJA requires minimum C++ standard of C++${RAJA_MIN_CXX_STANDARD}")
+endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -328,6 +336,10 @@ install(FILES
 
 # Setup internal RAJA configuration options
 include(cmake/SetupRajaConfig.cmake)
+
+if (RAJA_ENABLE_JIT)
+  include(cmake/SetupProteus.cmake)
+endif()
 
 if(RAJA_ENABLE_TESTS)
   add_subdirectory(test)

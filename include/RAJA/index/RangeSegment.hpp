@@ -597,13 +597,11 @@ namespace concepts
 
 template<typename T, typename U>
 struct RangeConstructible
-    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U>>())
-{};
+    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U>>()) {};
 
 template<typename T, typename U, typename V>
 struct RangeStrideConstructible
-    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U, V>>())
-{};
+    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U, V>>()) {};
 
 }  // namespace concepts
 

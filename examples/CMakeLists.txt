@@ -23,6 +23,12 @@ raja_add_executable(
   NAME dynamic-forall
   SOURCES dynamic-forall.cpp)
 
+if (RAJA_ENABLE_JIT)
+  raja_add_executable(
+    NAME forall-jit
+    SOURCES forall-jit.cpp)
+endif()
+
 raja_add_executable(
   NAME forall-param-reductions
   SOURCES forall-param-reductions.cpp)
@@ -74,6 +80,10 @@ raja_add_executable(
 raja_add_executable(
   NAME raja-launch
   SOURCES raja-launch.cpp)
+
+raja_add_executable(
+  NAME gpu-launch-context-indices
+  SOURCES gpu-launch-context-indices.cpp)
 
 raja_add_executable(
   NAME launch_matrix-multiply

@@ -84,8 +84,7 @@ forall_impl(resources::Omp omp_res,
   if constexpr (is_forall_param_empty)
   {
 #pragma omp target teams distribute parallel for num_teams(numteams)           \
-    schedule(static, 1) map(to                                                 \
-                            : body, begin_it)
+    schedule(static, 1) map(to : body, begin_it)
     for (i = 0; i < distance_it; ++i)
     {
       Body ib = body;
@@ -96,9 +95,7 @@ forall_impl(resources::Omp omp_res,
   {
     RAJA_OMP_DECLARE_REDUCTION_COMBINE
 #pragma omp target teams distribute parallel for num_teams(numteams)           \
-    schedule(static, 1) map(to                                                 \
-                            : body, begin_it) reduction(combine                \
-                                                        : f_params)
+    schedule(static, 1) map(to : body, begin_it) reduction(combine : f_params)
     for (i = 0; i < distance_it; ++i)
     {
       Body ib = body;
@@ -138,8 +135,7 @@ forall_impl(resources::Omp omp_res,
   {
     RAJA_OMP_DECLARE_REDUCTION_COMBINE;
 #pragma omp target teams distribute parallel for schedule(static, 1)           \
-    firstprivate(body, begin_it) reduction(combine                             \
-                                           : f_params)
+    firstprivate(body, begin_it) reduction(combine : f_params)
     for (decltype(distance_it) i = 0; i < distance_it; ++i)
     {
       Body ib = body;

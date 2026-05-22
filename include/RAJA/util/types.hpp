@@ -273,7 +273,7 @@ using Real_type = double;
 
 #elif defined(RAJA_USE_FLOAT)
 ///
-using Real_type         = float;
+using Real_type = float;
 
 #else
 #error RAJA Real_type is undefined!
@@ -887,8 +887,8 @@ using UnalignedReal_ptr       = Real_type*;
 using const_UnalignedReal_ptr = const Real_type*;
 
 #elif defined(RAJA_USE_RESTRICT_PTR)
-using Real_ptr          = Real_type* RAJA_RESTRICT;
-using const_Real_ptr    = const Real_type* RAJA_RESTRICT;
+using Real_ptr       = Real_type* RAJA_RESTRICT;
+using const_Real_ptr = const Real_type* RAJA_RESTRICT;
 
 #if defined(RAJA_USE_COMPLEX)
 using Complex_ptr       = Complex_type* RAJA_RESTRICT;
@@ -899,24 +899,24 @@ using UnalignedReal_ptr       = Real_type* RAJA_RESTRICT;
 using const_UnalignedReal_ptr = const Real_type* RAJA_RESTRICT;
 
 #elif defined(RAJA_USE_RESTRICT_ALIGNED_PTR)
-using Real_ptr           = TDRAReal_ptr;
-using const_Real_ptr     = const_TDRAReal_ptr;
+using Real_ptr       = TDRAReal_ptr;
+using const_Real_ptr = const_TDRAReal_ptr;
 
 #if defined(RAJA_USE_COMPLEX)
-using Complex_ptr        = Complex_type* RAJA_RESTRICT;
-using const_Complex_ptr  = const Complex_type* RAJA_RESTRICT;
+using Complex_ptr       = Complex_type* RAJA_RESTRICT;
+using const_Complex_ptr = const Complex_type* RAJA_RESTRICT;
 #endif
 
 using UnalignedReal_ptr       = Real_type* RAJA_RESTRICT;
 using const_UnalignedReal_ptr = const Real_type* RAJA_RESTRICT;
 
 #elif defined(RAJA_USE_PTR_CLASS)
-using Real_ptr           = RestrictAlignedRealPtr;
-using const_Real_ptr     = ConstRestrictAlignedRealPtr;
+using Real_ptr       = RestrictAlignedRealPtr;
+using const_Real_ptr = ConstRestrictAlignedRealPtr;
 
 #if defined(RAJA_USE_COMPLEX)
-using Complex_ptr        = RestrictComplexPtr;
-using const_Complex_ptr  = ConstRestrictComplexPtr;
+using Complex_ptr       = RestrictComplexPtr;
+using const_Complex_ptr = ConstRestrictComplexPtr;
 #endif
 
 using UnalignedReal_ptr       = RestrictRealPtr;
@@ -1052,6 +1052,56 @@ private:
   T& m_ref_to_val;
   T m_prev_val;
 };
+
+/*!
+ * \brief Functor that copies src to dst.
+ */
+template<typename DestIter, typename SrcIter>
+struct CopyFunctorOneRange
+{
+  DestIter dst;
+  SrcIter src;
+
+  template<typename IndexType>
+  RAJA_HOST_DEVICE constexpr void operator()(IndexType i) const
+  {
+    dst[i] = src[i];
+  }
+};
+
+template<typename DestIter, typename SrcIter>
+CopyFunctorOneRange(DestIter, SrcIter)
+    -> CopyFunctorOneRange<DestIter, SrcIter>;
+
+/*!
+ * \brief Functor that copies src1 to dst1 and src2 to dst2.
+ */
+template<typename DestIter1,
+         typename SrcIter1,
+         typename DestIter2,
+         typename SrcIter2>
+struct CopyFunctorTwoRanges
+{
+  DestIter1 dst1;
+  SrcIter1 src1;
+
+  DestIter2 dst2;
+  SrcIter2 src2;
+
+  template<typename IndexType>
+  RAJA_HOST_DEVICE constexpr void operator()(IndexType i) const
+  {
+    dst1[i] = src1[i];
+    dst2[i] = src2[i];
+  }
+};
+
+template<typename DestIter1,
+         typename SrcIter1,
+         typename DestIter2,
+         typename SrcIter2>
+CopyFunctorTwoRanges(DestIter1, SrcIter1, DestIter2, SrcIter2)
+    -> CopyFunctorTwoRanges<DestIter1, SrcIter1, DestIter2, SrcIter2>;
 
 }  // namespace detail
 

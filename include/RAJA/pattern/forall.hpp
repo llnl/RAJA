@@ -126,10 +126,11 @@ struct icount_adapter
   }
 
   RAJA_SUPPRESS_HD_WARN
-  template<typename T>
-  RAJA_HOST_DEVICE void operator()(T const& i) const
+  template<typename T, typename... Params>
+  RAJA_HOST_DEVICE void operator()(T const& i, Params&&... params) const
   {
-    body(static_cast<index_type>(i + icount), begin_it[i]);
+    body(static_cast<index_type>(i + icount), begin_it[i],
+         std::forward<Params>(params)...);
   }
 };
 
