@@ -162,6 +162,8 @@ template<typename AtomicPolicy, typename T, typename Operation>
 RAJA_HOST_DEVICE RAJA_INLINE
 T atomicGeneric(AtomicPolicy, T* acc, Operation&& operation)
 {
+  static_assert(std::is_trivially_copyable_v<T>);
+
   T old = desul::atomic_load(acc,
                              raja_default_desul_order {},
                              raja_default_desul_scope {});
