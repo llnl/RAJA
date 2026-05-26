@@ -14,9 +14,9 @@
 
 #if defined(RAJA_ENABLE_DESUL_ATOMICS)
 
-#include <cstdint>
+#include <array>
+#include <bit>
 #include <type_traits>
-#include <utility>
 
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/TypeConvert.hpp"
@@ -31,32 +31,6 @@ using raja_default_desul_scope = desul::MemoryScopeDevice;
 
 namespace RAJA
 {
-
-namespace detail
-{
-
-template<typename T>
-RAJA_HOST_DEVICE RAJA_INLINE bool desul_atomicCAS_equal(const T& a, const T& b)
-{
-  return a == b;
-}
-
-template<typename T,
-         std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
-RAJA_HOST_DEVICE RAJA_INLINE bool desul_atomicCAS_equal(const T& a, const T& b)
-{
-  using R = std::conditional_t<sizeof(T) == sizeof(std::uint32_t),
-                               std::uint32_t,
-                               std::uint64_t>;
-  static_assert(sizeof(T) == sizeof(std::uint32_t) ||
-                sizeof(T) == sizeof(std::uint64_t),
-                "desul_atomicCAS_equal only supports 32/64-bit floating point");
-
-  return RAJA::util::reinterp_A_as_B<T, R>(a) ==
-         RAJA::util::reinterp_A_as_B<T, R>(b);
-}
-
-}  // namespace detail
 
 RAJA_SUPPRESS_HD_WARN
 template<typename AtomicPolicy, typename T>
@@ -176,8 +150,8 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicExchange(AtomicPolicy, T* acc, T value)
 
 RAJA_SUPPRESS_HD_WARN
 template<typename AtomicPolicy, typename T>
-RAJA_HOST_DEVICE RAJA_INLINE T
-atomicCAS(AtomicPolicy, T* acc, T compare, T value)
+RAJA_HOST_DEVICE RAJA_INLINE
+T atomicCAS(AtomicPolicy, T* acc, T compare, T value)
 {
   return desul::atomic_compare_exchange(acc, compare, value,
                                         raja_default_desul_order {},
@@ -186,30 +160,23 @@ atomicCAS(AtomicPolicy, T* acc, T compare, T value)
 
 RAJA_SUPPRESS_HD_WARN
 template<typename AtomicPolicy, typename T, typename Operation>
-RAJA_HOST_DEVICE RAJA_INLINE T
-atomicOperation(AtomicPolicy, T* acc, Operation&& operation)
+RAJA_HOST_DEVICE RAJA_INLINE
+T atomicGeneric(AtomicPolicy, T* acc, Operation&& operation)
 {
-  T expected = desul::atomic_load(acc,
-                                  raja_default_desul_order {},
-                                  raja_default_desul_scope {});
+  T old = desul::atomic_load(acc,
+                             raja_default_desul_order {},
+                             raja_default_desul_scope {});
+  T expected;
 
-  while (true) {
-    const T desired = operation(expected);
-
-    if (desul_atomicCAS_equal(desired, expected)) {
-      return expected; // no-op
-    }
-
-    const T old = desul::atomic_compare_exchange(acc, expected, desired,
-                                                 raja_default_desul_order {},
-                                                 raja_default_desul_scope {});
-
-    if (desul_atomicCAS_equal(old, expected)) {
-      return old; // success
-    }
-
-    expected = old; // CAS failed, old is the latest observed value
-  }
+  do {
+    expected = old;
+    old = desul::atomic_compare_exchange(acc,
+                                         expected,
+                                         operation(expected),
+                                         raja_default_desul_order {},
+                                         raja_default_desul_scope {});
+  } while (std::bit_cast<std::array<unsigned char, sizeof(T)>>(old) !=
+           std::bit_cast<std::array<unsigned char, sizeof(T)>>(expected));
 }
 
 }  // namespace RAJA
