@@ -322,6 +322,28 @@ RAJA_INLINE __device__ bool cuda_atomicCAS_equal(const T& a, const T& b)
 }
 
 /*!
+ * Generic impementation of any atomic operation. This implementation uses a
+ * compare-and-swap loop and therefore is much slower than using a built-in
+ * atomic operation, which should be used when possible. Returns the OLD value
+ * that was replaced by the result of this operation.
+ */
+template<typename T, typename Operation>
+RAJA_INLINE __device__ T cuda_atomicGeneric(T* acc, Operation&& operation)
+{
+  cuda::atomic_ref<T, cuda::thread_scope_device> ref(*acc);
+  T expected = ref.load(cuda::memory_order_relaxed);
+
+  while (true) {
+    if (ref.compare_exchange_weak(expected,
+                                  operation(expected),
+                                  cuda::memory_order_relaxed,
+                                  cuda::memory_order_relaxed)) {
+      return expected;
+    }
+  }
+}
+
+/*!
  * Generic impementation of any atomic 32-bit or 64-bit operator.
  * Implementation uses the existing CUDA supplied unsigned 32-bit or 64-bit CAS
  * operator. Returns the OLD value that was replaced by the result of this
@@ -861,12 +883,12 @@ atomicCAS(cuda_atomic_explicit<host_policy>, T* acc, T compare, T value)
 RAJA_SUPPRESS_HD_WARN
 template<typename T, typename Operation, typename host_policy>
 RAJA_INLINE RAJA_HOST_DEVICE T
-atomicOperation(cuda_atomic_explicit<host_policy>, T* acc, Operation&& operation)
+atomicGeneric(cuda_atomic_explicit<host_policy>, T* acc, Operation&& operation)
 {
 #ifdef __CUDA_ARCH__
-  return detail::cuda_atomicCAS_loop(acc, std::forward<Operation>(operation));
+  return detail::cuda_atomicGeneric(acc, std::forward<Operation>(operation));
 #else
-  return RAJA::atomicOperation(host_policy {}, acc, std::forward<Operation>(operation));
+  return RAJA::atomicGeneric(host_policy {}, acc, std::forward<Operation>(operation));
 #endif
 }
 

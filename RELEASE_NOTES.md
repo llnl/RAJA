@@ -15,7 +15,7 @@ This release contains ...
 Notable changes include:
 
   * New features / API changes:
-    * Added `RAJA::atomicOperation` to enable user-defined atomic update
+    * Added `RAJA::atomicGeneric` to enable user-defined atomic update
       operations implemented using a compare-and-swap loop.
 
   * Build changes/improvements:

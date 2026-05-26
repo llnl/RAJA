@@ -295,9 +295,9 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicCAS(T* acc, T compare, T value)
  */
 RAJA_SUPPRESS_HD_WARN
 template<typename Policy, typename T, typename Operation>
-RAJA_INLINE RAJA_HOST_DEVICE T atomicOperation(T* acc, Operation&& operation)
+RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(T* acc, Operation&& operation)
 {
-  return RAJA::atomicOperation(Policy {}, acc, std::forward<Operation>(operation));
+  return RAJA::atomicGeneric(Policy {}, acc, std::forward<Operation>(operation));
 }
 
 /*!
