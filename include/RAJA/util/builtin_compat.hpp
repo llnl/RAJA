@@ -3,9 +3,8 @@
  *
  * \file
  *
- * \brief   Header file for RAJA concept definitions.
- *
- *          Definitions in this file will propagate to all RAJA header files.
+ * \brief   RAJA header file for handling builtin function differences for
+ *          different compilers.
  *
  ******************************************************************************
  */
@@ -19,28 +18,15 @@
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
-#ifndef RAJA_concepts_HPP
-#define RAJA_concepts_HPP
+#ifndef RAJA_util_builtin_compat_HPP
+#define RAJA_util_builtin_compat_HPP
 
-#include <iterator>
-#include <type_traits>
+#if defined(_MSC_VER)
+#include <cstring>
+#define RAJA_BUILTIN_MEMCPY(a, b, c) std::memcpy(a, b, c)
 
-#include "camp/concepts.hpp"
-
-namespace RAJA
-{
-
-namespace concepts
-{
-using namespace camp::concepts;
-}  // namespace concepts
-
-namespace type_traits
-{
-using namespace camp::type_traits;
-
-}  // namespace type_traits
-
-}  // end namespace RAJA
-
+#else
+#define RAJA_BUILTIN_MEMCPY(a, b, c) __builtin_memcpy(a, b, c)
 #endif
+
+#endif  // RAJA_util_builtin_compat_HPP

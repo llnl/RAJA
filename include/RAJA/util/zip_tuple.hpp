@@ -260,18 +260,17 @@ struct zip_tuple
   using IdxSeq = camp::make_idx_seq_t<sizeof...(Ts)>;
 
   // constructor from types convertible to Ts
-  template<
-      typename... Os,
-      typename = concepts::enable_if<type_traits::convertible_to<Os&&, Ts>...>>
+  template<typename... Os>
+    requires(std::convertible_to<Os &&, Ts> && ...)
   RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple(Os&&... os)
       : m_tuple(std::forward<Os>(os)...)
   {}
 
   // assignment from types convertible to Ts
-  template<typename... Os,
-           typename = concepts::enable_if<type_traits::convertible_to<
-               Os&&,
-               typename std::remove_reference<Ts>::type>...>>
+  template<typename... Os>
+    requires(
+        std::convertible_to<Os &&, typename std::remove_reference<Ts>::type> &&
+        ...)
   RAJA_HOST_DEVICE RAJA_INLINE constexpr zip_tuple& assign(Os&&... os)
   {
     return assign_helper(IdxSeq {}, std::forward<Os>(os)...);
