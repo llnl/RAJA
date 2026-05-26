@@ -24,7 +24,6 @@
 
 #include <atomic>
 #include <cstdint>
-#include <utility>
 
 #if defined(RAJA_COMPILER_MSVC) ||                                             \
     ((defined(_WIN32) || defined(_WIN64)) && defined(__INTEL_COMPILER))
