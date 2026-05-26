@@ -22,6 +22,7 @@
 
 #include "RAJA/config.hpp"
 
+#include <atomic>
 #include <cstdint>
 #include <utility>
 
@@ -1006,17 +1007,27 @@ RAJA_DEVICE_HIP RAJA_INLINE T atomicExchange(builtin_atomic, T* acc, T value)
 }
 
 template<typename T>
-RAJA_DEVICE_HIP RAJA_INLINE T
-atomicCAS(builtin_atomic, T* acc, T compare, T value)
+RAJA_DEVICE_HIP RAJA_INLINE
+T atomicCAS(builtin_atomic, T* acc, T compare, T value)
 {
   return detail::builtin_atomicCAS(acc, compare, value);
 }
 
 template<typename T, typename Operation>
-RAJA_DEVICE_HIP RAJA_INLINE T
-atomicOperation(builtin_atomic, T* acc, Operation&& operation)
+RAJA_DEVICE_HIP RAJA_INLINE
+T atomicGeneric(builtin_atomic, T* acc, Operation&& operation)
 {
-  return detail::builtin_atomicCAS_loop(acc, std::forward<Operation>(operation));
+  std::atomic_ref<T> ref(*acc);
+  T expected = ref.load(std::memory_order_relaxed);
+
+  while (true) {
+    if (ref.compare_exchange_weak(expected,
+                                  operation(expected),
+                                  std::memory_order_relaxed,
+                                  std::memory_order_relaxed)) {
+      return expected;
+    }
+  }
 }
 
 
