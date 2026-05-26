@@ -160,7 +160,7 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicCAS(seq_atomic, T* acc, T compare, T value)
 
 RAJA_SUPPRESS_HD_WARN
 template<typename T, typename Operation>
-RAJA_HOST_DEVICE RAJA_INLINE T atomicOperation(seq_atomic, T* acc, Operation&& operation)
+RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(seq_atomic, T* acc, Operation&& operation)
 {
   T ret = *acc;
   *acc  = operation(ret);
