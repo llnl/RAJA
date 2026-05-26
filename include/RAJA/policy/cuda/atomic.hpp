@@ -373,10 +373,8 @@ RAJA_INLINE __device__ T cuda_atomicCAS_loop(T* acc,
 }
 
 /*!
- * Generic impementation of any atomic operation. This implementation uses a
- * compare-and-swap loop and therefore is much slower than using a built-in
- * atomic operation, which should be used when possible. Returns the OLD value
- * that was replaced by the result of this operation.
+ * Generic atomic operation implemented using CAS loop.
+ * Returns the OLD value that was replaced by the result of this operation.
  */
 template<typename T, typename Operation>
 RAJA_INLINE __device__ T cuda_atomicGeneric(T* acc, Operation&& operation)
