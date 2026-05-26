@@ -891,8 +891,8 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicExchange(hip_atomic_explicit<host_policy>,
 
 RAJA_SUPPRESS_HD_WARN
 template<typename T, typename host_policy>
-RAJA_INLINE RAJA_HOST_DEVICE T
-atomicCAS(hip_atomic_explicit<host_policy>, T* acc, T compare, T value)
+RAJA_INLINE RAJA_HOST_DEVICE
+T atomicCAS(hip_atomic_explicit<host_policy>, T* acc, T compare, T value)
 {
 #if defined(__HIP_DEVICE_COMPILE__)
   return detail::hip_atomicCAS(acc, compare, value);
@@ -903,8 +903,8 @@ atomicCAS(hip_atomic_explicit<host_policy>, T* acc, T compare, T value)
 
 RAJA_SUPPRESS_HD_WARN
 template<typename T, typename Operation, typename host_policy>
-RAJA_INLINE RAJA_HOST_DEVICE T
-atomicGeneric(hip_atomic_explicit<host_policy>, T* acc, Operation&& operation)
+RAJA_INLINE RAJA_HOST_DEVICE
+T atomicGeneric(hip_atomic_explicit<host_policy>, T* acc, Operation&& operation)
 {
 #if defined(__HIP_DEVICE_COMPILE__)
   return detail::hip_atomicCAS_loop(acc, std::forward<Operation>(operation));
