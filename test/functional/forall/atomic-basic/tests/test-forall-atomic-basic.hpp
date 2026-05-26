@@ -111,7 +111,7 @@ void ForallAtomicBasicTestImpl( IdxType seglimit )
     RAJA::atomicInc<AtomicPolicy>(work_array + 10, static_cast<T>(16));
     RAJA::atomicDec<AtomicPolicy>(work_array + 11, static_cast<T>(16));
 
-    // Exercise generic atomicOperation with an order-independent update:
+    // Exercise atomicGeneric with an order-independent update:
     // compute factorial(N) by multiplying by (i+1) for i in [0, N).
     //
     // Choose N small enough that:
@@ -119,14 +119,13 @@ void ForallAtomicBasicTestImpl( IdxType seglimit )
     // - The intermediate values are exactly representable in float/double
     //   (avoids non-associativity issues).
     constexpr IdxType factN = static_cast<IdxType>(10);
-    RAJA::atomicOperation<AtomicPolicy>(work_array + 12,
-                                        [=] RAJA_HOST_DEVICE(T old) {
-                                          if (i < factN)
-                                          {
-                                            return old * static_cast<T>(i + static_cast<IdxType>(1));
-                                          }
-                                          return old;
-                                        });
+    RAJA::atomicGeneric<AtomicPolicy>(work_array + 12,
+                                      [=] RAJA_HOST_DEVICE(T old) {
+                                        if (i < factN) {
+                                          return old * static_cast<T>(i + static_cast<IdxType>(1));
+                                        }
+                                        return old;
+                                      });
   });
 
   work_res.memcpy( check_array, work_array, sizeof(T) * len );
