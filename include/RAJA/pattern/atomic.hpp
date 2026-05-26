@@ -27,6 +27,8 @@
 
 #include "RAJA/util/macros.hpp"
 
+#include <utility>
+
 namespace RAJA
 {
 
