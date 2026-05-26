@@ -152,17 +152,19 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicExchange(auto_atomic, T* acc, T value)
 }
 
 template<typename T>
-RAJA_INLINE RAJA_HOST_DEVICE
-T atomicCAS(auto_atomic, T* acc, T compare, T value)
+RAJA_INLINE RAJA_HOST_DEVICE T
+atomicCAS(auto_atomic, T* acc, T compare, T value)
 {
   return atomicCAS(RAJA_AUTO_ATOMIC, acc, compare, value);
 }
 
 template<typename T, typename Operation>
-RAJA_INLINE RAJA_HOST_DEVICE
-T atomicGeneric(auto_atomic, T* acc, Operation&& operation)
+RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(auto_atomic,
+                                             T* acc,
+                                             Operation&& operation)
 {
-  return atomicGeneric(RAJA_AUTO_ATOMIC, acc, std::forward<Operation>(operation));
+  return atomicGeneric(RAJA_AUTO_ATOMIC, acc,
+                       std::forward<Operation>(operation));
 }
 
 }  // namespace RAJA

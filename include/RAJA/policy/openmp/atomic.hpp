@@ -234,13 +234,13 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicCAS(omp_atomic, T* acc, T compare, T value)
 
 RAJA_SUPPRESS_HD_WARN
 template<typename T, typename Operation>
-RAJA_HOST_DEVICE RAJA_INLINE
-T atomicGeneric(omp_atomic, T* acc, Operation&& operation)
+RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(omp_atomic,
+                                             T* acc,
+                                             Operation&& operation)
 {
   // OpenMP doesn't define a generic atomic operation, so use builtin atomics
-  return RAJA::atomicOperation(builtin_atomic {},
-                               acc,
-                               std::forward<Operation>(operation));
+  return RAJA::atomicGeneric(builtin_atomic {}, acc,
+                             std::forward<Operation>(operation));
 }
 
 #endif  // not defined RAJA_COMPILER_MSVC

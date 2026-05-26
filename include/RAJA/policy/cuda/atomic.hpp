@@ -382,11 +382,12 @@ RAJA_INLINE __device__ T cuda_atomicGeneric(T* acc, Operation&& operation)
   cuda::atomic_ref<T, cuda::thread_scope_device> ref(*acc);
   T expected = ref.load(cuda::memory_order_relaxed);
 
-  while (true) {
-    if (ref.compare_exchange_weak(expected,
-                                  operation(expected),
+  while (true)
+  {
+    if (ref.compare_exchange_weak(expected, operation(expected),
                                   cuda::memory_order_relaxed,
-                                  cuda::memory_order_relaxed)) {
+                                  cuda::memory_order_relaxed))
+    {
       return expected;
     }
   }
@@ -869,8 +870,8 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicExchange(cuda_atomic_explicit<host_policy>,
 
 RAJA_SUPPRESS_HD_WARN
 template<typename T, typename host_policy>
-RAJA_INLINE RAJA_HOST_DEVICE
-T atomicCAS(cuda_atomic_explicit<host_policy>, T* acc, T compare, T value)
+RAJA_INLINE RAJA_HOST_DEVICE T
+atomicCAS(cuda_atomic_explicit<host_policy>, T* acc, T compare, T value)
 {
 #ifdef __CUDA_ARCH__
   return detail::cuda_atomicCAS(acc, compare, value);
@@ -881,13 +882,15 @@ T atomicCAS(cuda_atomic_explicit<host_policy>, T* acc, T compare, T value)
 
 RAJA_SUPPRESS_HD_WARN
 template<typename T, typename Operation, typename host_policy>
-RAJA_INLINE RAJA_HOST_DEVICE
-T atomicGeneric(cuda_atomic_explicit<host_policy>, T* acc, Operation&& operation)
+RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(cuda_atomic_explicit<host_policy>,
+                                             T* acc,
+                                             Operation&& operation)
 {
 #ifdef __CUDA_ARCH__
   return detail::cuda_atomicGeneric(acc, std::forward<Operation>(operation));
 #else
-  return RAJA::atomicGeneric(host_policy {}, acc, std::forward<Operation>(operation));
+  return RAJA::atomicGeneric(host_policy {}, acc,
+                             std::forward<Operation>(operation));
 #endif
 }
 
