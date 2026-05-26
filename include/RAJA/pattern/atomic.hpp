@@ -290,7 +290,7 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicCAS(T* acc, T compare, T value)
 }
 
 /*!
- * @brief Generic atomic operation implemented using CAS loop
+ * @brief Generic atomic operation implemented using a CAS loop
  * @param acc Pointer to location to store value
  * @param operation Functor that computes a new value from the old value
  * @return Returns value at *acc immediately before this operation completed

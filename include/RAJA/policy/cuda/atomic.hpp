@@ -373,7 +373,7 @@ RAJA_INLINE __device__ T cuda_atomicCAS_loop(T* acc,
 }
 
 /*!
- * Generic atomic operation implemented using CAS loop.
+ * Generic atomic operation implemented using a CAS loop.
  * Returns the OLD value that was replaced by the result of this operation.
  */
 template<typename T, typename Operation>
