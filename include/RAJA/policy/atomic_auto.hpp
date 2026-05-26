@@ -22,6 +22,8 @@
 
 #include "RAJA/config.hpp"
 
+#include <utility>
+
 #include "RAJA/util/macros.hpp"
 
 #if !defined(RAJA_ENABLE_DESUL_ATOMICS)
