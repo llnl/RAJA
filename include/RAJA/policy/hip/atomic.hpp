@@ -27,6 +27,8 @@
 #include <cstdint>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
+
 #include "hip/hip_runtime.h"
 
 #include "camp/list.hpp"
