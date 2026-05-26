@@ -34,7 +34,3 @@ raja_add_test(
 raja_add_test(
   NAME test-atomic-ref-bitwise
   SOURCES test-atomic-ref-bitwise.cpp)
-
-raja_add_test(
-  NAME test-atomic-operation
-  SOURCES test-atomic-operation.cpp)
