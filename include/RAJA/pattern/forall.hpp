@@ -429,7 +429,7 @@ RAJA_INLINE resources::EventProxy<Res> forall(ExecutionPolicy&& p,
  *
  ******************************************************************************
  */
-template<type_traits::MultiPolicyConcept ExecutionPolicy,
+template<concepts::MultiPolicyConcept ExecutionPolicy,
          concepts::RandomAccessRange Container,
          typename LoopBody,
          typename Res = typename resources::get_resource<ExecutionPolicy>::type>
@@ -522,7 +522,7 @@ template<concepts::ExecutionPolicy ExecutionPolicy,
          concepts::RandomAccessRange Container,
          typename... Params>
   requires(!concepts::IndexSetPolicy<ExecutionPolicy> &&
-           !type_traits::MultiPolicyConcept<ExecutionPolicy>)
+           !concepts::MultiPolicyConcept<ExecutionPolicy>)
 RAJA_INLINE resources::EventProxy<Res> forall(ExecutionPolicy&& p,
                                               Res r,
                                               Container&& c,
@@ -561,7 +561,7 @@ template<concepts::ExecutionPolicy ExecutionPolicy,
          typename LoopBody,
          typename Res = typename resources::get_resource<ExecutionPolicy>::type>
   requires(!concepts::IndexSetPolicy<ExecutionPolicy> &&
-           !type_traits::MultiPolicyConcept<ExecutionPolicy>)
+           !concepts::MultiPolicyConcept<ExecutionPolicy>)
 RAJA_INLINE resources::EventProxy<Res> forall(ExecutionPolicy&& p,
                                               Container&& c,
                                               LoopBody&& loop_body)
