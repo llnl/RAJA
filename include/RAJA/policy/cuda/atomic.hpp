@@ -27,14 +27,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-#if __CUDA__ARCH__ >= 600 && __CUDACC_VER_MAJOR__ >= 11 &&                     \
-    __CUDACC_VER_MINOR__ >= 6
-#define RAJA_ENABLE_CUDA_ATOMIC_REF
-#endif
-
-#if defined(RAJA_ENABLE_CUDA_ATOMIC_REF)
 #include <cuda/atomic>
-#endif
 
 #include "camp/list.hpp"
 
@@ -182,8 +175,6 @@ RAJA_INLINE __device__ T cuda_atomicExchange(T* acc, T value)
 /*!
  * Atomic load and store
  */
-#if defined(RAJA_ENABLE_CUDA_ATOMIC_REF)
-
 template<typename T>
 RAJA_INLINE __device__ T cuda_atomicLoad(T* acc)
 {
@@ -197,34 +188,6 @@ RAJA_INLINE __device__ void cuda_atomicStore(T* acc, T value)
   cuda::atomic_ref<T, cuda::thread_scope_device>(*acc).store(
       value, cuda::memory_order_relaxed {});
 }
-
-#else
-
-template<typename T,
-         std::enable_if_t<cuda_useBuiltinCommon<T>::value, bool> = true>
-RAJA_INLINE __device__ T cuda_atomicLoad(T* acc)
-{
-  return cuda_atomicOr(acc, static_cast<T>(0));
-}
-
-template<typename T,
-         std::enable_if_t<cuda_useReinterpretCommon<T>::value, bool> = true>
-RAJA_INLINE __device__ T cuda_atomicLoad(T* acc)
-{
-  using R = cuda_useReinterpretCommon_t<T>;
-
-  return RAJA::util::reinterp_A_as_B<R, T>(
-      cuda_atomicLoad(reinterpret_cast<R*>(acc)));
-}
-
-template<typename T>
-RAJA_INLINE __device__ void cuda_atomicStore(T* acc, T value)
-{
-  cuda_atomicExchange(acc, value);
-}
-
-#endif
-
 
 /*!
  * Atomic compare and swap
@@ -585,74 +548,6 @@ RAJA_INLINE __device__ T cuda_atomicDec(T* acc)
   return cuda_atomicSub(acc, static_cast<T>(1));
 }
 
-/*!
- * Atomic bitwise functions (and, or, xor)
- */
-using cuda_atomicBit_builtin_types =
-    ::camp::list<int, unsigned int, unsigned long long int>;
-
-/*!
- * Atomic and
- */
-template<typename T,
-         RAJA::util::enable_if_is_none_of<T, cuda_atomicBit_builtin_types>* =
-             nullptr>
-RAJA_INLINE __device__ T cuda_atomicAnd(T* acc, T value)
-{
-  return cuda_atomicCAS_loop(acc, [value](T old) {
-    return old & value;
-  });
-}
-
-template<
-    typename T,
-    RAJA::util::enable_if_is_any_of<T, cuda_atomicBit_builtin_types>* = nullptr>
-RAJA_INLINE __device__ T cuda_atomicAnd(T* acc, T value)
-{
-  return ::atomicAnd(acc, value);
-}
-
-/*!
- * Atomic or
- */
-template<typename T,
-         RAJA::util::enable_if_is_none_of<T, cuda_atomicBit_builtin_types>* =
-             nullptr>
-RAJA_INLINE __device__ T cuda_atomicOr(T* acc, T value)
-{
-  return cuda_atomicCAS_loop(acc, [value](T old) {
-    return old | value;
-  });
-}
-
-/*!
- * Atomic or via builtin functions was implemented much earlier since atomicLoad
- * may depend on it.
- */
-
-
-/*!
- * Atomic xor
- */
-template<typename T,
-         RAJA::util::enable_if_is_none_of<T, cuda_atomicBit_builtin_types>* =
-             nullptr>
-RAJA_INLINE __device__ T cuda_atomicXor(T* acc, T value)
-{
-  return cuda_atomicCAS_loop(acc, [value](T old) {
-    return old ^ value;
-  });
-}
-
-template<
-    typename T,
-    RAJA::util::enable_if_is_any_of<T, cuda_atomicBit_builtin_types>* = nullptr>
-RAJA_INLINE __device__ T cuda_atomicXor(T* acc, T value)
-{
-  return ::atomicXor(acc, value);
-}
-
-
 }  // namespace detail
 
 /*!
@@ -801,7 +696,8 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicAnd(cuda_atomic_explicit<host_policy>,
                                          T value)
 {
 #ifdef __CUDA_ARCH__
-  return detail::cuda_atomicAnd(acc, value);
+  return cuda::atomic_ref<T, cuda::thread_scope_device>(*acc).fetch_and(
+      value, cuda::memory_order_relaxed {});
 #else
   return RAJA::atomicAnd(host_policy {}, acc, value);
 #endif
@@ -814,7 +710,8 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicOr(cuda_atomic_explicit<host_policy>,
                                         T value)
 {
 #ifdef __CUDA_ARCH__
-  return detail::cuda_atomicOr(acc, value);
+  return cuda::atomic_ref<T, cuda::thread_scope_device>(*acc).fetch_or(
+      value, cuda::memory_order_relaxed {});
 #else
   return RAJA::atomicOr(host_policy {}, acc, value);
 #endif
@@ -827,7 +724,8 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicXor(cuda_atomic_explicit<host_policy>,
                                          T value)
 {
 #ifdef __CUDA_ARCH__
-  return detail::cuda_atomicXor(acc, value);
+  return cuda::atomic_ref<T, cuda::thread_scope_device>(*acc).fetch_xor(
+      value, cuda::memory_order_relaxed {});
 #else
   return RAJA::atomicXor(host_policy {}, acc, value);
 #endif

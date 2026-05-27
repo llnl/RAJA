@@ -178,8 +178,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION V
 endif()
 
 if(RAJA_ENABLE_CUDA)
-  if("${CUDA_VERSION_STRING}" VERSION_LESS "9.2")
-    message(FATAL_ERROR "Trying to use CUDA version ${CUDA_VERSION_STRING}. RAJA dependency Googletest requires CUDA version 9.2.x or newer.")
+  if("${CUDA_VERSION_STRING}" VERSION_LESS "11.6")
+    message(FATAL_ERROR "Trying to use CUDA version ${CUDA_VERSION_STRING}. RAJA CUDA version 11.6 or newer.")
   endif()
 endif()
 
