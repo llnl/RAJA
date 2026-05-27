@@ -379,6 +379,7 @@ RAJA_INLINE __device__ T cuda_atomicCAS_loop(T* acc,
 template<typename T, typename Operation>
 RAJA_INLINE __device__ T cuda_atomicGeneric(T* acc, Operation&& operation)
 {
+#if defined(RAJA_ENABLE_CUDA_ATOMIC_REF)
   cuda::atomic_ref<T, cuda::thread_scope_device> ref(*acc);
   T expected = ref.load(cuda::memory_order_relaxed);
 
@@ -391,6 +392,9 @@ RAJA_INLINE __device__ T cuda_atomicGeneric(T* acc, Operation&& operation)
       return expected;
     }
   }
+#else
+  return cuda_atomicCAS_loop(acc, std::forward<Operation>(operation));
+#endif
 }
 
 /*!
