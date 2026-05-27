@@ -159,8 +159,8 @@ auto make_multi_policy(Selector s) -> MultiPolicy<Selector, Policies...>
 /// \return A MultiPolicy containing the given selector s
 template<typename... Policies, typename Selector>
 RAJA_DEPRECATE("In the next RAJA Release, MultiPolicy will be deprecated.")
-auto make_multi_policy(std::tuple<Policies...> policies, Selector s)
-    -> MultiPolicy<Selector, Policies...>
+auto make_multi_policy(std::tuple<Policies...> policies,
+                       Selector s) -> MultiPolicy<Selector, Policies...>
 {
   return detail::make_multi_policy(camp::make_idx_seq_t<sizeof...(Policies)> {},
                                    s, policies);
@@ -256,9 +256,9 @@ template<typename T>
 struct is_multi_policy
     : ::RAJA::type_traits::SpecializationOf<RAJA::MultiPolicy,
                                             typename std::decay<T>::type>
-                                            {};
-template<typename T>
-concept MultiPolicyConcept = static_cast<bool>(RAJA::type_traits::is_multi_policy<T>::value);
+{};
+
+
 }  // namespace type_traits
 
 }  // end namespace RAJA
