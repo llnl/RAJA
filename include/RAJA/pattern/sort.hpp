@@ -30,6 +30,7 @@
 #include "RAJA/util/Operators.hpp"
 #include "RAJA/pattern/concepts.hpp"
 #include "RAJA/pattern/detail/algorithm.hpp"
+#include "camp/concepts.hpp"
 
 namespace RAJA
 {
@@ -49,11 +50,11 @@ inline namespace policy_by_value_interface
 *
 ******************************************************************************
 */
-template<
-    concepts::ExecutionPolicy ExecPolicy,
-    concepts::Resource Res,
-    concepts::Range Container,
-    typename Compare = operators::less<RAJA::detail::ContainerVal<Container>>>
+template<concepts::ExecutionPolicy ExecPolicy,
+         concepts::Resource Res,
+         concepts::RandomAccessRange Container,
+         concepts::BinaryFunction<bool, RAJA::detail::ContainerVal<Container>>
+             Compare = operators::less<RAJA::detail::ContainerVal<Container>>>
 resources::EventProxy<Res> sort(ExecPolicy&& p,
                                 Res r,
                                 Container&& c,
@@ -62,11 +63,6 @@ resources::EventProxy<Res> sort(ExecPolicy&& p,
   using std::begin;
   using std::distance;
   using std::end;
-  using T = RAJA::detail::ContainerVal<Container>;
-  static_assert(type_traits::is_binary_function<Compare, bool, T, T>::value,
-                "Compare must model BinaryFunction");
-  static_assert(type_traits::is_random_access_range<Container>::value,
-                "Container must model RandomAccessRange");
 
   auto begin_it = begin(c);
   auto end_it   = end(c);
@@ -110,11 +106,11 @@ resources::EventProxy<Res> sort(ExecPolicy&& p,
 *
 ******************************************************************************
 */
-template<
-    concepts::ExecutionPolicy ExecPolicy,
-    concepts::Resource Res,
-    concepts::Range Container,
-    typename Compare = operators::less<RAJA::detail::ContainerVal<Container>>>
+template<concepts::ExecutionPolicy ExecPolicy,
+         concepts::Resource Res,
+         concepts::Range Container,
+         concepts::BinaryFunction<bool, RAJA::detail::ContainerVal<Container>>
+             Compare = operators::less<RAJA::detail::ContainerVal<Container>>>
 resources::EventProxy<Res> stable_sort(ExecPolicy&& p,
                                        Res r,
                                        Container&& c,
@@ -123,11 +119,6 @@ resources::EventProxy<Res> stable_sort(ExecPolicy&& p,
   using std::begin;
   using std::distance;
   using std::end;
-  using T = RAJA::detail::ContainerVal<Container>;
-  static_assert(type_traits::is_binary_function<Compare, bool, T, T>::value,
-                "Compare must model BinaryFunction");
-  static_assert(type_traits::is_random_access_range<Container>::value,
-                "Container must model RandomAccessRange");
 
   auto begin_it = begin(c);
   auto end_it   = end(c);
@@ -172,12 +163,13 @@ resources::EventProxy<Res> stable_sort(ExecPolicy&& p,
 *
 ******************************************************************************
 */
-template<concepts::ExecutionPolicy ExecPolicy,
-         concepts::Resource Res,
-         concepts::Range KeyContainer,
-         concepts::Range ValContainer,
-         typename Compare =
-             operators::less<RAJA::detail::ContainerVal<KeyContainer>>>
+template<
+    concepts::ExecutionPolicy ExecPolicy,
+    concepts::Resource Res,
+    concepts::RandomAccessRange KeyContainer,
+    concepts::RandomAccessRange ValContainer,
+    concepts::BinaryFunction<bool, RAJA::detail::ContainerVal<KeyContainer>>
+        Compare = operators::less<RAJA::detail::ContainerVal<KeyContainer>>>
 resources::EventProxy<Res> sort_pairs(ExecPolicy&& p,
                                       Res r,
                                       KeyContainer&& keys,
@@ -187,13 +179,6 @@ resources::EventProxy<Res> sort_pairs(ExecPolicy&& p,
   using std::begin;
   using std::distance;
   using std::end;
-  using T = RAJA::detail::ContainerVal<KeyContainer>;
-  static_assert(type_traits::is_binary_function<Compare, bool, T, T>::value,
-                "Compare must model BinaryFunction");
-  static_assert(type_traits::is_random_access_range<KeyContainer>::value,
-                "KeyContainer must model RandomAccessRange");
-  static_assert(type_traits::is_random_access_range<ValContainer>::value,
-                "ValContainer must model RandomAccessRange");
 
   auto begin_key = begin(keys);
   auto end_key   = end(keys);
@@ -241,12 +226,13 @@ resources::EventProxy<Res> sort_pairs(ExecPolicy&& p,
 *
 ******************************************************************************
 */
-template<concepts::ExecutionPolicy ExecPolicy,
-         concepts::Resource Res,
-         concepts::Range KeyContainer,
-         concepts::Range ValContainer,
-         typename Compare =
-             operators::less<RAJA::detail::ContainerVal<KeyContainer>>>
+template<
+    concepts::ExecutionPolicy ExecPolicy,
+    concepts::Resource Res,
+    concepts::Range KeyContainer,
+    concepts::Range ValContainer,
+    concepts::BinaryFunction<bool, RAJA::detail::ContainerVal<KeyContainer>>
+        Compare = operators::less<RAJA::detail::ContainerVal<KeyContainer>>>
 resources::EventProxy<Res> stable_sort_pairs(ExecPolicy&& p,
                                              Res r,
                                              KeyContainer&& keys,
@@ -256,13 +242,6 @@ resources::EventProxy<Res> stable_sort_pairs(ExecPolicy&& p,
   using std::begin;
   using std::distance;
   using std::end;
-  using T = RAJA::detail::ContainerVal<KeyContainer>;
-  static_assert(type_traits::is_binary_function<Compare, bool, T, T>::value,
-                "Compare must model BinaryFunction");
-  static_assert(type_traits::is_random_access_range<KeyContainer>::value,
-                "KeyContainer must model RandomAccessRange");
-  static_assert(type_traits::is_random_access_range<ValContainer>::value,
-                "ValContainer must model RandomAccessRange");
 
   auto begin_key = begin(keys);
   auto end_key   = end(keys);
