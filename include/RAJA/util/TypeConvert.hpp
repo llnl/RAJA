@@ -28,6 +28,9 @@
 
 #include "RAJA/util/macros.hpp"
 
+#include "camp/array.hpp"
+
+#include <cstdint>
 #include <string.h>
 
 namespace RAJA
@@ -47,6 +50,40 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr B reinterp_A_as_B(A const& a)
   B b;
   memcpy(&b, &a, sizeof(A));
   return b;
+}
+
+/*!
+ * Compare two values by their object representation.
+ */
+template<typename T>
+RAJA_INLINE RAJA_HOST_DEVICE constexpr bool bitwise_equal(T const& a,
+                                                          T const& b)
+{
+  if constexpr (sizeof(T) == 1)
+  {
+    return reinterp_A_as_B<T, std::uint8_t>(a) ==
+           reinterp_A_as_B<T, std::uint8_t>(b);
+  }
+  else if constexpr (sizeof(T) == 2)
+  {
+    return reinterp_A_as_B<T, std::uint16_t>(a) ==
+           reinterp_A_as_B<T, std::uint16_t>(b);
+  }
+  else if constexpr (sizeof(T) == 4)
+  {
+    return reinterp_A_as_B<T, std::uint32_t>(a) ==
+           reinterp_A_as_B<T, std::uint32_t>(b);
+  }
+  else if constexpr (sizeof(T) == 8)
+  {
+    return reinterp_A_as_B<T, std::uint64_t>(a) ==
+           reinterp_A_as_B<T, std::uint64_t>(b);
+  }
+  else
+  {
+    return reinterp_A_as_B<T, camp::array<unsigned char, sizeof(T)>>(a) ==
+           reinterp_A_as_B<T, camp::array<unsigned char, sizeof(T)>>(b);
+  }
 }
 
 

@@ -14,8 +14,6 @@
 
 #if defined(RAJA_ENABLE_DESUL_ATOMICS)
 
-#include <array>
-#include <bit>
 #include <type_traits>
 
 #include "RAJA/util/macros.hpp"
@@ -175,8 +173,7 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(AtomicPolicy,
     old = desul::atomic_compare_exchange(acc, expected, operation(expected),
                                          raja_default_desul_order {},
                                          raja_default_desul_scope {});
-  } while (std::bit_cast<std::array<unsigned char, sizeof(T)>>(old) !=
-           std::bit_cast<std::array<unsigned char, sizeof(T)>>(expected));
+  } while (!RAJA::util::bitwise_equal(old, expected));
 
   return old;
 }

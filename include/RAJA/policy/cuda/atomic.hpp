@@ -301,28 +301,6 @@ RAJA_INLINE __device__ T cuda_atomicCAS(T* acc, T compare, T value)
 }
 
 /*!
- * Equality comparison for compare and swap loop. Converts to the underlying
- * integral type to avoid cases where the values will never compare equal
- * (most notably, NaNs).
- */
-template<typename T,
-         std::enable_if_t<cuda_useBuiltinCommon<T>::value, bool> = true>
-RAJA_INLINE __device__ bool cuda_atomicCAS_equal(const T& a, const T& b)
-{
-  return a == b;
-}
-
-template<typename T,
-         std::enable_if_t<cuda_useReinterpretCommon<T>::value, bool> = true>
-RAJA_INLINE __device__ bool cuda_atomicCAS_equal(const T& a, const T& b)
-{
-  using R = cuda_useReinterpretCommon_t<T>;
-
-  return cuda_atomicCAS_equal(RAJA::util::reinterp_A_as_B<T, R>(a),
-                              RAJA::util::reinterp_A_as_B<T, R>(b));
-}
-
-/*!
  * Generic impementation of any atomic 32-bit or 64-bit operator.
  * Implementation uses the existing CUDA supplied unsigned 32-bit or 64-bit CAS
  * operator. Returns the OLD value that was replaced by the result of this
@@ -338,7 +316,7 @@ RAJA_INLINE __device__ T cuda_atomicCAS_loop(T* acc, Oper&& oper)
   {
     expected = old;
     old      = cuda_atomicCAS(acc, expected, oper(expected));
-  } while (!cuda_atomicCAS_equal(old, expected));
+  } while (!RAJA::util::bitwise_equal(old, expected));
 
   return old;
 }
@@ -367,7 +345,7 @@ RAJA_INLINE __device__ T cuda_atomicCAS_loop(T* acc,
   {
     expected = old;
     old      = cuda_atomicCAS(acc, expected, oper(expected));
-  } while (!cuda_atomicCAS_equal(old, expected) && !sc(old));
+  } while (!RAJA::util::bitwise_equal(old, expected) && !sc(old));
 
   return old;
 }
