@@ -120,7 +120,7 @@ void ForallAtomicBasicTestImpl( IdxType seglimit )
     //   (avoids non-associativity issues).
     constexpr IdxType factN = static_cast<IdxType>(10);
     RAJA::atomicGeneric<AtomicPolicy>(work_array + 12,
-                                      [=] RAJA_HOST_DEVICE(T old) {
+                                      [=] (T old) {
                                         if (i < factN) {
                                           return old * static_cast<T>(i + static_cast<IdxType>(1));
                                         }
