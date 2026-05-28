@@ -177,6 +177,8 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(AtomicPolicy,
                                          raja_default_desul_scope {});
   } while (std::bit_cast<std::array<unsigned char, sizeof(T)>>(old) !=
            std::bit_cast<std::array<unsigned char, sizeof(T)>>(expected));
+
+  return old;
 }
 
 }  // namespace RAJA
