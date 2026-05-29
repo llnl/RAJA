@@ -164,7 +164,7 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(AtomicPolicy,
 {
   static_assert(std::is_trivially_copyable_v<T>);
 
-  T old = desul::atomic_load(acc, raja_default_desul_order {},
+  T old = desul::atomic_load(acc, desul::MemoryOrderRelaxed {},
                              raja_default_desul_scope {});
   T expected;
 
