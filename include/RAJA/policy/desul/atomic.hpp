@@ -17,6 +17,7 @@
 #include <type_traits>
 
 #include "RAJA/util/macros.hpp"
+#include "RAJA/util/TypeConvert.hpp"
 
 #include "RAJA/policy/atomic_builtin.hpp"
 
