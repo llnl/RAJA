@@ -22,8 +22,8 @@
 
 #include "RAJA/config.hpp"
 
-#include <atomic>
 #include <cstdint>
+#include <utility>
 
 #if defined(RAJA_COMPILER_MSVC) ||                                             \
     ((defined(_WIN32) || defined(_WIN64)) && defined(__INTEL_COMPILER))
@@ -991,18 +991,7 @@ RAJA_DEVICE_HIP RAJA_INLINE T atomicGeneric(builtin_atomic,
                                             T* acc,
                                             Operation&& operation)
 {
-  std::atomic_ref<T> ref(*acc);
-  T expected = ref.load(std::memory_order_relaxed);
-
-  while (true)
-  {
-    if (ref.compare_exchange_weak(expected, operation(expected),
-                                  std::memory_order_relaxed,
-                                  std::memory_order_relaxed))
-    {
-      return expected;
-    }
-  }
+  return detail::builtin_atomicCAS_loop(acc, std::forward<Operation>(operation));
 }
 
 
