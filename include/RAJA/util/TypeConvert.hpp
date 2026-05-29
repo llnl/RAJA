@@ -39,6 +39,9 @@ namespace util
 {
 
 
+// TODO: Investigate std::bit_cast in C++20.
+//       Currently breaks the ROCm 5.7.1 build.
+
 /*!
  * Reinterpret any datatype as another datatype of the same size
  */
