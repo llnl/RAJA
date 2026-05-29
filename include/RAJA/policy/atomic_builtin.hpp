@@ -779,7 +779,7 @@ RAJA_DEVICE_HIP RAJA_INLINE T builtin_atomicCAS_loop(T* acc, Oper&& oper)
   {
     expected = old;
     old      = builtin_atomicCAS(acc, expected, oper(expected));
-  } while (!RAJA::util::bitwise_equal(old, expected));
+  } while (!RAJA::util::bit_equal(old, expected));
 
   return old;
 }
@@ -808,7 +808,7 @@ RAJA_DEVICE_HIP RAJA_INLINE T builtin_atomicCAS_loop(T* acc,
   {
     expected = old;
     old      = builtin_atomicCAS(acc, expected, oper(expected));
-  } while (!RAJA::util::bitwise_equal(old, expected) && !sc(old));
+  } while (!RAJA::util::bit_equal(old, expected) && !sc(old));
 
   return old;
 }

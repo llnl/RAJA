@@ -316,7 +316,7 @@ RAJA_INLINE __device__ T cuda_atomicCAS_loop(T* acc, Oper&& oper)
   {
     expected = old;
     old      = cuda_atomicCAS(acc, expected, oper(expected));
-  } while (!RAJA::util::bitwise_equal(old, expected));
+  } while (!RAJA::util::bit_equal(old, expected));
 
   return old;
 }
@@ -345,7 +345,7 @@ RAJA_INLINE __device__ T cuda_atomicCAS_loop(T* acc,
   {
     expected = old;
     old      = cuda_atomicCAS(acc, expected, oper(expected));
-  } while (!RAJA::util::bitwise_equal(old, expected) && !sc(old));
+  } while (!RAJA::util::bit_equal(old, expected) && !sc(old));
 
   return old;
 }

@@ -174,7 +174,7 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(AtomicPolicy,
     old = desul::atomic_compare_exchange(acc, expected, operation(expected),
                                          raja_default_desul_order {},
                                          raja_default_desul_scope {});
-  } while (!RAJA::util::bitwise_equal(old, expected));
+  } while (!RAJA::util::bit_equal(old, expected));
 
   return old;
 }

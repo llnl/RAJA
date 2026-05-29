@@ -59,8 +59,8 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr B reinterp_A_as_B(A const& a)
  * Compare two values by their object representation.
  */
 template<typename T>
-RAJA_INLINE RAJA_HOST_DEVICE constexpr bool bitwise_equal(T const& a,
-                                                          T const& b)
+RAJA_INLINE RAJA_HOST_DEVICE constexpr bool bit_equal(T const& a,
+                                                      T const& b)
 {
   if constexpr (sizeof(T) == 1)
   {
