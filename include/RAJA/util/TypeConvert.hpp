@@ -31,7 +31,8 @@
 #include "camp/array.hpp"
 
 #include <cstdint>
-#include <string.h>
+#include <cstring>
+#include <type_traits>
 
 namespace RAJA
 {
@@ -49,9 +50,11 @@ template<typename A, typename B>
 RAJA_INLINE RAJA_HOST_DEVICE constexpr B reinterp_A_as_B(A const& a)
 {
   static_assert(sizeof(A) == sizeof(B), "A and B must be the same size");
+  static_assert(std::is_trivially_copyable_v<A>, "A must be trivially copyable");
+  static_assert(std::is_trivially_copyable_v<B>, "B must be trivially copyable");
 
   B b;
-  memcpy(&b, &a, sizeof(A));
+  std::memcpy(&b, &a, sizeof(A));
   return b;
 }
 
