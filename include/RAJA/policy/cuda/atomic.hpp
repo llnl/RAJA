@@ -351,31 +351,6 @@ RAJA_INLINE __device__ T cuda_atomicCAS_loop(T* acc,
 }
 
 /*!
- * Generic atomic operation implemented using a CAS loop.
- * Returns the OLD value that was replaced by the result of this operation.
- */
-template<typename T, typename Operation>
-RAJA_INLINE __device__ T cuda_atomicGeneric(T* acc, Operation&& operation)
-{
-#if defined(RAJA_ENABLE_CUDA_ATOMIC_REF)
-  cuda::atomic_ref<T, cuda::thread_scope_device> ref(*acc);
-  T expected = ref.load(cuda::memory_order_relaxed);
-
-  while (true)
-  {
-    if (ref.compare_exchange_weak(expected, operation(expected),
-                                  cuda::memory_order_relaxed,
-                                  cuda::memory_order_relaxed))
-    {
-      return expected;
-    }
-  }
-#else
-  return cuda_atomicCAS_loop(acc, std::forward<Operation>(operation));
-#endif
-}
-
-/*!
  * Atomic addition
  */
 using cuda_atomicAdd_builtin_types = ::camp::list<int,
@@ -869,7 +844,7 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(cuda_atomic_explicit<host_policy>,
                                              Operation&& operation)
 {
 #ifdef __CUDA_ARCH__
-  return detail::cuda_atomicGeneric(acc, std::forward<Operation>(operation));
+  return detail::cuda_atomicCAS_loop(acc, std::forward<Operation>(operation));
 #else
   return RAJA::atomicGeneric(host_policy {}, acc,
                              std::forward<Operation>(operation));
