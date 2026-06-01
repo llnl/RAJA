@@ -257,8 +257,6 @@ struct is_multi_policy
     : ::RAJA::type_traits::SpecializationOf<RAJA::MultiPolicy,
                                             typename std::decay<T>::type>
 {};
-
-
 }  // namespace type_traits
 
 }  // end namespace RAJA
