@@ -991,7 +991,8 @@ RAJA_DEVICE_HIP RAJA_INLINE T atomicGeneric(builtin_atomic,
                                             T* acc,
                                             Operation&& operation)
 {
-  return detail::builtin_atomicCAS_loop(acc, std::forward<Operation>(operation));
+  return detail::builtin_atomicCAS_loop(acc,
+                                        std::forward<Operation>(operation));
 }
 
 
