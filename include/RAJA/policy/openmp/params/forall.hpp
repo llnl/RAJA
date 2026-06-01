@@ -25,15 +25,14 @@ namespace internal
 //
 // omp for (Auto)
 //
-template<typename ExecPol,
+template<RAJA::policy::omp::Auto ExecPol,
          typename Iterable,
          typename Func,
          typename ForallParam>
-RAJA_INLINE concepts::enable_if<std::is_same<ExecPol, RAJA::policy::omp::Auto>>
-forall_impl(const ExecPol& p,
-            Iterable&& iter,
-            Func&& loop_body,
-            ForallParam&& f_params)
+RAJA_INLINE void forall_impl(const ExecPol& p,
+                             Iterable&& iter,
+                             Func&& loop_body,
+                             ForallParam&& f_params)
 {
   using EXEC_POL = camp::decay<decltype(p)>;
 
@@ -316,17 +315,13 @@ RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
 template<typename Iterable,
          typename Func,
          typename InnerPolicy,
-         typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Host>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>,
-    concepts::negate<
-        RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>>>
-forall_impl(resources::Host host_res,
-            const omp_parallel_exec<InnerPolicy>&,
-            Iterable&& iter,
-            Func&& loop_body,
-            ForallParam f_params)
+         concepts::NonEmptyForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
+    resources::Host host_res,
+    const omp_parallel_exec<InnerPolicy>&,
+    Iterable&& iter,
+    Func&& loop_body,
+    ForallParam f_params)
 {
   expt::forall_impl(host_res, InnerPolicy {}, iter, loop_body, f_params);
   return resources::EventProxy<resources::Host>(host_res);

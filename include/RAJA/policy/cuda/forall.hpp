@@ -375,13 +375,10 @@ template<typename EXEC_POL,
          typename LOOP_BODY,
          typename IndexType,
          typename ForallParam,
-         typename IterationMapping = typename EXEC_POL::IterationMapping,
-         typename IterationGetter  = typename EXEC_POL::IterationGetter,
-         std::enable_if_t<std::is_base_of<iteration_mapping::DirectBase,
-                                          IterationMapping>::value &&
-                              (IterationGetter::block_size > 0),
-                          size_t> BlockSize = IterationGetter::block_size>
-__launch_bounds__(BlockSize, BlocksPerSM) __global__
+         typename IterationGetter = typename EXEC_POL::IterationGetter>
+  requires concepts::DirectBasePolicy<EXEC_POL> &&
+           (IterationGetter::block_size > 0)
+__launch_bounds__(IterationGetter::block_size, BlocksPerSM) __global__
     RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
         const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
         const RAJA_CUDA_GRID_CONSTANT Iterator idx,
@@ -408,12 +405,9 @@ template<typename EXEC_POL,
          typename LOOP_BODY,
          typename IndexType,
          typename ForallParam,
-         typename IterationMapping = typename EXEC_POL::IterationMapping,
-         typename IterationGetter  = typename EXEC_POL::IterationGetter,
-         std::enable_if_t<std::is_base_of<iteration_mapping::DirectBase,
-                                          IterationMapping>::value &&
-                              (IterationGetter::block_size <= 0),
-                          size_t> RAJA_UNUSED_ARG(BlockSize) = 0>
+         typename IterationGetter = typename EXEC_POL::IterationGetter>
+  requires concepts::DirectBasePolicy<EXEC_POL> &&
+           (IterationGetter::block_size <= 0)
 __global__ RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
     const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
     const RAJA_CUDA_GRID_CONSTANT Iterator idx,
@@ -434,22 +428,17 @@ __global__ RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
 }
 
 ///
-template<
-    typename EXEC_POL,
-    size_t BlocksPerSM,
-    typename Iterator,
-    typename LOOP_BODY,
-    typename IndexType,
-    typename ForallParam,
-    typename IterationMapping          = typename EXEC_POL::IterationMapping,
-    typename IterationGetter           = typename EXEC_POL::IterationGetter,
-    std::enable_if_t<std::is_base_of<iteration_mapping::StridedLoopBase,
-                                     IterationMapping>::value &&
-                         std::is_base_of<iteration_mapping::UnsizedLoopBase,
-                                         IterationMapping>::value &&
-                         (IterationGetter::block_size > 0),
-                     size_t> BlockSize = IterationGetter::block_size>
-__launch_bounds__(BlockSize, BlocksPerSM) __global__
+template<typename EXEC_POL,
+         size_t BlocksPerSM,
+         typename Iterator,
+         typename LOOP_BODY,
+         typename IndexType,
+         typename ForallParam,
+         typename IterationGetter = typename EXEC_POL::IterationGetter>
+  requires concepts::StridedLoopPolicy<EXEC_POL> &&
+           concepts::UnsizedLoopPolicy<EXEC_POL> &&
+           (IterationGetter::block_size > 0)
+__launch_bounds__(IterationGetter::block_size, BlocksPerSM) __global__
     RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
         const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
         const RAJA_CUDA_GRID_CONSTANT Iterator idx,
@@ -470,21 +459,16 @@ __launch_bounds__(BlockSize, BlocksPerSM) __global__
 }
 
 ///
-template<
-    typename EXEC_POL,
-    size_t BlocksPerSM,
-    typename Iterator,
-    typename LOOP_BODY,
-    typename IndexType,
-    typename ForallParam,
-    typename IterationMapping = typename EXEC_POL::IterationMapping,
-    typename IterationGetter  = typename EXEC_POL::IterationGetter,
-    std::enable_if_t<std::is_base_of<iteration_mapping::StridedLoopBase,
-                                     IterationMapping>::value &&
-                         std::is_base_of<iteration_mapping::UnsizedLoopBase,
-                                         IterationMapping>::value &&
-                         (IterationGetter::block_size <= 0),
-                     size_t> RAJA_UNUSED_ARG(BlockSize) = 0>
+template<typename EXEC_POL,
+         size_t BlocksPerSM,
+         typename Iterator,
+         typename LOOP_BODY,
+         typename IndexType,
+         typename ForallParam,
+         typename IterationGetter = typename EXEC_POL::IterationGetter>
+  requires concepts::StridedLoopPolicy<EXEC_POL> &&
+           concepts::UnsizedLoopPolicy<EXEC_POL> &&
+           (IterationGetter::block_size <= 0)
 __global__ RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
     const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
     const RAJA_CUDA_GRID_CONSTANT Iterator idx,
@@ -521,19 +505,17 @@ template<typename Iterable,
          typename Concretizer,
          size_t BlocksPerSM,
          bool Async,
-         typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Cuda>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>>
-forall_impl(resources::Cuda cuda_res,
-            ::RAJA::policy::cuda::cuda_exec_explicit<IterationMapping,
-                                                     IterationGetter,
-                                                     Concretizer,
-                                                     BlocksPerSM,
-                                                     Async> const& pol,
-            Iterable&& iter,
-            LoopBody&& loop_body,
-            ForallParam f_params)
+         concepts::ForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Cuda> forall_impl(
+    resources::Cuda cuda_res,
+    ::RAJA::policy::cuda::cuda_exec_explicit<IterationMapping,
+                                             IterationGetter,
+                                             Concretizer,
+                                             BlocksPerSM,
+                                             Async> const& pol,
+    Iterable&& iter,
+    LoopBody&& loop_body,
+    ForallParam f_params)
 {
   using Iterator  = camp::decay<decltype(std::begin(iter))>;
   using LOOP_BODY = camp::decay<LoopBody>;

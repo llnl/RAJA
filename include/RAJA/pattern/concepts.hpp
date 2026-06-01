@@ -25,6 +25,7 @@
 #include "RAJA/pattern/detail/TypeTraits.hpp"
 #include "RAJA/policy/PolicyBase.hpp"
 #include "RAJA/policy/MultiPolicy.hpp"
+#include "RAJA/util/concepts.hpp"
 #include "RAJA/util/resource.hpp"
 #include "RAJA/index/IndexSet.hpp"
 
@@ -62,38 +63,46 @@ concept ForallParams =
     expt::type_traits::is_ForallParamPack<std::decay_t<T>>::value;
 
 template<typename T>
+concept EmptyForallParams =
+    ForallParams<T> &&
+    RAJA::expt::type_traits::is_ForallParamPack_empty<T>::value;
+
+template<typename T>
+concept NonEmptyForallParams =
+    ForallParams<T> &&
+    !RAJA::expt::type_traits::is_ForallParamPack_empty<T>::value;
+
+template<typename T>
 concept MultiPolicyConcept =
     static_cast<bool>(RAJA::type_traits::is_multi_policy<T>::value);
 
-template<class Function, class Return, class Arg1 = Return, class Arg2 = Arg1>
-concept BinaryFunction = std::is_invocable_r_v<Return, Function&, Arg1, Arg2>;
+/// Iteration mappings inherit from things like StridedLoopBase
+#define MakeExecPolWithIterMappingConcept(ConceptName, BaseName)               \
+  template<typename Pol>                                                       \
+  concept ConceptName =                                                        \
+      ExecutionPolicy<Pol> &&                                                  \
+      std::is_base_of_v<BaseName, typename Pol::IterationMapping>;
 
-template<class Function, class Return, class Arg1 = Return>
-concept UnaryFunction = std::is_invocable_r_v<Return, Function&, Arg1>;
-
+// clang-format off
+MakeExecPolWithIterMappingConcept(StridedLoopPolicy,
+                                  iteration_mapping::StridedLoopBase)
+MakeExecPolWithIterMappingConcept(UnsizedLoopPolicy,
+                                  iteration_mapping::UnsizedLoopBase)
+MakeExecPolWithIterMappingConcept(SizedLoopPolicy,
+                                  iteration_mapping::SizedLoopBase)
+MakeExecPolWithIterMappingConcept(ContiguousLoopPolicy,
+                                  iteration_mapping::ContiguousLoopBase)
+MakeExecPolWithIterMappingConcept(DirectPolicy,
+                                  iteration_mapping::Direct)
+MakeExecPolWithIterMappingConcept(DirectBasePolicy,
+                                  iteration_mapping::DirectBase)
+// clang-format on
 }  // namespace concepts
 
 namespace type_traits
 {
 DefineTypeTraitFromConcept(is_execution_policy,
                            RAJA::concepts::ExecutionPolicy);
-
-template<class Function, class Return, class Arg1 = Return, class Arg2 = Arg1>
-struct is_binary_function
-    : std::bool_constant<
-          RAJA::concepts::BinaryFunction<Function, Return, Arg1, Arg2>>
-{};
-template<class Function, class Return, class Arg1 = Return, class Arg2 = Arg1>
-inline constexpr bool is_binary_function_v =
-    is_binary_function<Function, Return, Arg1, Arg2>::value;
-
-template<class Function, class Return, class Arg = Return>
-struct is_unary_function
-    : std::bool_constant<RAJA::concepts::UnaryFunction<Function, Return, Arg>>
-{};
-template<class Function, class Return, class Arg1 = Return>
-inline constexpr bool is_unary_function_v =
-    is_unary_function<Function, Return, Arg1>::value;
 
 }  // namespace type_traits
 

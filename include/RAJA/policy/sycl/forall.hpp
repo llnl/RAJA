@@ -89,15 +89,13 @@ template<typename Iterable,
          typename LoopBody,
          size_t BlockSize,
          bool Async,
-         typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Sycl>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>>
-forall_impl(resources::Sycl& sycl_res,
-            sycl_exec<BlockSize, Async> const& pol,
-            Iterable&& iter,
-            LoopBody&& loop_body,
-            ForallParam f_params)
+         concepts::ForallParams ForallParam>
+    RAJA_INLINE resources::EventProxy < resources::Sycl >>
+    forall_impl(resources::Sycl& sycl_res,
+                sycl_exec<BlockSize, Async> const& pol,
+                Iterable&& iter,
+                LoopBody&& loop_body,
+                ForallParam f_params)
 
 {
   using Iterator = camp::decay<decltype(std::begin(iter))>;

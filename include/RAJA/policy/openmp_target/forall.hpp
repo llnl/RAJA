@@ -38,15 +38,13 @@ namespace omp
 template<size_t ThreadsPerTeam,
          typename Iterable,
          typename Func,
-         typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Omp>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>>
-forall_impl(resources::Omp omp_res,
-            const omp_target_parallel_for_exec<ThreadsPerTeam>& p,
-            Iterable&& iter,
-            Func&& loop_body,
-            ForallParam f_params)
+         concepts::ForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Omp> forall_impl(
+    resources::Omp omp_res,
+    const omp_target_parallel_for_exec<ThreadsPerTeam>& p,
+    Iterable&& iter,
+    Func&& loop_body,
+    ForallParam f_params)
 {
   using EXEC_POL = camp::decay<decltype(p)>;
   constexpr bool is_forall_param_empty =
@@ -108,15 +106,13 @@ forall_impl(resources::Omp omp_res,
   return resources::EventProxy<resources::Omp>(omp_res);
 }
 
-template<typename Iterable, typename Func, typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Omp>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>>
-forall_impl(resources::Omp omp_res,
-            const omp_target_parallel_for_exec_nt& p,
-            Iterable&& iter,
-            Func&& loop_body,
-            ForallParam f_params)
+template<typename Iterable, typename Func, concepts::ForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Omp> forall_impl(
+    resources::Omp omp_res,
+    const omp_target_parallel_for_exec_nt& p,
+    Iterable&& iter,
+    Func&& loop_body,
+    ForallParam f_params)
 {
   using EXEC_POL = camp::decay<decltype(p)>;
   constexpr bool is_forall_param_empty =
