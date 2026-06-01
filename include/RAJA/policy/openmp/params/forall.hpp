@@ -25,14 +25,15 @@ namespace internal
 //
 // omp for (Auto)
 //
-template<RAJA::policy::omp::Auto ExecPol,
+template<typename ExecPol,
          typename Iterable,
          typename Func,
          typename ForallParam>
-RAJA_INLINE void forall_impl(const ExecPol& p,
-                             Iterable&& iter,
-                             Func&& loop_body,
-                             ForallParam&& f_params)
+RAJA_INLINE concepts::enable_if<std::is_same<ExecPol, RAJA::policy::omp::Auto>>
+forall_impl(const ExecPol& p,
+            Iterable&& iter,
+            Func&& loop_body,
+            ForallParam&& f_params)
 {
   using EXEC_POL = camp::decay<decltype(p)>;
 
