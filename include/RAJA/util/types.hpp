@@ -1053,6 +1053,56 @@ private:
   T m_prev_val;
 };
 
+/*!
+ * \brief Functor that copies src to dst.
+ */
+template<typename DestIter, typename SrcIter>
+struct CopyFunctorOneRange
+{
+  DestIter dst;
+  SrcIter src;
+
+  template<typename IndexType>
+  RAJA_HOST_DEVICE constexpr void operator()(IndexType i) const
+  {
+    dst[i] = src[i];
+  }
+};
+
+template<typename DestIter, typename SrcIter>
+CopyFunctorOneRange(DestIter, SrcIter)
+    -> CopyFunctorOneRange<DestIter, SrcIter>;
+
+/*!
+ * \brief Functor that copies src1 to dst1 and src2 to dst2.
+ */
+template<typename DestIter1,
+         typename SrcIter1,
+         typename DestIter2,
+         typename SrcIter2>
+struct CopyFunctorTwoRanges
+{
+  DestIter1 dst1;
+  SrcIter1 src1;
+
+  DestIter2 dst2;
+  SrcIter2 src2;
+
+  template<typename IndexType>
+  RAJA_HOST_DEVICE constexpr void operator()(IndexType i) const
+  {
+    dst1[i] = src1[i];
+    dst2[i] = src2[i];
+  }
+};
+
+template<typename DestIter1,
+         typename SrcIter1,
+         typename DestIter2,
+         typename SrcIter2>
+CopyFunctorTwoRanges(DestIter1, SrcIter1, DestIter2, SrcIter2)
+    -> CopyFunctorTwoRanges<DestIter1, SrcIter1, DestIter2, SrcIter2>;
+
 }  // namespace detail
 
 }  // namespace RAJA

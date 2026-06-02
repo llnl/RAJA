@@ -33,8 +33,10 @@
 #define ROCPRIM_HIP_API 1
 #include "rocprim/device/device_transform.hpp"
 #include "rocprim/device/device_radix_sort.hpp"
+#include "rocprim/device/device_merge_sort.hpp"
 #elif defined(__CUDACC__)
 #include "cub/device/device_radix_sort.cuh"
+#include "cub/device/device_merge_sort.cuh"
 #endif
 
 #include "RAJA/util/concepts.hpp"
@@ -71,10 +73,369 @@ R* get_current(double_buffer<R>& d_bufs)
 #endif
 }
 
+/*!
+        \brief sort given range
+*/
+template<bool RequireStable,
+         typename IterationMapping,
+         typename IterationGetter,
+         typename Concretizer,
+         bool Async,
+         typename Iter,
+         typename Compare>
+resources::EventProxy<resources::Hip> sort(
+    resources::Hip hip_res,
+    ::RAJA::policy::hip::
+        hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
+    Iter begin,
+    Iter end,
+    Compare comp)
+{
+  RAJA_UNUSED_VAR(RequireStable);
+
+  hipStream_t stream = hip_res.get_stream();
+
+  using R = RAJA::detail::IterVal<Iter>;
+
+  using IndexType = camp::decay<decltype(std::distance(begin, end))>;
+
+  const IndexType len     = std::distance(begin, end);
+  constexpr int begin_bit = 0;
+  constexpr int end_bit   = sizeof(R) * CHAR_BIT;
+
+  void* d_temp_storage      = nullptr;
+  size_t temp_storage_bytes = 0;
+
+  auto call_impl = [&,
+                    tmp_begin = static_cast<R*>(nullptr)](auto phase) mutable {
+    RAJA_UNUSED_VAR(phase);
+    RAJA_UNUSED_VAR(tmp_begin);
+
+    if constexpr (std::is_arithmetic_v<R> && std::is_pointer_v<Iter> &&
+                  (std::is_same_v<std::decay_t<Compare>, operators::less<R>> ||
+                   std::is_same_v<std::decay_t<Compare>,
+                                  operators::greater<R>>))
+    {
+      // The begin iterator is a pointer in this constexpr conditional
+      // so we can use double_buffer
+
+      // Setup temporary storage for the output array
+      if constexpr (phase == 0)
+      {
+        tmp_begin = hip::device_mempool_type::getInstance().malloc<R>(len);
+      }
+
+      // Use double_buffers to reduce temporary memory requirements
+      // by allowing cub to write to the begin buffer
+      double_buffer<R> d_keys(begin, tmp_begin);
+
+      if constexpr (std::is_same_v<std::decay_t<Compare>, operators::less<R>>)
+      {
+#if defined(__HIPCC__)
+        CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_keys,
+                                      d_temp_storage, temp_storage_bytes,
+                                      d_keys, len, begin_bit, end_bit, stream);
+#elif defined(__CUDACC__)
+        CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortKeys,
+                                       d_temp_storage, temp_storage_bytes,
+                                       d_keys, len, begin_bit, end_bit, stream);
+#endif
+      }
+      else if constexpr (std::is_same_v<std::decay_t<Compare>,
+                                        operators::greater<R>>)
+      {
+#if defined(__HIPCC__)
+        CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_keys_desc,
+                                      d_temp_storage, temp_storage_bytes,
+                                      d_keys, len, begin_bit, end_bit, stream);
+#elif defined(__CUDACC__)
+        CAMP_CUDA_API_INVOKE_AND_CHECK(
+            ::cub::DeviceRadixSort::SortKeysDescending, d_temp_storage,
+            temp_storage_bytes, d_keys, len, begin_bit, end_bit, stream);
+#endif
+      }
+
+      // Tear-down temporary storage for the output array
+      if constexpr (phase == 1)
+      {
+        // Copy result back if necessary
+        if (get_current(d_keys) == tmp_begin)
+        {
+          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, begin, tmp_begin,
+                                        len * sizeof(R), hipMemcpyDefault,
+                                        stream);
+        }
+
+        // Free temporary output array
+        hip::device_mempool_type::getInstance().free(tmp_begin);
+      }
+    }
+    else
+    {
+#if defined(__HIPCC__)
+      // Setup temporary storage for the output array
+      if constexpr (phase == 0)
+      {
+        tmp_begin = hip::device_mempool_type::getInstance().malloc<R>(len);
+      }
+
+      CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::merge_sort, d_temp_storage,
+                                    temp_storage_bytes, begin, tmp_begin, len,
+                                    comp, stream);
+
+      // Tear-down temporary storage for the output array
+      if constexpr (phase == 1)
+      {
+        // Copy result back via kernel as begin may not be a pointer
+        forall_impl(
+            hip_res,
+            ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
+                                          Concretizer, true> {},
+            TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
+            ::RAJA::detail::CopyFunctorOneRange {begin, tmp_begin},
+            expt::get_empty_forall_param_pack());
+
+        // Free temporary output array
+        hip::device_mempool_type::getInstance().free(tmp_begin);
+      }
+#elif defined(__CUDACC__)
+      if constexpr (RequireStable)
+      {
+        CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::StableSortKeys,
+                                       d_temp_storage, temp_storage_bytes,
+                                       begin, len, comp, stream);
+      }
+      else
+      {
+        CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceMergeSort::SortKeys,
+                                       d_temp_storage, temp_storage_bytes,
+                                       begin, len, comp, stream);
+      }
+#endif
+    }
+  };
+
+  // Determine temporary storage requirements
+  call_impl(std::integral_constant<int, 0> {});
+
+  // Allocate temporary storage
+  d_temp_storage =
+      hip::device_mempool_type::getInstance().malloc<unsigned char>(
+          temp_storage_bytes);
+
+  // Run implementation
+  call_impl(std::integral_constant<int, 1> {});
+
+  // Free temporary storage
+  hip::device_mempool_type::getInstance().free(d_temp_storage);
+
+  // Mark kernel launches done by this resource/stream
+  hip::launch(hip_res, Async);
+
+  return resources::EventProxy<resources::Hip>(hip_res);
+}
+
+/*!
+        \brief stable sort given range of pairs in order of keys
+*/
+template<bool RequireStable,
+         typename IterationMapping,
+         typename IterationGetter,
+         typename Concretizer,
+         bool Async,
+         typename KeyIter,
+         typename ValIter,
+         typename Compare>
+resources::EventProxy<resources::Hip> sort_pairs(
+    resources::Hip hip_res,
+    ::RAJA::policy::hip::
+        hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
+    KeyIter keys_begin,
+    KeyIter keys_end,
+    ValIter vals_begin,
+    Compare comp)
+{
+  RAJA_UNUSED_VAR(RequireStable);
+
+  hipStream_t stream = hip_res.get_stream();
+
+  using K = RAJA::detail::IterVal<KeyIter>;
+  using V = RAJA::detail::IterVal<ValIter>;
+
+  using IndexType = camp::decay<decltype(std::distance(keys_begin, keys_end))>;
+
+  const IndexType len     = std::distance(keys_begin, keys_end);
+  constexpr int begin_bit = 0;
+  constexpr int end_bit   = sizeof(K) * CHAR_BIT;
+
+  void* d_temp_storage      = nullptr;
+  size_t temp_storage_bytes = 0;
+
+  auto call_impl = [&, tmp_keys_begin = static_cast<K*>(nullptr),
+                    tmp_vals_begin =
+                        static_cast<V*>(nullptr)](auto phase) mutable {
+    RAJA_UNUSED_VAR(phase);
+    RAJA_UNUSED_VAR(tmp_keys_begin);
+    RAJA_UNUSED_VAR(tmp_vals_begin);
+
+    if constexpr (std::is_arithmetic_v<K> && std::is_pointer_v<KeyIter> &&
+                  std::is_pointer_v<ValIter> &&
+                  (std::is_same_v<std::decay_t<Compare>, operators::less<K>> ||
+                   std::is_same_v<std::decay_t<Compare>,
+                                  operators::greater<K>>))
+    {
+      // The begin iterators are pointers in this constexpr conditional
+      // so we can use double_buffer
+
+      // Setup temporary storage for the output arrays
+      if constexpr (phase == 0)
+      {
+        tmp_keys_begin = hip::device_mempool_type::getInstance().malloc<K>(len);
+        tmp_vals_begin = hip::device_mempool_type::getInstance().malloc<V>(len);
+      }
+
+      // Use double_buffers to reduce temporary memory requirements
+      // by allowing cub to write to the keys_begin and vals_begin buffers
+      double_buffer<K> d_keys(keys_begin, tmp_keys_begin);
+      double_buffer<V> d_vals(vals_begin, tmp_vals_begin);
+
+      if constexpr (std::is_same_v<std::decay_t<Compare>, operators::less<K>>)
+      {
+#if defined(__HIPCC__)
+        CAMP_HIP_API_INVOKE_AND_CHECK(
+            ::rocprim::radix_sort_pairs, d_temp_storage, temp_storage_bytes,
+            d_keys, d_vals, len, begin_bit, end_bit, stream);
+#elif defined(__CUDACC__)
+        CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairs,
+                                       d_temp_storage, temp_storage_bytes,
+                                       d_keys, d_vals, len, begin_bit, end_bit,
+                                       stream);
+#endif
+      }
+      else if constexpr (std::is_same_v<std::decay_t<Compare>,
+                                        operators::greater<K>>)
+      {
+#if defined(__HIPCC__)
+        CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs_desc,
+                                      d_temp_storage, temp_storage_bytes,
+                                      d_keys, d_vals, len, begin_bit, end_bit,
+                                      stream);
+#elif defined(__CUDACC__)
+        CAMP_CUDA_API_INVOKE_AND_CHECK(
+            ::cub::DeviceRadixSort::SortPairsDescending, d_temp_storage,
+            temp_storage_bytes, d_keys, d_vals, len, begin_bit, end_bit,
+            stream);
+#endif
+      }
+
+      // Tear-down temporary storage for the output array
+      if constexpr (phase == 1)
+      {
+        // copy keys and values back if necessary
+        if (get_current(d_keys) == tmp_keys_begin &&
+            get_current(d_vals) == tmp_vals_begin)
+        {
+          // Copy keys and values back via kernel for performance
+          forall_impl(
+              hip_res,
+              ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
+                                            Concretizer, true> {},
+              TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
+              ::RAJA::detail::CopyFunctorTwoRanges {keys_begin, tmp_keys_begin,
+                                                    vals_begin, tmp_vals_begin},
+              expt::get_empty_forall_param_pack());
+        }
+        else if (get_current(d_keys) == tmp_keys_begin)
+        {
+          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, keys_begin,
+                                        tmp_keys_begin, len * sizeof(K),
+                                        hipMemcpyDefault, stream);
+        }
+        else if (get_current(d_vals) == tmp_vals_begin)
+        {
+          CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, vals_begin,
+                                        tmp_vals_begin, len * sizeof(V),
+                                        hipMemcpyDefault, stream);
+        }
+
+        // Free temporary output arrays
+        hip::device_mempool_type::getInstance().free(tmp_keys_begin);
+        hip::device_mempool_type::getInstance().free(tmp_vals_begin);
+      }
+    }
+    else
+    {
+#if defined(__HIPCC__)
+      // Setup temporary storage for the output arrays
+      if constexpr (phase == 0)
+      {
+        tmp_keys_begin = hip::device_mempool_type::getInstance().malloc<K>(len);
+        tmp_vals_begin = hip::device_mempool_type::getInstance().malloc<V>(len);
+      }
+
+      CAMP_HIP_API_INVOKE_AND_CHECK(
+          ::rocprim::merge_sort, d_temp_storage, temp_storage_bytes, keys_begin,
+          tmp_keys_begin, vals_begin, tmp_vals_begin, len, comp, stream);
+
+      // Tear-down temporary storage for the output array
+      if constexpr (phase == 1)
+      {
+        // Copy keys and values back via kernel as iterators may not be a
+        // pointer
+        forall_impl(
+            hip_res,
+            ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
+                                          Concretizer, true> {},
+            TypedRangeSegment<IndexType>(static_cast<IndexType>(0), len),
+            ::RAJA::detail::CopyFunctorTwoRanges {keys_begin, tmp_keys_begin,
+                                                  vals_begin, tmp_vals_begin},
+            expt::get_empty_forall_param_pack());
+
+        // Free temporary output arrays
+        hip::device_mempool_type::getInstance().free(tmp_keys_begin);
+        hip::device_mempool_type::getInstance().free(tmp_vals_begin);
+      }
+#elif defined(__CUDACC__)
+      if constexpr (RequireStable)
+      {
+        CAMP_CUDA_API_INVOKE_AND_CHECK(
+            ::cub::DeviceMergeSort::StableSortPairs, d_temp_storage,
+            temp_storage_bytes, keys_begin, vals_begin, len, comp, stream);
+      }
+      else
+      {
+        CAMP_CUDA_API_INVOKE_AND_CHECK(
+            ::cub::DeviceMergeSort::SortPairs, d_temp_storage,
+            temp_storage_bytes, keys_begin, vals_begin, len, comp, stream);
+      }
+#endif
+    }
+  };
+
+  // Determine temporary device storage requirements
+  call_impl(std::integral_constant<int, 0> {});
+
+  // Allocate temporary storage
+  d_temp_storage =
+      hip::device_mempool_type::getInstance().malloc<unsigned char>(
+          temp_storage_bytes);
+
+  // Run
+  call_impl(std::integral_constant<int, 1> {});
+
+  // Free temporary storage
+  hip::device_mempool_type::getInstance().free(d_temp_storage);
+
+  // Mark kernel launches done by this resource/stream
+  hip::launch(hip_res, Async);
+
+  return resources::EventProxy<resources::Hip>(hip_res);
+}
+
 }  // namespace detail
 
 /*!
-        \brief static assert unimplemented stable sort
+        \brief stable sort given range
 */
 template<typename IterationMapping,
          typename IterationGetter,
@@ -82,197 +443,20 @@ template<typename IterationMapping,
          bool Async,
          typename Iter,
          typename Compare>
-concepts::enable_if_t<
-    resources::EventProxy<resources::Hip>,
-    concepts::negate<concepts::all_of<
-        type_traits::is_arithmetic<RAJA::detail::IterVal<Iter>>,
-        std::is_pointer<Iter>,
-        concepts::any_of<
-            camp::is_same<Compare,
-                          operators::less<RAJA::detail::IterVal<Iter>>>,
-            camp::is_same<Compare,
-                          operators::greater<RAJA::detail::IterVal<Iter>>>>>>>
-stable(resources::Hip hip_res,
-       ::RAJA::policy::hip::
-           hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
-       Iter,
-       Iter,
-       Compare)
+resources::EventProxy<resources::Hip> stable(
+    resources::Hip hip_res,
+    ::RAJA::policy::hip::
+        hip_exec<IterationMapping, IterationGetter, Concretizer, Async> p,
+    Iter begin,
+    Iter end,
+    Compare comp)
 {
-  static_assert(
-      concepts::all_of<
-          type_traits::is_arithmetic<RAJA::detail::IterVal<Iter>>,
-          std::is_pointer<Iter>,
-          concepts::any_of<
-              camp::is_same<Compare,
-                            operators::less<RAJA::detail::IterVal<Iter>>>,
-              camp::is_same<Compare, operators::greater<
-                                         RAJA::detail::IterVal<Iter>>>>>::value,
-      "RAJA stable_sort<hip_exec> is only implemented for pointers to "
-      "arithmetic types and RAJA::operators::less and "
-      "RAJA::operators::greater.");
-
-  return resources::EventProxy<resources::Hip>(hip_res);
+  constexpr bool require_stable = true;
+  return detail::sort<require_stable>(hip_res, p, begin, end, comp);
 }
 
 /*!
-        \brief stable sort given range in ascending order
-*/
-template<typename IterationMapping,
-         typename IterationGetter,
-         typename Concretizer,
-         bool Async,
-         typename Iter>
-concepts::enable_if_t<resources::EventProxy<resources::Hip>,
-                      type_traits::is_arithmetic<RAJA::detail::IterVal<Iter>>,
-                      std::is_pointer<Iter>>
-stable(resources::Hip hip_res,
-       ::RAJA::policy::hip::
-           hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
-       Iter begin,
-       Iter end,
-       operators::less<RAJA::detail::IterVal<Iter>>)
-{
-  hipStream_t stream = hip_res.get_stream();
-
-  using R = RAJA::detail::IterVal<Iter>;
-
-  int len       = std::distance(begin, end);
-  int begin_bit = 0;
-  int end_bit   = sizeof(R) * CHAR_BIT;
-
-  // Allocate temporary storage for the output array
-  R* d_out = hip::device_mempool_type::getInstance().malloc<R>(len);
-
-  // use cub double buffer to reduce temporary memory requirements
-  // by allowing cub to write to the begin buffer
-  detail::double_buffer<R> d_keys(begin, d_out);
-
-  // Determine temporary device storage requirements
-  void* d_temp_storage      = nullptr;
-  size_t temp_storage_bytes = 0;
-#if defined(__HIPCC__)
-  CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_keys, d_temp_storage,
-                                temp_storage_bytes, d_keys, len, begin_bit,
-                                end_bit, stream);
-#elif defined(__CUDACC__)
-  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortKeys,
-                                 d_temp_storage, temp_storage_bytes, d_keys,
-                                 len, begin_bit, end_bit, stream);
-#endif
-  // Allocate temporary storage
-  d_temp_storage =
-      hip::device_mempool_type::getInstance().malloc<unsigned char>(
-          temp_storage_bytes);
-
-  // Run
-#if defined(__HIPCC__)
-  CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_keys, d_temp_storage,
-                                temp_storage_bytes, d_keys, len, begin_bit,
-                                end_bit, stream);
-#elif defined(__CUDACC__)
-  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortKeys,
-                                 d_temp_storage, temp_storage_bytes, d_keys,
-                                 len, begin_bit, end_bit, stream);
-#endif
-  // Free temporary storage
-  hip::device_mempool_type::getInstance().free(d_temp_storage);
-
-  if (detail::get_current(d_keys) == d_out)
-  {
-
-    // copy
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, begin, d_out, len * sizeof(R),
-                                  hipMemcpyDefault, stream);
-  }
-
-  hip::device_mempool_type::getInstance().free(d_out);
-
-  hip::launch(hip_res, Async);
-
-  return resources::EventProxy<resources::Hip>(hip_res);
-}
-
-/*!
-        \brief stable sort given range in descending order
-*/
-template<typename IterationMapping,
-         typename IterationGetter,
-         typename Concretizer,
-         bool Async,
-         typename Iter>
-concepts::enable_if_t<resources::EventProxy<resources::Hip>,
-                      type_traits::is_arithmetic<RAJA::detail::IterVal<Iter>>,
-                      std::is_pointer<Iter>>
-stable(resources::Hip hip_res,
-       ::RAJA::policy::hip::
-           hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
-       Iter begin,
-       Iter end,
-       operators::greater<RAJA::detail::IterVal<Iter>>)
-{
-  hipStream_t stream = hip_res.get_stream();
-
-  using R = RAJA::detail::IterVal<Iter>;
-
-  int len       = std::distance(begin, end);
-  int begin_bit = 0;
-  int end_bit   = sizeof(R) * CHAR_BIT;
-
-  // Allocate temporary storage for the output array
-  R* d_out = hip::device_mempool_type::getInstance().malloc<R>(len);
-
-  // use cub double buffer to reduce temporary memory requirements
-  // by allowing cub to write to the begin buffer
-  detail::double_buffer<R> d_keys(begin, d_out);
-
-  // Determine temporary device storage requirements
-  void* d_temp_storage      = nullptr;
-  size_t temp_storage_bytes = 0;
-#if defined(__HIPCC__)
-  CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_keys_desc, d_temp_storage,
-                                temp_storage_bytes, d_keys, len, begin_bit,
-                                end_bit, stream);
-#elif defined(__CUDACC__)
-  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortKeysDescending,
-                                 d_temp_storage, temp_storage_bytes, d_keys,
-                                 len, begin_bit, end_bit, stream);
-#endif
-  // Allocate temporary storage
-  d_temp_storage =
-      hip::device_mempool_type::getInstance().malloc<unsigned char>(
-          temp_storage_bytes);
-
-  // Run
-#if defined(__HIPCC__)
-  CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_keys_desc, d_temp_storage,
-                                temp_storage_bytes, d_keys, len, begin_bit,
-                                end_bit, stream);
-#elif defined(__CUDACC__)
-  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortKeysDescending,
-                                 d_temp_storage, temp_storage_bytes, d_keys,
-                                 len, begin_bit, end_bit, stream);
-#endif
-  // Free temporary storage
-  hip::device_mempool_type::getInstance().free(d_temp_storage);
-
-  if (detail::get_current(d_keys) == d_out)
-  {
-
-    // copy
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, begin, d_out, len * sizeof(R),
-                                  hipMemcpyDefault, stream);
-  }
-
-  hip::device_mempool_type::getInstance().free(d_out);
-
-  hip::launch(hip_res, Async);
-
-  return resources::EventProxy<resources::Hip>(hip_res);
-}
-
-/*!
-        \brief static assert unimplemented sort
+        \brief sort given range
 */
 template<typename IterationMapping,
          typename IterationGetter,
@@ -280,82 +464,20 @@ template<typename IterationMapping,
          bool Async,
          typename Iter,
          typename Compare>
-concepts::enable_if_t<
-    resources::EventProxy<resources::Hip>,
-    concepts::negate<concepts::all_of<
-        type_traits::is_arithmetic<RAJA::detail::IterVal<Iter>>,
-        std::is_pointer<Iter>,
-        concepts::any_of<
-            camp::is_same<Compare,
-                          operators::less<RAJA::detail::IterVal<Iter>>>,
-            camp::is_same<Compare,
-                          operators::greater<RAJA::detail::IterVal<Iter>>>>>>>
-unstable(resources::Hip hip_res,
-         ::RAJA::policy::hip::
-             hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
-         Iter,
-         Iter,
-         Compare)
+resources::EventProxy<resources::Hip> unstable(
+    resources::Hip hip_res,
+    ::RAJA::policy::hip::
+        hip_exec<IterationMapping, IterationGetter, Concretizer, Async> p,
+    Iter begin,
+    Iter end,
+    Compare comp)
 {
-  static_assert(
-      concepts::all_of<
-          type_traits::is_arithmetic<RAJA::detail::IterVal<Iter>>,
-          std::is_pointer<Iter>,
-          concepts::any_of<
-              camp::is_same<Compare,
-                            operators::less<RAJA::detail::IterVal<Iter>>>,
-              camp::is_same<Compare, operators::greater<
-                                         RAJA::detail::IterVal<Iter>>>>>::value,
-      "RAJA sort<hip_exec> is only implemented for pointers to arithmetic "
-      "types and RAJA::operators::less and RAJA::operators::greater.");
-
-  return resources::EventProxy<resources::Hip>(hip_res);
+  constexpr bool require_stable = true;
+  return detail::sort<!require_stable>(hip_res, p, begin, end, comp);
 }
 
 /*!
-        \brief sort given range in ascending order
-*/
-template<typename IterationMapping,
-         typename IterationGetter,
-         typename Concretizer,
-         bool Async,
-         typename Iter>
-concepts::enable_if_t<resources::EventProxy<resources::Hip>,
-                      type_traits::is_arithmetic<RAJA::detail::IterVal<Iter>>,
-                      std::is_pointer<Iter>>
-unstable(resources::Hip hip_res,
-         ::RAJA::policy::hip::
-             hip_exec<IterationMapping, IterationGetter, Concretizer, Async> p,
-         Iter begin,
-         Iter end,
-         operators::less<RAJA::detail::IterVal<Iter>> comp)
-{
-  return stable(hip_res, p, begin, end, comp);
-}
-
-/*!
-        \brief sort given range in descending order
-*/
-template<typename IterationMapping,
-         typename IterationGetter,
-         typename Concretizer,
-         bool Async,
-         typename Iter>
-concepts::enable_if_t<resources::EventProxy<resources::Hip>,
-                      type_traits::is_arithmetic<RAJA::detail::IterVal<Iter>>,
-                      std::is_pointer<Iter>>
-unstable(resources::Hip hip_res,
-         ::RAJA::policy::hip::
-             hip_exec<IterationMapping, IterationGetter, Concretizer, Async> p,
-         Iter begin,
-         Iter end,
-         operators::greater<RAJA::detail::IterVal<Iter>> comp)
-{
-  return stable(hip_res, p, begin, end, comp);
-}
-
-/*!
-        \brief static assert unimplemented stable sort pairs
+        \brief stable sort given range of pairs in order of keys
 */
 template<typename IterationMapping,
          typename IterationGetter,
@@ -364,234 +486,22 @@ template<typename IterationMapping,
          typename KeyIter,
          typename ValIter,
          typename Compare>
-concepts::enable_if_t<
-    resources::EventProxy<resources::Hip>,
-    concepts::negate<concepts::all_of<
-        type_traits::is_arithmetic<RAJA::detail::IterVal<KeyIter>>,
-        std::is_pointer<KeyIter>,
-        std::is_pointer<ValIter>,
-        concepts::any_of<
-            camp::is_same<Compare,
-                          operators::less<RAJA::detail::IterVal<KeyIter>>>,
-            camp::is_same<
-                Compare,
-                operators::greater<RAJA::detail::IterVal<KeyIter>>>>>>>
-stable_pairs(
+resources::EventProxy<resources::Hip> stable_pairs(
     resources::Hip hip_res,
     ::RAJA::policy::hip::
-        hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
-    KeyIter,
-    KeyIter,
-    ValIter,
-    Compare)
-{
-  static_assert(std::is_pointer<KeyIter>::value,
-                "stable_sort_pairs<hip_exec> is only implemented for pointers");
-  static_assert(std::is_pointer<ValIter>::value,
-                "stable_sort_pairs<hip_exec> is only implemented for pointers");
-  using K = RAJA::detail::IterVal<KeyIter>;
-  static_assert(
-      type_traits::is_arithmetic<K>::value,
-      "stable_sort_pairs<hip_exec> is only implemented for arithmetic types");
-  static_assert(
-      concepts::any_of<camp::is_same<Compare, operators::less<K>>,
-                       camp::is_same<Compare, operators::greater<K>>>::value,
-      "stable_sort_pairs<hip_exec> is only implemented for "
-      "RAJA::operators::less or RAJA::operators::greater");
-
-  return resources::EventProxy<resources::Hip>(hip_res);
-}
-
-/*!
-        \brief stable sort given range of pairs in ascending order of keys
-*/
-template<typename IterationMapping,
-         typename IterationGetter,
-         typename Concretizer,
-         bool Async,
-         typename KeyIter,
-         typename ValIter>
-concepts::enable_if_t<
-    resources::EventProxy<resources::Hip>,
-    type_traits::is_arithmetic<RAJA::detail::IterVal<KeyIter>>,
-    std::is_pointer<KeyIter>,
-    std::is_pointer<ValIter>>
-stable_pairs(
-    resources::Hip hip_res,
-    ::RAJA::policy::hip::
-        hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
+        hip_exec<IterationMapping, IterationGetter, Concretizer, Async> p,
     KeyIter keys_begin,
     KeyIter keys_end,
     ValIter vals_begin,
-    operators::less<RAJA::detail::IterVal<KeyIter>>)
+    Compare comp)
 {
-  hipStream_t stream = hip_res.get_stream();
-
-  using K = RAJA::detail::IterVal<KeyIter>;
-  using V = RAJA::detail::IterVal<ValIter>;
-
-  int len       = std::distance(keys_begin, keys_end);
-  int begin_bit = 0;
-  int end_bit   = sizeof(K) * CHAR_BIT;
-
-  // Allocate temporary storage for the output arrays
-  K* d_keys_out = hip::device_mempool_type::getInstance().malloc<K>(len);
-  V* d_vals_out = hip::device_mempool_type::getInstance().malloc<V>(len);
-
-  // use cub double buffer to reduce temporary memory requirements
-  // by allowing cub to write to the keys_begin and vals_begin buffers
-  detail::double_buffer<K> d_keys(keys_begin, d_keys_out);
-  detail::double_buffer<V> d_vals(vals_begin, d_vals_out);
-
-  // Determine temporary device storage requirements
-  void* d_temp_storage      = nullptr;
-  size_t temp_storage_bytes = 0;
-#if defined(__HIPCC__)
-  CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs, d_temp_storage,
-                                temp_storage_bytes, d_keys, d_vals, len,
-                                begin_bit, end_bit, stream);
-#elif defined(__CUDACC__)
-  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairs,
-                                 d_temp_storage, temp_storage_bytes, d_keys,
-                                 d_vals, len, begin_bit, end_bit, stream);
-#endif
-  // Allocate temporary storage
-  d_temp_storage =
-      hip::device_mempool_type::getInstance().malloc<unsigned char>(
-          temp_storage_bytes);
-
-  // Run
-#if defined(__HIPCC__)
-  CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs, d_temp_storage,
-                                temp_storage_bytes, d_keys, d_vals, len,
-                                begin_bit, end_bit, stream);
-#elif defined(__CUDACC__)
-  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairs,
-                                 d_temp_storage, temp_storage_bytes, d_keys,
-                                 d_vals, len, begin_bit, end_bit, stream);
-#endif
-  // Free temporary storage
-  hip::device_mempool_type::getInstance().free(d_temp_storage);
-
-  if (detail::get_current(d_keys) == d_keys_out)
-  {
-
-    // copy keys
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, keys_begin, d_keys_out,
-                                  len * sizeof(K), hipMemcpyDefault, stream);
-  }
-  if (detail::get_current(d_vals) == d_vals_out)
-  {
-
-    // copy vals
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, vals_begin, d_vals_out,
-                                  len * sizeof(V), hipMemcpyDefault, stream);
-  }
-
-  hip::device_mempool_type::getInstance().free(d_keys_out);
-  hip::device_mempool_type::getInstance().free(d_vals_out);
-
-  hip::launch(hip_res, Async);
-
-  return resources::EventProxy<resources::Hip>(hip_res);
+  constexpr bool require_stable = true;
+  return detail::sort_pairs<require_stable>(hip_res, p, keys_begin, keys_end,
+                                            vals_begin, comp);
 }
 
 /*!
-        \brief stable sort given range of pairs in descending order of keys
-*/
-template<typename IterationMapping,
-         typename IterationGetter,
-         typename Concretizer,
-         bool Async,
-         typename KeyIter,
-         typename ValIter>
-concepts::enable_if_t<
-    resources::EventProxy<resources::Hip>,
-    type_traits::is_arithmetic<RAJA::detail::IterVal<KeyIter>>,
-    std::is_pointer<KeyIter>,
-    std::is_pointer<ValIter>>
-stable_pairs(
-    resources::Hip hip_res,
-    ::RAJA::policy::hip::
-        hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
-    KeyIter keys_begin,
-    KeyIter keys_end,
-    ValIter vals_begin,
-    operators::greater<RAJA::detail::IterVal<KeyIter>>)
-{
-  hipStream_t stream = hip_res.get_stream();
-
-  using K = RAJA::detail::IterVal<KeyIter>;
-  using V = RAJA::detail::IterVal<ValIter>;
-
-  int len       = std::distance(keys_begin, keys_end);
-  int begin_bit = 0;
-  int end_bit   = sizeof(K) * CHAR_BIT;
-
-  // Allocate temporary storage for the output arrays
-  K* d_keys_out = hip::device_mempool_type::getInstance().malloc<K>(len);
-  V* d_vals_out = hip::device_mempool_type::getInstance().malloc<V>(len);
-
-  // use cub double buffer to reduce temporary memory requirements
-  // by allowing cub to write to the keys_begin and vals_begin buffers
-  detail::double_buffer<K> d_keys(keys_begin, d_keys_out);
-  detail::double_buffer<V> d_vals(vals_begin, d_vals_out);
-
-  // Determine temporary device storage requirements
-  void* d_temp_storage      = nullptr;
-  size_t temp_storage_bytes = 0;
-#if defined(__HIPCC__)
-  CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs_desc,
-                                d_temp_storage, temp_storage_bytes, d_keys,
-                                d_vals, len, begin_bit, end_bit, stream);
-#elif defined(__CUDACC__)
-  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairsDescending,
-                                 d_temp_storage, temp_storage_bytes, d_keys,
-                                 d_vals, len, begin_bit, end_bit, stream);
-#endif
-  // Allocate temporary storage
-  d_temp_storage =
-      hip::device_mempool_type::getInstance().malloc<unsigned char>(
-          temp_storage_bytes);
-
-  // Run
-#if defined(__HIPCC__)
-  CAMP_HIP_API_INVOKE_AND_CHECK(::rocprim::radix_sort_pairs_desc,
-                                d_temp_storage, temp_storage_bytes, d_keys,
-                                d_vals, len, begin_bit, end_bit, stream);
-#elif defined(__CUDACC__)
-  CAMP_CUDA_API_INVOKE_AND_CHECK(::cub::DeviceRadixSort::SortPairsDescending,
-                                 d_temp_storage, temp_storage_bytes, d_keys,
-                                 d_vals, len, begin_bit, end_bit, stream);
-#endif
-  // Free temporary storage
-  hip::device_mempool_type::getInstance().free(d_temp_storage);
-
-  if (detail::get_current(d_keys) == d_keys_out)
-  {
-
-    // copy keys
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, keys_begin, d_keys_out,
-                                  len * sizeof(K), hipMemcpyDefault, stream);
-  }
-  if (detail::get_current(d_vals) == d_vals_out)
-  {
-
-    // copy vals
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpyAsync, vals_begin, d_vals_out,
-                                  len * sizeof(V), hipMemcpyDefault, stream);
-  }
-
-  hip::device_mempool_type::getInstance().free(d_keys_out);
-  hip::device_mempool_type::getInstance().free(d_vals_out);
-
-  hip::launch(hip_res, Async);
-
-  return resources::EventProxy<resources::Hip>(hip_res);
-}
-
-/*!
-        \brief static assert unimplemented sort pairs
+        \brief stable sort given range of pairs in order of keys
 */
 template<typename IterationMapping,
          typename IterationGetter,
@@ -600,94 +510,18 @@ template<typename IterationMapping,
          typename KeyIter,
          typename ValIter,
          typename Compare>
-concepts::enable_if_t<
-    resources::EventProxy<resources::Hip>,
-    concepts::negate<concepts::all_of<
-        type_traits::is_arithmetic<RAJA::detail::IterVal<KeyIter>>,
-        std::is_pointer<KeyIter>,
-        std::is_pointer<ValIter>,
-        concepts::any_of<
-            camp::is_same<Compare,
-                          operators::less<RAJA::detail::IterVal<KeyIter>>>,
-            camp::is_same<
-                Compare,
-                operators::greater<RAJA::detail::IterVal<KeyIter>>>>>>>
-unstable_pairs(
-    resources::Hip hip_res,
-    ::RAJA::policy::hip::
-        hip_exec<IterationMapping, IterationGetter, Concretizer, Async>,
-    KeyIter,
-    KeyIter,
-    ValIter,
-    Compare)
-{
-  static_assert(std::is_pointer<KeyIter>::value,
-                "sort_pairs<hip_exec> is only implemented for pointers");
-  static_assert(std::is_pointer<ValIter>::value,
-                "sort_pairs<hip_exec> is only implemented for pointers");
-  using K = RAJA::detail::IterVal<KeyIter>;
-  static_assert(
-      type_traits::is_arithmetic<K>::value,
-      "sort_pairs<hip_exec> is only implemented for arithmetic types");
-  static_assert(
-      concepts::any_of<camp::is_same<Compare, operators::less<K>>,
-                       camp::is_same<Compare, operators::greater<K>>>::value,
-      "sort_pairs<hip_exec> is only implemented for RAJA::operators::less or "
-      "RAJA::operators::greater");
-
-  return resources::EventProxy<resources::Hip>(hip_res);
-}
-
-/*!
-        \brief stable sort given range of pairs in ascending order of keys
-*/
-template<typename IterationMapping,
-         typename IterationGetter,
-         typename Concretizer,
-         bool Async,
-         typename KeyIter,
-         typename ValIter>
-concepts::enable_if_t<
-    resources::EventProxy<resources::Hip>,
-    type_traits::is_arithmetic<RAJA::detail::IterVal<KeyIter>>,
-    std::is_pointer<KeyIter>,
-    std::is_pointer<ValIter>>
-unstable_pairs(
+resources::EventProxy<resources::Hip> unstable_pairs(
     resources::Hip hip_res,
     ::RAJA::policy::hip::
         hip_exec<IterationMapping, IterationGetter, Concretizer, Async> p,
     KeyIter keys_begin,
     KeyIter keys_end,
     ValIter vals_begin,
-    operators::less<RAJA::detail::IterVal<KeyIter>> comp)
+    Compare comp)
 {
-  return stable_pairs(hip_res, p, keys_begin, keys_end, vals_begin, comp);
-}
-
-/*!
-        \brief stable sort given range of pairs in descending order of keys
-*/
-template<typename IterationMapping,
-         typename IterationGetter,
-         typename Concretizer,
-         bool Async,
-         typename KeyIter,
-         typename ValIter>
-concepts::enable_if_t<
-    resources::EventProxy<resources::Hip>,
-    type_traits::is_arithmetic<RAJA::detail::IterVal<KeyIter>>,
-    std::is_pointer<KeyIter>,
-    std::is_pointer<ValIter>>
-unstable_pairs(
-    resources::Hip hip_res,
-    ::RAJA::policy::hip::
-        hip_exec<IterationMapping, IterationGetter, Concretizer, Async> p,
-    KeyIter keys_begin,
-    KeyIter keys_end,
-    ValIter vals_begin,
-    operators::greater<RAJA::detail::IterVal<KeyIter>> comp)
-{
-  return stable_pairs(hip_res, p, keys_begin, keys_end, vals_begin, comp);
+  constexpr bool require_stable = true;
+  return detail::sort_pairs<!require_stable>(hip_res, p, keys_begin, keys_end,
+                                             vals_begin, comp);
 }
 
 }  // namespace sort

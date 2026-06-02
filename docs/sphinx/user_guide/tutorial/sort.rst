@@ -171,9 +171,7 @@ non-increasing order in the output array::
 .. note:: * The only operators provided by RAJA that are valid to use in sort
             because they enforce a strict weak ordering of elements for 
             arithmetic types are 'less' and 'greater'. Users may provide other
-            operators for different sorting operations. 
-          * Also the RAJA CUDA sort back-end only supports RAJA operators 
-            'less' and 'greater' because it uses the NVIDIA CUB library.
+            operators for different sorting operations.
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Sort Pairs
