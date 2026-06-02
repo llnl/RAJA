@@ -198,6 +198,7 @@ template<concepts::Resource Res,
          concepts::ExecutionPolicy ExecutionPolicy,
          concepts::Range Container,
          typename LoopBody>
+  requires(!concepts::IndexSetPolicy<ExecutionPolicy>)
 RAJA_INLINE RAJA::resources::EventProxy<Res> forall(Res r,
                                                     ExecutionPolicy&& p,
                                                     Container&& c,

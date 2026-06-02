@@ -40,23 +40,33 @@ namespace concepts
 /// kernel
 template<typename Pol>
 concept ExecutionPolicy =
-    RAJA::type_traits::is_same_decay_v<decltype(Pol::policy), ::RAJA::Policy> &&
-    RAJA::type_traits::is_same_decay_v<decltype(Pol::pattern),
-                                       ::RAJA::Pattern> &&
-    RAJA::type_traits::is_same_decay_v<decltype(Pol::launch), ::RAJA::Launch> &&
-    RAJA::type_traits::is_same_decay_v<decltype(Pol::platform),
-                                       ::RAJA::Platform>;
+    type_traits::is_same_decay_v<decltype(std::decay_t<Pol>::policy),
+                                 ::RAJA::Policy> &&
+    type_traits::is_same_decay_v<decltype(std::decay_t<Pol>::pattern),
+                                 ::RAJA::Pattern> &&
+    type_traits::is_same_decay_v<decltype(std::decay_t<Pol>::launch),
+                                 ::RAJA::Launch> &&
+    type_traits::is_same_decay_v<decltype(std::decay_t<Pol>::platform),
+                                 ::RAJA::Platform>;
 
+/// Note: IndexSetType, IndexSetPolicy, and MultiPolicyConcept all utilize
+/// specializations of camp::num<bool=false/true>. Because of this, their
+/// value type is actually const long, not bool.  Therefore, static_cast to
+/// bool is used below to define these.
 template<typename T>
 concept IndexSetType =
-    static_cast<bool>(RAJA::type_traits::is_index_set<std::decay_t<T>>::value);
+    static_cast<bool>(type_traits::is_index_set<std::decay_t<T>>::value);
 
 template<typename T>
 concept IndexSetPolicy =
     static_cast<bool>(type_traits::is_indexset_policy<std::decay_t<T>>::value);
 
 template<typename T>
-concept Resource = RAJA::type_traits::is_resource<std::decay_t<T>>::value;
+concept MultiPolicyConcept =
+    static_cast<bool>(type_traits::is_multi_policy<std::decay_t<T>>::value);
+
+template<typename T>
+concept Resource = type_traits::is_resource<std::decay_t<T>>::value;
 
 template<typename T>
 concept ForallParams =
@@ -65,44 +75,42 @@ concept ForallParams =
 template<typename T>
 concept EmptyForallParams =
     ForallParams<T> &&
-    RAJA::expt::type_traits::is_ForallParamPack_empty<T>::value;
+    expt::type_traits::is_ForallParamPack_empty<std::decay_t<T>>::value;
 
 template<typename T>
 concept NonEmptyForallParams =
     ForallParams<T> &&
-    !RAJA::expt::type_traits::is_ForallParamPack_empty<T>::value;
+    !expt::type_traits::is_ForallParamPack_empty<std::decay_t<T>>::value;
 
-template<typename T>
-concept MultiPolicyConcept =
-    static_cast<bool>(RAJA::type_traits::is_multi_policy<T>::value);
-
-/// Iteration mappings inherit from things like StridedLoopBase
-#define MakeExecPolWithIterMappingConcept(ConceptName, BaseName)               \
+/// This macro creates ExecutionPolicy concepts whose IterationMapping member
+/// inherit from a specific type of loop mapping: like a StridedLoop, for
+/// example
+#define RAJAMakeExecPolWithIterMappingConcept(ConceptName, BaseName)           \
   template<typename Pol>                                                       \
   concept ConceptName =                                                        \
       ExecutionPolicy<Pol> &&                                                  \
-      std::is_base_of_v<BaseName, typename Pol::IterationMapping>;
+      std::is_base_of_v<BaseName,                                              \
+                        typename std::decay_t<Pol>::IterationMapping>;
 
 // clang-format off
-MakeExecPolWithIterMappingConcept(StridedLoopPolicy,
-                                  iteration_mapping::StridedLoopBase)
-MakeExecPolWithIterMappingConcept(UnsizedLoopPolicy,
-                                  iteration_mapping::UnsizedLoopBase)
-MakeExecPolWithIterMappingConcept(SizedLoopPolicy,
-                                  iteration_mapping::SizedLoopBase)
-MakeExecPolWithIterMappingConcept(ContiguousLoopPolicy,
-                                  iteration_mapping::ContiguousLoopBase)
-MakeExecPolWithIterMappingConcept(DirectPolicy,
-                                  iteration_mapping::Direct)
-MakeExecPolWithIterMappingConcept(DirectBasePolicy,
-                                  iteration_mapping::DirectBase)
+RAJAMakeExecPolWithIterMappingConcept(StridedLoopPolicy,
+                                      iteration_mapping::StridedLoopBase)
+RAJAMakeExecPolWithIterMappingConcept(UnsizedLoopPolicy,
+                                      iteration_mapping::UnsizedLoopBase)
+RAJAMakeExecPolWithIterMappingConcept(SizedLoopPolicy,
+                                      iteration_mapping::SizedLoopBase)
+RAJAMakeExecPolWithIterMappingConcept(ContiguousLoopPolicy,
+                                      iteration_mapping::ContiguousLoopBase)
+RAJAMakeExecPolWithIterMappingConcept(DirectPolicy,
+                                      iteration_mapping::Direct)
+RAJAMakeExecPolWithIterMappingConcept(DirectBasePolicy,
+                                      iteration_mapping::DirectBase)
 // clang-format on
 }  // namespace concepts
 
 namespace type_traits
 {
-DefineTypeTraitFromConcept(is_execution_policy,
-                           RAJA::concepts::ExecutionPolicy);
+DefineTypeTraitFromConcept(is_execution_policy, concepts::ExecutionPolicy);
 
 }  // namespace type_traits
 
