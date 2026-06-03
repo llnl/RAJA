@@ -184,20 +184,6 @@ template<Policy Policy_, Pattern Pattern_, Platform Platform_, typename... Args>
 using make_policy_pattern_platform_t =
     PolicyBaseT<Policy_, Pattern_, Launch::undefined, Platform_, Args...>;
 
-namespace concepts
-{
-
-template<typename Pol>
-concept ExecutionPolicy =
-    RAJA::type_traits::is_same_decay_v<decltype(Pol::policy), ::RAJA::Policy> &&
-    RAJA::type_traits::is_same_decay_v<decltype(Pol::pattern),
-                                       ::RAJA::Pattern> &&
-    RAJA::type_traits::is_same_decay_v<decltype(Pol::launch), ::RAJA::Launch> &&
-    RAJA::type_traits::is_same_decay_v<decltype(Pol::platform),
-                                       ::RAJA::Platform>;
-
-}  // end namespace concepts
-
 namespace type_traits
 {
 
@@ -234,9 +220,6 @@ template<typename Pol>
 struct is_device_exec_policy
     : RAJA::policy_any_of<Pol, RAJA::Policy::cuda, RAJA::Policy::hip>
 {};
-
-DefineTypeTraitFromConcept(is_execution_policy,
-                           RAJA::concepts::ExecutionPolicy);
 
 template<typename Pol>
 struct is_reduce_policy : RAJA::pattern_is<Pol, RAJA::Pattern::reduce>
