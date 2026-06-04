@@ -33,7 +33,6 @@
 #include <limits>
 #endif
 
-#include "RAJA/util/concepts.hpp"
 #include "RAJA/util/macros.hpp"
 
 namespace RAJA
@@ -764,39 +763,6 @@ struct safe_plus
 };
 
 }  // namespace operators
-
-namespace concepts
-{
-
-template<class Function, class Return, class Arg1 = Return, class Arg2 = Arg1>
-concept BinaryFunction = std::is_invocable_r_v<Return, Function&, Arg1, Arg2>;
-
-template<class Function, class Return, class Arg1 = Return>
-concept UnaryFunction = std::is_invocable_r_v<Return, Function&, Arg1>;
-
-
-}  // namespace concepts
-
-namespace type_traits
-{
-
-template<class Function, class Return, class Arg1 = Return, class Arg2 = Arg1>
-struct is_binary_function
-    : std::bool_constant<
-          RAJA::concepts::BinaryFunction<Function, Return, Arg1, Arg2>>
-{};
-template<class Function, class Return, class Arg1 = Return, class Arg2 = Arg1>
-inline constexpr bool is_binary_function_v =
-    is_binary_function<Function, Return, Arg1, Arg2>::value;
-
-template<class Function, class Return, class Arg = Return>
-struct is_unary_function
-    : std::bool_constant<RAJA::concepts::UnaryFunction<Function, Return, Arg>>
-{};
-template<class Function, class Return, class Arg1 = Return>
-inline constexpr bool is_unary_function_v =
-    is_unary_function<Function, Return, Arg1>::value;
-}  // namespace type_traits
 
 
 }  // namespace RAJA
