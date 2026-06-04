@@ -50,7 +50,7 @@ debug_mode=${DEBUG_MODE:-false}
 push_to_registry=${PUSH_TO_REGISTRY:-true}
 
 # Map CPU core allocations
-declare -A core_counts=(["lassen"]=40 ["poodle"]=28 ["dane"]=28 ["matrix"]=28 ["corona"]=32 ["rzansel"]=48 ["tioga"]=32 ["tuolumne"]=48)
+declare -A core_counts=(["dane"]=28 ["matrix"]=28 ["corona"]=32 ["rzansel"]=48 ["tioga"]=32 ["tuolumne"]=48)
 
 # REGISTRY_TOKEN allows you to provide your own personal access token to the CI
 # registry. Be sure to set the token with at least read access to the registry.
@@ -374,7 +374,7 @@ then
     # Shared allocation: Allows build_and_test.sh to run within a sub-allocation (see CI config).
     # Use /dev/shm: Prevent MPI tests from running on a node where the build dir doesn't exist.
     cmake_options=""
-    if [[ "${truehostname}" == "poodle" || "${truehostname}" == "dane" || "${truehostname}" == "matrix" ]]
+    if [[ "${truehostname}" == "dane" || "${truehostname}" == "matrix" ]]
     then
         cmake_options="-DBLT_MPI_COMMAND_APPEND:STRING=--overlap"
     fi
@@ -397,7 +397,14 @@ then
         section_end
     else
         status=$?
-        section_end ; print_error "CMake configuration failed"
+        section_end ; print_error "CMake configuration failed, dumping output..."
+
+        $cmake_exe \
+          -C ${hostconfig_path} \
+          ${cmake_options} \
+          -DCMAKE_INSTALL_PREFIX=${install_dir} \
+          ${project_dir} --debug-output --trace-expand
+
         exit ${status}
     fi
 
