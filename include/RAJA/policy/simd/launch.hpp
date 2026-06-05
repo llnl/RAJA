@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -29,8 +31,21 @@ struct LoopExecute<simd_exec, SEGMENT>
 {
 
   template<typename BODY>
+  static RAJA_INLINE RAJA_HOST_DEVICE void exec(SEGMENT const& segment,
+                                                BODY const& body)
+  {
+
+    const int len = segment.end() - segment.begin();
+    RAJA_SIMD
+    for (int i = 0; i < len; i++)
+    {
+      body(*(segment.begin() + i));
+    }
+  }
+
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {
@@ -49,8 +64,21 @@ struct LoopICountExecute<simd_exec, SEGMENT>
 {
 
   template<typename BODY>
+  static RAJA_INLINE RAJA_HOST_DEVICE void exec(SEGMENT const& segment,
+                                                BODY const& body)
+  {
+
+    const int len = segment.end() - segment.begin();
+    RAJA_SIMD
+    for (int i = 0; i < len; i++)
+    {
+      body(*(segment.begin() + i), i);
+    }
+  }
+
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
       SEGMENT const& segment,
       BODY const& body)
   {

@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -19,6 +21,8 @@
 #define RAJA_policy_atomic_auto_HPP
 
 #include "RAJA/config.hpp"
+
+#include <utility>
 
 #include "RAJA/util/macros.hpp"
 
@@ -154,6 +158,14 @@ atomicCAS(auto_atomic, T* acc, T compare, T value)
   return atomicCAS(RAJA_AUTO_ATOMIC, acc, compare, value);
 }
 
+template<typename T, typename Operation>
+RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(auto_atomic,
+                                             T* acc,
+                                             Operation&& operation)
+{
+  return atomicGeneric(RAJA_AUTO_ATOMIC, acc,
+                       std::forward<Operation>(operation));
+}
 
 }  // namespace RAJA
 

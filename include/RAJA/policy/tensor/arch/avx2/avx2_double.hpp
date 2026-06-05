@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -22,6 +24,7 @@
 
 #include "RAJA/config.hpp"
 #include "RAJA/util/macros.hpp"
+#include "RAJA/util/builtin_compat.hpp"
 #include "RAJA/pattern/tensor/internal/RegisterBase.hpp"
 
 // Include SIMD intrinsics header file
@@ -52,6 +55,15 @@ private:
   register_type m_value;
 
   RAJA_INLINE
+  static register_type make_register(element_type x0,
+                                     element_type x1,
+                                     element_type x2,
+                                     element_type x3)
+  {
+    return _mm256_set_pd(x3, x2, x1, x0);
+  }
+
+  RAJA_INLINE
   __m256i createMask(camp::idx_t N) const
   {
     // Generate a mask
@@ -64,6 +76,41 @@ private:
   {
     // Generate a strided offset list
     return _mm256_set_epi64x(3 * stride, 2 * stride, stride, 0);
+  }
+
+  static RAJA_NOINLINE element_type load_scalar(element_type const* ptr)
+  {
+    element_type value;
+    RAJA_BUILTIN_MEMCPY(&value, ptr, sizeof(value));
+    return value;
+  }
+
+  RAJA_INLINE
+  static register_type load_register(element_type const* ptr)
+  {
+    return make_register(load_scalar(ptr + 0), load_scalar(ptr + 1),
+                         load_scalar(ptr + 2), load_scalar(ptr + 3));
+  }
+
+  RAJA_INLINE
+  static void store_register(element_type* ptr, register_type value)
+  {
+    _mm256_storeu_pd(ptr, value);
+  }
+
+  RAJA_INLINE
+  self_type& assign_register(register_type value)
+  {
+    RAJA_BUILTIN_MEMCPY(&m_value, &value, sizeof(m_value));
+    return *this;
+  }
+
+  RAJA_INLINE
+  static element_type lane(register_type value, camp::idx_t i)
+  {
+    element_type lanes[s_num_elem];
+    store_register(lanes, value);
+    return lanes[i];
   }
 
 public:
@@ -93,7 +140,10 @@ public:
    * @brief Copy constructor
    */
   RAJA_INLINE
-  Register(self_type const& c) : base_type(c), m_value(c.m_value) {}
+  Register(self_type const& c) : base_type(c), m_value(_mm256_setzero_pd())
+  {
+    assign_register(c.m_value);
+  }
 
   /*!
    * @brief Copy assignment constructor
@@ -101,8 +151,7 @@ public:
   RAJA_INLINE
   self_type& operator=(self_type const& c)
   {
-    m_value = c.m_value;
-    return *this;
+    return assign_register(c.m_value);
   }
 
   /*!
@@ -128,8 +177,7 @@ public:
 #ifdef RAJA_ENABLE_VECTOR_STATS
     RAJA::tensor_stats::num_vector_load_packed++;
 #endif
-    m_value = _mm256_loadu_pd(ptr);
-    return *this;
+    return assign_register(load_register(ptr));
   }
 
   /*!
@@ -234,7 +282,7 @@ public:
 #ifdef RAJA_ENABLE_VECTOR_STATS
     RAJA::tensor_stats::num_vector_store_packed++;
 #endif
-    _mm256_storeu_pd(ptr, m_value);
+    store_register(ptr, m_value);
     return *this;
   }
 
@@ -262,9 +310,11 @@ public:
 #ifdef RAJA_ENABLE_VECTOR_STATS
     RAJA::tensor_stats::num_vector_store_strided++;
 #endif
+    element_type lanes[s_num_elem];
+    store_register(lanes, m_value);
     for (camp::idx_t i = 0; i < 4; ++i)
     {
-      ptr[i * stride] = m_value[i];
+      ptr[i * stride] = lanes[i];
     }
     return *this;
   }
@@ -281,9 +331,11 @@ public:
 #ifdef RAJA_ENABLE_VECTOR_STATS
     RAJA::tensor_stats::num_vector_store_strided_n++;
 #endif
+    element_type lanes[s_num_elem];
+    store_register(lanes, m_value);
     for (camp::idx_t i = 0; i < N; ++i)
     {
-      ptr[i * stride] = m_value[i];
+      ptr[i * stride] = lanes[i];
     }
     return *this;
   }
@@ -294,7 +346,7 @@ public:
    * @return Returns scalar value at i
    */
   RAJA_INLINE
-  element_type get(camp::idx_t i) const { return m_value[i]; }
+  element_type get(camp::idx_t i) const { return lane(m_value, i); }
 
   /*!
    * @brief Set scalar value in vector register
@@ -304,7 +356,10 @@ public:
   RAJA_INLINE
   self_type& set(element_type value, camp::idx_t i)
   {
-    m_value[i] = value;
+    element_type lanes[s_num_elem];
+    store_register(lanes, m_value);
+    lanes[i] = value;
+    m_value  = load_register(lanes);
     return *this;
   }
 
@@ -342,11 +397,7 @@ public:
   RAJA_HOST_DEVICE
 
   RAJA_INLINE
-  self_type& copy(self_type const& src)
-  {
-    m_value = src.m_value;
-    return *this;
-  }
+  self_type& copy(self_type const& src) { return assign_register(src.m_value); }
 
   RAJA_HOST_DEVICE
 
@@ -419,7 +470,7 @@ public:
   {
     auto sh1  = _mm256_permute_pd(m_value, 0x5);
     auto red1 = _mm256_add_pd(m_value, sh1);
-    return red1[0] + red1[2];
+    return lane(red1, 0) + lane(red1, 2);
   }
 
   /*!
@@ -443,7 +494,7 @@ public:
       register_type b = _mm256_max_pd(m_value, a);
 
       // now take the maximum of a lower and upper halves
-      return RAJA::max<element_type>(b[0], b[2]);
+      return RAJA::max<element_type>(lane(b, 0), lane(b, 2));
     }
     else if (N == 3)
     {
@@ -461,15 +512,15 @@ public:
       register_type b = _mm256_max_pd(m_value, a);
 
       // now take the maximum of a lower and upper lane
-      return RAJA::max<element_type>(b[0], b[2]);
+      return RAJA::max<element_type>(lane(b, 0), lane(b, 2));
     }
     else if (N == 2)
     {
-      return RAJA::max<element_type>(m_value[0], m_value[1]);
+      return RAJA::max<element_type>(get(0), get(1));
     }
     else if (N == 1)
     {
-      return m_value[0];
+      return get(0);
     }
     return RAJA::operators::limits<double>::min();
   }
@@ -503,7 +554,7 @@ public:
     register_type b = _mm256_min_pd(m_value, a);
 
     // now take the minimum of a lower and upper halves
-    return RAJA::min<element_type>(b[0], b[2]);
+    return RAJA::min<element_type>(lane(b, 0), lane(b, 2));
   }
 
   /*!
@@ -527,7 +578,7 @@ public:
       register_type b = _mm256_min_pd(m_value, a);
 
       // now take the minimum of a lower and upper halves
-      return std::min<element_type>(b[0], b[2]);
+      return std::min<element_type>(lane(b, 0), lane(b, 2));
     }
     else if (N == 3)
     {
@@ -545,15 +596,15 @@ public:
       register_type b = _mm256_min_pd(m_value, a);
 
       // now take the minimum of a lower and upper lane
-      return std::min<element_type>(b[0], b[2]);
+      return std::min<element_type>(lane(b, 0), lane(b, 2));
     }
     else if (N == 2)
     {
-      return std::min<element_type>(m_value[0], m_value[1]);
+      return std::min<element_type>(get(0), get(1));
     }
     else if (N == 1)
     {
-      return m_value[0];
+      return get(0);
     }
     return RAJA::operators::limits<double>::max();
   }

@@ -1,16 +1,10 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
-// Produced at the Lawrence Livermore National Laboratory
-//
-// LLNL-CODE-689114
-//
-// All rights reserved.
-//
-// This file is part of RAJA.
-//
-// For details about use and distribution, please read RAJA/LICENSE.
-//
+// SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 ///
@@ -35,6 +29,9 @@ struct Accumulate;
 
 template < typename test_policy, typename platform = test_platform<test_policy> >
 struct KahanSum;
+
+template < typename test_policy, typename platform = test_platform<test_policy> >
+struct KahanSumVolatile;
 
 
 template < typename test_policy >
@@ -94,6 +91,26 @@ struct KahanSum<test_policy, RunOnHost>
   void operator()(T* reduced_value, Args&&... args)
   {
     *reduced_value = RAJA::kahan_sum(std::forward<Args>(args)...);
+  }
+};
+
+template < typename test_policy >
+struct KahanSumVolatile<test_policy, RunOnHost>
+  : ForoneSynchronize<test_policy>
+{
+  using reduce_category = unordered_reduce_tag;
+  using reduce_interface = sum_interface_tag;
+  using reduce_types = floating_point_types_tag;
+
+  const char* name()
+  {
+    return "RAJA::kahan_sum_volatile";
+  }
+
+  template < typename T, typename... Args >
+  void operator()(T* reduced_value, Args&&... args)
+  {
+    *reduced_value = RAJA::kahan_sum_volatile(std::forward<Args>(args)...);
   }
 };
 
@@ -220,6 +237,42 @@ struct KahanSum<test_policy, RunOnDevice>
   {
     forone<test_policy>( [=] RAJA_DEVICE() {
       *reduced_value = RAJA::kahan_sum(c, init);
+    });
+  }
+};
+
+template < typename test_policy >
+struct KahanSumVolatile<test_policy, RunOnDevice>
+  : ForoneSynchronize<test_policy>
+{
+  using reduce_category = unordered_reduce_tag;
+  using reduce_interface = sum_interface_tag;
+  using reduce_types = floating_point_types_tag;
+
+  std::string m_name;
+
+  KahanSumVolatile()
+    : m_name(std::string("RAJA::kahan_sum_volatile<") + test_policy_info<test_policy>::name() + std::string(">"))
+  { }
+
+  const char* name()
+  {
+    return m_name.c_str();
+  }
+
+  template < typename T, typename Container >
+  void operator()(T* reduced_value, Container&& c)
+  {
+    forone<test_policy>( [=] RAJA_DEVICE() {
+      *reduced_value = RAJA::kahan_sum_volatile(c);
+    });
+  }
+
+  template < typename T, typename Container >
+  void operator()(T* reduced_value, Container&& c, RAJA::detail::ContainerVal<Container> init)
+  {
+    forone<test_policy>( [=] RAJA_DEVICE() {
+      *reduced_value = RAJA::kahan_sum_volatile(c, init);
     });
   }
 };

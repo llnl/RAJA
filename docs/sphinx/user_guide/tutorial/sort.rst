@@ -1,7 +1,8 @@
 .. ##
-.. ## Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-.. ## and RAJA project contributors. See the RAJA/LICENSE file
-.. ## for details.
+.. ## Copyright (c) Lawrence Livermore National Security, LLC and other
+.. ## RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+.. ## files for dates and other details. No copyright assignment is required
+.. ## to contribute to RAJA.
 .. ##
 .. ## SPDX-License-Identifier: (BSD-3-Clause)
 .. ##
@@ -170,9 +171,7 @@ non-increasing order in the output array::
 .. note:: * The only operators provided by RAJA that are valid to use in sort
             because they enforce a strict weak ordering of elements for 
             arithmetic types are 'less' and 'greater'. Users may provide other
-            operators for different sorting operations. 
-          * Also the RAJA CUDA sort back-end only supports RAJA operators 
-            'less' and 'greater' because it uses the NVIDIA CUB library.
+            operators for different sorting operations.
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Sort Pairs

@@ -1,6 +1,8 @@
 ###############################################################################
-# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-# and other RAJA project contributors. See the RAJA/LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other
+# RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+# files for dates and other details. No copyright assignment is required
+# to contribute to RAJA.
 #
 # SPDX-License-Identifier: (BSD-3-Clause)
 ###############################################################################
@@ -59,7 +61,7 @@ endif()
 # end RAJA_ENABLE_CUDA section
 
 if (RAJA_ENABLE_HIP)
-  set(RAJA_HIPCC_STD_FLAG -std=c++17)
+  set(RAJA_HIPCC_STD_FLAG -std=c++20)
   if (NOT RAJA_HOST_CONFIG_LOADED)
     #list(APPEND RAJA_EXTRA_HIPCC_FLAGS)
 

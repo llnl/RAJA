@@ -1,6 +1,8 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -277,4 +279,10 @@ TYPED_TEST(IndexValueUnitTest, IndexTypeCompare)
   ASSERT_GT(x, x_lower);
   ASSERT_NE(x, x_lower);
   ASSERT_NE(x, x_higher);
+}
+
+TYPED_TEST(IndexValueUnitTest, IndexValueConcept) 
+{
+  static_assert(Compiles<Index, Tester>, "Test that index value concept accepts IndexValue"); 
+  static_assert(!Compiles<Ty, Tester>, "Test that index value concept does not accept generic types"); 
 }

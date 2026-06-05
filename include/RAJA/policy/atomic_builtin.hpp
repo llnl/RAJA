@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -21,6 +23,7 @@
 #include "RAJA/config.hpp"
 
 #include <cstdint>
+#include <utility>
 
 #if defined(RAJA_COMPILER_MSVC) ||                                             \
     ((defined(_WIN32) || defined(_WIN64)) && defined(__INTEL_COMPILER))
@@ -762,32 +765,6 @@ RAJA_DEVICE_HIP RAJA_INLINE T builtin_atomicCAS(T* acc, T compare, T value)
 
 
 /*!
- * Equality comparison for compare and swap loop using types supported by
- * intrinsics.
- */
-template<typename T,
-         std::enable_if_t<builtin_useIntrinsic<T>::value, bool> = true>
-RAJA_DEVICE_HIP RAJA_INLINE bool builtin_atomicCAS_equal(const T& a, const T& b)
-{
-  return a == b;
-}
-
-/*!
- * Equality comparison for compare and swap loop using reinterpret cast.
- * Converts to the underlying integral type to avoid cases where the values
- * will never compare equal (most notably, NaNs).
- */
-template<typename T,
-         std::enable_if_t<builtin_useReinterpret<T>::value, bool> = true>
-RAJA_DEVICE_HIP RAJA_INLINE bool builtin_atomicCAS_equal(const T& a, const T& b)
-{
-  using R = builtin_useReinterpret_t<T>;
-
-  return builtin_atomicCAS_equal(RAJA::util::reinterp_A_as_B<T, R>(a),
-                                 RAJA::util::reinterp_A_as_B<T, R>(b));
-}
-
-/*!
  * Generic impementation of any atomic 8, 16, 32, or 64 bit operator
  * that can be implemented using a builtin compare and swap primitive.
  * Returns the OLD value that was replaced by the result of this operation.
@@ -802,7 +779,7 @@ RAJA_DEVICE_HIP RAJA_INLINE T builtin_atomicCAS_loop(T* acc, Oper&& oper)
   {
     expected = old;
     old      = builtin_atomicCAS(acc, expected, oper(expected));
-  } while (!builtin_atomicCAS_equal(old, expected));
+  } while (!RAJA::util::bit_equal(old, expected));
 
   return old;
 }
@@ -831,7 +808,7 @@ RAJA_DEVICE_HIP RAJA_INLINE T builtin_atomicCAS_loop(T* acc,
   {
     expected = old;
     old      = builtin_atomicCAS(acc, expected, oper(expected));
-  } while (!builtin_atomicCAS_equal(old, expected) && !sc(old));
+  } while (!RAJA::util::bit_equal(old, expected) && !sc(old));
 
   return old;
 }
@@ -1007,6 +984,15 @@ RAJA_DEVICE_HIP RAJA_INLINE T
 atomicCAS(builtin_atomic, T* acc, T compare, T value)
 {
   return detail::builtin_atomicCAS(acc, compare, value);
+}
+
+template<typename T, typename Operation>
+RAJA_DEVICE_HIP RAJA_INLINE T atomicGeneric(builtin_atomic,
+                                            T* acc,
+                                            Operation&& operation)
+{
+  return detail::builtin_atomicCAS_loop(acc,
+                                        std::forward<Operation>(operation));
 }
 
 

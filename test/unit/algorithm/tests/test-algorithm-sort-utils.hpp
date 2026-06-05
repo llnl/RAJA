@@ -1,16 +1,10 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-19, Lawrence Livermore National Security, LLC.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
-// Produced at the Lawrence Livermore National Laboratory
-//
-// LLNL-CODE-689114
-//
-// All rights reserved.
-//
-// This file is part of RAJA.
-//
-// For details about use and distribution, please read RAJA/LICENSE.
-//
+// SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 ///
@@ -579,6 +573,9 @@ void testSorterResInterfaces(
   // Sorter does not support resource interface, no tests
 }
 
+template < typename K >
+struct custom_greater : RAJA::operators::greater<K>{};
+
 template <typename Res,
           typename K,
           typename V,
@@ -601,6 +598,8 @@ void testSorterResInterfaces(
   ASSERT_TRUE(testSort("resource+ascending", seed, data, N, RAJA::operators::less<K>{},
       sorter, stability_category{}, pairs_category{}, resource_use_comparator{}));
   ASSERT_TRUE(testSort("resource+descending", seed, data, N, RAJA::operators::greater<K>{},
+      sorter, stability_category{}, pairs_category{}, resource_use_comparator{}));
+  ASSERT_TRUE(testSort("resource+custom_descending", seed, data, N, custom_greater<K>{},
       sorter, stability_category{}, pairs_category{}, resource_use_comparator{}));
 }
 
@@ -626,6 +625,8 @@ void testSorterInterfaces(unsigned seed, RAJA::Index_type MaxN, Sorter sorter, R
   ASSERT_TRUE(testSort("ascending", seed, data, N, RAJA::operators::less<K>{},
       sorter, stability_category{}, pairs_category{}, use_comparator{}));
   ASSERT_TRUE(testSort("descending", seed, data, N, RAJA::operators::greater<K>{},
+      sorter, stability_category{}, pairs_category{}, use_comparator{}));
+  ASSERT_TRUE(testSort("custom_descending", seed, data, N, custom_greater<K>{},
       sorter, stability_category{}, pairs_category{}, use_comparator{}));
 
   testSorterResInterfaces(supports_resource(), seed, data, N, sorter);

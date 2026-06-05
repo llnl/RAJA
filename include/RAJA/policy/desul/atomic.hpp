@@ -1,6 +1,8 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -12,7 +14,10 @@
 
 #if defined(RAJA_ENABLE_DESUL_ATOMICS)
 
+#include <type_traits>
+
 #include "RAJA/util/macros.hpp"
+#include "RAJA/util/TypeConvert.hpp"
 
 #include "RAJA/policy/atomic_builtin.hpp"
 
@@ -149,6 +154,29 @@ atomicCAS(AtomicPolicy, T* acc, T compare, T value)
   return desul::atomic_compare_exchange(acc, compare, value,
                                         raja_default_desul_order {},
                                         raja_default_desul_scope {});
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename AtomicPolicy, typename T, typename Operation>
+RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(AtomicPolicy,
+                                             T* acc,
+                                             Operation&& operation)
+{
+  static_assert(std::is_trivially_copyable_v<T>);
+
+  T old = desul::atomic_load(acc, desul::MemoryOrderRelaxed {},
+                             raja_default_desul_scope {});
+  T expected;
+
+  do
+  {
+    expected = old;
+    old = desul::atomic_compare_exchange(acc, expected, operation(expected),
+                                         raja_default_desul_order {},
+                                         raja_default_desul_scope {});
+  } while (!RAJA::util::bit_equal(old, expected));
+
+  return old;
 }
 
 }  // namespace RAJA

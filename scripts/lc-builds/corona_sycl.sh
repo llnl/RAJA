@@ -1,24 +1,38 @@
 #!/usr/bin/env bash
 
 ###############################################################################
-# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-# and RAJA project contributors. See the RAJA/LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other
+# RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+# files for dates and other details. No copyright assignment is required
+# to contribute to RAJA.
 #
 # SPDX-License-Identifier: (BSD-3-Clause)
 ###############################################################################
 
-if [[ $# -lt 1 ]]; then
+# Default CMake version if not provided
+DEFAULT_CMAKE_VER=3.25.2
+
+# Require compiler version
+if [ "$1" == "" ]; then
   echo
-  echo "You must pass 1 argument to the script: "
-  echo "   1) SYCL compiler installation path"
-  echo
-  echo "For example: "
-  echo "    corona_sycl.sh /usr/workspace/raja-dev/clang_sycl_16b7bcb09915_hip_gcc10.3.1_rocm6.4.2"
-  exit
+  echo "You must pass a SYCL compiler path to script. For example,"
+  echo "    corona_sycl.sh /usr/workspace/raja-dev/clang_sycl_16b7bcb09915_hip_gcc10.3.1_rocm6.4.3 [3.27.4]"
+  echo "An optional second argument can be given to set the CMake version to load."
+  echo "If no CMake version is provided, version ${DEFAULT_CMAKE_VER} will be used."
+  exit 1
 fi
 
 SYCL_PATH=$1
-shift 1
+
+# Detect optional second positional argument as a CMake version if it looks like N.M or N.M.P
+# Otherwise, treat it as a normal CMake argument.
+if [ -n "$2" ] && [[ "$2" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+  CMAKE_VER=$2
+  shift 2
+else
+  CMAKE_VER=$DEFAULT_CMAKE_VER
+  shift 1
+fi
 
 BUILD_SUFFIX=corona-sycl
 : ${BUILD_TYPE:=RelWithDebInfo}
@@ -26,6 +40,7 @@ RAJA_HOSTCONFIG=../host-configs/lc-builds/toss4/corona_sycl.cmake
 
 echo
 echo "Creating build directory build_${BUILD_SUFFIX} and generating configuration in it"
+echo "Using CMake version: ${CMAKE_VER}"
 echo "Configuration extra arguments:"
 echo "   $@"
 echo
@@ -38,7 +53,7 @@ DATE=$(printf '%(%Y-%m-%d)T\n' -1)
 export PATH=${SYCL_PATH}/bin:$PATH
 export LD_LIBRARY_PATH=${SYCL_PATH}/lib:${SYCL_PATH}/lib64:$LD_LIBRARY_PATH
 
-module load cmake/3.23.1
+module load cmake/${CMAKE_VER}
 
 cmake \
   -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
@@ -47,14 +62,14 @@ cmake \
   -DENABLE_OPENMP=Off \
   -DENABLE_CUDA=Off \
   -DENABLE_CLANGFORMAT=On \
-  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-14.0.6/bin/clang-format \
+  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-19.1.3/bin/clang-format \
   -DRAJA_ENABLE_TARGET_OPENMP=Off \
   -DENABLE_ALL_WARNINGS=Off \
   -DRAJA_ENABLE_SYCL=On \
   -DCMAKE_C_COMPILER=clang \
   -DCMAKE_CXX_COMPILER=clang++ \
   -DCMAKE_LINKER=clang++ \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -DENABLE_TESTS=On \
   -DENABLE_EXAMPLES=On \
   "$@" \

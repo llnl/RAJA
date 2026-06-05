@@ -1,6 +1,8 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -36,15 +38,13 @@ namespace omp
 template<size_t ThreadsPerTeam,
          typename Iterable,
          typename Func,
-         typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Omp>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>>
-forall_impl(resources::Omp omp_res,
-            const omp_target_parallel_for_exec<ThreadsPerTeam>& p,
-            Iterable&& iter,
-            Func&& loop_body,
-            ForallParam f_params)
+         concepts::ForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Omp> forall_impl(
+    resources::Omp omp_res,
+    const omp_target_parallel_for_exec<ThreadsPerTeam>& p,
+    Iterable&& iter,
+    Func&& loop_body,
+    ForallParam f_params)
 {
   using EXEC_POL = camp::decay<decltype(p)>;
   constexpr bool is_forall_param_empty =
@@ -82,8 +82,7 @@ forall_impl(resources::Omp omp_res,
   if constexpr (is_forall_param_empty)
   {
 #pragma omp target teams distribute parallel for num_teams(numteams)           \
-    schedule(static, 1) map(to                                                 \
-                            : body, begin_it)
+    schedule(static, 1) map(to : body, begin_it)
     for (i = 0; i < distance_it; ++i)
     {
       Body ib = body;
@@ -94,9 +93,7 @@ forall_impl(resources::Omp omp_res,
   {
     RAJA_OMP_DECLARE_REDUCTION_COMBINE
 #pragma omp target teams distribute parallel for num_teams(numteams)           \
-    schedule(static, 1) map(to                                                 \
-                            : body, begin_it) reduction(combine                \
-                                                        : f_params)
+    schedule(static, 1) map(to : body, begin_it) reduction(combine : f_params)
     for (i = 0; i < distance_it; ++i)
     {
       Body ib = body;
@@ -109,15 +106,13 @@ forall_impl(resources::Omp omp_res,
   return resources::EventProxy<resources::Omp>(omp_res);
 }
 
-template<typename Iterable, typename Func, typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Omp>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>>
-forall_impl(resources::Omp omp_res,
-            const omp_target_parallel_for_exec_nt& p,
-            Iterable&& iter,
-            Func&& loop_body,
-            ForallParam f_params)
+template<typename Iterable, typename Func, concepts::ForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Omp> forall_impl(
+    resources::Omp omp_res,
+    const omp_target_parallel_for_exec_nt& p,
+    Iterable&& iter,
+    Func&& loop_body,
+    ForallParam f_params)
 {
   using EXEC_POL = camp::decay<decltype(p)>;
   constexpr bool is_forall_param_empty =
@@ -136,8 +131,7 @@ forall_impl(resources::Omp omp_res,
   {
     RAJA_OMP_DECLARE_REDUCTION_COMBINE;
 #pragma omp target teams distribute parallel for schedule(static, 1)           \
-    firstprivate(body, begin_it) reduction(combine                             \
-                                           : f_params)
+    firstprivate(body, begin_it) reduction(combine : f_params)
     for (decltype(distance_it) i = 0; i < distance_it; ++i)
     {
       Body ib = body;

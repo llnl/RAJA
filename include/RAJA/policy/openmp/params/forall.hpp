@@ -1,6 +1,8 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-2025, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -314,17 +316,13 @@ RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
 template<typename Iterable,
          typename Func,
          typename InnerPolicy,
-         typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Host>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>,
-    concepts::negate<
-        RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>>>
-forall_impl(resources::Host host_res,
-            const omp_parallel_exec<InnerPolicy>&,
-            Iterable&& iter,
-            Func&& loop_body,
-            ForallParam f_params)
+         concepts::NonEmptyForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
+    resources::Host host_res,
+    const omp_parallel_exec<InnerPolicy>&,
+    Iterable&& iter,
+    Func&& loop_body,
+    ForallParam f_params)
 {
   expt::forall_impl(host_res, InnerPolicy {}, iter, loop_body, f_params);
   return resources::EventProxy<resources::Host>(host_res);

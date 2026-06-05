@@ -1,3 +1,12 @@
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
+//
+// SPDX-License-Identifier: (BSD-3-Clause)
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
 #ifndef NEW_REDUCE_HPP
 #define NEW_REDUCE_HPP
 
@@ -131,8 +140,7 @@ struct Reducer : public ForallParamBase
 // I is a deduced index type
 template<typename T,
          typename I,
-         template<typename, typename, typename>
-         class Op>
+         template<typename, typename, typename> class Op>
 struct Reducer<Op<ValLoc<T, I>, ValLoc<T, I>, ValLoc<T, I>>,
                ValLoc<T, I>,
                ValOp<ValLoc<T, I>, Op>> : public ForallParamBase

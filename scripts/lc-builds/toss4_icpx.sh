@@ -1,26 +1,43 @@
 #!/usr/bin/env bash
 
 ###############################################################################
-# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-# and RAJA project contributors. See the RAJA/LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other
+# RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+# files for dates and other details. No copyright assignment is required
+# to contribute to RAJA.
 #
 # SPDX-License-Identifier: (BSD-3-Clause)
 ###############################################################################
 
+# Default CMake version if not provided
+DEFAULT_CMAKE_VER=3.25.2
+
 if [ "$1" == "" ]; then
   echo
   echo "You must pass a compiler version number to script. For example,"
-  echo "    toss4_icpx.sh 2022.1.0"
-  exit
+  echo "    toss4_icpx.sh 2022.1.0 [3.27.4]"
+  echo "An optional second argument can be given to set the CMake version to load."
+  echo "If no CMake version is provided, version ${DEFAULT_CMAKE_VER} will be used."
+  exit 1
 fi
 
 COMP_VER=$1
-shift 1
+
+# Detect optional second positional argument as a CMake version if it looks like N.M or N.M.P
+# Otherwise, treat it as a normal CMake argument.
+if [ -n "$2" ] && [[ "$2" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+  CMAKE_VER=$2
+  shift 2
+else
+  CMAKE_VER=$DEFAULT_CMAKE_VER
+  shift 1
+fi
 
 BUILD_SUFFIX=lc_toss4-icpx-${COMP_VER}
 
 echo
 echo "Creating build directory build_${BUILD_SUFFIX} and generating configuration in it"
+echo "Using CMake version: ${CMAKE_VER}"
 echo "Configuration extra arguments:"
 echo "   $@"
 echo
@@ -28,7 +45,7 @@ echo
 rm -rf build_${BUILD_SUFFIX} 2>/dev/null
 mkdir build_${BUILD_SUFFIX} && cd build_${BUILD_SUFFIX}
 
-module load cmake/3.23.1
+module load cmake/${CMAKE_VER}
 
 ##
 # CMake option -DRAJA_ENABLE_FORCEINLINE_RECURSIVE=Off used to speed up compile
@@ -46,11 +63,11 @@ cmake \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_CXX_COMPILER=icpx \
   -DCMAKE_C_COMPILER=icx \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -C ../host-configs/lc-builds/toss4/icpx_X.cmake \
   -DRAJA_ENABLE_FORCEINLINE_RECURSIVE=Off \
   -DENABLE_CLANGFORMAT=On \
-  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-14.0.6/bin/clang-format \
+  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-19.1.3/bin/clang-format \
   -DENABLE_OPENMP=On \
   -DENABLE_BENCHMARKS=On \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \

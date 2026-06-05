@@ -1,16 +1,18 @@
 
 [comment]: # (#################################################################)
-[comment]: # (Copyright 2016-25, Lawrence Livermore National Security, LLC)
-[comment]: # (and RAJA project contributors. See the RAJA/LICENSE file)
-[comment]: # (for details.)
-[comment]: # 
+[comment]: # (Copyright Lawrence Livermore National Security, LLC and other)
+[comment]: # (RAJA Project Developers. See top-level LICENSE and COPYRIGHT)
+[comment]: # (files for dates and other details. No copyright assignment is)
+[comment]: # (required to contribute to RAJA.)
+[comment]: #
 [comment]: # (# SPDX-License-Identifier: BSD-3-Clause)
 [comment]: # (#################################################################)
 
 # <img src="/share/raja/logo/RAJA_LOGO_Color.png?raw=true" width="128" valign="middle" alt="RAJA"/>
 
+[![Build Status](https://github.com/llnl/RAJA/actions/workflows/build.yml/badge.svg)](https://github.com/llnl/RAJA/actions/workflows/build.yml)
 [![Documentation Status](https://readthedocs.org/projects/raja/badge/?version=develop)](https://raja.readthedocs.io/en/develop/?badge=develop)
-[![Coverage](https://img.shields.io/codecov/c/github/LLNL/RAJA/develop.svg)](https://codecov.io/gh/LLNL/RAJA)
+[![GitHub release](https://img.shields.io/github/release/llnl/RAJA.svg)](https://github.com/llnl/RAJA/releases/latest)
 [![Join the chat at https://gitter.im/llnl/raja](https://badges.gitter.im/llnl/raja.svg)](https://gitter.im/llnl/raja?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 RAJA is a library of C++ software abstractions, primarily developed at
@@ -24,7 +26,7 @@ and programming model portability for HPC applications. RAJA has two main goals:
 
 RAJA offers portable, parallel loop execution by providing building blocks 
 that extend the generally-accepted parallel for idiom. RAJA relies on standard 
-C++17 features.
+C++20 features.
 
 RAJA's design is rooted in decades of experience working on 
 production mesh-based multiphysics applications. Based on the diversity of
@@ -55,7 +57,7 @@ To clone the repo, use the command:
     git clone --recursive https://github.com/llnl/raja.git
 
 Then, you can build RAJA like any other CMake project, provided you have a C++
-compiler that supports the C++17 standard. The simplest way to build the code,
+compiler that supports the C++20 standard. The simplest way to build the code,
 using your system default compiler, is to run the following sequence of 
 commands in the top-level RAJA directory (in-source builds are not allowed!):
 
@@ -138,17 +140,16 @@ License
 
 RAJA is licensed under the [BSD 3-Clause license](https://opensource.org/licenses/BSD-3-Clause).
 
-Copyrights and patents in the RAJA project are retained by contributors.
-No copyright assignment is required to contribute to RAJA.
-
 Unlimited Open Source - BSD 3-clause Distribution
 `LLNL-CODE-689114`  `OCEC-16-063`
 
+Copyrights and patents in the RAJA project are retained by contributors.
+No copyright assignment is required to contribute to RAJA.
+
 For release details and restrictions, please see the information in the
 following:
-- [RELEASE](./RELEASE)
+- [COPYRIGHT](./COPYRIGHT)
 - [LICENSE](./LICENSE)
-- [NOTICE](./NOTICE)
 
 
 SPDX usage
@@ -177,10 +178,7 @@ PackageName: camp
 PackageHomePage: https://github.com/LLNL/camp  
 PackageLicenseDeclared: BSD-3-Clause
 
-PackageName: CUB   
-PackageHomePage: https://github.com/NVlabs/cub  
-PackageLicenseDeclared: BSD-3-Clause
+* * *
 
-PackageName: rocPRIM   
-PackageHomePage: https://github.com/ROCmSoftwarePlatform/rocPRIM.git  
-PackageLicenseDeclared: MIT License
+[BLT]: https://github.com/LLNL/blt
+[RAJA]: https://github.com/LLNL/camp

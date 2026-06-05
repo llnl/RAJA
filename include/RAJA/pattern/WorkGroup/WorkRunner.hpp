@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -113,9 +115,9 @@ struct HoldForall
 {
   using resource_type = typename resources::get_resource<ExecutionPolicy>::type;
   using HoldBodyArgs  = typename std::conditional<
-      !type_traits::is_device_exec_policy<ExecutionPolicy>::value,
-      HoldBodyArgs_host<LoopBody, index_type, Args...>,
-      HoldBodyArgs_device<LoopBody, index_type, Args...>>::type;
+       !type_traits::is_device_exec_policy<ExecutionPolicy>::value,
+       HoldBodyArgs_host<LoopBody, index_type, Args...>,
+       HoldBodyArgs_device<LoopBody, index_type, Args...>>::type;
 
   template<typename segment_in, typename body_in>
   HoldForall(segment_in&& segment, body_in&& body)

@@ -1,6 +1,8 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -30,7 +32,12 @@ void testWorkGroupWorkStorageInsertCall()
 
   using callable = TestCallable<double>;
 
+  // MSVC ran into an "Internal Compiler Error" with the static keyword
+#if !defined(RAJA_COMPILER_MSVC)
   static constexpr auto platform = RAJA::Platform::host;
+#else
+  constexpr auto platform = RAJA::Platform::host;
+#endif
   using DispatchPolicy = typename DispatchTyper::template type<callable>;
   using Dispatcher_type = RAJA::detail::Dispatcher<
       platform, DispatchPolicy, void, void*, bool*, bool*>;

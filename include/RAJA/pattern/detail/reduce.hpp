@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -210,10 +212,8 @@ namespace detail
 {
 
 template<typename T,
-         template<typename>
-         class Reduce_,
-         template<typename, typename>
-         class Combiner_>
+         template<typename> class Reduce_,
+         template<typename, typename> class Combiner_>
 class BaseReduce
 {
   using Reduce = Reduce_<T>;
@@ -389,8 +389,7 @@ public:
  */
 template<typename T,
          typename IndexType,
-         template<typename, typename>
-         class Combiner>
+         template<typename, typename> class Combiner>
 class BaseReduceMinLoc
     : public BaseReduce<ValueLoc<T, IndexType>, RAJA::reduce::min, Combiner>
 {
@@ -543,8 +542,7 @@ public:
  */
 template<typename T,
          typename IndexType,
-         template<typename, typename>
-         class Combiner>
+         template<typename, typename> class Combiner>
 class BaseReduceMaxLoc : public BaseReduce<ValueLoc<T, IndexType, false>,
                                            RAJA::reduce::max,
                                            Combiner>

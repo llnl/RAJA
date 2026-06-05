@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -19,6 +21,8 @@
 #define RAJA_pattern_atomic_HPP
 
 #include "RAJA/config.hpp"
+
+#include <utility>
 
 #include "RAJA/policy/atomic_auto.hpp"
 #include "RAJA/policy/atomic_builtin.hpp"
@@ -278,12 +282,25 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicExchange(T* acc, T value)
  * @param compare Value to compare with *acc
  * @return Returns value at *acc immediately before this operation completed
  */
-
 RAJA_SUPPRESS_HD_WARN
 template<typename Policy, typename T>
 RAJA_INLINE RAJA_HOST_DEVICE T atomicCAS(T* acc, T compare, T value)
 {
   return RAJA::atomicCAS(Policy {}, acc, compare, value);
+}
+
+/*!
+ * @brief Generic atomic operation implemented using a CAS loop
+ * @param acc Pointer to location to store value
+ * @param operation Functor that computes a new value from the old value
+ * @return Returns value at *acc immediately before this operation completed
+ */
+RAJA_SUPPRESS_HD_WARN
+template<typename Policy, typename T, typename Operation>
+RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(T* acc, Operation&& operation)
+{
+  return RAJA::atomicGeneric(Policy {}, acc,
+                             std::forward<Operation>(operation));
 }
 
 /*!

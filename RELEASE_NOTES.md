@@ -1,7 +1,8 @@
 [comment]: # (#################################################################)
-[comment]: # (Copyright 2016-25, Lawrence Livermore National Security, LLC)
-[comment]: # (and RAJA project contributors. See the RAJA/LICENSE file)
-[comment]: # (for details.)
+[comment]: # (Copyright Lawrence Livermore National Security, LLC and other)
+[comment]: # (RAJA Project Developers. See top-level LICENSE and COPYRIGHT)
+[comment]: # (files for dates and other details. No copyright assignment is)
+[comment]: # (required to contribute to RAJA.)
 [comment]: # 
 [comment]: # (# SPDX-License-Identifier: BSD-3-Clause)
 [comment]: # (#################################################################)
@@ -14,10 +15,56 @@ This release contains ...
 Notable changes include:
 
   * New features / API changes:
+    * Added `RAJA::atomicGeneric` to enable user-defined atomic
+      operations implemented using a compare-and-swap loop.
 
   * Build changes/improvements:
 
   * Bug fixes/improvements:
+
+
+Version 2025.12.2 -- Release date 2026-03-04
+============================================
+
+This release contains a bug fix and some performance enhancements resulting
+from new execution policies.
+
+Notable changes include:
+
+  * New features / API changes:
+    * Add new policies for RAJA::launch that enable caching of team (block)
+      indices and dimensions, and thread indices and dimensions. This 
+      eliminates repeated calls to device intrinsics when those quantities 
+      are used multiple times in a kernel. A new example code was added to
+      show the usage. RAJA User Guide documentation will be forthcoming.
+
+  * Build changes/improvements:
+    * None
+
+  * Bug fixes/improvements:
+    * Fixed issue with our checks for C++ symbol names.
+
+
+Version 2025.12.1 -- Release date 2026-01-28
+============================================
+
+This release contains some improvements to code robustness, including
+evolving internal code implementations to use C++17, and eventually C++20.
+
+Notable changes include:
+
+  * New features / API changes:
+    * Add Kahan sum class used in RAJAPerf to make parallel sum reductions
+      more accurate. Note that using fast-math compiler option (default with the
+      Intel compiler) will undo the accuracy increase. To recover the accuracy
+      with the Intel compiler, use the '-fp-model=precise' option. 
+
+  * Build changes/improvements:
+    * Bump minimum CMake version required to 3.24.
+
+  * Bug fixes/improvements:
+    * Various internal code cleanups, simplifications, and improvements using
+      C++17 features, with an eye toward C++20.
 
 
 Version 2025.12.0 -- Release date 2025-12-19
@@ -34,7 +81,6 @@ Notable changes include:
     * Update Camp submodule to v2025.12.0 release.
     * Improve CMake support for configuring with Caliper and fix issue reported
       by a user.
-    * Bump minimum CMake version required to 3.24.
 
   * Bug fixes/improvements:
     * Fix compilation failue when a downstream library or applications is

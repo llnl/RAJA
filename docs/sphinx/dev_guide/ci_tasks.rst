@@ -1,7 +1,8 @@
 .. ##
-.. ## Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-.. ## and RAJA project contributors. See the RAJA/LICENSE file
-.. ## for details.
+.. ## Copyright (c) Lawrence Livermore National Security, LLC and other
+.. ## RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+.. ## files for dates and other details. No copyright assignment is required
+.. ## to contribute to RAJA.
 .. ##
 .. ## SPDX-License-Identifier: (BSD-3-Clause)
 .. ##
@@ -125,11 +126,12 @@ there, modify the job entry, and create a pull request.
 Changing run parameters
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The parameters for each system/scheduler on which we run GitLab CI for
-RAJA, such as job time limits, resource allocations, etc. are defined in the 
-``RAJA/.gitlab/custom-jobs-and-variables.yml`` file. This information can
-remain as is, for the most part, and should not be changed unless absolutely 
-necessary.
+The parameters for each system/scheduler on which we run GitLab CI for RAJA,
+such as job time limits, resource allocations, etc. are defined in the
+``RAJA/.gitlab/custom-variables.yml`` file. Job-specific templates and
+customizations are defined in ``RAJA/.gitlab/custom-jobs.yml``. This
+information can remain as is, for the most part, and should not be changed
+unless absolutely necessary.
 
 For example, sometimes a particular job will take longer to build and run than
 the default allotted time for jobs on a machine. In this case, the time for the
@@ -188,46 +190,47 @@ Building the Compiler
 ^^^^^^^^^^^^^^^^^^^^^
 
 .. important:: Because Intel updates their compiler repo daily, it is possible
-   that the head of the SYCL branch will fail to build. In the event that it
-   does not build, try checking out an earlier commit. On the Intel/LLVM GitHub
-   page, one can see which of their commits builds by checking the status
-   badge next to each commit. Look for a commit that passes.
+   that the head of the SYCL branch will fail to build. If it does not build,
+   try checking out an earlier commit in your local cloned repo. On the
+   `Intel/LLVM GitHub Project <https://github.com/intel/llvm>`_, you can see
+   which of their commits builds by checking the status badge next to each
+   commit. Look for a recent commit that passes.
 
 
-#. On LC machines, it is following the good neighbor policy to do your build on a compute node.
+#. On LC machines, please follow the good neighbor policy and do your build on a compute node.
 
    Use an appropriate bank to get an interactive node, e.g on Corona::
 
     flux alloc -t 60 -N 1 --bank=wbronze
 
-#. Load the module of the version of GCC headers that you want to use. We typically use the system default, which on corona at time of writing is gcc/10.3.1-magic::
+#. Load the module of the version of GCC headers that you want to use. We typically use the system default, which on corona is currently gcc/10.3.1-magic. Set then environment variable ``GCC_VERSION`` to the GCC version, then load the module::
 
-    GCC_VERSION=10.3.1
     module load gcc/${GCC_VERSION}-magic
 
-#. Load the module of the version of ROCm that you want to use::
-    ROCM_VERSION=6.4.2
+#. Load the module of the version of ROCm that you want to use. Set the environment variable ``ROCM_VERSION`` to the ROCm version, then load the module::
+
     module load rocm/${ROCM_VERSION}
 
-#. Load Python module you want to use.  At time of writing, the LLVM configure requires at least version 3.7. we use Corona default::
-    PYTHON_VERSION=3.9.12
+#. Load Python module you want to use. The LLVM configure requires at least version 3.7. Set the environment variable ``PYTHON_VERSION`` to the Python version, then load the module::
+
     module load python/${PYTHON_VERSION}
     
 #. Clone the SYCL branch of Intel's LLVM compiler::
 
     git clone https://github.com/intel/llvm -b sycl
 
-#. cd into the LLVM folder and extract the GIT SHA for naming the install directories.  The install directory uses the naming convention ``clang_sycl_<git sha>_hip_gcc<version>_rocm<version>``::
+#. Go into the LLVM folder and get the Git SHA for the commit hash you are building. The first 12 characters of the hash value are used in the name of the compiler install directory. To get the first 12 characters of the hash value::
 
     cd llvm
-    GIT_SHA=$(git rev-parse --short=12 HEAD)
-    INSTALL_PREFIX=/usr/workspace/raja-dev/clang_sycl_${GIT_SHA}_hip_gcc${GCC_VERSION}_rocm${ROCM_VERSION}
+    git rev-parse --short=12 HEAD
 
-#. Build the compiler. 
+#. Then, set the environment variable ``GIT_SHA`` to the hash value, and set the environment variable ``INSTALL_PREFIX`` to the name of the installation directory, which has the following form:  ``/usr/workspace/raja-dev/clang_sycl_${GIT_SHA}_hip_gcc${GCC_VERSION}_rocm${ROCM_VERSION}``
 
-   a. Configure
+#. After, the compiler repo code is in place and the build environment is set as described in the previous steps, build and install the compiler.
 
-     .. code-block:: bash
+   a. Configure:
+
+.. code-block:: bash
 
      python3 buildbot/configure.py --hip -o buildrocm${ROCM_VERSION} \
      --cmake-gen "Unix Makefiles" \
@@ -242,16 +245,16 @@ Building the Compiler
      --cmake-opt=-DUR_HIP_HSA_INCLUDE_DIR=/opt/rocm-${ROCM_VERSION}/hsa/include/hsa \
      --cmake-opt=-DUR_HIP_LIB_DIR=/opt/rocm-${ROCM_VERSION}/lib 
 
-   #. Build::
+   b. Build::
 
       python buildbot/compile.py -o buildrocm${ROCM_VERSION}		     
 
-   #. Install::
+   c. Install::
 	
       cp -rp buildrocm${ROCM_VERSION}/install ${INSTALL_PREFIX}
       cd ..
 
-#. Set the permissions of the folder, and everything in it to 750::
+#. Set the permissions of the installation folder, and everything in it to 750::
 
       chmod 750 ${INSTALL_PREFIX} -R  
 
@@ -268,7 +271,7 @@ Using the compiler
 
 #. Load the version of ROCm that you used when building the compiler, for example::
 
-    ROCM_VERSION=6.4.2 
+    ROCM_VERSION=6.4.3 
     module load rocm/${ROCM_VERSION}
 
 #. Navigate to the root of your local RAJA checkout space::
@@ -279,15 +282,15 @@ Using the compiler
 
    This is the ``INSTALL_PREFIX`` used above.  For example::
 
-    SYCL_INSTALL_PREFIX=/usr/workspace/raja-dev/clang_sycl_16b7bcb09915_hip_gcc10.3.1_rocm6.4.2
+    SYCL_INSTALL_PREFIX=/usr/workspace/raja-dev/clang_sycl_16b7bcb09915_hip_gcc10.3.1_rocm6.4.3
 
 #. Run the test config script::
 
     ./scripts/lc-builds/corona_sycl.sh ${SYCL_INSTALL_PREFIX}
 
 #. As indicated in the output of the ``corona_sycl.sh`` script the SYCL compiler libraries need to be on the ``LD_LIBRARY_PATH``::
-   
-    export LD_LIBRARY_PATH=${SYCL_INSTALL_PREFIX}/lib:${SYCL_INSTALL_PREFIX}/lib64:$LD_LIBRARY_PATH    
+ 
+    export LD_LIBRARY_PATH=${SYCL_INSTALL_PREFIX}/lib:${SYCL_INSTALL_PREFIX}/lib64:$LD_LIBRARY_PATH
 
 #. cd into the generated build directory::
 
@@ -409,10 +412,11 @@ Specifically,
 
   * The RAJA Performance Suite GitLab CI process is driven by the
     `RAJAPerf/.gitlab-ci.yml
-    <https://github.com/LLNL/RAJAPerf/blob/develop/.gitlab-ci.yml>`_ file.
-  * The ``custom-jobs-and-variables.yml`` and ``subscribed-pipelines.yml``
-    files reside in the `RAJAPerf/.gitlab
-    <https://github.com/LLNL/RAJAPerf/tree/develop/.gitlab>`_ directory.
+    <https://github.com/LLNL/RAJAPerf/blob/develop/.gitlab-ci.yml>`_ file,
+    which uses GitLab CI Components from radiuss-shared-ci.
+  * The ``custom-jobs.yml`` and ``custom-variables.yml`` files reside in
+    `RAJAPerf/.gitlab
+    <https://github.com/LLNL/RAJAPerf/tree/develop/.gitlab>`_.
   * The ``build_and_test.sh`` script resides in the `RAJAPerf/scripts/gitlab
     <https://github.com/LLNL/RAJAPerf/tree/develop/scripts/gitlab>`_ directory.
   * The `RAJAPerf/Dockerfile

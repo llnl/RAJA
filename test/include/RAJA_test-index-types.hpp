@@ -1,6 +1,8 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -30,11 +32,13 @@ RAJA_INDEX_VALUE_T(StrongULL, unsigned long long , "StrongULLType");
 //
 // Standard index types list
 //
+// TODO(bowen): do we want to support StrongULL here?
 using IdxTypeList = camp::list<RAJA::Index_type,
                                int,
+                               //StrongULL,
 #if defined(RAJA_TEST_EXHAUSTIVE)
                                unsigned int,
-// short int types will break a bunch of tests due to assumpitons made in 
+// short int types will break a bunch of tests due to assumptions made in
 // the test implementations.
 //                             short,
 //                             unsigned short,
@@ -47,7 +51,9 @@ using IdxTypeList = camp::list<RAJA::Index_type,
 //
 // Signed index types list
 //
+// TODO(bowen): do we want to support StrongInt here?
 using SignedIdxTypeList = camp::list<RAJA::Index_type,
+                                     //StrongInt,
                                      int,
                                      long long>;
 
@@ -60,7 +66,7 @@ using StrongIdxTypeList = camp::list<RAJA::Index_type,
 #if defined(RAJA_TEST_EXHAUSTIVE)
                                      //StrongInt,
                                      unsigned int,
-// short int types will break a bunch of tests due to assumpitons made in 
+// short int types will break a bunch of tests due to assumptions made in
 // the test implementations.
 //                                   short,
 //                                   unsigned short,

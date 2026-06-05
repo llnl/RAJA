@@ -17,8 +17,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -31,6 +33,7 @@
 #include <iterator>
 #include <type_traits>
 
+#include "RAJA/pattern/concepts.hpp"
 #include "RAJA/util/types.hpp"
 
 #include "RAJA/policy/simd/policy.hpp"
@@ -45,16 +48,15 @@ namespace simd
 {
 
 
-template<typename Iterable, typename Func, typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Host>,
-    expt::type_traits::is_ForallParamPack<ForallParam>,
-    concepts::negate<expt::type_traits::is_ForallParamPack_empty<ForallParam>>>
-forall_impl(resources::Host host_res,
-            const simd_exec& pol,
-            Iterable&& iter,
-            Func&& body,
-            ForallParam f_params)
+template<typename Iterable,
+         typename Func,
+         concepts::NonEmptyForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
+    resources::Host host_res,
+    const simd_exec& pol,
+    Iterable&& iter,
+    Func&& body,
+    ForallParam f_params)
 {
   expt::ParamMultiplexer::parampack_init(pol, f_params);
 
@@ -71,16 +73,15 @@ forall_impl(resources::Host host_res,
   return resources::EventProxy<resources::Host>(host_res);
 }
 
-template<typename Iterable, typename Func, typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Host>,
-    expt::type_traits::is_ForallParamPack<ForallParam>,
-    expt::type_traits::is_ForallParamPack_empty<ForallParam>>
-forall_impl(resources::Host host_res,
-            const simd_exec&,
-            Iterable&& iter,
-            Func&& body,
-            ForallParam)
+template<typename Iterable,
+         typename Func,
+         concepts::EmptyForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
+    resources::Host host_res,
+    const simd_exec&,
+    Iterable&& iter,
+    Func&& body,
+    ForallParam)
 {
   RAJA_EXTRACT_BED_IT(iter);
 

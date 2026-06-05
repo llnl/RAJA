@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -551,7 +553,7 @@ using common_type_t = typename common_type<Ts...>::type;
  * \brief Function to make a TypedRangeSegment for the interval [begin, end)
  *
  *  \return a newly constructed TypedRangeSegment where the
- *          value_type is equivilent to the common type of
+ *          value_type is equivalent to the common type of
  *          @begin and @end. If there is no common type, then
  *          a compiler error will be produced.
  */
@@ -589,32 +591,6 @@ RAJA_HOST_DEVICE TypedRangeStrideSegment<Common> make_strided_range(
       "make_stride_segment : stride and end must be of similar types.");
   return {begin, end, stride};
 }
-
-namespace concepts
-{
-
-template<typename T, typename U>
-struct RangeConstructible
-    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U>>())
-{};
-
-template<typename T, typename U, typename V>
-struct RangeStrideConstructible
-    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U, V>>())
-{};
-
-}  // namespace concepts
-
-namespace type_traits
-{
-
-DefineTypeTraitFromConcept(is_range_constructible,
-                           RAJA::concepts::RangeConstructible);
-
-DefineTypeTraitFromConcept(is_range_stride_constructible,
-                           RAJA::concepts::RangeStrideConstructible);
-
-}  // namespace type_traits
 
 }  // namespace RAJA
 

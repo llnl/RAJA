@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -57,9 +59,8 @@ struct ZipIterator
 
   RAJA_HOST_DEVICE RAJA_INLINE constexpr ZipIterator() : m_iterators() {}
 
-  template<typename... Args,
-           typename = concepts::enable_if<
-               type_traits::convertible_to<Args&&, Iters>...>>
+  template<typename... Args>
+    requires(std::convertible_to<Args &&, Iters> && ...)
   RAJA_HOST_DEVICE RAJA_INLINE constexpr ZipIterator(Args&&... args)
       : m_iterators(std::forward<Args>(args)...)
   {}

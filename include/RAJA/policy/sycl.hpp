@@ -11,8 +11,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -29,13 +31,13 @@
 #include "RAJA/policy/sycl/forall.hpp"
 #include "RAJA/policy/sycl/policy.hpp"
 #include "RAJA/policy/sycl/reduce.hpp"
-//#include "RAJA/policy/sycl/multi_reduce.hpp"
-//#include "RAJA/policy/sycl/scan.hpp"
-//#include "RAJA/policy/sycl/sort.hpp"
+// #include "RAJA/policy/sycl/multi_reduce.hpp"
+// #include "RAJA/policy/sycl/scan.hpp"
+// #include "RAJA/policy/sycl/sort.hpp"
 #include "RAJA/policy/sycl/kernel.hpp"
-//#include "RAJA/policy/sycl/synchronize.hpp"
+// #include "RAJA/policy/sycl/synchronize.hpp"
 #include "RAJA/policy/sycl/launch.hpp"
-//#include "RAJA/policy/sycl/WorkGroup.hpp"
+// #include "RAJA/policy/sycl/WorkGroup.hpp"
 #include "RAJA/policy/sycl/params/reduce.hpp"
 #include "RAJA/policy/sycl/params/kernel_name.hpp"
 

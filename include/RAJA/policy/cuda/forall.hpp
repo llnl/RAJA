@@ -13,8 +13,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -34,6 +36,7 @@
 
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
+#include "RAJA/util/Jit.hpp"
 
 #include "RAJA/policy/cuda/MemUtils_CUDA.hpp"
 #include "RAJA/policy/cuda/policy.hpp"
@@ -379,10 +382,11 @@ template<typename EXEC_POL,
                               (IterationGetter::block_size > 0),
                           size_t> BlockSize = IterationGetter::block_size>
 __launch_bounds__(BlockSize, BlocksPerSM) __global__
-    void forallp_cuda_kernel(const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
-                             const RAJA_CUDA_GRID_CONSTANT Iterator idx,
-                             const RAJA_CUDA_GRID_CONSTANT IndexType length,
-                             ForallParam f_params)
+    RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
+        const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
+        const RAJA_CUDA_GRID_CONSTANT Iterator idx,
+        const RAJA_CUDA_GRID_CONSTANT IndexType length,
+        ForallParam f_params)
 {
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
@@ -410,7 +414,7 @@ template<typename EXEC_POL,
                                           IterationMapping>::value &&
                               (IterationGetter::block_size <= 0),
                           size_t> RAJA_UNUSED_ARG(BlockSize) = 0>
-__global__ void forallp_cuda_kernel(
+__global__ RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
     const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
     const RAJA_CUDA_GRID_CONSTANT Iterator idx,
     const RAJA_CUDA_GRID_CONSTANT IndexType length,
@@ -446,10 +450,11 @@ template<
                          (IterationGetter::block_size > 0),
                      size_t> BlockSize = IterationGetter::block_size>
 __launch_bounds__(BlockSize, BlocksPerSM) __global__
-    void forallp_cuda_kernel(const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
-                             const RAJA_CUDA_GRID_CONSTANT Iterator idx,
-                             const RAJA_CUDA_GRID_CONSTANT IndexType length,
-                             ForallParam f_params)
+    RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
+        const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
+        const RAJA_CUDA_GRID_CONSTANT Iterator idx,
+        const RAJA_CUDA_GRID_CONSTANT IndexType length,
+        ForallParam f_params)
 {
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
@@ -480,7 +485,7 @@ template<
                                          IterationMapping>::value &&
                          (IterationGetter::block_size <= 0),
                      size_t> RAJA_UNUSED_ARG(BlockSize) = 0>
-__global__ void forallp_cuda_kernel(
+__global__ RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
     const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
     const RAJA_CUDA_GRID_CONSTANT Iterator idx,
     const RAJA_CUDA_GRID_CONSTANT IndexType length,
@@ -552,7 +557,10 @@ forall_impl(resources::Cuda cuda_res,
   // Only launch kernel if we have something to iterate over
   if (len > 0)
   {
-
+    // Note: we cannot fully remove enable_if_t from this file because NVCC is
+    // not capable of disambiguating conceptified versions of
+    // forallp_cuda_kernel when they are used by address like below.
+    RAJA::internal::jit::register_lambda(loop_body);
     auto func = reinterpret_cast<const void*>(
         &impl::forallp_cuda_kernel<EXEC_POL, BlocksPerSM, Iterator, LOOP_BODY,
                                    IndexType, camp::decay<ForallParam>>);
@@ -637,6 +645,7 @@ RAJA_INLINE resources::EventProxy<resources::Cuda> forall_impl(
     LoopBody&& loop_body)
 {
   int num_seg = iset.getNumSegments();
+  RAJA::internal::jit::register_lambda(loop_body);
   for (int isi = 0; isi < num_seg; ++isi)
   {
     iset.segmentCall(

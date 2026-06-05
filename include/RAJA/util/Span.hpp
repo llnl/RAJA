@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -18,10 +20,14 @@
 #ifndef RAJA_SPAN_HPP
 #define RAJA_SPAN_HPP
 
+#include <concepts>
 #include <type_traits>
 
+#include "RAJA/index/IndexValue.hpp"
 #include "RAJA/util/concepts.hpp"
 #include "RAJA/util/macros.hpp"
+#include "RAJA/util/types.hpp"
+#include "camp/concepts.hpp"
 
 namespace RAJA
 {
@@ -55,7 +61,14 @@ namespace RAJA
  *   compile time extents
  *
  */
-template<typename IterType, typename IndexType>
+
+namespace concepts
+{
+template<typename T>
+concept SpanIndex = concepts::Integral<T> || concepts::IndexValued<T>;
+};
+
+template<concepts::RandomAccessIterator IterType, concepts::SpanIndex IndexType>
 struct Span
 {
   using element_type    = typename std::iterator_traits<IterType>::value_type;
@@ -66,11 +79,6 @@ struct Span
   using const_reference = const element_type&;
   using iterator        = IterType;
   using const_iterator  = IterType;
-
-  static_assert(type_traits::is_integral<IndexType>::value,
-                "IndexType must model Integral");
-  static_assert(type_traits::is_random_access_iterator<IterType>::value,
-                "IterType must model RandomAccessIterator");
 
   constexpr RAJA_HOST_DEVICE Span(iterator begin, iterator end)
       : m_begin {begin},

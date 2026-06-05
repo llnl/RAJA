@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -153,6 +155,17 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicCAS(seq_atomic, T* acc, T compare, T value)
 {
   T ret = *acc;
   *acc  = ret == compare ? value : ret;
+  return ret;
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename T, typename Operation>
+RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(seq_atomic,
+                                             T* acc,
+                                             Operation&& operation)
+{
+  T ret = *acc;
+  *acc  = operation(ret);
   return ret;
 }
 

@@ -4,7 +4,7 @@ jobs:
   build_docker:
     strategy:
       matrix:
-        target: [gcc12, gcc12_debug, gcc13, gcc13_desul, clang14_debug, clang14_style, clang14_desul, intel2024_0, intel2024_0_debug, intel2024_0_sycl, rocm6_4_3_desul]
+        target: [gcc12, gcc12_debug, gcc13, gcc13_desul, clang19_debug, clang19_style, clang19_desul, intel2024_2, intel2024_2_debug, intel2024_2_sycl, rocm6_4_3_desul]
     runs-on: ubuntu-latest
     steps:
     - run: |
@@ -30,7 +30,7 @@ jobs:
         with:
           build-dir: build
           options:
-            CMAKE_CXX_STANDARD=17
+            CMAKE_CXX_STANDARD=20
             ENABLE_OPENMP=Off
             CMAKE_BUILD_TYPE=Release
           run-build: true
@@ -57,8 +57,8 @@ jobs:
           build-dir: build
           options:
             ENABLE_WARNINGS_AS_ERRORS=Off
-            BLT_CXX_STD=""
-            CMAKE_CXX_STANDARD=17
+            BLT_CXX_STD="c++20"
+            CMAKE_CXX_STANDARD=20
             CMAKE_BUILD_TYPE=Release
             ${{ matrix.shared.args }}
           run-build: true

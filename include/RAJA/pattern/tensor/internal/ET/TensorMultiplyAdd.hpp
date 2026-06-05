@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -54,8 +56,8 @@ class TensorMultiplyAdd
 {
 public:
   using self_type          = TensorMultiplyAdd<LEFT_OPERAND_TYPE,
-                                      RIGHT_OPERAND_TYPE,
-                                      ADD_OPERAND_TYPE>;
+                                               RIGHT_OPERAND_TYPE,
+                                               ADD_OPERAND_TYPE>;
   using left_operand_type  = LEFT_OPERAND_TYPE;
   using right_operand_type = RIGHT_OPERAND_TYPE;
   using add_operand_type   = ADD_OPERAND_TYPE;

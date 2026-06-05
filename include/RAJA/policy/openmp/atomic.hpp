@@ -9,8 +9,10 @@
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -21,6 +23,8 @@
 #include "RAJA/config.hpp"
 
 #if defined(RAJA_ENABLE_OPENMP)
+
+#include <utility>
 
 #include "RAJA/policy/openmp/policy.hpp"
 
@@ -226,6 +230,17 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicCAS(omp_atomic, T* acc, T compare, T value)
 {
   // OpenMP doesn't define atomic ternary operators so use builtin atomics
   return RAJA::atomicCAS(builtin_atomic {}, acc, compare, value);
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename T, typename Operation>
+RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(omp_atomic,
+                                             T* acc,
+                                             Operation&& operation)
+{
+  // OpenMP doesn't define a generic atomic operation, so use builtin atomics
+  return RAJA::atomicGeneric(builtin_atomic {}, acc,
+                             std::forward<Operation>(operation));
 }
 
 #endif  // not defined RAJA_COMPILER_MSVC

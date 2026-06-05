@@ -1,3 +1,12 @@
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
+//
+// SPDX-License-Identifier: (BSD-3-Clause)
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
 #ifndef RAJA_PARAMS_BASE
 #define RAJA_PARAMS_BASE
 
@@ -160,8 +169,7 @@ struct ValOp
 
 template<typename T,
          typename IndexType,
-         template<typename, typename, typename>
-         class Op>
+         template<typename, typename, typename> class Op>
 struct ValOp<ValLoc<T, IndexType>, Op>
 {
   using index_type        = IndexType;
@@ -248,8 +256,7 @@ struct ValOp<ValLoc<T, IndexType>, Op>
 
 template<typename T,
          typename IndexType,
-         template<typename, typename, typename>
-         class Op>
+         template<typename, typename, typename> class Op>
 using ValLocOp = ValOp<ValLoc<T, IndexType>, Op>;
 
 namespace detail
