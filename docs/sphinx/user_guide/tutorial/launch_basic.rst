@@ -67,6 +67,8 @@ within the kernel, for example by creating thread-team synchronization points.
     RAJA::LaunchParams(RAJA::Teams::sycl_order(g0, g1, g2),
                        RAJA::Threads::sycl_order(l0, l1, l2))
 
+  See also the example ``examples/launch-device-policy-aliases.cpp``.
+
 Inside the execution space, developers write a kernel using nested
 ``RAJA::loop`` methods. The manner in which each loop is executed 
 is determined by a template parameter type, which
