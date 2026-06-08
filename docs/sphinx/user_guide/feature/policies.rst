@@ -730,6 +730,33 @@ GPU Policies for SYCL
           configuration. SYCL dimension 2 always exists and should be used as
           one would use the x dimension in CUDA and HIP.  
 
+Device policy aliases
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To simplify transitions between GPU backends (CUDA/HIP/SYCL) and reduce
+downstream preprocessor conditionals, RAJA provides a small set of
+``device_*`` policy aliases that resolve to the *active* GPU backend.
+
+In particular, the following aliases are available when compiling for a GPU
+device backend (i.e., when one of ``RAJA_CUDA_ACTIVE``, ``RAJA_HIP_ACTIVE``,
+or ``RAJA_SYCL_ACTIVE`` is defined):
+
+  * ``device_exec<BLOCK_SIZE>`` (maps to ``cuda_exec`` / ``hip_exec`` /
+    ``sycl_exec``)
+  * ``device_launch_t`` (maps to ``cuda_launch_t`` / ``hip_launch_t`` /
+    ``sycl_launch_t``)
+  * ``device_global_size_{x,y,z}_direct<N>`` (maps to
+    ``cuda/hip_global_size_*`` or ``sycl_global_{2,1,0}``)
+  * ``device_global_thread_{x,y,z}``, ``device_thread_{x,y,z}_{direct,loop}``,
+    and ``device_block_{x,y,z}_{direct,loop}`` (maps to the corresponding
+    backend loop/index mapping policies)
+
+For SYCL, these aliases use CUDA-like (x,y,z) naming with the standard RAJA
+mapping described above: x corresponds to SYCL dimension 2, y to dimension 1,
+and z to dimension 0.
+
+See also the example ``examples/device-policy-aliases.cpp``.
+
 ======================================== ============= ==============================
 SYCL Execution Policies                  Works with    Brief description
 ======================================== ============= ==============================
