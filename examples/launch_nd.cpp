@@ -22,6 +22,10 @@
  *  multi-size studies, and uses RAJA::Name so Caliper can aggregate results by
  *  policy/size combination.
  *
+ *  It also demonstrates runtime backend selection using RAJA::ExecPlace and the
+ *  extended RAJA::launch_nd overloads that accept an ExecPlace plus a
+ *  host/device policy pair.
+ *
  *  Typical runs:
  *
  *    ./launch_nd --mapping all --repetitions 50 --warmup 5
@@ -60,6 +64,12 @@ struct ProblemSize
 struct Options
 {
   Mapping mapping = Mapping::All;
+  RAJA::ExecPlace exec_place =
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+      RAJA::ExecPlace::DEVICE;
+#else
+      RAJA::ExecPlace::HOST;
+#endif
   int warmup      = 5;
   int repetitions = 50;
   std::vector<ProblemSize> sizes = {};
@@ -128,6 +138,18 @@ ProblemSize default_problem_size()
   return ProblemSize {262144, 8};
 }
 
+const char* exec_place_name(RAJA::ExecPlace place)
+{
+  switch (place)
+  {
+    case RAJA::ExecPlace::HOST:
+      return "host";
+    case RAJA::ExecPlace::DEVICE:
+      return "device";
+  }
+  return "unknown";
+}
+
 void print_usage(const char* executable)
 {
   std::cout
@@ -136,6 +158,9 @@ void print_usage(const char* executable)
       << "Options:\n"
       << "  --mapping <flat|global|block|thread_local|all>\n"
       << "                            Select policy set to benchmark.\n"
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+      << "  --exec-place <host|device> Select execution backend at runtime.\n"
+#endif
       << "  --sizes <cellsxcomp,...>    Problem sizes, e.g. 262144x8 or"
       << " 65536x8,262144x8.\n"
       << "  --warmup <int>              Warmup launches per mapping/size.\n"
@@ -170,6 +195,21 @@ Mapping parse_mapping(const std::string& value)
   throw std::runtime_error("unknown mapping '" + value +
                            "' (expected flat, global, block, thread_local,"
                            " or all)");
+}
+
+RAJA::ExecPlace parse_exec_place(const std::string& value)
+{
+  if (value == "host" || value == "cpu")
+  {
+    return RAJA::ExecPlace::HOST;
+  }
+  if (value == "device" || value == "gpu")
+  {
+    return RAJA::ExecPlace::DEVICE;
+  }
+
+  throw std::runtime_error("unknown exec-place '" + value +
+                           "' (expected host or device)");
 }
 
 int parse_positive_int(const std::string& name, const std::string& value)
@@ -267,6 +307,13 @@ Options parse_options(int argc, char** argv)
     {
       options.mapping = parse_mapping(require_value(i, argc, argv, "--mapping"));
     }
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+    else if (arg == "--exec-place")
+    {
+      options.exec_place =
+          parse_exec_place(require_value(i, argc, argv, "--exec-place"));
+    }
+#endif
     else if (arg == "--sizes")
     {
       options.sizes = parse_problem_sizes(require_value(i, argc, argv, "--sizes"));
@@ -329,7 +376,8 @@ std::string kernel_name(Mapping mapping, const ProblemSize& size)
 
 template<typename LaunchNdPolicy>
 void launch_kernel(RAJA::resources::Resource res,
-                   LaunchNdPolicy policy,
+                   RAJA::ExecPlace exec_place,
+                   LaunchNdPolicy const& policy,
                    int* values_ptr,
                    const ProblemSize& size,
                    const std::string& name)
@@ -337,7 +385,7 @@ void launch_kernel(RAJA::resources::Resource res,
   auto cell_segment = RAJA::TypedRangeSegment<int>(0, size.cells);
   auto comp_segment = RAJA::TypedRangeSegment<int>(0, size.components);
 
-  RAJA::launch_nd(res, policy, RAJA::segments(cell_segment, comp_segment),
+  RAJA::launch_nd(res, exec_place, policy, RAJA::segments(cell_segment, comp_segment),
                   RAJA::Name(name.c_str()),
                   [=] RAJA_HOST_DEVICE(int cell, int comp) {
                     values_ptr[comp + size.components * cell] =
@@ -376,9 +424,11 @@ int verify_result(RAJA::resources::Resource res,
   return errors;
 }
 
-template<typename LaunchNdPolicy>
+template<typename HostPolicy, typename DevicePolicy>
 RunResult benchmark_mapping(RAJA::resources::Resource res,
-                            LaunchNdPolicy policy,
+                            RAJA::ExecPlace exec_place,
+                            HostPolicy host_policy,
+                            DevicePolicy device_policy,
                             const Options& options,
                             Mapping mapping,
                             const ProblemSize& size)
@@ -388,14 +438,18 @@ RunResult benchmark_mapping(RAJA::resources::Resource res,
   const std::string name = kernel_name(mapping, size);
   int* values_ptr = res.allocate<int>(total);
 
+  const auto policy =
+      RAJA::make_launch_nd_place_policy(std::move(host_policy),
+                                        std::move(device_policy));
+
   for (int step = 0; step < options.warmup; ++step)
   {
-    launch_kernel(res, policy, values_ptr, size, name);
+    launch_kernel(res, exec_place, policy, values_ptr, size, name);
   }
 
   for (int rep = 0; rep < options.repetitions; ++rep)
   {
-    launch_kernel(res, policy, values_ptr, size, name);
+    launch_kernel(res, exec_place, policy, values_ptr, size, name);
   }
 
   RunResult result;
@@ -471,8 +525,22 @@ int main(int argc, char** argv)
     std::cout << '\n';
 
     RAJA::resources::Resource res(resource_type {});
+    const RAJA::ExecPlace exec_place = options.exec_place;
+
+#if !defined(RAJA_ENABLE_CUDA) && !defined(RAJA_ENABLE_HIP)
+    if (exec_place == RAJA::ExecPlace::DEVICE)
+    {
+      throw std::runtime_error(
+          "--exec-place device requested but no GPU backend is enabled");
+    }
+#endif
+
+    std::cout << "  exec place: " << exec_place_name(exec_place) << '\n';
 
     int total_errors = 0;
+
+    using host_launch_policy = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
+    using host_loop_policy   = RAJA::LoopPolicy<RAJA::seq_exec>;
 
     for (const ProblemSize& size : sizes)
     {
@@ -482,48 +550,71 @@ int main(int argc, char** argv)
       {
         if (mapping == Mapping::Flat)
         {
-          auto policy = RAJA::launch_nd_flattened_policy<flat_exec> {};
           const RunResult result =
-              benchmark_mapping(res, policy, options, mapping, size);
+              benchmark_mapping(res,
+                                exec_place,
+                                RAJA::launch_nd_flattened_policy<RAJA::seq_exec> {},
+                                RAJA::launch_nd_flattened_policy<flat_exec> {},
+                                options,
+                                mapping,
+                                size);
           total_errors += result.errors;
           std::cout << "  flattened launch threads per block: " << block_size_1d
                     << "\n\n";
         }
         else if (mapping == Mapping::Global)
         {
-          auto policy =
-              RAJA::launch_nd_grid_policy<launch_policy,
-                                          global_cell_loop,
-                                          global_comp_loop>(
-                  make_global_launch_params(size));
           const RunResult result =
-              benchmark_mapping(res, policy, options, mapping, size);
+              benchmark_mapping(
+                  res,
+                  exec_place,
+                  RAJA::launch_nd_grid_policy<host_launch_policy,
+                                              host_loop_policy,
+                                              host_loop_policy>(RAJA::LaunchParams {}),
+                  RAJA::launch_nd_grid_policy<launch_policy,
+                                              global_cell_loop,
+                                              global_comp_loop>(make_global_launch_params(size)),
+                  options,
+                  mapping,
+                  size);
           total_errors += result.errors;
           std::cout << "  global launch block shape: " << block_x << " x "
                     << block_y << "\n\n";
         }
         else if (mapping == Mapping::Block)
         {
-          auto policy =
-              RAJA::launch_nd_grid_policy<launch_policy,
-                                          block_cell_loop,
-                                          block_comp_loop>(
-                  make_block_launch_params(size));
           const RunResult result =
-              benchmark_mapping(res, policy, options, mapping, size);
+              benchmark_mapping(
+                  res,
+                  exec_place,
+                  RAJA::launch_nd_grid_policy<host_launch_policy,
+                                              host_loop_policy,
+                                              host_loop_policy>(RAJA::LaunchParams {}),
+                  RAJA::launch_nd_grid_policy<launch_policy,
+                                              block_cell_loop,
+                                              block_comp_loop>(make_block_launch_params(size)),
+                  options,
+                  mapping,
+                  size);
           total_errors += result.errors;
           std::cout << "  block launch uses one logical iteration per team"
                     << "\n\n";
         }
         else
         {
-          auto policy =
-              RAJA::launch_nd_grid_policy<launch_policy,
-                                          thread_cell_loop,
-                                          thread_comp_loop>(
-                  make_thread_launch_params(size));
           const RunResult result =
-              benchmark_mapping(res, policy, options, mapping, size);
+              benchmark_mapping(
+                  res,
+                  exec_place,
+                  RAJA::launch_nd_grid_policy<host_launch_policy,
+                                              host_loop_policy,
+                                              host_loop_policy>(RAJA::LaunchParams {}),
+                  RAJA::launch_nd_grid_policy<launch_policy,
+                                              thread_cell_loop,
+                                              thread_comp_loop>(make_thread_launch_params(size)),
+                  options,
+                  mapping,
+                  size);
           total_errors += result.errors;
           std::cout << "  thread-local launch uses a single team with thread"
                     << " loops of shape " << block_x << " x " << block_y

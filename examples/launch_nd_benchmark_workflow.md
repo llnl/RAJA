@@ -51,6 +51,7 @@ CALIPER_DIR="${CALIPER_DIR}" ./scripts/lc-builds/toss4_amdclang.sh 6.4.3 gfx90a
 cd "${REPO_DIR}/build-raja-clang"
 RAJA_CALIPER=1 CALI_CONFIG=runtime-report ./bin/launch_nd \
   --mapping all \
+  --exec-place device \
   --sizes 65536x8,262144x8,1048576x8 \
   --warmup 5 \
   --repetitions 50
@@ -73,6 +74,7 @@ cd "${REPO_DIR}/build-raja-clang"
 RAJA_CALIPER=1 CALI_CONFIG=runtime-profile(output=launch_nd.cali,output.format=cali) \
 ./bin/launch_nd \
   --mapping all \
+  --exec-place device \
   --sizes 65536x8,262144x8,1048576x8 \
   --warmup 5 \
   --repetitions 50
@@ -146,3 +148,5 @@ plot \
 - Save both the Caliper profile and the derived throughput CSV for each build.
 - Compare `flat`, `global`, `block`, and `thread_local` at each size, then
   examine how the gap changes with total problem size.
+- When building with CUDA/HIP enabled, use `--exec-place host` to run the
+  same benchmark on the host backend for an apples-to-apples comparison.
