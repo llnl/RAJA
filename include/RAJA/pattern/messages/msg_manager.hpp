@@ -155,7 +155,7 @@ public:
   using const_pointer  = const value_type*;
   using iterator       = msg_iterator;
   using const_iterator = const iterator;
-  using resource_type  = resource_deleter::resource_type;
+  using resource_type  = typename resource_deleter::resource_type;
   // Allocator for queue buffer
   using allocator_type = Allocator;
   // Allocator for queue struct
