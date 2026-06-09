@@ -159,7 +159,7 @@ public:
   // Allocator for queue buffer
   using allocator_type = Allocator;
   // Allocator for queue struct
-  using queue_allocator = resource_deleter::allocator_type;
+  using queue_allocator = typename resource_deleter::allocator_type;
 
   message_bus() : message_bus(camp::resources::Host()) {}
 
