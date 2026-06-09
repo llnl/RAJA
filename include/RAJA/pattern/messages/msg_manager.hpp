@@ -167,7 +167,7 @@ public:
   message_bus(Resource res, Allocator alloc = Allocator {})
       : m_res {res},
         m_alloc {alloc},
-        m_bus {queue_allocator(alloc).allocate(1),
+        m_bus {new(queue_allocator(alloc).allocate(1)) queue {},
                resource_deleter {m_res, alloc}}
   {}
 
