@@ -28,6 +28,7 @@
 
 #include "RAJA/util/align.hpp"
 #include "RAJA/util/HashCombiner.hpp"
+#include "RAJA/util/ResourceAllocator.hpp"
 
 #include "RAJA/pattern/messages/msg_header.hpp"
 #include "RAJA/pattern/messages/msg_callback.hpp"
@@ -42,7 +43,7 @@ namespace RAJA
 /// of the message queue and is a move-only class. For getting a view-like
 /// class, use the `get_queue` member function, which allows copying.
 ///
-template<typename T>
+template<typename T, typename Allocator>
 class message_bus;
 
 ///
@@ -50,8 +51,8 @@ class message_bus;
 /// This will store a msg_header and arguments in a char* buffer. These
 /// are later reinterpretted to the correct message arguments.
 ///
-template<>
-class message_bus<char>
+template<typename Allocator>
+class message_bus<char, Allocator>
 {
   // Internal classes
 public:
@@ -126,20 +127,25 @@ private:
   {
   public:
     using resource_type = camp::resources::Resource;
+    using allocator_type =
+        typename std::allocator_traits<Allocator>::template rebind_alloc<queue>;
 
     template<typename Resource>
-    resource_deleter(Resource res) : m_res {res}
+    resource_deleter(Resource res, allocator_type alloc)
+        : m_res {res},
+          m_alloc {alloc}
     {}
 
     void operator()(queue* ptr)
     {
       m_res.wait();
       ptr->~queue();
-      m_res.deallocate(ptr, camp::resources::MemoryAccess::Pinned);
+      m_alloc.deallocate(ptr, 1);
     }
 
   private:
     resource_type m_res;
+    allocator_type m_alloc;
   };
 
 public:
@@ -150,20 +156,26 @@ public:
   using iterator       = msg_iterator;
   using const_iterator = const iterator;
   using resource_type  = resource_deleter::resource_type;
+  // Allocator for queue buffer
+  using allocator_type = Allocator;
+  // Allocator for queue struct
+  using queue_allocator = resource_deleter::allocator_type;
 
   message_bus() : message_bus(camp::resources::Host()) {}
 
   template<typename Resource>
-  message_bus(Resource res)
+  message_bus(Resource res, Allocator alloc = Allocator {})
       : m_res {res},
-        m_bus {
-            new(m_res.allocate<queue>(1, camp::resources::MemoryAccess::Pinned))
-                queue {},
-            resource_deleter {m_res}}
+        m_alloc {alloc},
+        m_bus {queue_allocator(alloc).allocate(1),
+               resource_deleter {m_res, alloc}}
   {}
 
   template<typename Resource>
-  message_bus(const size_type bus_sz, Resource res) : message_bus {res}
+  message_bus(const size_type bus_sz,
+              Resource res,
+              Allocator alloc = Allocator {})
+      : message_bus {res, alloc}
   {
     reserve(bus_sz);
   }
@@ -181,8 +193,7 @@ public:
   void reserve(size_type bus_sz)
   {
     reset();
-    m_bus->m_data = m_res.allocate<value_type>(
-        bus_sz, camp::resources::MemoryAccess::Pinned);
+    m_bus->m_data     = m_alloc.allocate(bus_sz);
     m_bus->m_capacity = bus_sz;
   }
 
@@ -192,7 +203,7 @@ public:
     if (m_bus->m_data != nullptr)
     {
       m_res.wait();
-      m_res.deallocate(m_bus->m_data, camp::resources::MemoryAccess::Pinned);
+      m_alloc.deallocate(m_bus->m_data, m_bus->m_capacity);
       m_bus->m_data = nullptr;
     }
     m_bus->m_capacity = 0;
@@ -240,6 +251,7 @@ public:
 
 private:
   resource_type m_res;
+  allocator_type m_alloc;
   std::unique_ptr<queue, resource_deleter> m_bus;
 };
 
@@ -252,17 +264,19 @@ private:
 /// Currently, this forces a synchronize prior to calling
 /// the callback function or testing if there are any messages.
 ///
+template<typename Allocator>
 class message_manager
 {
 public:
   using msg_callback_t = std::unique_ptr<RAJA::imsg_callback>;
   using msg_fn_list_t  = std::vector<msg_callback_t>;
   using msg_id         = std::pair<std::size_t, std::size_t>;
-  using msg_bus        = message_bus<char>;
+  using msg_bus        = message_bus<char, Allocator>;
 
 public:
   template<typename Resource>
-  message_manager(const std::size_t bus_sz, Resource res) : m_bus {bus_sz, res}
+  message_manager(const std::size_t bus_sz, Resource res, Allocator alloc)
+      : m_bus {bus_sz, res, alloc}
   {}
 
   ~message_manager() = default;
@@ -406,17 +420,23 @@ private:
   std::unordered_map<msg_id, msg_fn_list_t, RAJA::PairHash> m_callback_map;
 };
 
-template<typename Resource>
-auto make_message_manager(std::size_t bus_sz, Resource r)
+template<typename Resource,
+         typename Allocator = RAJA::ResourceAllocator<char, Resource>>
+auto make_message_manager(std::size_t bus_sz,
+                          Resource r,
+                          Allocator alloc = Allocator {})
 {
-  return RAJA::message_manager(bus_sz, r);
+  return RAJA::message_manager<Allocator>(bus_sz, r, alloc);
 }
 
-template<typename ExecPol>
-auto make_message_manager(std::size_t bus_sz)
+template<typename ExecPol,
+         typename Allocator = RAJA::ResourceAllocator<
+             char,
+             decltype(RAJA::resources::get_default_resource<ExecPol>())>>
+auto make_message_manager(std::size_t bus_sz, Allocator alloc = Allocator {})
 {
   auto r = RAJA::resources::get_default_resource<ExecPol>();
-  return RAJA::message_manager(bus_sz, r);
+  return RAJA::message_manager<Allocator>(bus_sz, r, alloc);
 }
 
 }  // namespace RAJA
