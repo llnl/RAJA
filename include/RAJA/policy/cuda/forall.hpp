@@ -557,6 +557,9 @@ forall_impl(resources::Cuda cuda_res,
   // Only launch kernel if we have something to iterate over
   if (len > 0)
   {
+    // Note: we cannot fully remove enable_if_t from this file because NVCC is
+    // not capable of disambiguating conceptified versions of
+    // forallp_cuda_kernel when they are used by address like below.
     RAJA::internal::jit::register_lambda(loop_body);
     auto func = reinterpret_cast<const void*>(
         &impl::forallp_cuda_kernel<EXEC_POL, BlocksPerSM, Iterator, LOOP_BODY,
