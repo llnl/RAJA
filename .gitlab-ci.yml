@@ -203,7 +203,7 @@ tioga-build-and-test:
   needs: [tioga-up-check, generate-job-lists]
   trigger:
     include:
-      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/tioga-pipeline@woptim/fix-rules
+      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/tioga-pipeline@release/2026.6.0
         inputs:
           job_cmd: $JOB_CMD
           shared_alloc: $TIOGA_SHARED_ALLOC
