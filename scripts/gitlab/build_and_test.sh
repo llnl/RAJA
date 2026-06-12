@@ -416,9 +416,7 @@ then
         status=$?
         section_end ; print_error "Compilation failed, building with verbose output..."
 
-        section_start "build_verbose" "Verbose Rebuild"
         $cmake_exe --build . --verbose -j 1
-        section_end
 
         exit ${status}
     fi
