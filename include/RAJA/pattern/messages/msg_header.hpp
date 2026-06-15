@@ -26,7 +26,7 @@
 
 namespace RAJA
 {
-struct msg_header
+struct MsgHeader
 {
   std::size_t sz;
   std::size_t type;
@@ -35,7 +35,7 @@ struct msg_header
 };
 
 template<typename... Args>
-struct msg_args
+struct MsgArgs
 {
   camp::tuple<Args...> args;
 };

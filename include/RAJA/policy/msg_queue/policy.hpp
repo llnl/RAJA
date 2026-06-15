@@ -29,7 +29,7 @@ namespace messages
 /// This is a view-like queue so that message queues can be copied to kernels.
 ///
 template<typename Container, typename Policy, typename Args>
-class queue;
+class Queue;
 
 }  // namespace messages
 

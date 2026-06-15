@@ -11,8 +11,8 @@
 #include "gtest/gtest.h"
 
 TEST(message_handler, initialize) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
@@ -26,8 +26,8 @@ TEST(message_handler, initialize) {
 } 
 
 TEST(message_handler, initialize_with_resource) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager(msg_sz, camp::resources::Host());
 
@@ -41,8 +41,8 @@ TEST(message_handler, initialize_with_resource) {
 } 
 
 TEST(message_handler, clear) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
@@ -60,8 +60,8 @@ TEST(message_handler, clear) {
 }
 
 TEST(message_handler, try_post_message) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
@@ -74,8 +74,8 @@ TEST(message_handler, try_post_message) {
 } 
 
 TEST(message_handler, try_post_message_overflow) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
@@ -91,8 +91,8 @@ TEST(message_handler, try_post_message_overflow) {
 } 
 
 TEST(message_handler, wait_all) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
@@ -109,8 +109,8 @@ TEST(message_handler, wait_all) {
 }
 
 TEST(message_handler, wait_all_overalloc) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(2*msg_sz);
 
@@ -127,8 +127,8 @@ TEST(message_handler, wait_all_overalloc) {
 }
 
 TEST(message_handler, wait_all_array) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<camp::array<int, 3>>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<camp::array<int, 3>>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
@@ -152,8 +152,8 @@ TEST(message_handler, wait_all_array) {
 }
 
 TEST(message_handler, wait_all_overflow) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
@@ -171,8 +171,8 @@ TEST(message_handler, wait_all_overflow) {
 }
 
 TEST(message_handler, subscribe) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
@@ -192,8 +192,8 @@ TEST(message_handler, subscribe) {
 } 
 
 TEST(message_handler, unsubscribe) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(msg_sz);
 
@@ -213,8 +213,8 @@ TEST(message_handler, unsubscribe) {
 } 
 
 TEST(message_handler, unsubscribe_all_id) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(2*msg_sz);
 
@@ -238,8 +238,8 @@ TEST(message_handler, unsubscribe_all_id) {
 } 
 
 TEST(message_handler, unsubscribe_all) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(2*msg_sz);
 
@@ -263,8 +263,8 @@ TEST(message_handler, unsubscribe_all) {
 } 
 
 TEST(message_handler, get_messages) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<int>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(20*msg_sz);
 
@@ -284,8 +284,8 @@ TEST(message_handler, get_messages) {
 } 
 
 TEST(message_handler, handle_all_sort) {
-  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::msg_header)) +
-                                 RAJA::align_sz(sizeof(RAJA::msg_args<>));
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<>));
 
   auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(20*msg_sz);
 

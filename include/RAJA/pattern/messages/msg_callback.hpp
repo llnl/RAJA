@@ -28,10 +28,10 @@
 
 namespace RAJA
 {
-class imsg_callback
+class IMsgCallback
 {
 public:
-  virtual ~imsg_callback() = default;
+  virtual ~IMsgCallback() = default;
 
   virtual std::type_index get_type() const { return typeid(void); }
 
@@ -39,20 +39,17 @@ public:
 };
 
 template<typename Callable, typename Signature>
-class msg_callback;
+class MsgCallback;
 
 template<typename Callable, typename Ret, typename... Args>
-class msg_callback<Callable, Ret(Args...)> : public imsg_callback
+class MsgCallback<Callable, Ret(Args...)> : public IMsgCallback
 {
 public:
   using return_t = Ret;
 
-  template<typename Object>
-  explicit msg_callback(const Object& obj) : m_callable {obj}
-  {}
+  explicit MsgCallback(const Callable& callable) : m_callable {callable} {}
 
-  template<typename Object>
-  explicit msg_callback(Object&& obj) : m_callable {std::move(obj)}
+  explicit MsgCallback(Callable&& callable) : m_callable {std::move(callable)}
   {}
 
   std::type_index get_type() const final override { return typeid(Callable); }
@@ -60,9 +57,9 @@ public:
   void operator()(char* args_buf) const final override
   {
     auto& msg = *std::launder(
-        reinterpret_cast<msg_args<std::decay_t<Args>...>*>(args_buf));
+        reinterpret_cast<MsgArgs<std::decay_t<Args>...>*>(args_buf));
     camp::apply(m_callable, msg.args);
-    msg.~msg_args<std::decay_t<Args>...>();
+    msg.~MsgArgs<std::decay_t<Args>...>();
   }
 
 private:
@@ -70,17 +67,17 @@ private:
 };
 
 template<typename R, typename... Args>
-msg_callback(R (*)(Args...)) -> msg_callback<R (*)(Args...), R(Args...)>;
+MsgCallback(R (*)(Args...)) -> MsgCallback<R (*)(Args...), R(Args...)>;
 
 template<
-    typename Object,
-    typename Signature = internal::signature_t<decltype(&Object::operator())>>
-msg_callback(const Object&) -> msg_callback<Object, Signature>;
+    typename Callable,
+    typename Signature = internal::signature_t<decltype(&Callable::operator())>>
+MsgCallback(const Callable&) -> MsgCallback<Callable, Signature>;
 
 template<
-    typename Object,
-    typename Signature = internal::signature_t<decltype(&Object::operator())>>
-msg_callback(Object&&) -> msg_callback<Object, Signature>;
+    typename Callable,
+    typename Signature = internal::signature_t<decltype(&Callable::operator())>>
+MsgCallback(Callable&&) -> MsgCallback<Callable, Signature>;
 }  // namespace RAJA
 
 #endif  // RAJA_MSG_CALLBACK_HPP

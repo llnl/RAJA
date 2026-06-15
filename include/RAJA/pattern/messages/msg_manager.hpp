@@ -44,21 +44,21 @@ namespace RAJA
 /// class, use the `get_queue` member function, which allows copying.
 ///
 template<typename T, typename Allocator>
-class message_bus;
+class MessageBus;
 
 ///
 /// Specialized case from message bus.
-/// This will store a msg_header and arguments in a char* buffer. These
+/// This will store a MsgHeader and arguments in a char* buffer. These
 /// are later reinterpretted to the correct message arguments.
 ///
 template<typename Allocator>
-class message_bus<char, Allocator>
+class MessageBus<char, Allocator>
 {
   // Internal classes
 public:
-  // queue is public due to limitation with extended lambdas
+  // Queue is public due to limitation with extended lambdas
   // in nvcc
-  struct queue
+  struct Queue
   {
     using value_type     = char;
     using size_type      = unsigned long long;
@@ -74,7 +74,7 @@ public:
   };
 
 private:
-  struct msg_iterator
+  struct MsgIterator
   {
     using value_type        = char;
     using pointer           = value_type*;
@@ -82,39 +82,39 @@ private:
     using difference_type   = std::ptrdiff_t;
     using iterator_categroy = std::forward_iterator_tag;
 
-    msg_iterator(pointer ptr) : cur_ptr(ptr) {}
+    MsgIterator(pointer ptr) : cur_ptr(ptr) {}
 
-    msg_header& operator*() const
+    MsgHeader& operator*() const
     {
-      return *std::launder(reinterpret_cast<msg_header*>(cur_ptr));
+      return *std::launder(reinterpret_cast<MsgHeader*>(cur_ptr));
     }
 
-    msg_header* operator->() const
+    MsgHeader* operator->() const
     {
-      return std::launder(reinterpret_cast<msg_header*>(cur_ptr));
+      return std::launder(reinterpret_cast<MsgHeader*>(cur_ptr));
     }
 
-    msg_iterator& operator++()
+    MsgIterator& operator++()
     {
-      msg_header& msg = *std::launder(reinterpret_cast<msg_header*>(cur_ptr));
-      cur_ptr += msg.sz + align_sz(sizeof(msg_header));
+      MsgHeader& msg = *std::launder(reinterpret_cast<MsgHeader*>(cur_ptr));
+      cur_ptr += msg.sz + align_sz(sizeof(MsgHeader));
 
       return (*this);
     }
 
-    msg_iterator operator++(int)
+    MsgIterator operator++(int)
     {
-      msg_iterator temp = *this;
+      MsgIterator temp = *this;
       ++(*this);
       return temp;
     }
 
-    bool operator==(const msg_iterator& other) const
+    bool operator==(const MsgIterator& other) const
     {
       return (cur_ptr == other.cur_ptr);
     }
 
-    bool operator!=(const msg_iterator& other) const
+    bool operator!=(const MsgIterator& other) const
     {
       return !(*this == other);
     }
@@ -123,23 +123,23 @@ private:
     pointer cur_ptr;
   };
 
-  struct resource_deleter
+  struct ResourceDeleter
   {
   public:
     using resource_type = camp::resources::Resource;
     using allocator_type =
-        typename std::allocator_traits<Allocator>::template rebind_alloc<queue>;
+        typename std::allocator_traits<Allocator>::template rebind_alloc<Queue>;
 
     template<typename Resource>
-    resource_deleter(Resource res, allocator_type alloc)
+    ResourceDeleter(Resource res, allocator_type alloc)
         : m_res {res},
           m_alloc {alloc}
     {}
 
-    void operator()(queue* ptr)
+    void operator()(Queue* ptr)
     {
       m_res.wait();
-      ptr->~queue();
+      ptr->~Queue();
       m_alloc.deallocate(ptr, 1);
     }
 
@@ -153,42 +153,42 @@ public:
   using size_type      = unsigned long long;
   using pointer        = value_type*;
   using const_pointer  = const value_type*;
-  using iterator       = msg_iterator;
+  using iterator       = MsgIterator;
   using const_iterator = const iterator;
-  using resource_type  = typename resource_deleter::resource_type;
+  using resource_type  = typename ResourceDeleter::resource_type;
   // Allocator for queue buffer
   using allocator_type = Allocator;
   // Allocator for queue struct
-  using queue_allocator = typename resource_deleter::allocator_type;
+  using queue_allocator = typename ResourceDeleter::allocator_type;
 
-  message_bus() : message_bus(camp::resources::Host()) {}
+  MessageBus() : MessageBus(camp::resources::Host()) {}
 
   template<typename Resource>
-  message_bus(Resource res, Allocator alloc = Allocator {})
+  MessageBus(Resource res, Allocator alloc = Allocator {})
       : m_res {res},
         m_alloc {alloc},
-        m_bus {new(queue_allocator(alloc).allocate(1)) queue {},
-               resource_deleter {m_res, alloc}}
+        m_bus {new(queue_allocator(alloc).allocate(1)) Queue {},
+               ResourceDeleter {m_res, alloc}}
   {}
 
   template<typename Resource>
-  message_bus(const size_type bus_sz,
-              Resource res,
-              Allocator alloc = Allocator {})
-      : message_bus {res, alloc}
+  MessageBus(const size_type bus_sz,
+             Resource res,
+             Allocator alloc = Allocator {})
+      : MessageBus {res, alloc}
   {
     reserve(bus_sz);
   }
 
-  ~message_bus() { reset(); }
+  ~MessageBus() { reset(); }
 
   // Copy ctor/operator
-  message_bus(const message_bus&)            = delete;
-  message_bus& operator=(const message_bus&) = delete;
+  MessageBus(const MessageBus&)            = delete;
+  MessageBus& operator=(const MessageBus&) = delete;
 
   // Move ctor/operator
-  message_bus(message_bus&&)            = default;
-  message_bus& operator=(message_bus&&) = default;
+  MessageBus(MessageBus&&)            = default;
+  MessageBus& operator=(MessageBus&&) = default;
 
   void reserve(size_type bus_sz)
   {
@@ -227,14 +227,14 @@ public:
   template<typename Policy, typename... Args>
   auto get_queue(std::pair<std::size_t, std::size_t> id) noexcept
   {
-    return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {
+    return RAJA::messages::Queue<Queue, Policy, RAJA::MsgArgs<Args...>> {
         id, m_bus.get()};
   }
 
   template<typename Policy, typename... Args>
   auto get_queue(std::pair<std::size_t, std::size_t> id) const noexcept
   {
-    return RAJA::messages::queue<queue, Policy, RAJA::msg_args<Args...>> {
+    return RAJA::messages::Queue<Queue, Policy, RAJA::MsgArgs<Args...>> {
         id, m_bus.get()};
   }
 
@@ -252,7 +252,7 @@ public:
 private:
   resource_type m_res;
   allocator_type m_alloc;
-  std::unique_ptr<queue, resource_deleter> m_bus;
+  std::unique_ptr<Queue, ResourceDeleter> m_bus;
 };
 
 ///
@@ -265,29 +265,28 @@ private:
 /// the callback function or testing if there are any messages.
 ///
 template<typename Allocator>
-class message_manager
+class MessageManager
 {
 public:
-  using msg_callback_t = std::unique_ptr<RAJA::imsg_callback>;
-  using msg_fn_list_t  = std::vector<msg_callback_t>;
-  using msg_id         = std::pair<std::size_t, std::size_t>;
-  using msg_bus        = message_bus<char, Allocator>;
+  using msg_fn_list_t = std::vector<std::unique_ptr<RAJA::IMsgCallback>>;
+  using msg_id        = std::pair<std::size_t, std::size_t>;
+  using msg_bus       = MessageBus<char, Allocator>;
 
 public:
   template<typename Resource>
-  message_manager(const std::size_t bus_sz, Resource res, Allocator alloc)
+  MessageManager(const std::size_t bus_sz, Resource res, Allocator alloc)
       : m_bus {bus_sz, res, alloc}
   {}
 
-  ~message_manager() = default;
+  ~MessageManager() = default;
 
   // Doesn't support copying
-  message_manager(const message_manager&)            = delete;
-  message_manager& operator=(const message_manager&) = delete;
+  MessageManager(const MessageManager&)            = delete;
+  MessageManager& operator=(const MessageManager&) = delete;
 
   // Move ctor/operator
-  message_manager(message_manager&&)            = default;
-  message_manager& operator=(message_manager&&) = default;
+  MessageManager(MessageManager&&)            = default;
+  MessageManager& operator=(MessageManager&&) = default;
 
   template<typename Policy, typename Callable>
   auto subscribe(Callable&& c)
@@ -296,13 +295,13 @@ public:
         std::make_pair(m_callback_map.size(), typeid(Callable).hash_code());
 
     return get_queue_impl<Policy>(
-        id, RAJA::msg_callback {std::forward<Callable>(c)});
+        id, RAJA::MsgCallback {std::forward<Callable>(c)});
   }
 
   template<typename Callable>
   void subscribe(msg_id id, Callable&& c)
   {
-    RAJA::msg_callback callback {std::forward<Callable>(c)};
+    RAJA::MsgCallback callback {std::forward<Callable>(c)};
     auto& fn_list = m_callback_map.at(id);
     auto it = std::find_if(fn_list.begin(), fn_list.end(), [](const auto& fn) {
       return std::type_index {typeid(Callable)} == fn->get_type();
@@ -349,7 +348,7 @@ public:
 
   auto get_messages()
   {
-    std::vector<const msg_header*> messages;
+    std::vector<const MsgHeader*> messages;
 
     if (test_any())
     {
@@ -378,7 +377,7 @@ public:
         {
           (*callback)(msg->args);
         }
-        msg->~msg_header();
+        msg->~MsgHeader();
       }
       messages.clear();
     }
@@ -397,7 +396,7 @@ public:
         {
           (*callback)(msg->args);
         }
-        msg->~msg_header();
+        msg->~MsgHeader();
       }
       messages.clear();
     }
@@ -406,9 +405,9 @@ public:
 
 private:
   template<typename Policy, typename Callable, typename R, typename... Args>
-  auto get_queue_impl(msg_id id, msg_callback<Callable, R(Args...)>&& c)
+  auto get_queue_impl(msg_id id, MsgCallback<Callable, R(Args...)>&& c)
   {
-    using msg_callback_t = msg_callback<Callable, R(Args...)>;
+    using msg_callback_t = MsgCallback<Callable, R(Args...)>;
 
     m_callback_map[id].emplace_back(
         std::make_unique<msg_callback_t>(std::move(c)));
@@ -426,7 +425,7 @@ auto make_message_manager(std::size_t bus_sz,
                           Resource r,
                           Allocator alloc = Allocator {})
 {
-  return RAJA::message_manager<Allocator>(bus_sz, r, alloc);
+  return RAJA::MessageManager<Allocator>(bus_sz, r, alloc);
 }
 
 template<typename ExecPol,
@@ -436,7 +435,7 @@ template<typename ExecPol,
 auto make_message_manager(std::size_t bus_sz, Allocator alloc = Allocator {})
 {
   auto r = RAJA::resources::get_default_resource<ExecPol>();
-  return RAJA::message_manager<Allocator>(bus_sz, r, alloc);
+  return RAJA::MessageManager<Allocator>(bus_sz, r, alloc);
 }
 
 }  // namespace RAJA
