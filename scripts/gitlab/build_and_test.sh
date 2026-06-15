@@ -264,6 +264,7 @@ fi
 ###############################################################################
 # BUILD DEPENDENCIES
 ###############################################################################
+
 if [[ "${option}" != "--build-only" && "${option}" != "--test-only" ]]
 then
     section_start "dependencies" "Building Dependencies"
@@ -313,6 +314,7 @@ fi
 ###############################################################################
 # HOST CONFIG / CMAKE CACHE FILE
 ###############################################################################
+
 if [[ -z ${hostconfig} ]]
 then
     # If no host config file was provided, we assume it was generated.
@@ -343,6 +345,7 @@ print_info "Found hostconfig ${hostconfig_path}"
 ###############################################################################
 # BUILD PROJECT
 ###############################################################################
+
 # Build Directory
 # When using /dev/shm, we use prefix for both spack builds and source build, unless BUILD_ROOT was defined
 build_root=${BUILD_ROOT:-"${prefix}"}
@@ -429,6 +432,7 @@ fi
 ###############################################################################
 # TEST PROJECT
 ###############################################################################
+
 if [[ "${option}" != "--build-only" ]] && grep -q -i "ENABLE_TESTS.*ON" ${hostconfig_path}
 then
 
@@ -504,14 +508,11 @@ fi
 # CLEANUP
 ###############################################################################
 
-section_start "cleanup" "Cleaning up" "collapsed"
-if make clean
+if [[ "${option}" != "--deps-only" && "${option}" != "--test-only" ]]
 then
-    section_end
-else
-    status=$?
-    section_end ; print_error "Cleanup failed"
-    exit ${status}
+    run_section "cleanup" "Cleaning build directory" "collapsed" \
+      "Cleaning build directory failed" \
+      cd ${build_dir} && make clean
 fi
 
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
