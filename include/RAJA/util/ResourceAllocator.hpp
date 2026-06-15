@@ -91,11 +91,9 @@ struct ResourceAllocator
     RAJA::resources::MemoryAccess get_mem_access() const { return m_mem_type; }
 
     template<typename U>
-    friend inline bool operator==(allocator const& /*lhs*/,
-                                  allocator<U> const& /*rhs*/)
+    friend inline bool operator==(allocator const& lhs, allocator<U> const& rhs)
     {
-      return true;  // lhs.get_resource() == rhs.get_resource(); // TODO not
-                    // equality comparable yet
+      return lhs.get_resource() == rhs.get_resource();
     }
 
     template<typename U>
