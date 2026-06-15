@@ -17,14 +17,12 @@
 /*
  *  RAJA::messages example
  *
- *  The purpose of this example to show how RAJA::messages can be used.
- *  For this example, the kernels will be launched using RAJA::forall 
- *  along with a vector addition calculation. This will show how messages
- *  can be used:
- *  - to store messages on various execution policies (serial, OpenMP, GPU)
- *  - to print to a file on the GPU using the RAJA::messages
- *  - to interact with multiple GPU streams
- *  - to create custom types that can be stored (note: these types should be
+ *  The purpose of this example to show how RAJA::messages can be used 
+ *  with RAJA::forall. This includes the following:
+ *  - storing messages on various execution policies (serial, OpenMP, GPU)
+ *  - printing to a file on the GPU using the RAJA::messages
+ *  - interacting with multiple GPU streams
+ *  - creating custom types that can be stored (note: these types should be
  *    trivially destructible and trivially copyable)
  *
  */
