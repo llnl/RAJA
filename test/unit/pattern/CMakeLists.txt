@@ -7,15 +7,6 @@
 # SPDX-License-Identifier: (BSD-3-Clause)
 ###############################################################################
 
-add_subdirectory(index)
-add_subdirectory(internal)
-add_subdirectory(pattern)
-add_subdirectory(util)
-add_subdirectory(reducer)
-add_subdirectory(multi_reducer)
-add_subdirectory(resource)
-add_subdirectory(atomic)
-add_subdirectory(view-layout)
-add_subdirectory(algorithm)
-add_subdirectory(workgroup)
-add_subdirectory(indexing)
+raja_add_test(
+  NAME test-pattern-concepts
+  SOURCES test-pattern-concepts.cpp)
