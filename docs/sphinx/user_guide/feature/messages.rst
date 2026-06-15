@@ -142,7 +142,7 @@ the number of producers/consumers or the type of atomic operations.
  mpsc                    Supports multiple producers,
                          a single consumer; i.e., 
                          requires atomic operations. 
-                         Automiatically determines 
+                         Automatically determines 
                          which atomic operations to 
                          use.
  ======================= ============================
