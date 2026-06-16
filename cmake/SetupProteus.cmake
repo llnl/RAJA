@@ -20,7 +20,7 @@ else()
   FetchContent_Declare(
     proteus
     GIT_REPOSITORY https://github.com/Olympus-HPC/proteus.git
-    GIT_TAG        257707cf7e60452ed38161f6429421be303ddaf3
+    GIT_TAG        44415066d3c91729a23137101a0f08a170101fb5
     )
   FetchContent_MakeAvailable(proteus)
   # Re-enable tests if specified by user.
@@ -30,4 +30,16 @@ else()
 endif()
 # We don't explicitly link against ProteusPass, but it is required to be
 #available as an LLVM pass, so manually enforce order
-add_dependencies(RAJA ProteusPass)
+target_include_directories(RAJA
+  PUBLIC
+  $<BUILD_INTERFACE:${PROTEUS_HEADERS_DIR}>
+  $<INSTALL_INTERFACE:include>)
+
+# RAJA's public JIT headers include Proteus headers, so install those headers
+# into RAJA's include tree instead of exporting a build-tree path.
+if (EXISTS "${PROTEUS_HEADERS_DIR}/proteus")
+  install(DIRECTORY "${PROTEUS_HEADERS_DIR}/proteus"
+    DESTINATION include)
+endif()
+
+add_dependencies(RAJA ProteusPass LambdaPass)

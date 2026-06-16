@@ -521,9 +521,10 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
   // Only launch kernel if we have something to iterate over
   if (len > 0)
   {
-    RAJA::internal::jit::register_lambda(loop_body);
+    auto registered_body = RAJA::internal::jit::register_lambda(loop_body);
+    using RegisteredLambdaType = std::decay_t<decltype(registered_body)>;
     auto func = reinterpret_cast<const void*>(
-        &impl::forallp_hip_kernel<EXEC_POL, Iterator, LOOP_BODY, IndexType,
+        &impl::forallp_hip_kernel<EXEC_POL, Iterator, RegisteredLambdaType, IndexType,
                                   camp::decay<ForallParam>>);
 
     //
@@ -549,9 +550,9 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
       //
       // Privatize the loop_body, using make_launch_body to setup reductions
       //
-      LOOP_BODY body = RAJA::hip::make_launch_body(
+      auto body = RAJA::hip::make_launch_body(
           func, dims.blocks, dims.threads, shmem, hip_res,
-          std::forward<LoopBody>(loop_body));
+          std::forward<RegisteredLambdaType>(registered_body));
 
       //
       // Launch the kernels
@@ -602,7 +603,7 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
     const TypedIndexSet<SegmentTypes...>& iset,
     LoopBody&& loop_body)
 {
-  RAJA::internal::jit::register_lambda(loop_body);
+  auto reg_lambda = RAJA::internal::jit::register_lambda(loop_body);
   int num_seg = iset.getNumSegments();
   for (int isi = 0; isi < num_seg; ++isi)
   {
@@ -610,7 +611,7 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
         r, isi, detail::CallForall(),
         ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
                                       Concretizer, true>(),
-        loop_body);
+        reg_lambda);
   }  // iterate over segments of index set
 
   if (!Async) RAJA::hip::synchronize(r);
