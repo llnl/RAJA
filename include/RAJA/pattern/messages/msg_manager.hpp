@@ -143,6 +143,10 @@ private:
       m_alloc.deallocate(ptr, 1);
     }
 
+    allocator_type& get_allocator() noexcept { return m_alloc; }
+
+    resource_type& get_resource() noexcept { return m_res; }
+
   private:
     resource_type m_res;
     allocator_type m_alloc;
@@ -165,10 +169,8 @@ public:
 
   template<typename Resource>
   MessageBus(Resource res, Allocator alloc = Allocator {})
-      : m_res {res},
-        m_alloc {alloc},
-        m_bus {new(queue_allocator(alloc).allocate(1)) Queue {},
-               ResourceDeleter {m_res, alloc}}
+      : m_bus {new(queue_allocator(alloc).allocate(1)) Queue {},
+               ResourceDeleter {res, alloc}}
   {}
 
   template<typename Resource>
@@ -193,7 +195,7 @@ public:
   void reserve(size_type bus_sz)
   {
     reset();
-    m_bus->m_data     = m_alloc.allocate(bus_sz);
+    m_bus->m_data     = get_allocator().allocate(bus_sz);
     m_bus->m_capacity = bus_sz;
   }
 
@@ -202,8 +204,8 @@ public:
     // Verify that queue is not in use
     if (m_bus->m_data != nullptr)
     {
-      m_res.wait();
-      m_alloc.deallocate(m_bus->m_data, m_bus->m_capacity);
+      get_resource().wait();
+      get_allocator().deallocate(m_bus->m_data, m_bus->m_capacity);
       m_bus->m_data = nullptr;
     }
     m_bus->m_capacity = 0;
@@ -213,13 +215,13 @@ public:
 
   bool has_pending_messages()
   {
-    m_res.wait();
+    get_resource().wait();
     return (m_bus->m_end != 0);
   }
 
   void clear_messages()
   {
-    m_res.wait();
+    get_resource().wait();
     m_bus->m_end   = 0;
     m_bus->m_begin = 0;
   }
@@ -238,6 +240,16 @@ public:
         id, m_bus.get()};
   }
 
+  auto get_allocator() noexcept
+  {
+    return allocator_type {m_bus.get_deleter().get_allocator()};
+  }
+
+  resource_type& get_resource() noexcept
+  {
+    return m_bus.get_deleter().get_resource();
+  }
+
   iterator begin() noexcept { return iterator {m_bus->m_data}; }
 
   iterator begin() const noexcept { return iterator {m_bus->m_data}; }
@@ -250,8 +262,6 @@ public:
   }
 
 private:
-  resource_type m_res;
-  allocator_type m_alloc;
   std::unique_ptr<Queue, ResourceDeleter> m_bus;
 };
 
