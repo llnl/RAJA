@@ -316,17 +316,13 @@ RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
 template<typename Iterable,
          typename Func,
          typename InnerPolicy,
-         typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Host>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>,
-    concepts::negate<
-        RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>>>
-forall_impl(resources::Host host_res,
-            const omp_parallel_exec<InnerPolicy>&,
-            Iterable&& iter,
-            Func&& loop_body,
-            ForallParam f_params)
+         concepts::NonEmptyForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
+    resources::Host host_res,
+    const omp_parallel_exec<InnerPolicy>&,
+    Iterable&& iter,
+    Func&& loop_body,
+    ForallParam f_params)
 {
   expt::forall_impl(host_res, InnerPolicy {}, iter, loop_body, f_params);
   return resources::EventProxy<resources::Host>(host_res);
