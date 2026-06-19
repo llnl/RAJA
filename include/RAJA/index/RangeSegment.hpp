@@ -708,7 +708,7 @@ RAJA_HOST_DEVICE RAJA_INLINE TypedRangeStrideSegment<Common, DiffT> range(
  * \brief Function to make a TypedRangeSegment for the interval [begin, end)
  *
  *  \return a newly constructed TypedRangeSegment where the
- *          value_type is equivilent to the common type of
+ *          value_type is equivalent to the common type of
  *          @begin and @end. If there is no common type, then
  *          a compiler error will be produced.
  */
@@ -756,26 +756,36 @@ namespace concepts
 {
 
 template<typename T, typename U>
-struct RangeConstructible
-    : DefineConcept(
-          camp::val<RAJA::detail::deduced_range_storage_type_t<T, U>>()) {};
+concept RangeConstructible =
+    requires { typename RAJA::detail::deduced_range_storage_type_t<T, U>; };
 
 template<typename T, typename U, typename V>
-struct RangeStrideConstructible
-    : DefineConcept(
-          camp::val<
-              RAJA::detail::deduced_range_stride_storage_type_t<T, U, V>>()) {};
+concept RangeStrideConstructible = requires {
+  typename RAJA::detail::deduced_range_stride_storage_type_t<T, U, V>;
+};
 
 }  // namespace concepts
 
 namespace type_traits
 {
 
-DefineTypeTraitFromConcept(is_range_constructible,
-                           RAJA::concepts::RangeConstructible);
+template<typename T, typename U>
+struct is_range_constructible
+    : std::bool_constant<RAJA::concepts::RangeConstructible<T, U>>
+{};
 
-DefineTypeTraitFromConcept(is_range_stride_constructible,
-                           RAJA::concepts::RangeStrideConstructible);
+template<typename T, typename U>
+inline constexpr bool is_range_constructible_v =
+    is_range_constructible<T, U>::value;
+
+template<typename T, typename U, typename V>
+struct is_range_stride_constructible
+    : std::bool_constant<RAJA::concepts::RangeStrideConstructible<T, U, V>>
+{};
+
+template<typename T, typename U, typename V>
+inline constexpr bool is_range_stride_constructible_v =
+    is_range_stride_constructible<T, U, V>::value;
 
 }  // namespace type_traits
 

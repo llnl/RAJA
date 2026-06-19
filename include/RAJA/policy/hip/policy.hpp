@@ -829,7 +829,7 @@ struct IndexGlobal
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(block_size) * static_cast<IdxT>(grid_size);
   }
@@ -853,7 +853,7 @@ struct IndexGlobal<dim, 1, GRID_SIZE>
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(grid_size);
   }
@@ -877,7 +877,7 @@ struct IndexGlobal<dim, BLOCK_SIZE, 1>
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(block_size);
   }
@@ -892,14 +892,14 @@ struct IndexGlobal<dim, 1, 1>
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(0);
   }
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(1);
   }
@@ -1047,7 +1047,7 @@ struct IndexGlobal<dim, named_usage::ignored, GRID_SIZE>
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(grid_size);
   }
@@ -1062,14 +1062,14 @@ struct IndexGlobal<dim, named_usage::ignored, 1>
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(0);
   }
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(1);
   }
@@ -1116,7 +1116,7 @@ struct IndexGlobal<dim, BLOCK_SIZE, named_usage::ignored>
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(block_size);
   }
@@ -1131,14 +1131,14 @@ struct IndexGlobal<dim, 1, named_usage::ignored>
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(0);
   }
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(1);
   }
@@ -1176,14 +1176,14 @@ struct IndexGlobal<dim, named_usage::ignored, named_usage::ignored>
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(0);
   }
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(1);
   }
@@ -1292,7 +1292,7 @@ struct IndexModulo
 
   template<typename IdxT     = hip_dim_member_t,
            typename IdxNDims = NonCachedIndicesAndDims>
-  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(divisor);
   }

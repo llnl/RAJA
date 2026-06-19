@@ -341,6 +341,20 @@ public:
     return *this;
   }
 
+  RAJA_HOST_DEVICE inline strided_numeric_iterator operator++(int)
+  {
+    strided_numeric_iterator tmp(*this);
+    val += stride;
+    return tmp;
+  }
+
+  RAJA_HOST_DEVICE inline strided_numeric_iterator operator--(int)
+  {
+    strided_numeric_iterator tmp(*this);
+    val -= stride;
+    return tmp;
+  }
+
   RAJA_HOST_DEVICE inline strided_numeric_iterator& operator+=(
       const difference_type& rhs)
   {
@@ -396,6 +410,16 @@ public:
     check_is_subtraction_overflow(val, rhs * stride);
 #endif
     return strided_numeric_iterator(val - rhs * stride, stride);
+  }
+
+  RAJA_HOST_DEVICE friend constexpr strided_numeric_iterator operator+(
+      difference_type lhs,
+      const strided_numeric_iterator& rhs)
+  {
+#if defined(RAJA_ENABLE_ITERATOR_OVERFLOW_DEBUG)
+    check_is_addition_overflow(rhs.val, lhs * rhs.stride);
+#endif
+    return strided_numeric_iterator(rhs.val + lhs * rhs.stride, rhs.stride);
   }
 
   // Specialized comparison to allow normal iteration to work on off-stride

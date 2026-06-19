@@ -20,6 +20,7 @@
 #ifndef RAJA_POLICYBASE_HPP
 #define RAJA_POLICYBASE_HPP
 
+#include "RAJA/pattern/detail/TypeTraits.hpp"
 #include "RAJA/util/camp_aliases.hpp"
 #include "RAJA/util/concepts.hpp"
 
@@ -183,22 +184,6 @@ template<Policy Policy_, Pattern Pattern_, Platform Platform_, typename... Args>
 using make_policy_pattern_platform_t =
     PolicyBaseT<Policy_, Pattern_, Launch::undefined, Platform_, Args...>;
 
-namespace concepts
-{
-
-template<typename Pol>
-struct ExecutionPolicy
-    : DefineConcept(::RAJA::concepts::has_type<::RAJA::Policy>(
-                        camp::decay<decltype(Pol::policy)>()),
-                    ::RAJA::concepts::has_type<::RAJA::Pattern>(
-                        camp::decay<decltype(Pol::pattern)>()),
-                    ::RAJA::concepts::has_type<::RAJA::Launch>(
-                        camp::decay<decltype(Pol::launch)>()),
-                    ::RAJA::concepts::has_type<::RAJA::Platform>(
-                        camp::decay<decltype(Pol::platform)>())) {};
-
-}  // end namespace concepts
-
 namespace type_traits
 {
 
@@ -235,9 +220,6 @@ template<typename Pol>
 struct is_device_exec_policy
     : RAJA::policy_any_of<Pol, RAJA::Policy::cuda, RAJA::Policy::hip>
 {};
-
-DefineTypeTraitFromConcept(is_execution_policy,
-                           RAJA::concepts::ExecutionPolicy);
 
 template<typename Pol>
 struct is_reduce_policy : RAJA::pattern_is<Pol, RAJA::Pattern::reduce>
