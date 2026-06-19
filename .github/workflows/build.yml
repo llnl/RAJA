@@ -121,7 +121,7 @@ build_windows_cuda:
         build-args: '--parallel 16'
 ## ====================================
 ## Print the contents of the test directory in the build space (debugging)
-##    - run: | 
+##    - run: |
 ##        dir -r D:\a\RAJA\RAJA\build\test
 ## ====================================
 ## Run tests action
