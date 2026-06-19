@@ -73,13 +73,13 @@ jobs:
         with:
           build-config: Debug
 
+#          - args:
+#              BUILD_SHARED_LIBS=On
+#              CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=On
   build_windows_cuda:
     strategy:
       matrix:
         shared:
-          - args:
-              BUILD_SHARED_LIBS=On
-              CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=On
           - args:
               BUILD_SHARED_LIBS=Off
 
@@ -112,11 +112,11 @@ jobs:
             BLT_CXX_STD="c++20"
             CMAKE_CXX_STANDARD=20
             CMAKE_BUILD_TYPE=Release
-            CMAKE_CUDA_ARCHITECTURES=70
+            CMAKE_CUDA_ARCHITECTURES=75
             ENABLE_CUDA=On
             ${{ matrix.shared.args }}
           run-build: true
-          build-args: '--parallel 16'
+#          build-args: '--parallel 16'
 ## ====================================
 ## Print the contents of the test directory in the build space (debugging)
 ##    - run: |
