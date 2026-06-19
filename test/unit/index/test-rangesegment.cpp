@@ -16,6 +16,7 @@
 #include "RAJA_unit-test-types.hpp"
 
 RAJA_INDEX_VALUE(RangeStrongIndex, "RangeStrongIndex");
+RAJA_INDEX_VALUE(AnotherRangeStrongIndex, "AnotherRangeStrongIndex");
 
 template<typename T>
 class RangeSegmentUnitTest : public ::testing::Test {};
@@ -203,7 +204,7 @@ TEST(RangeSegmentUnitTest, LongRangeEndLValue)
 
 TEST(RangeSegmentUnitTest, TypedRangeEnd)
 {
-  auto r = RAJA::range<RangeStrongIndex>(17);
+  auto r = RAJA::range<RangeStrongIndex>(RangeStrongIndex(17));
 
   ASSERT_EQ((RAJA::TypedRangeSegment<RangeStrongIndex>(0, 17)), r);
   ASSERT_EQ(RangeStrongIndex(0), *r.begin());
@@ -257,41 +258,58 @@ TEST(RangeSegmentUnitTest, StrongRangeBeginEnd)
 
 TEST(RangeSegmentUnitTest, MixedStrongRangeBeginEnd)
 {
-  auto r = RAJA::range(3, RangeStrongIndex(17));
-
-  static_assert(
-      std::is_same<decltype(r), RAJA::TypedRangeSegment<RangeStrongIndex>>::value,
-      "range(int, StrongIndex) should preserve the strong storage type.");
-  ASSERT_EQ((RAJA::TypedRangeSegment<RangeStrongIndex>(3, 17)), r);
-  ASSERT_EQ(RangeStrongIndex(3), *r.begin());
-  ASSERT_EQ(RAJA::Index_type(14), r.size());
+  static_assert(!requires { RAJA::range(3, RangeStrongIndex(17)); });
 }
 
-static_assert(RAJA::concepts::RangeConstructible<RangeStrongIndex, int>);
+static_assert(RAJA::concepts::RangeConstructible<RangeStrongIndex,
+                                                 RangeStrongIndex>);
+static_assert(!RAJA::concepts::RangeConstructible<RangeStrongIndex, int>);
 static_assert(!RAJA::concepts::RangeConstructible<RangeStrongIndex, long>);
 static_assert(!RAJA::concepts::RangeConstructible<long, RangeStrongIndex>);
+static_assert(requires {
+  RAJA::range<RangeStrongIndex>(RangeStrongIndex(3), RangeStrongIndex(17));
+});
+static_assert(!requires { RAJA::range<int>(RangeStrongIndex(3), 17); });
+static_assert(!requires {
+  RAJA::range<RangeStrongIndex>(RangeStrongIndex(3), 17);
+});
+static_assert(!requires { RAJA::range<RangeStrongIndex>(AnotherRangeStrongIndex(3), 17); });
 
 TEST(RangeSegmentUnitTest, MixedStrongRangeStrongBegin)
 {
-  auto r = RAJA::range(RangeStrongIndex(3), 17);
-
-  static_assert(
-      std::is_same<decltype(r), RAJA::TypedRangeSegment<RangeStrongIndex>>::value,
-      "range(StrongIndex, int) should preserve the strong storage type.");
-  ASSERT_EQ((RAJA::TypedRangeSegment<RangeStrongIndex>(3, 17)), r);
-  ASSERT_EQ(RangeStrongIndex(3), *r.begin());
-  ASSERT_EQ(RAJA::Index_type(14), r.size());
+  static_assert(!requires { RAJA::range(RangeStrongIndex(3), 17); });
 }
 
 static_assert(RAJA::concepts::RangeStrideConstructible<RangeStrongIndex,
-                                                       int,
-                                                       int>);
+                                                       RangeStrongIndex,
+                                                       RangeStrongIndex>);
+static_assert(!RAJA::concepts::RangeStrideConstructible<RangeStrongIndex,
+                                                        int,
+                                                        int>);
 static_assert(!RAJA::concepts::RangeStrideConstructible<RangeStrongIndex,
                                                         long,
                                                         int>);
 static_assert(!RAJA::concepts::RangeStrideConstructible<long,
                                                         RangeStrongIndex,
                                                         int>);
+static_assert(!requires {
+  RAJA::range<int>(RangeStrongIndex(2), 11, 3);
+});
+static_assert(!requires {
+  RAJA::range<RangeStrongIndex>(RangeStrongIndex(2), 11, 3);
+});
+static_assert(!requires {
+  RAJA::range<RangeStrongIndex>(AnotherRangeStrongIndex(2), 11, 3);
+});
+static_assert(!requires { RAJA::range<int>(2, 11, RangeStrongIndex(3)); });
+static_assert(!requires {
+  RAJA::range<RangeStrongIndex>(2, 11, AnotherRangeStrongIndex(3));
+});
+static_assert(requires {
+  RAJA::range<RangeStrongIndex>(RangeStrongIndex(2),
+                                RangeStrongIndex(11),
+                                RangeStrongIndex(3));
+});
 
 TEST(RangeSegmentUnitTest, RangeBeginEndStridePositive)
 {
@@ -304,43 +322,17 @@ TEST(RangeSegmentUnitTest, RangeBeginEndStridePositive)
 
 TEST(RangeSegmentUnitTest, MixedStrongRangeBeginEndStrideStrongEnd)
 {
-  auto r = RAJA::range(2, RangeStrongIndex(11), 3);
-
-  static_assert(
-      std::is_same<decltype(r),
-                   RAJA::TypedRangeStrideSegment<RangeStrongIndex>>::value,
-      "range(int, StrongIndex, stride) should preserve the strong storage "
-      "type.");
-  ASSERT_EQ((RAJA::TypedRangeStrideSegment<RangeStrongIndex>(2, 11, 3)), r);
-  ASSERT_EQ(3, r.size());
-  ASSERT_EQ(RangeStrongIndex(2), *r.begin());
+  static_assert(!requires { RAJA::range(2, RangeStrongIndex(11), 3); });
 }
 
 TEST(RangeSegmentUnitTest, MixedStrongRangeBeginEndStrideStrongBegin)
 {
-  auto r = RAJA::range(RangeStrongIndex(2), 11, 3);
-
-  static_assert(
-      std::is_same<decltype(r),
-                   RAJA::TypedRangeStrideSegment<RangeStrongIndex>>::value,
-      "range(StrongIndex, int, stride) should preserve the strong storage "
-      "type.");
-  ASSERT_EQ((RAJA::TypedRangeStrideSegment<RangeStrongIndex>(2, 11, 3)), r);
-  ASSERT_EQ(3, r.size());
-  ASSERT_EQ(RangeStrongIndex(2), *r.begin());
+  static_assert(!requires { RAJA::range(RangeStrongIndex(2), 11, 3); });
 }
 
 TEST(RangeSegmentUnitTest, RangeBeginEndStrongStride)
 {
-  auto r = RAJA::range(2, 11, RangeStrongIndex(3));
-
-  static_assert(
-      std::is_same<decltype(r), RAJA::TypedRangeStrideSegment<long>>::value,
-      "range(begin, end, StrongIndex stride) should include stride in the "
-      "storage type.");
-  ASSERT_EQ((RAJA::TypedRangeStrideSegment<long>(2, 11, 3)), r);
-  ASSERT_EQ(3, r.size());
-  ASSERT_EQ(2, *r.begin());
+  static_assert(!requires { RAJA::range(2, 11, RangeStrongIndex(3)); });
 }
 
 TEST(RangeSegmentUnitTest, RangeBeginEndStrideNegative)

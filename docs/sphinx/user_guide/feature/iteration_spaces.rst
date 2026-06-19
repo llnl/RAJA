@@ -118,12 +118,15 @@ The return type depends on the arguments:
 * ``RAJA::range(begin, end, stride)`` returns a
   ``RAJA::TypedRangeStrideSegment``.
 * When one of the bounds is a RAJA strong index type, such as a type created
-  with ``RAJA_INDEX_VALUE``, that strong type is preserved for the loop
-  variable. Mixed strong and plain integral bounds are only accepted when the
-  plain bound already matches the strong type's underlying storage type.
-  Otherwise deduction fails rather than narrowing the value.
+  with ``RAJA_INDEX_VALUE``, all bounds must use that same strong type. Mixed
+  strong and plain integral bounds are rejected rather than narrowed.
 * Providing an explicit template argument, such as
-  ``RAJA::range<MyIndex>(end)``, overrides the deduced storage type.
+  ``RAJA::range<MyIndex>(end)``, overrides the deduced storage type, but
+  explicit storage must still match the argument types. For example,
+  ``RAJA::range<int>(RangeStrongIndex(3), 17)`` and
+  ``RAJA::range<RangeStrongIndex>(AnotherRangeStrongIndex(3), 17)`` are
+  rejected, while ``RAJA::range<RangeStrongIndex>(RangeStrongIndex(3),
+  RangeStrongIndex(17))`` is valid.
 
 For example::
 
@@ -133,7 +136,8 @@ For example::
     values[i] = i * i;
   });
 
-  RAJA::forall<RAJA::seq_exec>(RAJA::range<CellIndex>(N), [=](CellIndex i) {
+  RAJA::forall<RAJA::seq_exec>(RAJA::range<CellIndex>(CellIndex {N}),
+                               [=](CellIndex i) {
     typed_values[*i] = *i + 10;
   });
 
@@ -141,7 +145,8 @@ For example::
     subrange_values[i] = i;
   });
 
-  RAJA::forall<RAJA::seq_exec>(RAJA::range(CellIndex {1}, N, 2),
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(CellIndex {1}, CellIndex {N},
+                                            CellIndex {2}),
                                [=](CellIndex i) {
                                  strided_values[*i] = *i;
                                });
