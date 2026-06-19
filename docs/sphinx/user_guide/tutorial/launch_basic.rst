@@ -100,10 +100,10 @@ equivalent of the kernel body using the policy shown above is:
    :language: C++
 
 When only one logical thread should execute a piece of work inside a launch
-loop, use ``RAJA::once()``. It returns ``RAJA::RangeSegment{0, 1}``, which is
-useful for per-team setup before a synchronization point:
+loop, use ``RAJA::mask<threads_x>(ctx, ...)``. This keeps the intent explicit
+for per-team setup before a synchronization point:
 
 .. literalinclude:: ../../../../examples/raja-launch.cpp
-   :start-after: // __once_loop_start
-   :end-before: // __once_loop_end
+   :start-after: // __mask_loop_start
+   :end-before: // __mask_loop_end
    :language: C++
