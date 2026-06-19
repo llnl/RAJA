@@ -113,8 +113,8 @@ jobs:
             CMAKE_CXX_STANDARD=20
             CMAKE_BUILD_TYPE=Release
             CMAKE_CUDA_ARCHITECTURES=70
-            CUDA_TOOLKIT_ROOT_DIR="${{ env.CUDA_PATH }}"
-            CMAKE_CUDA_COMPILER="${{ env.CUDA_PATH }}\bin\nvcc.exe"
+#            CUDA_TOOLKIT_ROOT_DIR="${{ env.CUDA_PATH }}"
+#            CMAKE_CUDA_COMPILER="${{ env.CUDA_PATH }}\bin\nvcc.exe"
             ENABLE_CUDA=On
             ${{ matrix.shared.args }}
           run-build: true
