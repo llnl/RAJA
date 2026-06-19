@@ -591,15 +591,39 @@ using selected_range_storage_t =
     typename selected_range_storage<StorageT, DeducedT>::type;
 
 template<typename StrongT, typename... Ts>
-struct range_storage_from_strong
-{
-  using type = StrongT;
-};
+struct range_storage_from_strong;
 
 template<typename... Ts>
 struct range_storage_from_strong<no_strong_index, Ts...>
 {
   using type = common_type_t<Ts...>;
+};
+
+template<typename StrongT, typename... Ts>
+  requires ((std::is_same_v<strip_index_type_t<std::decay_t<Ts>>,
+                            strip_index_type_t<std::decay_t<StrongT>>> && ...))
+struct range_storage_from_strong<StrongT, Ts...>
+{
+  using type = StrongT;
+};
+
+template<typename StrongT, typename BeginT, typename EndT, typename StrideT>
+struct range_stride_storage_from_strong;
+
+template<typename BeginT, typename EndT, typename StrideT>
+struct range_stride_storage_from_strong<no_strong_index, BeginT, EndT, StrideT>
+{
+  using type = common_type_t<BeginT, EndT, range_stride_type_t<StrideT>>;
+};
+
+template<typename StrongT, typename BeginT, typename EndT, typename StrideT>
+  requires (std::is_same_v<strip_index_type_t<std::decay_t<BeginT>>,
+                           strip_index_type_t<std::decay_t<StrongT>>> &&
+            std::is_same_v<strip_index_type_t<std::decay_t<EndT>>,
+                           strip_index_type_t<std::decay_t<StrongT>>>)
+struct range_stride_storage_from_strong<StrongT, BeginT, EndT, StrideT>
+{
+  using type = StrongT;
 };
 
 template<typename BeginT, typename EndT>
@@ -610,10 +634,10 @@ using deduced_range_storage_type_t =
 
 template<typename BeginT, typename EndT, typename StrideT>
 using deduced_range_stride_storage_type_t =
-    typename range_storage_from_strong<strong_index_type_t<BeginT, EndT>,
-                                       BeginT,
-                                       EndT,
-                                       range_stride_type_t<StrideT>>::type;
+    typename range_stride_storage_from_strong<strong_index_type_t<BeginT, EndT>,
+                                              BeginT,
+                                              EndT,
+                                              StrideT>::type;
 
 template<typename Common, typename StrideT>
 using deduced_range_stride_diff_type_t =

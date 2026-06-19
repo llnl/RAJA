@@ -119,7 +119,9 @@ The return type depends on the arguments:
   ``RAJA::TypedRangeStrideSegment``.
 * When one of the bounds is a RAJA strong index type, such as a type created
   with ``RAJA_INDEX_VALUE``, that strong type is preserved for the loop
-  variable when possible.
+  variable. Mixed strong and plain integral bounds are only accepted when the
+  plain bound already matches the strong type's underlying storage type.
+  Otherwise deduction fails rather than narrowing the value.
 * Providing an explicit template argument, such as
   ``RAJA::range<MyIndex>(end)``, overrides the deduced storage type.
 

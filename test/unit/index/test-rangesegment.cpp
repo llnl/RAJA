@@ -267,6 +267,10 @@ TEST(RangeSegmentUnitTest, MixedStrongRangeBeginEnd)
   ASSERT_EQ(RAJA::Index_type(14), r.size());
 }
 
+static_assert(RAJA::concepts::RangeConstructible<RangeStrongIndex, int>);
+static_assert(!RAJA::concepts::RangeConstructible<RangeStrongIndex, long>);
+static_assert(!RAJA::concepts::RangeConstructible<long, RangeStrongIndex>);
+
 TEST(RangeSegmentUnitTest, MixedStrongRangeStrongBegin)
 {
   auto r = RAJA::range(RangeStrongIndex(3), 17);
@@ -278,6 +282,16 @@ TEST(RangeSegmentUnitTest, MixedStrongRangeStrongBegin)
   ASSERT_EQ(RangeStrongIndex(3), *r.begin());
   ASSERT_EQ(RAJA::Index_type(14), r.size());
 }
+
+static_assert(RAJA::concepts::RangeStrideConstructible<RangeStrongIndex,
+                                                       int,
+                                                       int>);
+static_assert(!RAJA::concepts::RangeStrideConstructible<RangeStrongIndex,
+                                                        long,
+                                                        int>);
+static_assert(!RAJA::concepts::RangeStrideConstructible<long,
+                                                        RangeStrongIndex,
+                                                        int>);
 
 TEST(RangeSegmentUnitTest, RangeBeginEndStridePositive)
 {
