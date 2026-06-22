@@ -7,13 +7,13 @@
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
-#ifndef __TEST_LAUNCH_MASK_HPP__
-#define __TEST_LAUNCH_MASK_HPP__
+#ifndef __TEST_LAUNCH_LEAD_HPP__
+#define __TEST_LAUNCH_LEAD_HPP__
 
 #include <cstring>
 
 template <typename WORKING_RES, typename LAUNCH_POLICY, typename TEAM_POLICY, typename THREAD_POLICY>
-void LaunchMaskTestImpl()
+void LaunchLeadTestImpl()
 {
   constexpr int num_teams = 37;
   constexpr int threads_per_team = 32;
@@ -42,7 +42,7 @@ void LaunchMaskTestImpl()
       RAJA::LaunchParams(RAJA::Teams(num_teams), RAJA::Threads(threads_per_team)),
       [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx) {
         RAJA::loop<TEAM_POLICY>(ctx, RAJA::RangeSegment(0, num_teams), [&](int team) {
-          RAJA::mask<THREAD_POLICY>(ctx, [&] {
+          RAJA::lead<THREAD_POLICY>(ctx, [&] {
             working_array[team] = team + 1;
           });
         });
@@ -60,13 +60,13 @@ void LaunchMaskTestImpl()
                                 test_array);
 }
 
-TYPED_TEST_SUITE_P(LaunchMaskTest);
+TYPED_TEST_SUITE_P(LaunchLeadTest);
 template <typename T>
-class LaunchMaskTest : public ::testing::Test
+class LaunchLeadTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_P(LaunchMaskTest, MaskTeams)
+TYPED_TEST_P(LaunchLeadTest, LeadTeams)
 {
   using WORKING_RES = typename camp::at<TypeParam, camp::num<0>>::type;
   using LAUNCH_POLICY =
@@ -79,9 +79,9 @@ TYPED_TEST_P(LaunchMaskTest, MaskTeams)
       typename camp::at<typename camp::at<TypeParam, camp::num<1>>::type,
                         camp::num<2>>::type;
 
-  LaunchMaskTestImpl<WORKING_RES, LAUNCH_POLICY, TEAM_POLICY, THREAD_POLICY>();
+  LaunchLeadTestImpl<WORKING_RES, LAUNCH_POLICY, TEAM_POLICY, THREAD_POLICY>();
 }
 
-REGISTER_TYPED_TEST_SUITE_P(LaunchMaskTest, MaskTeams);
+REGISTER_TYPED_TEST_SUITE_P(LaunchLeadTest, LeadTeams);
 
-#endif  // __TEST_LAUNCH_MASK_HPP__
+#endif  // __TEST_LAUNCH_LEAD_HPP__

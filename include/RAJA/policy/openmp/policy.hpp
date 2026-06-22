@@ -482,10 +482,10 @@ using policy::omp::omp_synchronize;
 using policy::omp::omp_work;
 
 template<typename POLICY>
-struct MaskExecute;
+struct LeadExecute;
 
 template<>
-struct MaskExecute<RAJA::policy::omp::omp_thread>
+struct LeadExecute<RAJA::policy::omp::omp_thread>
 {
   template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(

@@ -162,12 +162,12 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
            // Array shared within threads of the same team
            RAJA_TEAM_SHARED int s_A[1];
 
-           // __mask_loop_start
+           // __lead_loop_start
            // Use a single logical thread per team for shared initialization.
-           RAJA::mask<threads_x>(ctx, [&] {
+           RAJA::lead<threads_x>(ctx, [&] {
               s_A[0] = r;
            });
-           // __mask_loop_end
+           // __lead_loop_end
 
            ctx.teamSync();
 

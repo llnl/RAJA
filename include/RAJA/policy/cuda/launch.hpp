@@ -277,7 +277,7 @@ struct LaunchExecute<
 template<typename IterationMapping,
          kernel_sync_requirement sync,
          typename... IndexMappers>
-struct MaskExecute<
+struct LeadExecute<
     RAJA::policy::cuda::cuda_indexer<IterationMapping, sync, IndexMappers...>>
 {
   template<typename LaunchContextPolicy, typename BODY>
@@ -297,10 +297,9 @@ struct MaskExecute<
 template<typename IterationMapping,
          kernel_sync_requirement sync,
          typename... IndexMappers>
-struct MaskExecute<
-    RAJA::policy::cuda::cuda_flatten_indexer<IterationMapping,
-                                             sync,
-                                             IndexMappers...>>
+struct LeadExecute<RAJA::policy::cuda::cuda_flatten_indexer<IterationMapping,
+                                                            sync,
+                                                            IndexMappers...>>
 {
   template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
