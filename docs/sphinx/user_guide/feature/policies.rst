@@ -751,10 +751,12 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
     and ``device_block_{x,y,z}_{direct,loop}`` (maps to the corresponding
     backend loop/index mapping policies)
 
-For SYCL, these aliases use CUDA-like (x,y,z) naming with the standard RAJA
-mapping described above: x corresponds to SYCL dimension 2, y to dimension 1,
-and z to dimension 0. These build options enable the corresponding internal
-``RAJA_*_ACTIVE`` compile-time macros used by the implementation.
+.. important::
+   For SYCL, these aliases use CUDA-like ``(x,y,z)`` naming with the standard
+   RAJA mapping described above: ``x`` corresponds to SYCL dimension 2,
+   ``y`` to dimension 1, and ``z`` to dimension 0. These build options enable
+   the corresponding internal ``RAJA_*_ACTIVE`` compile-time macros used by
+   the implementation.
 
 See also the example ``examples/device-policy-aliases.cpp``.
 
