@@ -10,3 +10,7 @@
 raja_add_test(
   NAME test-hip-synchronize
   SOURCES test-synchronize.cpp)
+
+raja_add_test(
+  NAME test-hip-scan-char-int
+  SOURCES test-scan-char-int.cpp)
