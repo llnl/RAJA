@@ -57,6 +57,66 @@ using device_exec = RAJA::cuda_exec<BLOCK_SIZE, Async>;
 template<size_t BLOCK_SIZE>
 using device_exec_async = device_exec<BLOCK_SIZE, true>;
 
+template<size_t BLOCK_SIZE, bool Async = false>
+using device_exec_with_reduce = RAJA::cuda_exec_with_reduce<BLOCK_SIZE, Async>;
+
+template<size_t BLOCK_SIZE>
+using device_exec_with_reduce_async = device_exec_with_reduce<BLOCK_SIZE, true>;
+
+template<bool with_reduce, size_t BLOCK_SIZE, bool Async = false>
+using device_exec_base = RAJA::cuda_exec_base<with_reduce, BLOCK_SIZE, Async>;
+
+template<bool with_reduce, size_t BLOCK_SIZE>
+using device_exec_base_async =
+    RAJA::cuda_exec_base_async<with_reduce, BLOCK_SIZE>;
+
+template<size_t BLOCK_SIZE, size_t GRID_SIZE, bool Async = false>
+using device_exec_grid = RAJA::cuda_exec_grid<BLOCK_SIZE, GRID_SIZE, Async>;
+
+template<size_t BLOCK_SIZE, size_t GRID_SIZE>
+using device_exec_grid_async =
+    RAJA::cuda_exec_grid_async<BLOCK_SIZE, GRID_SIZE>;
+
+template<size_t BLOCK_SIZE, bool Async = false>
+using device_exec_occ_calc = RAJA::cuda_exec_occ_calc<BLOCK_SIZE, Async>;
+
+template<size_t BLOCK_SIZE>
+using device_exec_occ_calc_async = RAJA::cuda_exec_occ_calc_async<BLOCK_SIZE>;
+
+template<size_t BLOCK_SIZE, bool Async = false>
+using device_exec_occ_max = RAJA::cuda_exec_occ_max<BLOCK_SIZE, Async>;
+
+template<size_t BLOCK_SIZE>
+using device_exec_occ_max_async = RAJA::cuda_exec_occ_max_async<BLOCK_SIZE>;
+
+template<size_t BLOCK_SIZE, typename Fraction, bool Async = false>
+using device_exec_occ_fraction =
+    RAJA::cuda_exec_occ_fraction<BLOCK_SIZE, Fraction, Async>;
+
+template<size_t BLOCK_SIZE, typename Fraction>
+using device_exec_occ_fraction_async =
+    RAJA::cuda_exec_occ_fraction_async<BLOCK_SIZE, Fraction>;
+
+template<size_t BLOCK_SIZE, typename Concretizer, bool Async = false>
+using device_exec_occ_custom =
+    RAJA::cuda_exec_occ_custom<BLOCK_SIZE, Concretizer, Async>;
+
+template<size_t BLOCK_SIZE, typename Concretizer>
+using device_exec_occ_custom_async =
+    RAJA::cuda_exec_occ_custom_async<BLOCK_SIZE, Concretizer>;
+
+// reducers and atomics
+using device_atomic = RAJA::cuda_atomic;
+template<typename host_policy>
+using device_atomic_explicit = RAJA::cuda_atomic_explicit<host_policy>;
+using device_reduce          = RAJA::cuda_reduce;
+using device_reduce_atomic   = RAJA::cuda_reduce_atomic;
+template<bool with_atomic>
+using device_reduce_base         = RAJA::cuda_reduce_base<with_atomic>;
+using device_multi_reduce_atomic = RAJA::cuda_multi_reduce_atomic;
+using device_multi_reduce_atomic_low_performance_low_overhead =
+    RAJA::cuda_multi_reduce_atomic_low_performance_low_overhead;
+
 // launch
 template<bool Async, int num_threads = RAJA::named_usage::unspecified>
 using device_launch_t = RAJA::cuda_launch_t<Async, num_threads>;
@@ -69,6 +129,23 @@ using device_global_size_y_direct = RAJA::cuda_global_size_y_direct<ny_threads>;
 template<int nz_threads>
 using device_global_size_z_direct = RAJA::cuda_global_size_z_direct<nz_threads>;
 
+template<int nx_threads>
+using device_global_size_x_direct_unchecked =
+    RAJA::cuda_global_size_x_direct_unchecked<nx_threads>;
+template<int ny_threads>
+using device_global_size_y_direct_unchecked =
+    RAJA::cuda_global_size_y_direct_unchecked<ny_threads>;
+template<int nz_threads>
+using device_global_size_z_direct_unchecked =
+    RAJA::cuda_global_size_z_direct_unchecked<nz_threads>;
+
+template<int nx_threads>
+using device_global_size_x_loop = RAJA::cuda_global_size_x_loop<nx_threads>;
+template<int ny_threads>
+using device_global_size_y_loop = RAJA::cuda_global_size_y_loop<ny_threads>;
+template<int nz_threads>
+using device_global_size_z_loop = RAJA::cuda_global_size_z_loop<nz_threads>;
+
 // launch (loop) index mapping
 using device_global_thread_x = RAJA::cuda_global_thread_x;
 using device_global_thread_y = RAJA::cuda_global_thread_y;
@@ -79,17 +156,336 @@ using device_thread_x_direct = RAJA::cuda_thread_x_direct;
 using device_thread_y_direct = RAJA::cuda_thread_y_direct;
 using device_thread_z_direct = RAJA::cuda_thread_z_direct;
 
-using device_thread_x_loop = RAJA::cuda_thread_x_loop;
-using device_thread_y_loop = RAJA::cuda_thread_y_loop;
-using device_thread_z_loop = RAJA::cuda_thread_z_loop;
+using device_thread_x_loop     = RAJA::cuda_thread_x_loop;
+using device_thread_y_loop     = RAJA::cuda_thread_y_loop;
+using device_thread_z_loop     = RAJA::cuda_thread_z_loop;
+using device_thread_xy_direct  = RAJA::cuda_thread_xy_direct;
+using device_thread_xz_direct  = RAJA::cuda_thread_xz_direct;
+using device_thread_yx_direct  = RAJA::cuda_thread_yx_direct;
+using device_thread_yz_direct  = RAJA::cuda_thread_yz_direct;
+using device_thread_zx_direct  = RAJA::cuda_thread_zx_direct;
+using device_thread_zy_direct  = RAJA::cuda_thread_zy_direct;
+using device_thread_xyz_direct = RAJA::cuda_thread_xyz_direct;
+using device_thread_xzy_direct = RAJA::cuda_thread_xzy_direct;
+using device_thread_yxz_direct = RAJA::cuda_thread_yxz_direct;
+using device_thread_yzx_direct = RAJA::cuda_thread_yzx_direct;
+using device_thread_zxy_direct = RAJA::cuda_thread_zxy_direct;
+using device_thread_zyx_direct = RAJA::cuda_thread_zyx_direct;
+
+using device_thread_xy_loop  = RAJA::cuda_thread_xy_loop;
+using device_thread_xz_loop  = RAJA::cuda_thread_xz_loop;
+using device_thread_yx_loop  = RAJA::cuda_thread_yx_loop;
+using device_thread_yz_loop  = RAJA::cuda_thread_yz_loop;
+using device_thread_zx_loop  = RAJA::cuda_thread_zx_loop;
+using device_thread_zy_loop  = RAJA::cuda_thread_zy_loop;
+using device_thread_xyz_loop = RAJA::cuda_thread_xyz_loop;
+using device_thread_xzy_loop = RAJA::cuda_thread_xzy_loop;
+using device_thread_yxz_loop = RAJA::cuda_thread_yxz_loop;
+using device_thread_yzx_loop = RAJA::cuda_thread_yzx_loop;
+using device_thread_zxy_loop = RAJA::cuda_thread_zxy_loop;
+using device_thread_zyx_loop = RAJA::cuda_thread_zyx_loop;
+
+template<RAJA::named_dim... dims>
+using device_thread_syncable_loop    = RAJA::cuda_thread_syncable_loop<dims...>;
+using device_thread_xy_syncable_loop = RAJA::cuda_thread_xy_syncable_loop;
+using device_thread_xz_syncable_loop = RAJA::cuda_thread_xz_syncable_loop;
+using device_thread_yx_syncable_loop = RAJA::cuda_thread_yx_syncable_loop;
+using device_thread_yz_syncable_loop = RAJA::cuda_thread_yz_syncable_loop;
+using device_thread_zx_syncable_loop = RAJA::cuda_thread_zx_syncable_loop;
+using device_thread_zy_syncable_loop = RAJA::cuda_thread_zy_syncable_loop;
+using device_thread_xyz_syncable_loop = RAJA::cuda_thread_xyz_syncable_loop;
+using device_thread_xzy_syncable_loop = RAJA::cuda_thread_xzy_syncable_loop;
+using device_thread_yxz_syncable_loop = RAJA::cuda_thread_yxz_syncable_loop;
+using device_thread_yzx_syncable_loop = RAJA::cuda_thread_yzx_syncable_loop;
+using device_thread_zxy_syncable_loop = RAJA::cuda_thread_zxy_syncable_loop;
+using device_thread_zyx_syncable_loop = RAJA::cuda_thread_zyx_syncable_loop;
+
+template<int nx_threads>
+using device_thread_size_x_direct_unchecked =
+    RAJA::cuda_thread_size_x_direct_unchecked<nx_threads>;
+template<int ny_threads>
+using device_thread_size_y_direct_unchecked =
+    RAJA::cuda_thread_size_y_direct_unchecked<ny_threads>;
+template<int nz_threads>
+using device_thread_size_z_direct_unchecked =
+    RAJA::cuda_thread_size_z_direct_unchecked<nz_threads>;
+
+template<int nx_threads>
+using device_thread_size_x_direct = RAJA::cuda_thread_size_x_direct<nx_threads>;
+template<int ny_threads>
+using device_thread_size_y_direct = RAJA::cuda_thread_size_y_direct<ny_threads>;
+template<int nz_threads>
+using device_thread_size_z_direct = RAJA::cuda_thread_size_z_direct<nz_threads>;
+
+template<int nx_threads>
+using device_thread_size_x_loop = RAJA::cuda_thread_size_x_loop<nx_threads>;
+template<int ny_threads>
+using device_thread_size_y_loop = RAJA::cuda_thread_size_y_loop<ny_threads>;
+template<int nz_threads>
+using device_thread_size_z_loop = RAJA::cuda_thread_size_z_loop<nz_threads>;
 
 using device_block_x_direct = RAJA::cuda_block_x_direct;
 using device_block_y_direct = RAJA::cuda_block_y_direct;
 using device_block_z_direct = RAJA::cuda_block_z_direct;
 
-using device_block_x_loop = RAJA::cuda_block_x_loop;
-using device_block_y_loop = RAJA::cuda_block_y_loop;
-using device_block_z_loop = RAJA::cuda_block_z_loop;
+using device_block_x_loop     = RAJA::cuda_block_x_loop;
+using device_block_y_loop     = RAJA::cuda_block_y_loop;
+using device_block_z_loop     = RAJA::cuda_block_z_loop;
+using device_block_xy_direct  = RAJA::cuda_block_xy_direct;
+using device_block_xz_direct  = RAJA::cuda_block_xz_direct;
+using device_block_yx_direct  = RAJA::cuda_block_yx_direct;
+using device_block_yz_direct  = RAJA::cuda_block_yz_direct;
+using device_block_zx_direct  = RAJA::cuda_block_zx_direct;
+using device_block_zy_direct  = RAJA::cuda_block_zy_direct;
+using device_block_xyz_direct = RAJA::cuda_block_xyz_direct;
+using device_block_xzy_direct = RAJA::cuda_block_xzy_direct;
+using device_block_yxz_direct = RAJA::cuda_block_yxz_direct;
+using device_block_yzx_direct = RAJA::cuda_block_yzx_direct;
+using device_block_zxy_direct = RAJA::cuda_block_zxy_direct;
+using device_block_zyx_direct = RAJA::cuda_block_zyx_direct;
+
+using device_block_xy_loop  = RAJA::cuda_block_xy_loop;
+using device_block_xz_loop  = RAJA::cuda_block_xz_loop;
+using device_block_yx_loop  = RAJA::cuda_block_yx_loop;
+using device_block_yz_loop  = RAJA::cuda_block_yz_loop;
+using device_block_zx_loop  = RAJA::cuda_block_zx_loop;
+using device_block_zy_loop  = RAJA::cuda_block_zy_loop;
+using device_block_xyz_loop = RAJA::cuda_block_xyz_loop;
+using device_block_xzy_loop = RAJA::cuda_block_xzy_loop;
+using device_block_yxz_loop = RAJA::cuda_block_yxz_loop;
+using device_block_yzx_loop = RAJA::cuda_block_yzx_loop;
+using device_block_zxy_loop = RAJA::cuda_block_zxy_loop;
+using device_block_zyx_loop = RAJA::cuda_block_zyx_loop;
+
+template<RAJA::named_dim... dims>
+using device_block_syncable_loop     = RAJA::cuda_block_syncable_loop<dims...>;
+using device_block_xy_syncable_loop  = RAJA::cuda_block_xy_syncable_loop;
+using device_block_xz_syncable_loop  = RAJA::cuda_block_xz_syncable_loop;
+using device_block_yx_syncable_loop  = RAJA::cuda_block_yx_syncable_loop;
+using device_block_yz_syncable_loop  = RAJA::cuda_block_yz_syncable_loop;
+using device_block_zx_syncable_loop  = RAJA::cuda_block_zx_syncable_loop;
+using device_block_zy_syncable_loop  = RAJA::cuda_block_zy_syncable_loop;
+using device_block_xyz_syncable_loop = RAJA::cuda_block_xyz_syncable_loop;
+using device_block_xzy_syncable_loop = RAJA::cuda_block_xzy_syncable_loop;
+using device_block_yxz_syncable_loop = RAJA::cuda_block_yxz_syncable_loop;
+using device_block_yzx_syncable_loop = RAJA::cuda_block_yzx_syncable_loop;
+using device_block_zxy_syncable_loop = RAJA::cuda_block_zxy_syncable_loop;
+using device_block_zyx_syncable_loop = RAJA::cuda_block_zyx_syncable_loop;
+
+template<int nx_blocks>
+using device_block_size_x_direct_unchecked =
+    RAJA::cuda_block_size_x_direct_unchecked<nx_blocks>;
+template<int ny_blocks>
+using device_block_size_y_direct_unchecked =
+    RAJA::cuda_block_size_y_direct_unchecked<ny_blocks>;
+template<int nz_blocks>
+using device_block_size_z_direct_unchecked =
+    RAJA::cuda_block_size_z_direct_unchecked<nz_blocks>;
+
+template<int nx_blocks>
+using device_block_size_x_direct = RAJA::cuda_block_size_x_direct<nx_blocks>;
+template<int ny_blocks>
+using device_block_size_y_direct = RAJA::cuda_block_size_y_direct<ny_blocks>;
+template<int nz_blocks>
+using device_block_size_z_direct = RAJA::cuda_block_size_z_direct<nz_blocks>;
+
+template<int nx_blocks>
+using device_block_size_x_loop = RAJA::cuda_block_size_x_loop<nx_blocks>;
+template<int ny_blocks>
+using device_block_size_y_loop = RAJA::cuda_block_size_y_loop<ny_blocks>;
+template<int nz_blocks>
+using device_block_size_z_loop = RAJA::cuda_block_size_z_loop<nz_blocks>;
+template<int X_SIZE, int Y_SIZE>
+using device_thread_size_xy_direct =
+    RAJA::cuda_thread_size_xy_direct<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
+using device_thread_size_xz_direct =
+    RAJA::cuda_thread_size_xz_direct<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
+using device_thread_size_yx_direct =
+    RAJA::cuda_thread_size_yx_direct<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
+using device_thread_size_yz_direct =
+    RAJA::cuda_thread_size_yz_direct<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
+using device_thread_size_zx_direct =
+    RAJA::cuda_thread_size_zx_direct<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
+using device_thread_size_zy_direct =
+    RAJA::cuda_thread_size_zy_direct<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
+using device_thread_size_xyz_direct =
+    RAJA::cuda_thread_size_xyz_direct<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
+using device_thread_size_xzy_direct =
+    RAJA::cuda_thread_size_xzy_direct<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
+using device_thread_size_yxz_direct =
+    RAJA::cuda_thread_size_yxz_direct<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
+using device_thread_size_yzx_direct =
+    RAJA::cuda_thread_size_yzx_direct<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
+using device_thread_size_zxy_direct =
+    RAJA::cuda_thread_size_zxy_direct<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
+using device_thread_size_zyx_direct =
+    RAJA::cuda_thread_size_zyx_direct<Z_SIZE, Y_SIZE, X_SIZE>;
+
+template<int X_SIZE, int Y_SIZE>
+using device_thread_size_xy_loop =
+    RAJA::cuda_thread_size_xy_loop<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
+using device_thread_size_xz_loop =
+    RAJA::cuda_thread_size_xz_loop<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
+using device_thread_size_yx_loop =
+    RAJA::cuda_thread_size_yx_loop<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
+using device_thread_size_yz_loop =
+    RAJA::cuda_thread_size_yz_loop<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
+using device_thread_size_zx_loop =
+    RAJA::cuda_thread_size_zx_loop<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
+using device_thread_size_zy_loop =
+    RAJA::cuda_thread_size_zy_loop<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
+using device_thread_size_xyz_loop =
+    RAJA::cuda_thread_size_xyz_loop<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
+using device_thread_size_xzy_loop =
+    RAJA::cuda_thread_size_xzy_loop<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
+using device_thread_size_yxz_loop =
+    RAJA::cuda_thread_size_yxz_loop<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
+using device_thread_size_yzx_loop =
+    RAJA::cuda_thread_size_yzx_loop<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
+using device_thread_size_zxy_loop =
+    RAJA::cuda_thread_size_zxy_loop<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
+using device_thread_size_zyx_loop =
+    RAJA::cuda_thread_size_zyx_loop<Z_SIZE, Y_SIZE, X_SIZE>;
+
+template<int X_SIZE, int Y_SIZE>
+using device_block_size_xy_direct =
+    RAJA::cuda_block_size_xy_direct<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
+using device_block_size_xz_direct =
+    RAJA::cuda_block_size_xz_direct<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
+using device_block_size_yx_direct =
+    RAJA::cuda_block_size_yx_direct<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
+using device_block_size_yz_direct =
+    RAJA::cuda_block_size_yz_direct<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
+using device_block_size_zx_direct =
+    RAJA::cuda_block_size_zx_direct<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
+using device_block_size_zy_direct =
+    RAJA::cuda_block_size_zy_direct<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
+using device_block_size_xyz_direct =
+    RAJA::cuda_block_size_xyz_direct<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
+using device_block_size_xzy_direct =
+    RAJA::cuda_block_size_xzy_direct<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
+using device_block_size_yxz_direct =
+    RAJA::cuda_block_size_yxz_direct<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
+using device_block_size_yzx_direct =
+    RAJA::cuda_block_size_yzx_direct<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
+using device_block_size_zxy_direct =
+    RAJA::cuda_block_size_zxy_direct<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
+using device_block_size_zyx_direct =
+    RAJA::cuda_block_size_zyx_direct<Z_SIZE, Y_SIZE, X_SIZE>;
+
+template<int X_SIZE, int Y_SIZE>
+using device_block_size_xy_loop = RAJA::cuda_block_size_xy_loop<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
+using device_block_size_xz_loop = RAJA::cuda_block_size_xz_loop<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
+using device_block_size_yx_loop = RAJA::cuda_block_size_yx_loop<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
+using device_block_size_yz_loop = RAJA::cuda_block_size_yz_loop<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
+using device_block_size_zx_loop = RAJA::cuda_block_size_zx_loop<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
+using device_block_size_zy_loop = RAJA::cuda_block_size_zy_loop<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
+using device_block_size_xyz_loop =
+    RAJA::cuda_block_size_xyz_loop<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
+using device_block_size_xzy_loop =
+    RAJA::cuda_block_size_xzy_loop<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
+using device_block_size_yxz_loop =
+    RAJA::cuda_block_size_yxz_loop<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
+using device_block_size_yzx_loop =
+    RAJA::cuda_block_size_yzx_loop<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
+using device_block_size_zxy_loop =
+    RAJA::cuda_block_size_zxy_loop<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
+using device_block_size_zyx_loop =
+    RAJA::cuda_block_size_zyx_loop<Z_SIZE, Y_SIZE, X_SIZE>;
+
+using device_flatten_block_threads_xy_direct =
+    RAJA::cuda_flatten_block_threads_xy_direct;
+using device_flatten_block_threads_xz_direct =
+    RAJA::cuda_flatten_block_threads_xz_direct;
+using device_flatten_block_threads_yx_direct =
+    RAJA::cuda_flatten_block_threads_yx_direct;
+using device_flatten_block_threads_yz_direct =
+    RAJA::cuda_flatten_block_threads_yz_direct;
+using device_flatten_block_threads_zx_direct =
+    RAJA::cuda_flatten_block_threads_zx_direct;
+using device_flatten_block_threads_zy_direct =
+    RAJA::cuda_flatten_block_threads_zy_direct;
+using device_flatten_block_threads_xyz_direct =
+    RAJA::cuda_flatten_block_threads_xyz_direct;
+using device_flatten_block_threads_xzy_direct =
+    RAJA::cuda_flatten_block_threads_xzy_direct;
+using device_flatten_block_threads_yxz_direct =
+    RAJA::cuda_flatten_block_threads_yxz_direct;
+using device_flatten_block_threads_yzx_direct =
+    RAJA::cuda_flatten_block_threads_yzx_direct;
+using device_flatten_block_threads_zxy_direct =
+    RAJA::cuda_flatten_block_threads_zxy_direct;
+using device_flatten_block_threads_zyx_direct =
+    RAJA::cuda_flatten_block_threads_zyx_direct;
+
+using device_flatten_block_threads_xy_loop =
+    RAJA::cuda_flatten_block_threads_xy_loop;
+using device_flatten_block_threads_xz_loop =
+    RAJA::cuda_flatten_block_threads_xz_loop;
+using device_flatten_block_threads_yx_loop =
+    RAJA::cuda_flatten_block_threads_yx_loop;
+using device_flatten_block_threads_yz_loop =
+    RAJA::cuda_flatten_block_threads_yz_loop;
+using device_flatten_block_threads_zx_loop =
+    RAJA::cuda_flatten_block_threads_zx_loop;
+using device_flatten_block_threads_zy_loop =
+    RAJA::cuda_flatten_block_threads_zy_loop;
+using device_flatten_block_threads_xyz_loop =
+    RAJA::cuda_flatten_block_threads_xyz_loop;
+using device_flatten_block_threads_xzy_loop =
+    RAJA::cuda_flatten_block_threads_xzy_loop;
+using device_flatten_block_threads_yxz_loop =
+    RAJA::cuda_flatten_block_threads_yxz_loop;
+using device_flatten_block_threads_yzx_loop =
+    RAJA::cuda_flatten_block_threads_yzx_loop;
+using device_flatten_block_threads_zxy_loop =
+    RAJA::cuda_flatten_block_threads_zxy_loop;
+using device_flatten_block_threads_zyx_loop =
+    RAJA::cuda_flatten_block_threads_zyx_loop;
 
 #elif defined(RAJA_HIP_ACTIVE)
 
@@ -99,6 +495,65 @@ using device_exec = RAJA::hip_exec<BLOCK_SIZE, Async>;
 
 template<size_t BLOCK_SIZE>
 using device_exec_async = device_exec<BLOCK_SIZE, true>;
+
+template<size_t BLOCK_SIZE, bool Async = false>
+using device_exec_with_reduce = RAJA::hip_exec_with_reduce<BLOCK_SIZE, Async>;
+
+template<size_t BLOCK_SIZE>
+using device_exec_with_reduce_async = device_exec_with_reduce<BLOCK_SIZE, true>;
+
+template<bool with_reduce, size_t BLOCK_SIZE, bool Async = false>
+using device_exec_base = RAJA::hip_exec_base<with_reduce, BLOCK_SIZE, Async>;
+
+template<bool with_reduce, size_t BLOCK_SIZE>
+using device_exec_base_async =
+    RAJA::hip_exec_base_async<with_reduce, BLOCK_SIZE>;
+
+template<size_t BLOCK_SIZE, size_t GRID_SIZE, bool Async = false>
+using device_exec_grid = RAJA::hip_exec_grid<BLOCK_SIZE, GRID_SIZE, Async>;
+
+template<size_t BLOCK_SIZE, size_t GRID_SIZE>
+using device_exec_grid_async = RAJA::hip_exec_grid_async<BLOCK_SIZE, GRID_SIZE>;
+
+template<size_t BLOCK_SIZE, bool Async = false>
+using device_exec_occ_calc = RAJA::hip_exec_occ_calc<BLOCK_SIZE, Async>;
+
+template<size_t BLOCK_SIZE>
+using device_exec_occ_calc_async = RAJA::hip_exec_occ_calc_async<BLOCK_SIZE>;
+
+template<size_t BLOCK_SIZE, bool Async = false>
+using device_exec_occ_max = RAJA::hip_exec_occ_max<BLOCK_SIZE, Async>;
+
+template<size_t BLOCK_SIZE>
+using device_exec_occ_max_async = RAJA::hip_exec_occ_max_async<BLOCK_SIZE>;
+
+template<size_t BLOCK_SIZE, typename Fraction, bool Async = false>
+using device_exec_occ_fraction =
+    RAJA::hip_exec_occ_fraction<BLOCK_SIZE, Fraction, Async>;
+
+template<size_t BLOCK_SIZE, typename Fraction>
+using device_exec_occ_fraction_async =
+    RAJA::hip_exec_occ_fraction_async<BLOCK_SIZE, Fraction>;
+
+template<size_t BLOCK_SIZE, typename Concretizer, bool Async = false>
+using device_exec_occ_custom =
+    RAJA::hip_exec_occ_custom<BLOCK_SIZE, Concretizer, Async>;
+
+template<size_t BLOCK_SIZE, typename Concretizer>
+using device_exec_occ_custom_async =
+    RAJA::hip_exec_occ_custom_async<BLOCK_SIZE, Concretizer>;
+
+// reducers and atomics
+using device_atomic = RAJA::hip_atomic;
+template<typename host_policy>
+using device_atomic_explicit = RAJA::hip_atomic_explicit<host_policy>;
+using device_reduce          = RAJA::hip_reduce;
+using device_reduce_atomic   = RAJA::hip_reduce_atomic;
+template<bool with_atomic>
+using device_reduce_base         = RAJA::hip_reduce_base<with_atomic>;
+using device_multi_reduce_atomic = RAJA::hip_multi_reduce_atomic;
+using device_multi_reduce_atomic_low_performance_low_overhead =
+    RAJA::hip_multi_reduce_atomic_low_performance_low_overhead;
 
 // launch
 template<bool Async, int num_threads = RAJA::named_usage::unspecified>
@@ -112,6 +567,23 @@ using device_global_size_y_direct = RAJA::hip_global_size_y_direct<ny_threads>;
 template<int nz_threads>
 using device_global_size_z_direct = RAJA::hip_global_size_z_direct<nz_threads>;
 
+template<int nx_threads>
+using device_global_size_x_direct_unchecked =
+    RAJA::hip_global_size_x_direct_unchecked<nx_threads>;
+template<int ny_threads>
+using device_global_size_y_direct_unchecked =
+    RAJA::hip_global_size_y_direct_unchecked<ny_threads>;
+template<int nz_threads>
+using device_global_size_z_direct_unchecked =
+    RAJA::hip_global_size_z_direct_unchecked<nz_threads>;
+
+template<int nx_threads>
+using device_global_size_x_loop = RAJA::hip_global_size_x_loop<nx_threads>;
+template<int ny_threads>
+using device_global_size_y_loop = RAJA::hip_global_size_y_loop<ny_threads>;
+template<int nz_threads>
+using device_global_size_z_loop = RAJA::hip_global_size_z_loop<nz_threads>;
+
 // launch (loop) index mapping
 using device_global_thread_x = RAJA::hip_global_thread_x;
 using device_global_thread_y = RAJA::hip_global_thread_y;
@@ -122,17 +594,336 @@ using device_thread_x_direct = RAJA::hip_thread_x_direct;
 using device_thread_y_direct = RAJA::hip_thread_y_direct;
 using device_thread_z_direct = RAJA::hip_thread_z_direct;
 
-using device_thread_x_loop = RAJA::hip_thread_x_loop;
-using device_thread_y_loop = RAJA::hip_thread_y_loop;
-using device_thread_z_loop = RAJA::hip_thread_z_loop;
+using device_thread_x_loop     = RAJA::hip_thread_x_loop;
+using device_thread_y_loop     = RAJA::hip_thread_y_loop;
+using device_thread_z_loop     = RAJA::hip_thread_z_loop;
+using device_thread_xy_direct  = RAJA::hip_thread_xy_direct;
+using device_thread_xz_direct  = RAJA::hip_thread_xz_direct;
+using device_thread_yx_direct  = RAJA::hip_thread_yx_direct;
+using device_thread_yz_direct  = RAJA::hip_thread_yz_direct;
+using device_thread_zx_direct  = RAJA::hip_thread_zx_direct;
+using device_thread_zy_direct  = RAJA::hip_thread_zy_direct;
+using device_thread_xyz_direct = RAJA::hip_thread_xyz_direct;
+using device_thread_xzy_direct = RAJA::hip_thread_xzy_direct;
+using device_thread_yxz_direct = RAJA::hip_thread_yxz_direct;
+using device_thread_yzx_direct = RAJA::hip_thread_yzx_direct;
+using device_thread_zxy_direct = RAJA::hip_thread_zxy_direct;
+using device_thread_zyx_direct = RAJA::hip_thread_zyx_direct;
+
+using device_thread_xy_loop  = RAJA::hip_thread_xy_loop;
+using device_thread_xz_loop  = RAJA::hip_thread_xz_loop;
+using device_thread_yx_loop  = RAJA::hip_thread_yx_loop;
+using device_thread_yz_loop  = RAJA::hip_thread_yz_loop;
+using device_thread_zx_loop  = RAJA::hip_thread_zx_loop;
+using device_thread_zy_loop  = RAJA::hip_thread_zy_loop;
+using device_thread_xyz_loop = RAJA::hip_thread_xyz_loop;
+using device_thread_xzy_loop = RAJA::hip_thread_xzy_loop;
+using device_thread_yxz_loop = RAJA::hip_thread_yxz_loop;
+using device_thread_yzx_loop = RAJA::hip_thread_yzx_loop;
+using device_thread_zxy_loop = RAJA::hip_thread_zxy_loop;
+using device_thread_zyx_loop = RAJA::hip_thread_zyx_loop;
+
+template<RAJA::named_dim... dims>
+using device_thread_syncable_loop     = RAJA::hip_thread_syncable_loop<dims...>;
+using device_thread_xy_syncable_loop  = RAJA::hip_thread_xy_syncable_loop;
+using device_thread_xz_syncable_loop  = RAJA::hip_thread_xz_syncable_loop;
+using device_thread_yx_syncable_loop  = RAJA::hip_thread_yx_syncable_loop;
+using device_thread_yz_syncable_loop  = RAJA::hip_thread_yz_syncable_loop;
+using device_thread_zx_syncable_loop  = RAJA::hip_thread_zx_syncable_loop;
+using device_thread_zy_syncable_loop  = RAJA::hip_thread_zy_syncable_loop;
+using device_thread_xyz_syncable_loop = RAJA::hip_thread_xyz_syncable_loop;
+using device_thread_xzy_syncable_loop = RAJA::hip_thread_xzy_syncable_loop;
+using device_thread_yxz_syncable_loop = RAJA::hip_thread_yxz_syncable_loop;
+using device_thread_yzx_syncable_loop = RAJA::hip_thread_yzx_syncable_loop;
+using device_thread_zxy_syncable_loop = RAJA::hip_thread_zxy_syncable_loop;
+using device_thread_zyx_syncable_loop = RAJA::hip_thread_zyx_syncable_loop;
+
+template<int nx_threads>
+using device_thread_size_x_direct_unchecked =
+    RAJA::hip_thread_size_x_direct_unchecked<nx_threads>;
+template<int ny_threads>
+using device_thread_size_y_direct_unchecked =
+    RAJA::hip_thread_size_y_direct_unchecked<ny_threads>;
+template<int nz_threads>
+using device_thread_size_z_direct_unchecked =
+    RAJA::hip_thread_size_z_direct_unchecked<nz_threads>;
+
+template<int nx_threads>
+using device_thread_size_x_direct = RAJA::hip_thread_size_x_direct<nx_threads>;
+template<int ny_threads>
+using device_thread_size_y_direct = RAJA::hip_thread_size_y_direct<ny_threads>;
+template<int nz_threads>
+using device_thread_size_z_direct = RAJA::hip_thread_size_z_direct<nz_threads>;
+
+template<int nx_threads>
+using device_thread_size_x_loop = RAJA::hip_thread_size_x_loop<nx_threads>;
+template<int ny_threads>
+using device_thread_size_y_loop = RAJA::hip_thread_size_y_loop<ny_threads>;
+template<int nz_threads>
+using device_thread_size_z_loop = RAJA::hip_thread_size_z_loop<nz_threads>;
 
 using device_block_x_direct = RAJA::hip_block_x_direct;
 using device_block_y_direct = RAJA::hip_block_y_direct;
 using device_block_z_direct = RAJA::hip_block_z_direct;
 
-using device_block_x_loop = RAJA::hip_block_x_loop;
-using device_block_y_loop = RAJA::hip_block_y_loop;
-using device_block_z_loop = RAJA::hip_block_z_loop;
+using device_block_x_loop     = RAJA::hip_block_x_loop;
+using device_block_y_loop     = RAJA::hip_block_y_loop;
+using device_block_z_loop     = RAJA::hip_block_z_loop;
+using device_block_xy_direct  = RAJA::hip_block_xy_direct;
+using device_block_xz_direct  = RAJA::hip_block_xz_direct;
+using device_block_yx_direct  = RAJA::hip_block_yx_direct;
+using device_block_yz_direct  = RAJA::hip_block_yz_direct;
+using device_block_zx_direct  = RAJA::hip_block_zx_direct;
+using device_block_zy_direct  = RAJA::hip_block_zy_direct;
+using device_block_xyz_direct = RAJA::hip_block_xyz_direct;
+using device_block_xzy_direct = RAJA::hip_block_xzy_direct;
+using device_block_yxz_direct = RAJA::hip_block_yxz_direct;
+using device_block_yzx_direct = RAJA::hip_block_yzx_direct;
+using device_block_zxy_direct = RAJA::hip_block_zxy_direct;
+using device_block_zyx_direct = RAJA::hip_block_zyx_direct;
+
+using device_block_xy_loop  = RAJA::hip_block_xy_loop;
+using device_block_xz_loop  = RAJA::hip_block_xz_loop;
+using device_block_yx_loop  = RAJA::hip_block_yx_loop;
+using device_block_yz_loop  = RAJA::hip_block_yz_loop;
+using device_block_zx_loop  = RAJA::hip_block_zx_loop;
+using device_block_zy_loop  = RAJA::hip_block_zy_loop;
+using device_block_xyz_loop = RAJA::hip_block_xyz_loop;
+using device_block_xzy_loop = RAJA::hip_block_xzy_loop;
+using device_block_yxz_loop = RAJA::hip_block_yxz_loop;
+using device_block_yzx_loop = RAJA::hip_block_yzx_loop;
+using device_block_zxy_loop = RAJA::hip_block_zxy_loop;
+using device_block_zyx_loop = RAJA::hip_block_zyx_loop;
+
+template<RAJA::named_dim... dims>
+using device_block_syncable_loop     = RAJA::hip_block_syncable_loop<dims...>;
+using device_block_xy_syncable_loop  = RAJA::hip_block_xy_syncable_loop;
+using device_block_xz_syncable_loop  = RAJA::hip_block_xz_syncable_loop;
+using device_block_yx_syncable_loop  = RAJA::hip_block_yx_syncable_loop;
+using device_block_yz_syncable_loop  = RAJA::hip_block_yz_syncable_loop;
+using device_block_zx_syncable_loop  = RAJA::hip_block_zx_syncable_loop;
+using device_block_zy_syncable_loop  = RAJA::hip_block_zy_syncable_loop;
+using device_block_xyz_syncable_loop = RAJA::hip_block_xyz_syncable_loop;
+using device_block_xzy_syncable_loop = RAJA::hip_block_xzy_syncable_loop;
+using device_block_yxz_syncable_loop = RAJA::hip_block_yxz_syncable_loop;
+using device_block_yzx_syncable_loop = RAJA::hip_block_yzx_syncable_loop;
+using device_block_zxy_syncable_loop = RAJA::hip_block_zxy_syncable_loop;
+using device_block_zyx_syncable_loop = RAJA::hip_block_zyx_syncable_loop;
+
+template<int nx_blocks>
+using device_block_size_x_direct_unchecked =
+    RAJA::hip_block_size_x_direct_unchecked<nx_blocks>;
+template<int ny_blocks>
+using device_block_size_y_direct_unchecked =
+    RAJA::hip_block_size_y_direct_unchecked<ny_blocks>;
+template<int nz_blocks>
+using device_block_size_z_direct_unchecked =
+    RAJA::hip_block_size_z_direct_unchecked<nz_blocks>;
+
+template<int nx_blocks>
+using device_block_size_x_direct = RAJA::hip_block_size_x_direct<nx_blocks>;
+template<int ny_blocks>
+using device_block_size_y_direct = RAJA::hip_block_size_y_direct<ny_blocks>;
+template<int nz_blocks>
+using device_block_size_z_direct = RAJA::hip_block_size_z_direct<nz_blocks>;
+
+template<int nx_blocks>
+using device_block_size_x_loop = RAJA::hip_block_size_x_loop<nx_blocks>;
+template<int ny_blocks>
+using device_block_size_y_loop = RAJA::hip_block_size_y_loop<ny_blocks>;
+template<int nz_blocks>
+using device_block_size_z_loop = RAJA::hip_block_size_z_loop<nz_blocks>;
+template<int X_SIZE, int Y_SIZE>
+using device_thread_size_xy_direct =
+    RAJA::hip_thread_size_xy_direct<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
+using device_thread_size_xz_direct =
+    RAJA::hip_thread_size_xz_direct<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
+using device_thread_size_yx_direct =
+    RAJA::hip_thread_size_yx_direct<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
+using device_thread_size_yz_direct =
+    RAJA::hip_thread_size_yz_direct<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
+using device_thread_size_zx_direct =
+    RAJA::hip_thread_size_zx_direct<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
+using device_thread_size_zy_direct =
+    RAJA::hip_thread_size_zy_direct<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
+using device_thread_size_xyz_direct =
+    RAJA::hip_thread_size_xyz_direct<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
+using device_thread_size_xzy_direct =
+    RAJA::hip_thread_size_xzy_direct<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
+using device_thread_size_yxz_direct =
+    RAJA::hip_thread_size_yxz_direct<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
+using device_thread_size_yzx_direct =
+    RAJA::hip_thread_size_yzx_direct<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
+using device_thread_size_zxy_direct =
+    RAJA::hip_thread_size_zxy_direct<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
+using device_thread_size_zyx_direct =
+    RAJA::hip_thread_size_zyx_direct<Z_SIZE, Y_SIZE, X_SIZE>;
+
+template<int X_SIZE, int Y_SIZE>
+using device_thread_size_xy_loop =
+    RAJA::hip_thread_size_xy_loop<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
+using device_thread_size_xz_loop =
+    RAJA::hip_thread_size_xz_loop<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
+using device_thread_size_yx_loop =
+    RAJA::hip_thread_size_yx_loop<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
+using device_thread_size_yz_loop =
+    RAJA::hip_thread_size_yz_loop<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
+using device_thread_size_zx_loop =
+    RAJA::hip_thread_size_zx_loop<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
+using device_thread_size_zy_loop =
+    RAJA::hip_thread_size_zy_loop<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
+using device_thread_size_xyz_loop =
+    RAJA::hip_thread_size_xyz_loop<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
+using device_thread_size_xzy_loop =
+    RAJA::hip_thread_size_xzy_loop<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
+using device_thread_size_yxz_loop =
+    RAJA::hip_thread_size_yxz_loop<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
+using device_thread_size_yzx_loop =
+    RAJA::hip_thread_size_yzx_loop<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
+using device_thread_size_zxy_loop =
+    RAJA::hip_thread_size_zxy_loop<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
+using device_thread_size_zyx_loop =
+    RAJA::hip_thread_size_zyx_loop<Z_SIZE, Y_SIZE, X_SIZE>;
+
+template<int X_SIZE, int Y_SIZE>
+using device_block_size_xy_direct =
+    RAJA::hip_block_size_xy_direct<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
+using device_block_size_xz_direct =
+    RAJA::hip_block_size_xz_direct<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
+using device_block_size_yx_direct =
+    RAJA::hip_block_size_yx_direct<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
+using device_block_size_yz_direct =
+    RAJA::hip_block_size_yz_direct<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
+using device_block_size_zx_direct =
+    RAJA::hip_block_size_zx_direct<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
+using device_block_size_zy_direct =
+    RAJA::hip_block_size_zy_direct<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
+using device_block_size_xyz_direct =
+    RAJA::hip_block_size_xyz_direct<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
+using device_block_size_xzy_direct =
+    RAJA::hip_block_size_xzy_direct<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
+using device_block_size_yxz_direct =
+    RAJA::hip_block_size_yxz_direct<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
+using device_block_size_yzx_direct =
+    RAJA::hip_block_size_yzx_direct<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
+using device_block_size_zxy_direct =
+    RAJA::hip_block_size_zxy_direct<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
+using device_block_size_zyx_direct =
+    RAJA::hip_block_size_zyx_direct<Z_SIZE, Y_SIZE, X_SIZE>;
+
+template<int X_SIZE, int Y_SIZE>
+using device_block_size_xy_loop = RAJA::hip_block_size_xy_loop<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
+using device_block_size_xz_loop = RAJA::hip_block_size_xz_loop<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
+using device_block_size_yx_loop = RAJA::hip_block_size_yx_loop<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
+using device_block_size_yz_loop = RAJA::hip_block_size_yz_loop<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
+using device_block_size_zx_loop = RAJA::hip_block_size_zx_loop<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
+using device_block_size_zy_loop = RAJA::hip_block_size_zy_loop<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
+using device_block_size_xyz_loop =
+    RAJA::hip_block_size_xyz_loop<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
+using device_block_size_xzy_loop =
+    RAJA::hip_block_size_xzy_loop<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
+using device_block_size_yxz_loop =
+    RAJA::hip_block_size_yxz_loop<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
+using device_block_size_yzx_loop =
+    RAJA::hip_block_size_yzx_loop<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
+using device_block_size_zxy_loop =
+    RAJA::hip_block_size_zxy_loop<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
+using device_block_size_zyx_loop =
+    RAJA::hip_block_size_zyx_loop<Z_SIZE, Y_SIZE, X_SIZE>;
+
+using device_flatten_block_threads_xy_direct =
+    RAJA::hip_flatten_block_threads_xy_direct;
+using device_flatten_block_threads_xz_direct =
+    RAJA::hip_flatten_block_threads_xz_direct;
+using device_flatten_block_threads_yx_direct =
+    RAJA::hip_flatten_block_threads_yx_direct;
+using device_flatten_block_threads_yz_direct =
+    RAJA::hip_flatten_block_threads_yz_direct;
+using device_flatten_block_threads_zx_direct =
+    RAJA::hip_flatten_block_threads_zx_direct;
+using device_flatten_block_threads_zy_direct =
+    RAJA::hip_flatten_block_threads_zy_direct;
+using device_flatten_block_threads_xyz_direct =
+    RAJA::hip_flatten_block_threads_xyz_direct;
+using device_flatten_block_threads_xzy_direct =
+    RAJA::hip_flatten_block_threads_xzy_direct;
+using device_flatten_block_threads_yxz_direct =
+    RAJA::hip_flatten_block_threads_yxz_direct;
+using device_flatten_block_threads_yzx_direct =
+    RAJA::hip_flatten_block_threads_yzx_direct;
+using device_flatten_block_threads_zxy_direct =
+    RAJA::hip_flatten_block_threads_zxy_direct;
+using device_flatten_block_threads_zyx_direct =
+    RAJA::hip_flatten_block_threads_zyx_direct;
+
+using device_flatten_block_threads_xy_loop =
+    RAJA::hip_flatten_block_threads_xy_loop;
+using device_flatten_block_threads_xz_loop =
+    RAJA::hip_flatten_block_threads_xz_loop;
+using device_flatten_block_threads_yx_loop =
+    RAJA::hip_flatten_block_threads_yx_loop;
+using device_flatten_block_threads_yz_loop =
+    RAJA::hip_flatten_block_threads_yz_loop;
+using device_flatten_block_threads_zx_loop =
+    RAJA::hip_flatten_block_threads_zx_loop;
+using device_flatten_block_threads_zy_loop =
+    RAJA::hip_flatten_block_threads_zy_loop;
+using device_flatten_block_threads_xyz_loop =
+    RAJA::hip_flatten_block_threads_xyz_loop;
+using device_flatten_block_threads_xzy_loop =
+    RAJA::hip_flatten_block_threads_xzy_loop;
+using device_flatten_block_threads_yxz_loop =
+    RAJA::hip_flatten_block_threads_yxz_loop;
+using device_flatten_block_threads_yzx_loop =
+    RAJA::hip_flatten_block_threads_yzx_loop;
+using device_flatten_block_threads_zxy_loop =
+    RAJA::hip_flatten_block_threads_zxy_loop;
+using device_flatten_block_threads_zyx_loop =
+    RAJA::hip_flatten_block_threads_zyx_loop;
 
 #elif defined(RAJA_SYCL_ACTIVE)
 
@@ -142,6 +933,12 @@ using device_exec = RAJA::sycl_exec<WORK_GROUP_SIZE, Async>;
 
 template<size_t WORK_GROUP_SIZE>
 using device_exec_async = device_exec<WORK_GROUP_SIZE, true>;
+
+// reducers and atomics
+using device_atomic = RAJA::sycl_atomic;
+template<typename host_policy>
+using device_atomic_explicit = RAJA::sycl_atomic_explicit<host_policy>;
+using device_reduce          = RAJA::sycl_reduce;
 
 // launch
 template<bool Async, int num_threads = RAJA::named_usage::unspecified>
@@ -176,6 +973,56 @@ using device_block_z_direct = RAJA::sycl_group_0_direct;
 using device_block_x_loop = RAJA::sycl_group_2_loop;
 using device_block_y_loop = RAJA::sycl_group_1_loop;
 using device_block_z_loop = RAJA::sycl_group_0_loop;
+
+using device_flatten_block_threads_xy_direct =
+    RAJA::sycl_flatten_group_local_21_direct;
+using device_flatten_block_threads_xz_direct =
+    RAJA::sycl_flatten_group_local_20_direct;
+using device_flatten_block_threads_yx_direct =
+    RAJA::sycl_flatten_group_local_12_direct;
+using device_flatten_block_threads_yz_direct =
+    RAJA::sycl_flatten_group_local_10_direct;
+using device_flatten_block_threads_zx_direct =
+    RAJA::sycl_flatten_group_local_02_direct;
+using device_flatten_block_threads_zy_direct =
+    RAJA::sycl_flatten_group_local_01_direct;
+using device_flatten_block_threads_xyz_direct =
+    RAJA::sycl_flatten_group_local_210_direct;
+using device_flatten_block_threads_xzy_direct =
+    RAJA::sycl_flatten_group_local_201_direct;
+using device_flatten_block_threads_yxz_direct =
+    RAJA::sycl_flatten_group_local_120_direct;
+using device_flatten_block_threads_yzx_direct =
+    RAJA::sycl_flatten_group_local_102_direct;
+using device_flatten_block_threads_zxy_direct =
+    RAJA::sycl_flatten_group_local_021_direct;
+using device_flatten_block_threads_zyx_direct =
+    RAJA::sycl_flatten_group_local_012_direct;
+
+using device_flatten_block_threads_xy_loop =
+    RAJA::sycl_flatten_group_local_21_loop;
+using device_flatten_block_threads_xz_loop =
+    RAJA::sycl_flatten_group_local_20_loop;
+using device_flatten_block_threads_yx_loop =
+    RAJA::sycl_flatten_group_local_12_loop;
+using device_flatten_block_threads_yz_loop =
+    RAJA::sycl_flatten_group_local_10_loop;
+using device_flatten_block_threads_zx_loop =
+    RAJA::sycl_flatten_group_local_02_loop;
+using device_flatten_block_threads_zy_loop =
+    RAJA::sycl_flatten_group_local_01_loop;
+using device_flatten_block_threads_xyz_loop =
+    RAJA::sycl_flatten_group_local_210_loop;
+using device_flatten_block_threads_xzy_loop =
+    RAJA::sycl_flatten_group_local_201_loop;
+using device_flatten_block_threads_yxz_loop =
+    RAJA::sycl_flatten_group_local_120_loop;
+using device_flatten_block_threads_yzx_loop =
+    RAJA::sycl_flatten_group_local_102_loop;
+using device_flatten_block_threads_zxy_loop =
+    RAJA::sycl_flatten_group_local_021_loop;
+using device_flatten_block_threads_zyx_loop =
+    RAJA::sycl_flatten_group_local_012_loop;
 
 #endif  // active backend
 
