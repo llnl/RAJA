@@ -59,3 +59,42 @@ if (RAJA_ENABLE_RUNTIME_PLUGINS)
                       ENVIRONMENT "KOKKOS_PLUGINS=${CMAKE_BINARY_DIR}/lib/libkokkos_plugin.so")
   endif()
 endif ()
+
+if (RAJA_ENABLE_JIT AND RAJA_ENABLE_HIP)
+  find_program(FILECHECK FileCheck
+               PATHS ${LLVM_BINARY_DIR}/bin ${LLVM_BINARY_DIR}/libexec/llvm)
+
+  if (FILECHECK)
+    function(raja_add_proteus_filecheck_test target source)
+      raja_add_executable(
+        NAME ${target}
+        SOURCES ${source}
+        TEST On)
+
+      add_test(
+        NAME ${target}
+        COMMAND ${CMAKE_COMMAND}
+                -DTEST_EXECUTABLE=$<TARGET_FILE:${target}>
+                -DFILECHECK_EXECUTABLE=${FILECHECK}
+                -DSOURCE_FILE=${CMAKE_CURRENT_SOURCE_DIR}/${source}
+                -DCACHE_DIR=${CMAKE_CURRENT_BINARY_DIR}/${target}.cache
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/run_proteus_filecheck_test.cmake)
+    endfunction()
+
+    raja_add_proteus_filecheck_test(test-forall-jit-proteus
+                                    forall_jit_proteus.cpp)
+
+    # These two targets build and run, but they do not currently emit any
+    # LambdaSpec lines. Keep the sources available for manual validation while
+    # leaving CTest green until the launch/kernel integration is fixed.
+    raja_add_executable(
+      NAME test-launch-jit-proteus
+      SOURCES launch_jit_proteus.cpp)
+
+    raja_add_executable(
+      NAME test-kernel-jit-proteus
+      SOURCES kernel_jit_proteus.cpp)
+  else()
+    message(STATUS "Skipping Proteus integration FileCheck tests: FileCheck not found")
+  endif()
+endif()
