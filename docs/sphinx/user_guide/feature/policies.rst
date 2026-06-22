@@ -737,9 +737,9 @@ To simplify transitions between GPU backends (CUDA/HIP/SYCL) and reduce
 downstream preprocessor conditionals, RAJA provides a small set of
 ``device_*`` policy aliases that resolve to the *active* GPU backend.
 
-In particular, the following aliases are available when compiling for a GPU
-device backend (i.e., when one of ``RAJA_CUDA_ACTIVE``, ``RAJA_HIP_ACTIVE``,
-or ``RAJA_SYCL_ACTIVE`` is defined):
+In particular, the following aliases are available when building with a GPU
+device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
+``RAJA_ENABLE_SYCL`` is enabled):
 
   * ``device_exec<BLOCK_SIZE>`` (maps to ``cuda_exec`` / ``hip_exec`` /
     ``sycl_exec``)
@@ -753,7 +753,8 @@ or ``RAJA_SYCL_ACTIVE`` is defined):
 
 For SYCL, these aliases use CUDA-like (x,y,z) naming with the standard RAJA
 mapping described above: x corresponds to SYCL dimension 2, y to dimension 1,
-and z to dimension 0.
+and z to dimension 0. These build options enable the corresponding internal
+``RAJA_*_ACTIVE`` compile-time macros used by the implementation.
 
 See also the example ``examples/device-policy-aliases.cpp``.
 
