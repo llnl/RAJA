@@ -20,11 +20,7 @@
 #ifndef RAJA_SPAN_HPP
 #define RAJA_SPAN_HPP
 
-#include <concepts>
-#include <type_traits>
-
 #include "RAJA/index/IndexValue.hpp"
-#include "RAJA/util/concepts.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 #include "camp/concepts.hpp"
@@ -61,14 +57,7 @@ namespace RAJA
  *   compile time extents
  *
  */
-
-namespace concepts
-{
-template<typename T>
-concept SpanIndex = concepts::Integral<T> || concepts::IndexValued<T>;
-};
-
-template<concepts::RandomAccessIterator IterType, concepts::SpanIndex IndexType>
+template<concepts::RandomAccessIterator IterType, concepts::Index IndexType>
 struct Span
 {
   using element_type    = typename std::iterator_traits<IterType>::value_type;

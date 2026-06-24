@@ -309,7 +309,7 @@ camp::list<
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@KernelNestesLoop@TESTTYPE@@DIM@Types =
-  Test< camp::cartesian_product<SignedIdxTypeList,
+  Test< camp::cartesian_product<RawSignedIdxTypeList,
                                 @BACKEND@ResourceList,
                                 @BACKEND@Kernel@DIM@ExecPols>>::Types;
 

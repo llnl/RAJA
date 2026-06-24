@@ -245,7 +245,7 @@ using HipKernelLocForallPols =
 // Cartesian product of types used in parameterized tests
 //
 using @LOC_BACKEND@KernelLocTypes =
-  Test< camp::cartesian_product<IdxTypeList,
+  Test< camp::cartesian_product<RawIdxTypeList,
                                 ReduceDataTypeList,
                                 @LOC_BACKEND@ResourceList,
                                 @LOC_BACKEND@KernelLocForallPols,

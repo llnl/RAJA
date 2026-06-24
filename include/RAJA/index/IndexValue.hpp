@@ -24,6 +24,7 @@
 
 #include <string>
 
+#include "RAJA/util/concepts.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 
@@ -58,13 +59,17 @@ struct IndexValue : public IndexValueBase
   RAJA_INLINE IndexValue& operator=(IndexValue const&) = default;
   RAJA_INLINE IndexValue& operator=(IndexValue&&)      = default;
 
+  RAJA_INLINE IndexValue& operator=(const value_type& v)
+  {
+    value = v;
+    return *this;
+  }
+
   /*!
-   * \brief Explicit constructor.
+   * \brief Constructor.
    * \param v   Initial value
    */
-  RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit IndexValue(value_type v)
-      : value(v)
-  {}
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr IndexValue(value_type v) : value(v) {}
 
   //! Dereference provides cast-to-integer.
   RAJA_HOST_DEVICE RAJA_INLINE value_type& operator*() { return value; }
@@ -302,19 +307,100 @@ convertIndex_helper(typename FROM::IndexValueType const val)
 
 namespace type_traits
 {
-template<typename T>
-struct is_instance_of_index_value : std::is_base_of<RAJA::IndexValue<T>, T>
+template<typename T, typename U>
+struct is_instance_of_index_value : std::is_base_of<RAJA::IndexValue<T, U>, T>
 {};
 
-template<typename T>
+template<typename T, typename U>
 constexpr bool is_instance_of_index_value_v =
-    is_instance_of_index_value<T>::value;
+    is_instance_of_index_value<T, U>::value;
 }  // namespace type_traits
 
 namespace concepts
 {
 template<typename T>
-concept IndexValued = type_traits::is_instance_of_index_value_v<T>;
+concept IndexValued =
+    type_traits::is_instance_of_index_value_v<T, typename T::value_type>;
+
+template<typename T>
+concept Index = concepts::Integral<T> || concepts::IndexValued<T>;
+}  // namespace concepts
+
+template<concepts::IndexValued TYPE>
+RAJA_HOST_DEVICE RAJA_INLINE TYPE operator+(typename TYPE::value_type lhs,
+                                            TYPE rhs)
+{
+  return TYPE(lhs + *rhs);
+}
+
+template<concepts::IndexValued TYPE>
+RAJA_HOST_DEVICE RAJA_INLINE TYPE operator-(typename TYPE::value_type lhs,
+                                            TYPE rhs)
+{
+  return TYPE(lhs - *rhs);
+}
+
+template<concepts::IndexValued TYPE>
+RAJA_HOST_DEVICE RAJA_INLINE TYPE operator*(typename TYPE::value_type lhs,
+                                            TYPE rhs)
+{
+  return TYPE(lhs * *rhs);
+}
+
+template<concepts::IndexValued TYPE>
+RAJA_HOST_DEVICE RAJA_INLINE TYPE operator/(typename TYPE::value_type lhs,
+                                            TYPE rhs)
+{
+  return TYPE(lhs / *rhs);
+}
+
+template<concepts::IndexValued TYPE>
+RAJA_HOST_DEVICE RAJA_INLINE TYPE operator%(typename TYPE::value_type lhs,
+                                            TYPE rhs)
+{
+  return TYPE(lhs % *rhs);
+}
+
+template<concepts::IndexValued TYPE>
+RAJA_HOST_DEVICE RAJA_INLINE bool operator<(typename TYPE::value_type lhs,
+                                            TYPE rhs)
+{
+  return lhs < *rhs;
+}
+
+template<concepts::IndexValued TYPE>
+RAJA_HOST_DEVICE RAJA_INLINE bool operator<=(typename TYPE::value_type lhs,
+                                             TYPE rhs)
+{
+  return lhs <= *rhs;
+}
+
+template<concepts::IndexValued TYPE>
+RAJA_HOST_DEVICE RAJA_INLINE bool operator>(typename TYPE::value_type lhs,
+                                            TYPE rhs)
+{
+  return lhs > *rhs;
+}
+
+template<concepts::IndexValued TYPE>
+RAJA_HOST_DEVICE RAJA_INLINE bool operator>=(typename TYPE::value_type lhs,
+                                             TYPE rhs)
+{
+  return lhs >= *rhs;
+}
+
+template<concepts::IndexValued TYPE>
+RAJA_HOST_DEVICE RAJA_INLINE bool operator==(typename TYPE::value_type lhs,
+                                             TYPE rhs)
+{
+  return lhs == *rhs;
+}
+
+template<concepts::IndexValued TYPE>
+RAJA_HOST_DEVICE RAJA_INLINE bool operator!=(typename TYPE::value_type lhs,
+                                             TYPE rhs)
+{
+  return lhs != *rhs;
 }
 
 /*!
@@ -402,12 +488,15 @@ using make_signed_t =
 #define RAJA_INDEX_VALUE(TYPE, NAME)                                           \
   class TYPE : public ::RAJA::IndexValue<TYPE>                                 \
   {                                                                            \
-    using parent = ::RAJA::IndexValue<TYPE>;                                   \
-                                                                               \
   public:                                                                      \
+    using parent = ::RAJA::IndexValue<TYPE>;                                   \
+    using parent::operator=;                                                   \
+    using parent::operator*;                                                   \
+    using parent::operator++;                                                  \
+    using parent::operator--;                                                  \
     using IndexValueType = TYPE;                                               \
     RAJA_HOST_DEVICE RAJA_INLINE TYPE() : parent::IndexValue() {}              \
-    RAJA_HOST_DEVICE RAJA_INLINE explicit TYPE(::RAJA::Index_type v)           \
+    RAJA_HOST_DEVICE RAJA_INLINE TYPE(::RAJA::Index_type v)                    \
         : parent::IndexValue(v)                                                \
     {}                                                                         \
     static inline std::string getName() { return NAME; }                       \
@@ -423,10 +512,15 @@ using make_signed_t =
   class TYPE : public ::RAJA::IndexValue<TYPE, IDXT>                           \
   {                                                                            \
   public:                                                                      \
+    using parent = RAJA::IndexValue<TYPE, IDXT>;                               \
+    using parent::operator=;                                                   \
+    using parent::operator*;                                                   \
+    using parent::operator++;                                                  \
+    using parent::operator--;                                                  \
     RAJA_HOST_DEVICE RAJA_INLINE TYPE()                                        \
         : RAJA::IndexValue<TYPE, IDXT>::IndexValue()                           \
     {}                                                                         \
-    RAJA_HOST_DEVICE RAJA_INLINE explicit TYPE(IDXT v)                         \
+    RAJA_HOST_DEVICE RAJA_INLINE TYPE(IDXT v)                                  \
         : RAJA::IndexValue<TYPE, IDXT>::IndexValue(v)                          \
     {}                                                                         \
     static inline std::string getName() { return NAME; }                       \

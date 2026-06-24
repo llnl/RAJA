@@ -36,9 +36,9 @@ CallKernel(IDX_TYPE& trip_count,
       [=] RAJA_HOST_DEVICE(IDX_TYPE i, IDX_TYPE ii,
                            RAJA::expt::ValOp<IDX_TYPE, RAJA::operators::plus>& _trip_count,
                            RAJA::expt::ValOp<IDX_TYPE, RAJA::operators::plus>& _tile_count) {
-        _trip_count += 1;
+        _trip_count += IDX_TYPE(1);
         if ( i % tsize == t && ii == t ) {
-          _tile_count += 1;
+          _tile_count += IDX_TYPE(1);
         }
       }
     );
@@ -60,9 +60,9 @@ CallKernel(IDX_TYPE& _trip_count,
     RAJA::make_tuple( static_cast<IDX_TYPE>(0) ),
 
     [=] RAJA_HOST_DEVICE(IDX_TYPE i, IDX_TYPE ii) {
-      trip_count += 1;
+      trip_count += IDX_TYPE(1);
       if ( i % tsize == t && ii == t ) {
-        tile_count += 1;
+        tile_count += IDX_TYPE(1);
       }
     }
   );
@@ -75,8 +75,8 @@ void KernelTileForICountDirectTestImpl(IDX_TYPE N, IDX_TYPE tsize)
 {
   IDX_TYPE trip_count(0);
 
-  for (IDX_TYPE t = 0; t < tsize; ++t) {
-    IDX_TYPE tile_count = 0;
+  for (IDX_TYPE t(0); t < tsize; ++t) {
+    IDX_TYPE tile_count(0);
     CallKernel<IDX_TYPE, EXEC_POLICY, REDUCE_POLICY, USE_REDUCER_PARAM>(trip_count, tile_count, t, N, tsize);
 
     IDX_TYPE tile_expect = N / tsize;
@@ -105,7 +105,7 @@ TYPED_TEST_P(KernelTileForICountDirectTest, ForICountTileKernel)
   using REDUCE_POLICY = typename camp::at<TypeParam, camp::num<2>>::type;
   using USE_REDUCER_PARAM = typename camp::at<TypeParam, camp::num<3>>::type;
 
-  IDX_TYPE tsize = camp::at_v<TypeParam, 4>::value;
+  IDX_TYPE tsize(camp::at_v<TypeParam, 4>::value);
 
   KernelTileForICountDirectTestImpl<IDX_TYPE, EXEC_POLICY, REDUCE_POLICY, USE_REDUCER_PARAM>(
     IDX_TYPE(57), tsize);

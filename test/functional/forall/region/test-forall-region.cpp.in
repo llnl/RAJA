@@ -47,7 +47,7 @@ using OpenMPForallRegionExecPols =
 // Cartesian product of types used in parameterized tests
 //
 using @REGION_BACKEND@ForallRegionTypes =
-  Test< camp::cartesian_product<IdxTypeList,
+  Test< camp::cartesian_product<RawIdxTypeList,
                                 @REGION_BACKEND@ResourceList,
                                 @REGION_BACKEND@RegionPols,
                                 @REGION_BACKEND@ForallRegionExecPols>>::Types;
@@ -58,6 +58,5 @@ using @REGION_BACKEND@ForallRegionTypes =
 INSTANTIATE_TYPED_TEST_SUITE_P(@REGION_BACKEND@,
                                ForallRegionTest,
                                @REGION_BACKEND@ForallRegionTypes);
-
 
 

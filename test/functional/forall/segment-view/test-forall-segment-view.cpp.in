@@ -30,7 +30,7 @@
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@ForallSegmentViewTypes =
-  Test< camp::cartesian_product<IdxTypeList,
+  Test< camp::cartesian_product<RawIdxTypeList,
                                 @BACKEND@ResourceList,
                                 @BACKEND@ForallExecPols>>::Types;
 

@@ -27,7 +27,7 @@
 
 // Sequential execution policy types
 using SequentialKernelExecPols = camp::list<
-    
+
   RAJA::KernelPolicy<
     RAJA::statement::For<0, RAJA::seq_exec,
       RAJA::statement::For<1, RAJA::seq_exec,
@@ -42,7 +42,7 @@ using SequentialKernelExecPols = camp::list<
 
 #if defined(RAJA_ENABLE_OPENMP)
 using OpenMPKernelExecPols = camp::list<
-    
+
   RAJA::KernelPolicy<
     RAJA::statement::For<0, RAJA::omp_parallel_for_exec,
       RAJA::statement::For<1, RAJA::seq_exec,
@@ -174,7 +174,7 @@ using SyclKernelExecPols = camp::list<
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@KernelNestedLoopsSegmentTypes =
-  Test< camp::cartesian_product<IdxTypeList,
+  Test< camp::cartesian_product<RawIdxTypeList,
                                 @BACKEND@ResourceList,
                                 @BACKEND@KernelExecPols>>::Types;
 

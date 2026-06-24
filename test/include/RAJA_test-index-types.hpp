@@ -27,44 +27,47 @@
 //
 RAJA_INDEX_VALUE(StrongIndexType, "StrongIndexType");
 RAJA_INDEX_VALUE_T(StrongInt, int, "StrongIntType");
-RAJA_INDEX_VALUE_T(StrongULL, unsigned long long , "StrongULLType");
+RAJA_INDEX_VALUE_T(StrongUL, unsigned long , "StrongULType");
 
 //
-// Standard index types list
+// Raw index types list
 //
-// TODO(bowen): do we want to support StrongULL here?
-using IdxTypeList = camp::list<RAJA::Index_type,
-                               int,
-                               //StrongULL,
+// Use this list for tests that require builtin integer interoperability:
+// STL sizes/subscripts, byte counts, pointer indexing, or APIs that take
+// stripped integral storage rather than strongly typed indices.
+using RawIdxTypeList = camp::list<RAJA::Index_type,
+                                  int,
 #if defined(RAJA_TEST_EXHAUSTIVE)
-                               unsigned int,
+                                  unsigned int,
 // short int types will break a bunch of tests due to assumptions made in
 // the test implementations.
-//                             short,
-//                             unsigned short,
-                               long int,
-                               unsigned long,
-                               long long,
+//                                short,
+//                                unsigned short,
+                                  long int,
+                                  unsigned long,
+                                  long long,
 #endif
-                               unsigned long long>;
+                                  unsigned long long>;
 
 //
-// Signed index types list
+// Raw signed index types list
 //
-// TODO(bowen): do we want to support StrongInt here?
-using SignedIdxTypeList = camp::list<RAJA::Index_type,
-                                     //StrongInt,
-                                     int,
-                                     long long>;
+// Use this list for tests that require signed builtin integer semantics.
+using RawSignedIdxTypeList = camp::list<RAJA::Index_type,
+                                        int,
+                                        long long>;
 
 //
-// Index types w/ Strong types list
+// Strong-compatible index types list
 //
+// Use this list for tests that are expected to work with strongly typed
+// indices and avoid raw integer interoperability assumptions.
 using StrongIdxTypeList = camp::list<RAJA::Index_type,
                                      int,
                                      StrongIndexType,
+                                     StrongInt,
+                                     StrongUL,
 #if defined(RAJA_TEST_EXHAUSTIVE)
-                                     //StrongInt,
                                      unsigned int,
 // short int types will break a bunch of tests due to assumptions made in
 // the test implementations.
@@ -74,7 +77,6 @@ using StrongIdxTypeList = camp::list<RAJA::Index_type,
                                      unsigned long,
                                      long long,
 #endif
-                                     //StrongULL,
                                      unsigned long long>;
 
 #endif // __RAJA_test_index_types_HPP__
