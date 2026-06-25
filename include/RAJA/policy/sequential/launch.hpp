@@ -89,7 +89,7 @@ struct LaunchExecute<RAJA::seq_launch_t>
 };
 
 template<>
-struct LeadExecute<seq_exec>
+struct MaskExecute<seq_exec>
 {
   template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_HOST_DEVICE void exec(

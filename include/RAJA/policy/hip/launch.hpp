@@ -272,7 +272,7 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
 template<typename IterationMapping,
          kernel_sync_requirement sync,
          typename... IndexMappers>
-struct LeadExecute<
+struct MaskExecute<
     RAJA::policy::hip::hip_indexer<IterationMapping, sync, IndexMappers...>>
 {
   template<typename LaunchContextPolicy, typename BODY>
@@ -292,7 +292,7 @@ struct LeadExecute<
 template<typename IterationMapping,
          kernel_sync_requirement sync,
          typename... IndexMappers>
-struct LeadExecute<RAJA::policy::hip::hip_flatten_indexer<IterationMapping,
+struct MaskExecute<RAJA::policy::hip::hip_flatten_indexer<IterationMapping,
                                                           sync,
                                                           IndexMappers...>>
 {

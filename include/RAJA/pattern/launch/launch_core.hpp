@@ -32,7 +32,7 @@ namespace RAJA
 {
 
 template<typename POLICY>
-struct LeadExecute;
+struct MaskExecute;
 
 }  // namespace RAJA
 
@@ -490,11 +490,11 @@ using loop_policy = typename POLICY_LIST::host_policy_t;
 
 template<typename POLICY_LIST>
 #if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
-using lead_policy = typename POLICY_LIST::device_policy_t;
+using mask_policy = typename POLICY_LIST::device_policy_t;
 #elif defined(RAJA_ENABLE_OPENMP)
-using lead_policy = RAJA::omp_thread;
+using mask_policy = RAJA::omp_thread;
 #else
-using lead_policy = typename POLICY_LIST::host_policy_t;
+using mask_policy = typename POLICY_LIST::host_policy_t;
 #endif
 
 template<typename POLICY, typename SEGMENT>
@@ -531,9 +531,9 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
 
 RAJA_SUPPRESS_HD_WARN
 template<typename POLICY_LIST, typename CONTEXT, typename BODY>
-RAJA_HOST_DEVICE RAJA_INLINE void lead(CONTEXT const& ctx, BODY const& body)
+RAJA_HOST_DEVICE RAJA_INLINE void mask(CONTEXT const& ctx, BODY const& body)
 {
-  LeadExecute<lead_policy<POLICY_LIST>>::exec(ctx, body);
+  MaskExecute<mask_policy<POLICY_LIST>>::exec(ctx, body);
 }
 
 namespace expt
@@ -603,9 +603,9 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
 
 RAJA_SUPPRESS_HD_WARN
 template<typename POLICY_LIST, typename CONTEXT, typename BODY>
-RAJA_HOST_DEVICE RAJA_INLINE void lead(CONTEXT const& ctx, BODY const& body)
+RAJA_HOST_DEVICE RAJA_INLINE void mask(CONTEXT const& ctx, BODY const& body)
 {
-  LeadExecute<lead_policy<POLICY_LIST>>::exec(ctx, body);
+  MaskExecute<mask_policy<POLICY_LIST>>::exec(ctx, body);
 }
 
 }  // namespace expt
