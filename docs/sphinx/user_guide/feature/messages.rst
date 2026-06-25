@@ -27,8 +27,8 @@ All messages are handled via the ``message_manager``, which is responsible for
 storing callbacks and a list of messages. For the purposes of ``RAJA::messages``, 
 a single message can be thought of:
 
-* ``msg_header``: helper data internal to ``RAJA``
-* ``msg_args``: a tuple of arguments needed to pass to the function  
+* ``MsgHeader``: helper data internal to ``RAJA``
+* ``MsgArgs``: a tuple of arguments needed to pass to the function  
 
 To create the ``message_manager``: 
 
@@ -77,12 +77,12 @@ An example for unsubscribing a callback:
 
 Publishing messages
 ^^^^^^^^^^^^^^^^^^^
-Messages can be published/stored in a ``msg_queue``. These are non-owning adapters to the ``msg_bus``, which is 
-responsible for storing all messages. The ``msg_queue`` will contain additional type information as well as 
-the ``msg_queue_id``. A queue is created once a callback is subscribed to a new message type. Since ``msg_queue`` is 
+Messages can be published/stored in a ``MessageQueue``. These are non-owning adapters to the ``MessageBus``, which is 
+responsible for storing all messages. The ``MessageQueue`` will contain additional type information as well as 
+the ``msg_queue_id``. A queue is created once a callback is subscribed to a new message type. Since ``MessageQueue`` is 
 non-owning, these can be copied. 
 
-Here is how the ``msg_queue`` can be used to publish messages:
+Here is how the ``MessageQueue`` can be used to publish messages:
 
 .. literalinclude:: ../../../../examples/messages-forall.cpp
     :start-after: _raja_msg_k2_start
@@ -172,13 +172,24 @@ Application considerations
 
 There are several things to consider when using ``RAJA::messages`` in an application.
 
-* The ``msg_queue`` with the correct argument types is created when a callback subscribes. Certain
+* The ``MessageQueue`` with the correct argument types is created when a callback subscribes. Certain
   patterns will cause this storage to slowly grow overtime. For example, creating a new
-  ``msg_queue`` every function call within a loop. Therefore, applications that use this pattern
+  ``MessageQueue`` every function call within a loop. Therefore, applications that use this pattern
   will want to unsubscribe at some point to avoid running out of memory. 
-* Upon creation of the ``message_manager``, the ``message_bus`` will be allocated with some size. This
+* Upon creation of the ``MessageManager``, the ``MessageBus`` will be allocated with some size. This
   can be resized; however, resizing will force a synchronize and will loss any messages currently stored.
-  Also, the allocation is done through the resource, which can be less performant depending on the resource. 
-* Since the ``msg_queue`` is a fixed size, there is a chance of lossing messages. The ``try_post_message`` function
+  Also, by default, the allocation is done through the resource, which can be less performant depending on the resource. 
+* Since the ``MessageQueue`` is a fixed size, there is a chance of lossing messages. The ``try_post_message`` function
   will return a ``boolean``. This will be ``true`` if the message is successfully added to the queue; otherwise, this
   is ``false``. 
+
+Custom Allocators
+^^^^^^^^^^^^^^^^^
+Allocation of the message bus is done through the ``RAJA::ResourceAllocator``
+by default. This allocator uses the resource provided to allocate/deallocate,
+which can be slow. During the creation of the ``MessageManager``, a custom
+allocator can be provided. This allocator should follow the C++ standard
+requirements for an allocator.
+
+.. note:: When using the move assignment operator, the ``MessageManager``
+          assumes that there are no currently pending messages.
