@@ -339,6 +339,64 @@ using sycl_flatten_group_local_201_loop =
 using sycl_flatten_group_local_210_loop =
     sycl_flatten_group_local_loop<2, 1, 0>;
 
+template<int DIM0, int DIM1>
+struct MaskExecute<sycl_flatten_group_local_direct<DIM0, DIM1>>
+{
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           BODY const& body)
+  {
+    if (ctx.itm->get_local_id(DIM0) == 0 && ctx.itm->get_local_id(DIM1) == 0)
+    {
+      body();
+    }
+  }
+};
+
+template<int DIM0, int DIM1>
+struct MaskExecute<sycl_flatten_group_local_loop<DIM0, DIM1>>
+{
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           BODY const& body)
+  {
+    if (ctx.itm->get_local_id(DIM0) == 0 && ctx.itm->get_local_id(DIM1) == 0)
+    {
+      body();
+    }
+  }
+};
+
+template<int DIM0, int DIM1, int DIM2>
+struct MaskExecute<sycl_flatten_group_local_direct<DIM0, DIM1, DIM2>>
+{
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           BODY const& body)
+  {
+    if (ctx.itm->get_local_id(DIM0) == 0 && ctx.itm->get_local_id(DIM1) == 0 &&
+        ctx.itm->get_local_id(DIM2) == 0)
+    {
+      body();
+    }
+  }
+};
+
+template<int DIM0, int DIM1, int DIM2>
+struct MaskExecute<sycl_flatten_group_local_loop<DIM0, DIM1, DIM2>>
+{
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           BODY const& body)
+  {
+    if (ctx.itm->get_local_id(DIM0) == 0 && ctx.itm->get_local_id(DIM1) == 0 &&
+        ctx.itm->get_local_id(DIM2) == 0)
+    {
+      body();
+    }
+  }
+};
+
 template<typename SEGMENT, int DIM0, int DIM1>
 struct LoopExecute<sycl_flatten_group_local_direct<DIM0, DIM1>, SEGMENT>
 {
@@ -453,6 +511,20 @@ struct LoopExecute<sycl_local_012_loop<DIM>, SEGMENT>
   }
 };
 
+template<int DIM>
+struct MaskExecute<sycl_local_012_loop<DIM>>
+{
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           BODY const& body)
+  {
+    if (ctx.itm->get_local_id(DIM) == 0)
+    {
+      body();
+    }
+  }
+};
+
 /*
   SYCL thread direct mappings
 */
@@ -470,6 +542,20 @@ struct LoopExecute<sycl_local_012_direct<DIM>, SEGMENT>
     {
       const int tx = ctx.itm->get_local_id(DIM);
       if (tx < len) body(*(segment.begin() + tx));
+    }
+  }
+};
+
+template<int DIM>
+struct MaskExecute<sycl_local_012_direct<DIM>>
+{
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           BODY const& body)
+  {
+    if (ctx.itm->get_local_id(DIM) == 0)
+    {
+      body();
     }
   }
 };
