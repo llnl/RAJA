@@ -530,17 +530,6 @@ using RangeSegment = TypedRangeSegment<Index_type>;
 //! Alias for TypedRangeStrideSegment<Index_type>
 using RangeStrideSegment = TypedRangeStrideSegment<Index_type>;
 
-/*!
- * \brief Function to make a single-iteration RangeSegment over index 0
- *
- * Useful in RAJA::launch kernels when exactly one logical thread per team
- * should perform setup work.
- */
-RAJA_HOST_DEVICE inline RAJA::RangeSegment once() noexcept
-{
-  return RAJA::RangeSegment {0, 1};
-}
-
 namespace detail
 {
 
