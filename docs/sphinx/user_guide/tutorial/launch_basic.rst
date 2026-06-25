@@ -99,7 +99,7 @@ equivalent of the kernel body using the policy shown above is:
    :end-before: // _device_loop_end
    :language: C++
 
-When only one logical thread should execute a piece of work inside a launch
+When only one logical thread should execute a piece of work inside a RAJA::launch
 loop, use ``RAJA::mask<threads_x>(ctx, ...)``. This keeps the intent explicit
 for per-team setup before a synchronization point:
 
