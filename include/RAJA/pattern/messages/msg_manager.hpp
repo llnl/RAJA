@@ -189,8 +189,38 @@ public:
   MessageBus& operator=(const MessageBus&) = delete;
 
   // Move ctor/operator
-  MessageBus(MessageBus&&)            = default;
-  MessageBus& operator=(MessageBus&&) = default;
+  MessageBus(MessageBus&&) = default;
+
+  MessageBus& operator=(MessageBus&& other)
+  {
+    using alloc_traits = std::allocator_traits<allocator_type>;
+
+    if constexpr (alloc_traits::propagate_on_container_move_assignment)
+    {
+      m_bus = std::move(other.m_bus);
+    }
+    else
+    {
+      if (get_allocator() == other.get_allocator())
+      {
+        m_bus->m_begin    = other.m_bus->m_begin;
+        m_bus->m_end      = other.m_bus->m_end;
+        m_bus->m_capacity = other.m_bus->m_capacity;
+        m_bus->m_data     = other.m_bus->m_data;
+
+        other.m_bus->m_begin    = 0;
+        other.m_bus->m_end      = 0;
+        other.m_bus->m_capacity = 0;
+        other.m_bus->m_data     = nullptr;
+      }
+      else
+      {
+        // This assumes that the bus is empty (i.e., no messages stored)
+        reserve(other.m_bus->m_capacity);
+        other.reset();
+      }
+    }
+  }
 
   void reserve(size_type bus_sz)
   {
