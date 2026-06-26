@@ -1,0 +1,206 @@
+diff --git a/include/RAJA/config.hpp.in b/include/RAJA/config.hpp.in
+index 3ec07c5..4a2b6c1 100644
+--- a/include/RAJA/config.hpp.in
++++ b/include/RAJA/config.hpp.in
+@@ -291,7 +291,7 @@ namespace RAJA {
+ #define RAJA_CUDA_DIM_T dim3
+ #endif
+ 
+-#if ( (__CUDACC_VER_MAJOR__ > 11) || (__CUDACC_VER_MAJOR__ == 11 && __CUDACC_VER_MINOR__ >= 7) ) && !defined(RAJA_ENABLE_CLANG_CUDA)
++#if ( (__CUDACC_VER_MAJOR__ > 11) || (__CUDACC_VER_MAJOR__ == 11 && __CUDACC_VER_MINOR__ >= 7) ) && !defined(RAJA_ENABLE_CLANG_CUDA) && !defined(_MSC_VER)
+ // only supported by nvcc on sm_70 and above
+ #define RAJA_CUDA_GRID_CONSTANT __grid_constant__
+ #else
+diff --git a/cmake/SetupCompilers.cmake b/cmake/SetupCompilers.cmake
+index 20c1d8f..de36e39 100644
+--- a/cmake/SetupCompilers.cmake
++++ b/cmake/SetupCompilers.cmake
+@@ -27,7 +27,7 @@ endif()
+ 
+ set(RAJA_COMPILER "RAJA_COMPILER_${CMAKE_CXX_COMPILER_ID}")
+ 
+-if ( MSVC )
++if ( MSVC AND NOT DEFINED VCPKG_TARGET_TRIPLET )
+   if (NOT BUILD_SHARED_LIBS)
+     foreach(flag_var
+         CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+diff --git a/include/RAJA/policy/cuda/forall.hpp b/include/RAJA/policy/cuda/forall.hpp
+index c1632f7..b525a00 100644
+--- a/include/RAJA/policy/cuda/forall.hpp
++++ b/include/RAJA/policy/cuda/forall.hpp
+@@ -501,6 +501,114 @@ __global__ void forallp_cuda_kernel(
+   RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
+ }
+ 
++#if defined(_MSC_VER)
++template<typename EXEC_POL,
++         size_t BlocksPerSM,
++         typename Iterator,
++         typename LOOP_BODY,
++         typename IndexType,
++         typename ForallParam,
++         typename IterationGetter = typename EXEC_POL::IterationGetter>
++__launch_bounds__(IterationGetter::block_size, BlocksPerSM) __global__
++    void forallp_cuda_kernel_direct_fixed(
++        const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
++        const RAJA_CUDA_GRID_CONSTANT Iterator idx,
++        const RAJA_CUDA_GRID_CONSTANT IndexType length,
++        ForallParam f_params)
++{
++  using RAJA::internal::thread_privatize;
++  auto privatizer = thread_privatize(loop_body);
++  auto& body      = privatizer.get_priv();
++  auto ii         = IterationGetter::template index<IndexType>();
++
++  if (ii < length)
++  {
++    RAJA::expt::invoke_body(f_params, body, idx[ii]);
++  }
++
++  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
++}
++
++template<typename EXEC_POL,
++         size_t BlocksPerSM,
++         typename Iterator,
++         typename LOOP_BODY,
++         typename IndexType,
++         typename ForallParam,
++         typename IterationGetter = typename EXEC_POL::IterationGetter>
++__global__ void forallp_cuda_kernel_direct_dynamic(
++    const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
++    const RAJA_CUDA_GRID_CONSTANT Iterator idx,
++    const RAJA_CUDA_GRID_CONSTANT IndexType length,
++    ForallParam f_params)
++{
++  using RAJA::internal::thread_privatize;
++  auto privatizer = thread_privatize(loop_body);
++  auto& body      = privatizer.get_priv();
++  auto ii         = IterationGetter::template index<IndexType>();
++
++  if (ii < length)
++  {
++    RAJA::expt::invoke_body(f_params, body, idx[ii]);
++  }
++
++  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
++}
++
++template<typename EXEC_POL,
++         size_t BlocksPerSM,
++         typename Iterator,
++         typename LOOP_BODY,
++         typename IndexType,
++         typename ForallParam,
++         typename IterationGetter = typename EXEC_POL::IterationGetter>
++__launch_bounds__(IterationGetter::block_size, BlocksPerSM) __global__
++    void forallp_cuda_kernel_strided_fixed(
++        const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
++        const RAJA_CUDA_GRID_CONSTANT Iterator idx,
++        const RAJA_CUDA_GRID_CONSTANT IndexType length,
++        ForallParam f_params)
++{
++  using RAJA::internal::thread_privatize;
++  auto privatizer = thread_privatize(loop_body);
++  auto& body      = privatizer.get_priv();
++
++  for (auto ii = IterationGetter::template index<IndexType>(); ii < length;
++       ii += IterationGetter::template size<IndexType>())
++  {
++    RAJA::expt::invoke_body(f_params, body, idx[ii]);
++  }
++
++  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
++}
++
++template<typename EXEC_POL,
++         size_t BlocksPerSM,
++         typename Iterator,
++         typename LOOP_BODY,
++         typename IndexType,
++         typename ForallParam,
++         typename IterationGetter = typename EXEC_POL::IterationGetter>
++__global__ void forallp_cuda_kernel_strided_dynamic(
++    const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
++    const RAJA_CUDA_GRID_CONSTANT Iterator idx,
++    const RAJA_CUDA_GRID_CONSTANT IndexType length,
++    ForallParam f_params)
++{
++  using RAJA::internal::thread_privatize;
++  auto privatizer = thread_privatize(loop_body);
++  auto& body      = privatizer.get_priv();
++
++  for (auto ii = IterationGetter::template index<IndexType>(); ii < length;
++       ii += IterationGetter::template size<IndexType>())
++  {
++    RAJA::expt::invoke_body(f_params, body, idx[ii]);
++  }
++
++  RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
++}
++#endif
++
+ }  // namespace impl
+ 
+ //
+@@ -555,9 +663,60 @@ forall_impl(resources::Cuda cuda_res,
+   if (len > 0)
+   {
+ 
++#if defined(_MSC_VER)
++    const void* func = nullptr;
++    if constexpr (std::is_base_of<iteration_mapping::DirectBase,
++                                  IterationMapping>::value &&
++                  (IterationGetter::block_size > 0))
++    {
++      func = reinterpret_cast<const void*>(
++          &impl::forallp_cuda_kernel_direct_fixed<EXEC_POL,
++                                                  BlocksPerSM,
++                                                  Iterator,
++                                                  LOOP_BODY,
++                                                  IndexType,
++                                                  camp::decay<ForallParam>>);
++    }
++    else if constexpr (std::is_base_of<iteration_mapping::DirectBase,
++                                       IterationMapping>::value)
++    {
++      func = reinterpret_cast<const void*>(
++          &impl::forallp_cuda_kernel_direct_dynamic<EXEC_POL,
++                                                    BlocksPerSM,
++                                                    Iterator,
++                                                    LOOP_BODY,
++                                                    IndexType,
++                                                    camp::decay<ForallParam>>);
++    }
++    else if constexpr (std::is_base_of<iteration_mapping::StridedLoopBase,
++                                       IterationMapping>::value &&
++                       std::is_base_of<iteration_mapping::UnsizedLoopBase,
++                                       IterationMapping>::value &&
++                       (IterationGetter::block_size > 0))
++    {
++      func = reinterpret_cast<const void*>(
++          &impl::forallp_cuda_kernel_strided_fixed<EXEC_POL,
++                                                   BlocksPerSM,
++                                                   Iterator,
++                                                   LOOP_BODY,
++                                                   IndexType,
++                                                   camp::decay<ForallParam>>);
++    }
++    else
++    {
++      func = reinterpret_cast<const void*>(
++          &impl::forallp_cuda_kernel_strided_dynamic<EXEC_POL,
++                                                     BlocksPerSM,
++                                                     Iterator,
++                                                     LOOP_BODY,
++                                                     IndexType,
++                                                     camp::decay<ForallParam>>);
++    }
++#else
+     auto func = reinterpret_cast<const void*>(
+         &impl::forallp_cuda_kernel<EXEC_POL, BlocksPerSM, Iterator, LOOP_BODY,
+                                    IndexType, camp::decay<ForallParam>>);
++#endif
+ 
+     //
+     // Setup shared memory buffers
