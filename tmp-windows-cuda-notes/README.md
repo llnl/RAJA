@@ -1,8 +1,18 @@
-\# RAJA Build with CUDA on Windows
+# RAJA Build with CUDA on Windows
 
-\## MS toolchain
+## Window CUDA CI build
 
-\### Install Visual Studio
+A Windows CUDA CI job was added.   Not working since the RAJA compile is not working.
+
+See ../.github/workflows/build.yml
+
+Should adjust CUDA and MSVCC versions when a working compile.
+
+Do we want to test multiple CUDA MSVCC versions?
+
+## MS toolchain
+
+### Install Visual Studio
 
 2026   https://visualstudio.microsoft.com/downloads/
 2022   https://aka.ms/vs/17/release/vs\_community.exe
@@ -12,21 +22,21 @@ Steve : tried both initially to see if one would show fewer errors.   The errors
 NOTE: MS seems to remove references to old VS community versions, found above 2022 link on reddit not sure how long links remain for the old versions.
 Paid subscribers can get access to the old VS versions.
 
-\### Install Cmake
+### Install Cmake
 
 https://cmake.org/download/
 
-\### Install Git
+### Install Git
 
 https://git-scm.com/install/windows
 
-\### Install CUDA
+### Install CUDA
 
 https://developer.nvidia.com/cuda-downloads
 
 Steve: Tried both CUDA 12 and CUDA 13.   Both had issues so went with CUDA 13 since we have added support for it.
 
-\##  Git stuff
+##  Git stuff
 
 All generic stuff.   Added a key for GitHub.
 
@@ -37,13 +47,13 @@ type %userprofile%\\.ssh\\id\_ed25519.pub | clip
 git clone --recursive git@github.com:llnl/RAJA.git
 ```
 
-\## Failed attempts to build.
+## Failed attempts to build.
 
 Steve : Tried combinations of MSVCC 2022 and 2026 with Cuda 12 and 13 to see if some combination might work....needed to start deeper patching.
 
-\## Steve patching
+## Steve patching
 
-\### BLT
+### BLT
 
 Apply the blt.patch to fix argument passing to MSVCC.   nvcc does not pass "/arg" to MSVCC by default which causes nvcc to interpret the arguments as directories/files.
 
@@ -57,13 +67,13 @@ git apply ..\\tmp-windows-cuda-notes\\blt.patch
 
 ```
 
-\### Camp 
+### Camp 
 
 MSVCC has issue parsing variadic macros.   Uses non-standard CPP parser.   Did come up with patch for CAMP but Nvidia CUDA 13 recommends using the "-Xcompiler=/Zc:preprocessor" flag which uses more standard conforming CPP.   Seemed more reasonable approach.
 
 Camp patch is in camp-variadic.patch.
 
-\## RAJA config/build
+## RAJA config/build
 
 CUDA 13 recommends the preprocessor flag and fix a CAMP issue.   MSVCC uses some non-standard conforming parsing if this is not done.
 
@@ -114,7 +124,7 @@ togram\_solution.obj "C:\\Users\\smith84\\projects\\raja\\clean\\RAJA\\exercises
 ts\\raja\\clean\\cudabuild\\exercises\\atomic-histogram\_solution.vcxproj]
 ```
 
-\## Kenny Weiss work on AXOM
+## Kenny Weiss work on AXOM
 
 Steve : Learned of Kenny branch of AXOM.    Kenny took Steve's CUDA 13 branch and made patches with extra fixes for Windows.   Steve was starting to parse through Kenny patching.   The template issue above might be have been similar to what is patched in "kweiss-windows-cuda-msvc.patch" pulled from Kenny's repository.   Current RAJA has modified the templates so this needs some work.
 
@@ -122,7 +132,7 @@ Steve goes on vacation :(
 
 Kenny/AI found some other changes, note Kenny was using VS 2022 and Cuda 13.
 
-\## Kenny Notes:
+## Kenny Notes:
 
 Hi Steve,
 

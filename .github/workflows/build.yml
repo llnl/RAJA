@@ -73,15 +73,15 @@ jobs:
         with:
           build-config: Debug
 
-#          - args:
-#              BUILD_SHARED_LIBS=On
-#              CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=On
   build_windows_cuda:
     strategy:
       matrix:
         shared:
           - args:
               BUILD_SHARED_LIBS=Off
+          - args:
+              BUILD_SHARED_LIBS=On
+              CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=On
 
   # Running on Visual Studio 2022 for better CUDA 12 compatibility
   # windows-2025 would be locked to Visual Studio 2026
