@@ -22,6 +22,7 @@
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 #include "camp/tuple.hpp"
+#include "camp/array.hpp"
 
 namespace RAJA
 {
@@ -161,7 +162,7 @@ template<typename... Slices>
 RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_slice_to_parent_index_map()
 {
   size_t sub_idx = 0;
-  std::array<size_t, sizeof...(Slices)> map {
+  camp::array<size_t, sizeof...(Slices)> map {
       {(Slices::reduces_dimension ? size_t(0) : sub_idx++)...}};
   return map;
 }
@@ -173,7 +174,7 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_slice_index_map()
   constexpr size_t n_dims = (!Slices::reduces_dimension + ...);
   size_t sub_idx          = 0;
   size_t i                = 0;
-  std::array<size_t, n_dims> map {};
+  camp::array<size_t, n_dims> map {};
 
   auto process_slice = [&](auto slice_type) constexpr {
     if constexpr (!decltype(slice_type)::reduces_dimension)
@@ -220,10 +221,10 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
   static inline constexpr size_t n_dims =
       ((!Slices::reduces_dimension ? 1 : 0) + ...);
 
-  static inline constexpr std::array<size_t, s_num_slices>
+  static inline constexpr camp::array<size_t, s_num_slices>
       s_slice_to_parent_map = make_slice_to_parent_index_map<Slices...>();
 
-  static inline constexpr std::array<size_t, n_dims> s_parent_to_slice_map =
+  static inline constexpr camp::array<size_t, n_dims> s_parent_to_slice_map =
       make_parent_to_slice_index_map<Slices...>();
 
   const LayoutType m_parent;
@@ -314,8 +315,8 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
   {
     static_assert(sizeof...(idxs) == n_dims, "Wrong number of indices");
 
-    std::array<IndexType, n_dims> arr {idxs...};
-    std::array<IndexType, s_num_slices> parent_indices {};
+    camp::array<IndexType, n_dims> arr {idxs...};
+    camp::array<IndexType, s_num_slices> parent_indices {};
 
     for_each_tuple_index(m_slices, [&](auto slice, auto index) {
       if constexpr (decltype(slice)::reduces_dimension)
@@ -329,7 +330,7 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
       }
     });
 
-    return std::apply(m_parent, parent_indices);
+    return camp::apply(m_parent, parent_indices);
   }
 };
 
