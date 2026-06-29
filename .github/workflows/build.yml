@@ -72,3 +72,58 @@ jobs:
       - uses: threeal/ctest-action@v1.1.0
         with:
           build-config: Debug
+
+  build_windows_cuda:
+    strategy:
+      matrix:
+        shared:
+          - args:
+              BUILD_SHARED_LIBS=Off
+          - args:
+              BUILD_SHARED_LIBS=On
+              CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=On
+
+  # Running on Visual Studio 2022 for better CUDA 12 compatibility
+  # windows-2025 would be locked to Visual Studio 2026
+  # windows-latest can be changed by GitHub
+    runs-on: windows-2022
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - uses: Jimver/cuda-toolkit@v0.2.35
+        with:
+          cuda: '12.9.1'
+          sub-packages: '["nvcc", "visual_studio_integration", "cudart", "nvrtc", "thrust"]'
+
+      - name: Check CUDA
+        shell: pwsh
+        run: |
+          nvcc --version
+          echo "CUDA_PATH=$env:CUDA_PATH"
+
+      - uses: threeal/cmake-action@v1.3.0
+        with:
+          build-dir: build
+          options:
+            ENABLE_WARNINGS_AS_ERRORS=Off
+            BLT_CXX_STD="c++20"
+            CMAKE_CUDA_FLAGS="-Xcompiler=/TP"
+            CMAKE_CXX_STANDARD=20
+            CMAKE_BUILD_TYPE=Release
+            CMAKE_CUDA_ARCHITECTURES=75
+            ENABLE_CUDA=On
+            ${{ matrix.shared.args }}
+          run-build: true
+#          build-args: '--parallel 16'
+## ====================================
+## Print the contents of the test directory in the build space (debugging)
+##    - run: |
+##        dir -r D:\a\RAJA\RAJA\build\test
+## ====================================
+## Run tests action
+      - uses: threeal/ctest-action@v1.1.0
+        with:
+          build-config: Debug

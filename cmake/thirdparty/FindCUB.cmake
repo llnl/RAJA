@@ -14,7 +14,8 @@ find_path(CUB_INCLUDE_DIRS
   HINTS
     ${CUB_DIR}/
     ${CUB_DIR}/include
-    ${CUDA_TOOLKIT_ROOT_DIR}/include)
+    ${CUDA_TOOLKIT_ROOT_DIR}/include
+    ${CUDA_TOOLKIT_ROOT_DIR}/include/cccl)
 
 find_package_handle_standard_args(
   CUB
