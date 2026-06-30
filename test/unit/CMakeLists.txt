@@ -19,7 +19,3 @@ add_subdirectory(view-layout)
 add_subdirectory(algorithm)
 add_subdirectory(workgroup)
 add_subdirectory(indexing)
-
-if(RAJA_ENABLE_HIP)
-  add_subdirectory(hip)
-endif()

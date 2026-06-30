@@ -47,11 +47,10 @@ namespace scan
 {
 
 template<typename InputIter, typename Function>
-using accumulator_type =
-    std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<
-        Function&,
-        typename std::iterator_traits<InputIter>::value_type,
-        typename std::iterator_traits<InputIter>::value_type>>>;
+using accumulator_type = std::remove_cvref_t<
+    std::invoke_result_t<Function&,
+                         typename std::iterator_traits<InputIter>::value_type,
+                         typename std::iterator_traits<InputIter>::value_type>>;
 
 /*!
         \brief explicit inclusive inplace scan given range, function, and

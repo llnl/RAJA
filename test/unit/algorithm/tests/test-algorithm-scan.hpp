@@ -21,7 +21,7 @@
 constexpr int scan_len = 300;
 
 template<typename ExecPolicy, typename Res>
-void runScanCharToIntExclusiveTest(Res res)
+void runScanCharToIntScanTest(Res res, bool inclusive)
 {
   camp::resources::Host host_res = camp::resources::Host::get_default();
 
@@ -36,41 +36,74 @@ void runScanCharToIntExclusiveTest(Res res)
   res.memcpy(work_in, host_in, scan_len * sizeof(char));
   res.wait();
 
-  RAJA::exclusive_scan<ExecPolicy>(RAJA::make_span(static_cast<const char*>(work_in),
-                                                   scan_len),
-                                   RAJA::make_span(work_out, scan_len),
-                                   RAJA::operators::plus<int> {});
+  if (inclusive) {
+    RAJA::inclusive_scan<ExecPolicy>(RAJA::make_span(
+                                         static_cast<const char*>(work_in),
+                                         scan_len),
+                                     RAJA::make_span(work_out, scan_len),
+                                     RAJA::operators::plus<int> {});
+  } else {
+    RAJA::exclusive_scan<ExecPolicy>(RAJA::make_span(
+                                         static_cast<const char*>(work_in),
+                                         scan_len),
+                                     RAJA::make_span(work_out, scan_len),
+                                     RAJA::operators::plus<int> {});
+  }
   res.wait();
 
   res.memcpy(host_out, work_out, scan_len * sizeof(int));
   res.wait();
 
   for (int i = 0; i < scan_len; ++i) {
-    ASSERT_EQ(host_out[i], i) << "Mismatch in default-resource scan at index "
-                              << i;
+    ASSERT_EQ(host_out[i], inclusive ? (i + 1) : i)
+        << "Mismatch in default-resource "
+        << (inclusive ? "inclusive" : "exclusive") << " scan at index " << i;
   }
 
   std::fill_n(host_out, scan_len, -1);
 
-  RAJA::exclusive_scan<ExecPolicy>(res,
-                                   RAJA::make_span(static_cast<const char*>(work_in),
-                                                   scan_len),
-                                   RAJA::make_span(work_out, scan_len),
-                                   RAJA::operators::plus<int> {});
+  if (inclusive) {
+    RAJA::inclusive_scan<ExecPolicy>(res,
+                                     RAJA::make_span(
+                                         static_cast<const char*>(work_in),
+                                         scan_len),
+                                     RAJA::make_span(work_out, scan_len),
+                                     RAJA::operators::plus<int> {});
+  } else {
+    RAJA::exclusive_scan<ExecPolicy>(res,
+                                     RAJA::make_span(
+                                         static_cast<const char*>(work_in),
+                                         scan_len),
+                                     RAJA::make_span(work_out, scan_len),
+                                     RAJA::operators::plus<int> {});
+  }
   res.wait();
 
   res.memcpy(host_out, work_out, scan_len * sizeof(int));
   res.wait();
 
   for (int i = 0; i < scan_len; ++i) {
-    ASSERT_EQ(host_out[i], i) << "Mismatch in explicit-resource scan at index "
-                              << i;
+    ASSERT_EQ(host_out[i], inclusive ? (i + 1) : i)
+        << "Mismatch in explicit-resource "
+        << (inclusive ? "inclusive" : "exclusive") << " scan at index " << i;
   }
 
   res.deallocate(work_in);
   res.deallocate(work_out);
   host_res.deallocate(host_in);
   host_res.deallocate(host_out);
+}
+
+template<typename ExecPolicy, typename Res>
+void runScanCharToIntExclusiveTest(Res res)
+{
+  runScanCharToIntScanTest<ExecPolicy>(res, false);
+}
+
+template<typename ExecPolicy, typename Res>
+void runScanCharToIntInclusiveTest(Res res)
+{
+  runScanCharToIntScanTest<ExecPolicy>(res, true);
 }
 
 TYPED_TEST_SUITE_P(ScanUnitTest);
@@ -89,7 +122,18 @@ TYPED_TEST_P(ScanUnitTest, CharToIntExclusive)
   runScanCharToIntExclusiveTest<ExecPolicy>(res);
 }
 
-REGISTER_TYPED_TEST_SUITE_P(ScanUnitTest, CharToIntExclusive);
+TYPED_TEST_P(ScanUnitTest, CharToIntInclusive)
+{
+  using ExecPolicy = typename camp::at<TypeParam, camp::num<0>>::type;
+  using ResType = typename camp::at<TypeParam, camp::num<1>>::type;
+
+  ResType res = ResType::get_default();
+  runScanCharToIntInclusiveTest<ExecPolicy>(res);
+}
+
+REGISTER_TYPED_TEST_SUITE_P(ScanUnitTest,
+                            CharToIntExclusive,
+                            CharToIntInclusive);
 
 using SequentialScanExecPolicies = camp::list<RAJA::seq_exec>;
 
