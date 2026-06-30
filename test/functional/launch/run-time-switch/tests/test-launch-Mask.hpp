@@ -49,6 +49,7 @@ void LaunchMaskTestImpl()
       });
 
   working_res.memcpy(check_array, working_array, sizeof(int) * num_teams);
+  working_res.wait();
 
   for (int team = 0; team < num_teams; ++team) {
     ASSERT_EQ(team + 1, check_array[team]);

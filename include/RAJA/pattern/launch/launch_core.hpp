@@ -491,8 +491,6 @@ using loop_policy = typename POLICY_LIST::host_policy_t;
 template<typename POLICY_LIST>
 #if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
 using mask_policy = typename POLICY_LIST::device_policy_t;
-#elif defined(RAJA_ENABLE_OPENMP)
-using mask_policy = RAJA::omp_thread;
 #else
 using mask_policy = typename POLICY_LIST::host_policy_t;
 #endif
