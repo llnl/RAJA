@@ -339,58 +339,28 @@ using sycl_flatten_group_local_201_loop =
 using sycl_flatten_group_local_210_loop =
     sycl_flatten_group_local_loop<2, 1, 0>;
 
-template<int DIM0, int DIM1>
-struct MaskExecute<sycl_flatten_group_local_direct<DIM0, DIM1>>
+template<int... DIMS>
+struct MaskExecute<sycl_flatten_group_local_direct<DIMS...>>
 {
   template<typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
                                            BODY const& body)
   {
-    if (ctx.itm->get_local_id(DIM0) == 0 && ctx.itm->get_local_id(DIM1) == 0)
+    if (((ctx.itm->get_local_id(DIMS) == 0) && ...))
     {
       body();
     }
   }
 };
 
-template<int DIM0, int DIM1>
-struct MaskExecute<sycl_flatten_group_local_loop<DIM0, DIM1>>
+template<int... DIMS>
+struct MaskExecute<sycl_flatten_group_local_loop<DIMS...>>
 {
   template<typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
                                            BODY const& body)
   {
-    if (ctx.itm->get_local_id(DIM0) == 0 && ctx.itm->get_local_id(DIM1) == 0)
-    {
-      body();
-    }
-  }
-};
-
-template<int DIM0, int DIM1, int DIM2>
-struct MaskExecute<sycl_flatten_group_local_direct<DIM0, DIM1, DIM2>>
-{
-  template<typename BODY>
-  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
-                                           BODY const& body)
-  {
-    if (ctx.itm->get_local_id(DIM0) == 0 && ctx.itm->get_local_id(DIM1) == 0 &&
-        ctx.itm->get_local_id(DIM2) == 0)
-    {
-      body();
-    }
-  }
-};
-
-template<int DIM0, int DIM1, int DIM2>
-struct MaskExecute<sycl_flatten_group_local_loop<DIM0, DIM1, DIM2>>
-{
-  template<typename BODY>
-  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
-                                           BODY const& body)
-  {
-    if (ctx.itm->get_local_id(DIM0) == 0 && ctx.itm->get_local_id(DIM1) == 0 &&
-        ctx.itm->get_local_id(DIM2) == 0)
+    if (((ctx.itm->get_local_id(DIMS) == 0) && ...))
     {
       body();
     }
