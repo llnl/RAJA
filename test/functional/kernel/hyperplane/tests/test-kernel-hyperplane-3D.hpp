@@ -13,22 +13,44 @@
 #include <numeric>
 #include <type_traits>
 
+namespace {
+template <typename T>
+struct val_t_impl {
+  using type = T;
+};
+
+template <RAJA::concepts::IndexValued T>
+struct val_t_impl<T> {
+  using type = typename T::value_type;
+};
+
+template <typename T>
+using VAL_T = typename val_t_impl<T>::type;
+
+template<RAJA::concepts::IndexValued T>
+RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
+
+template<typename T>
+requires (!RAJA::concepts::IndexValued<T>)
+RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
+}
+
 template <typename INDEX_TYPE, typename DATA_TYPE, typename EXEC_POLICY, typename REDUCE_POLICY, typename USE_PARAM_REDUCER>
 std::enable_if_t<USE_PARAM_REDUCER::value>
 CallKernel(DATA_TYPE& trip_count,
            DATA_TYPE& oob_count,
-           RAJA::View<DATA_TYPE, RAJA::Layout<4, INDEX_TYPE>>& WorkView,
-           const int idim,
-           const int jdim,
-           const int kdim,
-           const int groups)
+           RAJA::View<DATA_TYPE, RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE, INDEX_TYPE, INDEX_TYPE>>>& WorkView,
+           const INDEX_TYPE idim,
+           const INDEX_TYPE jdim,
+           const INDEX_TYPE kdim,
+           const INDEX_TYPE groups)
 {
 
   // perform array arithmetic with a 2D J-K hyperplane
-  RAJA::TypedRangeSegment<INDEX_TYPE>   Grange( 0, groups );
-  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Irange( 0, idim, 1 );
-  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Jrange( jdim-1, -1, -1 );
-  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Krange( 0, kdim, 1 );
+  RAJA::TypedRangeSegment<INDEX_TYPE>   Grange( 0, get_val(groups) );
+  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Irange( 0, get_val(idim), 1 );
+  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Jrange( get_val(jdim) - 1, -1, -1 );
+  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Krange( 0, get_val(kdim), 1 );
 
   RAJA::kernel_param<EXEC_POLICY> (
     RAJA::make_tuple( Grange, Irange, Jrange, Krange ),
@@ -39,7 +61,8 @@ CallKernel(DATA_TYPE& trip_count,
     [=] RAJA_HOST_DEVICE ( INDEX_TYPE g, INDEX_TYPE ii, INDEX_TYPE jj, INDEX_TYPE kk,
                            RAJA::expt::ValOp<DATA_TYPE, RAJA::operators::plus>& _trip_count,
                            RAJA::expt::ValOp<DATA_TYPE, RAJA::operators::plus>& _oob_count ) {
-      if (g < 0 || g >= groups || ii < 0 || ii >= idim || jj < 0 || jj >= jdim || kk < 0 || kk >= kdim) {
+      if (get_val(g) >= get_val(groups) || get_val(ii) >= get_val(idim) ||
+          get_val(jj) >= get_val(jdim) || get_val(kk) >= get_val(kdim)) {
         _oob_count += 1;
       }
 
@@ -68,23 +91,24 @@ template <typename INDEX_TYPE, typename DATA_TYPE, typename EXEC_POLICY, typenam
 std::enable_if_t<!USE_PARAM_REDUCER::value>
 CallKernel(DATA_TYPE& _trip_count,
            DATA_TYPE& _oob_count,
-           RAJA::View<DATA_TYPE, RAJA::Layout<4, INDEX_TYPE>>& WorkView,
-           const int idim,
-           const int jdim,
-           const int kdim,
-           const int groups)
+           RAJA::View<DATA_TYPE, RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE, INDEX_TYPE, INDEX_TYPE>>>& WorkView,
+           const INDEX_TYPE idim,
+           const INDEX_TYPE jdim,
+           const INDEX_TYPE kdim,
+           const INDEX_TYPE groups)
 {
   RAJA::ReduceSum<REDUCE_POLICY, DATA_TYPE> trip_count (_trip_count);
   RAJA::ReduceSum<REDUCE_POLICY, DATA_TYPE> oob_count (_oob_count);
   // perform array arithmetic with a 2D J-K hyperplane
-  RAJA::TypedRangeSegment<INDEX_TYPE>   Grange( 0, groups );
-  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Irange( 0, idim, 1 );
-  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Jrange( jdim-1, -1, -1 );
-  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Krange( 0, kdim, 1 );
+  RAJA::TypedRangeSegment<INDEX_TYPE>   Grange( 0, get_val(groups) );
+  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Irange( 0, get_val(idim), 1 );
+  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Jrange( get_val(jdim - 1), -1, -1 );
+  RAJA::TypedRangeStrideSegment<INDEX_TYPE>  Krange( 0, get_val(kdim), 1 );
 
   RAJA::kernel<EXEC_POLICY> ( RAJA::make_tuple( Grange, Irange, Jrange, Krange ),
     [=] RAJA_HOST_DEVICE ( INDEX_TYPE g, INDEX_TYPE ii, INDEX_TYPE jj, INDEX_TYPE kk ) {
-      if (g < 0 || g >= groups || ii < 0 || ii >= idim || jj < 0 || jj >= jdim || kk < 0 || kk >= kdim) {
+      if (get_val(g) >= get_val(groups) || get_val(ii) >= get_val(idim) ||
+          get_val(jj) >= get_val(jdim) || get_val(kk) >= get_val(kdim)) {
         oob_count += 1;
       }
 
@@ -113,18 +137,19 @@ CallKernel(DATA_TYPE& _trip_count,
 
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename EXEC_POLICY, typename REDUCE_POLICY, typename USE_PARAM_REDUCERS>
 std::enable_if_t<std::is_unsigned<RAJA::strip_index_type_t<INDEX_TYPE>>::value>
-KernelHyperplane3DTestImpl(const int RAJA_UNUSED_ARG(groups), const int RAJA_UNUSED_ARG(idim), const int RAJA_UNUSED_ARG(jdim), const int RAJA_UNUSED_ARG(kdim))
+KernelHyperplane3DTestImpl(const INDEX_TYPE RAJA_UNUSED_ARG(groups), const INDEX_TYPE RAJA_UNUSED_ARG(idim), const INDEX_TYPE RAJA_UNUSED_ARG(jdim), const INDEX_TYPE RAJA_UNUSED_ARG(kdim))
 {
   // do nothing for unsigned index types
 }
 
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename EXEC_POLICY, typename REDUCE_POLICY, typename USE_PARAM_REDUCERS>
 std::enable_if_t<std::is_signed<RAJA::strip_index_type_t<INDEX_TYPE>>::value>
-KernelHyperplane3DTestImpl(const int groups, const int idimin, const int jdimin, const int kdimin)
+KernelHyperplane3DTestImpl(const INDEX_TYPE groups, const INDEX_TYPE idimin, const INDEX_TYPE jdimin, const INDEX_TYPE kdimin)
 {
   // This test traverses "groups" number of 3D arrays, and modifies values in a 2D hyperplane manner.
 
-  int idim, jdim, kdim;
+  using raw_index_type = VAL_T<INDEX_TYPE>;
+  raw_index_type idim, jdim, kdim;
   if ( std::is_same<DATA_TYPE, float>::value )
   {
     // Restrict to a small data size for better float precision.
@@ -134,10 +159,14 @@ KernelHyperplane3DTestImpl(const int groups, const int idimin, const int jdimin,
   }
   else
   {
-    idim = idimin;
-    jdim = jdimin;
-    kdim = kdimin;
+    idim = get_val(idimin);
+    jdim = get_val(jdimin);
+    kdim = get_val(kdimin);
   }
+
+  INDEX_TYPE idim_t(idim);
+  INDEX_TYPE jdim_t(jdim);
+  INDEX_TYPE kdim_t(kdim);
 
   camp::resources::Resource work_res{WORKING_RES::get_default()};
 
@@ -145,7 +174,7 @@ KernelHyperplane3DTestImpl(const int groups, const int idimin, const int jdimin,
   DATA_TYPE * check_array;
   DATA_TYPE * test_array;
 
-  INDEX_TYPE array_length = groups * idim * jdim * kdim;
+  INDEX_TYPE array_length = groups * idim_t * jdim_t * kdim_t;
 
   allocateForallTestData<DATA_TYPE> ( array_length,
                                       work_res,
@@ -154,30 +183,32 @@ KernelHyperplane3DTestImpl(const int groups, const int idimin, const int jdimin,
                                       &test_array
                                     );
 
-  RAJA::View<DATA_TYPE, RAJA::Layout<4, INDEX_TYPE>> HostView( test_array, groups, idim, jdim, kdim );
-  RAJA::View<DATA_TYPE, RAJA::Layout<4, INDEX_TYPE>> WorkView( work_array, groups, idim, jdim, kdim );
-  RAJA::View<DATA_TYPE, RAJA::Layout<4, INDEX_TYPE>> CheckView( check_array, groups, idim, jdim, kdim );
+  using LayoutType = RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE, INDEX_TYPE, INDEX_TYPE>>;
+  using ViewType = RAJA::View<DATA_TYPE, LayoutType>;
+  ViewType HostView( test_array, groups, idim_t, jdim_t, kdim_t );
+  ViewType WorkView( work_array, groups, idim_t, jdim_t, kdim_t );
+  ViewType CheckView( check_array, groups, idim_t, jdim_t, kdim_t );
 
   // initialize array
-  std::iota( test_array, test_array + array_length, 1 );
+  std::iota( test_array, test_array + get_val(array_length), 1 );
 
-  work_res.memcpy( work_array, test_array, sizeof(DATA_TYPE) * array_length );
+  work_res.memcpy( work_array, test_array, sizeof(DATA_TYPE) * get_val(array_length) );
 
   DATA_TYPE trip_count(0);
   DATA_TYPE oob_count(0);
 
-  CallKernel<INDEX_TYPE, DATA_TYPE, EXEC_POLICY, REDUCE_POLICY, USE_PARAM_REDUCERS>(trip_count, oob_count, WorkView, idim, jdim, kdim, groups);
+  CallKernel<INDEX_TYPE, DATA_TYPE, EXEC_POLICY, REDUCE_POLICY, USE_PARAM_REDUCERS>(trip_count, oob_count, WorkView, idim_t, jdim_t, kdim_t, groups);
 
-  ASSERT_EQ((INDEX_TYPE)trip_count, (INDEX_TYPE)groups * idim * jdim * kdim);
+  ASSERT_EQ((INDEX_TYPE)trip_count, groups * idim_t * jdim_t * kdim_t);
   ASSERT_EQ((INDEX_TYPE)oob_count, (INDEX_TYPE)0);
 
-  work_res.memcpy( check_array, work_array, sizeof(DATA_TYPE) * array_length );
+  work_res.memcpy( check_array, work_array, sizeof(DATA_TYPE) * get_val(array_length) );
 
   // perform array arithmetic on the CPU
-  for (int g = 0; g < groups; ++g) {
-    for (int i = 0; i < idim; ++i) {
-      for (int j = jdim - 1; j >= 0; --j) {
-        for (int k = 0; k < kdim; ++k) {
+  for (INDEX_TYPE g(0); g < groups; ++g) {
+    for (INDEX_TYPE i(0); i < idim_t; ++i) {
+      for (INDEX_TYPE j(jdim_t - 1); j >= INDEX_TYPE(0); --j) {
+        for (INDEX_TYPE k(0); k < kdim_t; ++k) {
           DATA_TYPE left = 1;
           if (i > 0) {
             left = HostView(g, i - 1, j, k);
@@ -199,10 +230,10 @@ KernelHyperplane3DTestImpl(const int groups, const int idimin, const int jdimin,
     }
   }
 
-  for (int g = 0; g < groups; ++g) {
-    for (int i = 0; i < idim; ++i) {
-      for (int j = 0; j < jdim; ++j) {
-        for (int k = 0; k < kdim; ++k) {
+  for (INDEX_TYPE g(0); g < groups; ++g) {
+    for (INDEX_TYPE i(0); i < idim_t; ++i) {
+      for (INDEX_TYPE j(0); j < jdim_t; ++j) {
+        for (INDEX_TYPE k(0); k < kdim_t; ++k) {
           ASSERT_FLOAT_EQ(CheckView(g, i, j, k), HostView(g, i, j, k));
         }
       }

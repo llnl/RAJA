@@ -174,7 +174,7 @@ using SyclKernelExecPols = camp::list<
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@KernelNestedLoopsSegmentTypes =
-  Test< camp::cartesian_product<RawIdxTypeList,
+  Test< camp::cartesian_product<StrongIdxTypeList,
                                 @BACKEND@ResourceList,
                                 @BACKEND@KernelExecPols>>::Types;
 

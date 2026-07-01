@@ -13,14 +13,36 @@
 #include <numeric>
 #include <type_traits>
 
+namespace {
+template <typename T>
+struct val_t_impl {
+  using type = T;
+};
+
+template <RAJA::concepts::IndexValued T>
+struct val_t_impl<T> {
+  using type = typename T::value_type;
+};
+
+template <typename T>
+using VAL_T = typename val_t_impl<T>::type;
+
+template<RAJA::concepts::IndexValued T>
+RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
+
+template<typename T>
+requires (!RAJA::concepts::IndexValued<T>)
+RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
+}
+
 template <typename INDEX_TYPE, typename DATA_TYPE, typename EXEC_POLICY, typename REDUCE_POLICY, typename USE_PARAM_REDUCER>
 std::enable_if_t<USE_PARAM_REDUCER::value>
 CallKernel(DATA_TYPE& trip_count,
            DATA_TYPE& oob_count,
-           RAJA::View<DATA_TYPE, RAJA::Layout<3, INDEX_TYPE>>& WorkView,
-           const int idim,
-           const int jdim,
-           const int groups)
+           RAJA::View<DATA_TYPE, RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE, INDEX_TYPE>>>& WorkView,
+           const INDEX_TYPE idim,
+           const INDEX_TYPE jdim,
+           const INDEX_TYPE groups)
 {
   RAJA::TypedRangeSegment<INDEX_TYPE>  Grange( 0, groups );
   RAJA::TypedRangeSegment<INDEX_TYPE>  Irange( 0, idim );
@@ -34,7 +56,7 @@ CallKernel(DATA_TYPE& trip_count,
     [=] RAJA_HOST_DEVICE (INDEX_TYPE g, INDEX_TYPE ii, INDEX_TYPE jj,
                           RAJA::expt::ValOp<DATA_TYPE, RAJA::operators::plus>& _trip_count,
                           RAJA::expt::ValOp<DATA_TYPE, RAJA::operators::plus>& _oob_count ) {
-      if ((int)g < 0 || (int)g >= groups || (int)ii < 0 || (int)ii >= idim || (int)jj < 0 || (int)jj >= jdim) {
+      if (get_val(g) >= get_val(groups) || get_val(ii) >= get_val(idim) || get_val(jj) >= get_val(jdim)) {
         _oob_count += 1;
       }
 
@@ -59,10 +81,10 @@ template <typename INDEX_TYPE, typename DATA_TYPE, typename EXEC_POLICY, typenam
 std::enable_if_t<!USE_PARAM_REDUCER::value>
 CallKernel(DATA_TYPE& _trip_count,
            DATA_TYPE& _oob_count,
-           RAJA::View<DATA_TYPE, RAJA::Layout<3, INDEX_TYPE>>& WorkView,
-           const int idim,
-           const int jdim,
-           const int groups)
+           RAJA::View<DATA_TYPE, RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE, INDEX_TYPE>>>& WorkView,
+           const INDEX_TYPE idim,
+           const INDEX_TYPE jdim,
+           const INDEX_TYPE groups)
 {
   RAJA::TypedRangeSegment<INDEX_TYPE>  Grange( 0, groups );
   RAJA::TypedRangeSegment<INDEX_TYPE>  Irange( 0, idim );
@@ -73,7 +95,7 @@ CallKernel(DATA_TYPE& _trip_count,
 
   RAJA::kernel<EXEC_POLICY> ( RAJA::make_tuple( Grange, Irange, Jrange ),
     [=] RAJA_HOST_DEVICE ( INDEX_TYPE g, INDEX_TYPE ii, INDEX_TYPE jj ) {
-      if ((int)g < 0 || (int)g >= groups || (int)ii < 0 || (int)ii >= idim || (int)jj < 0 || (int)jj >= jdim) {
+      if (get_val(g) >= get_val(groups) || get_val(ii) >= get_val(idim) || get_val(jj) >= get_val(jdim)) {
         oob_count += 1;
       }
 
@@ -97,7 +119,7 @@ CallKernel(DATA_TYPE& _trip_count,
 
 
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename EXEC_POLICY, typename REDUCE_POLICY, typename USE_PARAM_REDUCERS>
-void KernelHyperplane2DTestImpl(const int groups, const int idim, const int jdim)
+void KernelHyperplane2DTestImpl(const INDEX_TYPE groups, const INDEX_TYPE idim, const INDEX_TYPE jdim)
 {
   // This test traverses "groups" 2D arrays, and modifies values in a 1D hyperplane manner.
 
@@ -116,14 +138,16 @@ void KernelHyperplane2DTestImpl(const int groups, const int idim, const int jdim
                                       &test_array
                                     );
 
-  RAJA::View<DATA_TYPE, RAJA::Layout<3, INDEX_TYPE>> HostView( test_array, groups, idim, jdim );
-  RAJA::View<DATA_TYPE, RAJA::Layout<3, INDEX_TYPE>> WorkView( work_array, groups, idim, jdim );
-  RAJA::View<DATA_TYPE, RAJA::Layout<3, INDEX_TYPE>> CheckView( check_array, groups, idim, jdim );
+  using LayoutType = RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE, INDEX_TYPE>>;
+  using ViewType = RAJA::View<DATA_TYPE, LayoutType>;
+  ViewType HostView( test_array, groups, idim, jdim );
+  ViewType WorkView( work_array, groups, idim, jdim );
+  ViewType CheckView( check_array, groups, idim, jdim );
 
   // initialize array
-  std::iota( test_array, test_array + array_length, 1 );
+  std::iota( test_array, test_array + get_val(array_length), 1 );
 
-  work_res.memcpy( work_array, test_array, sizeof(DATA_TYPE) * array_length );
+  work_res.memcpy( work_array, test_array, sizeof(DATA_TYPE) * get_val(array_length) );
 
   DATA_TYPE trip_count(0);
   DATA_TYPE oob_count(0);
@@ -131,15 +155,15 @@ void KernelHyperplane2DTestImpl(const int groups, const int idim, const int jdim
   // perform array arithmetic with a 1D hyperplane, in either the I or J direction
   CallKernel<INDEX_TYPE, DATA_TYPE, EXEC_POLICY, REDUCE_POLICY, USE_PARAM_REDUCERS>(trip_count, oob_count, WorkView, idim, jdim, groups);
 
-  ASSERT_EQ((INDEX_TYPE)trip_count, (INDEX_TYPE)groups * idim * jdim);
+  ASSERT_EQ((INDEX_TYPE)trip_count, groups * idim * jdim);
   ASSERT_EQ((INDEX_TYPE)oob_count, (INDEX_TYPE)0);
 
-  work_res.memcpy( check_array, work_array, sizeof(DATA_TYPE) * array_length );
+  work_res.memcpy( check_array, work_array, sizeof(DATA_TYPE) * get_val(array_length) );
 
   // perform array arithmetic on the CPU
-  for (int g = 0; g < groups; ++g) {
-    for (int i = 0; i < idim; ++i) {
-      for (int j = 0; j < jdim; ++j) {
+  for (INDEX_TYPE g(0); g < groups; ++g) {
+    for (INDEX_TYPE i(0); i < idim; ++i) {
+      for (INDEX_TYPE j(0); j < jdim; ++j) {
         DATA_TYPE left = 1;
         if (i > 0) {
           left = HostView(g, i - 1, j);
@@ -155,9 +179,9 @@ void KernelHyperplane2DTestImpl(const int groups, const int idim, const int jdim
     }
   }
 
-  for (int g = 0; g < groups; ++g) {
-    for (int i = 0; i < idim; ++i) {
-      for (int j = 0; j < jdim; ++j) {
+  for (INDEX_TYPE g(0); g < groups; ++g) {
+    for (INDEX_TYPE i(0); i < idim; ++i) {
+      for (INDEX_TYPE j(0); j < jdim; ++j) {
         ASSERT_FLOAT_EQ(CheckView(g, i, j), HostView(g, i, j));
       }
     }

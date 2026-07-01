@@ -15,14 +15,16 @@
 #define __RAJA_test_reduceloc_types_HPP__
 
 #include "RAJA/RAJA.hpp"
+#include "RAJA/index/IndexValue.hpp"
 #include "RAJA/util/types.hpp"
 #include "camp/list.hpp"
 
+template<RAJA::concepts::Index IDX>
 struct Index2D {
-   RAJA::Index_type idx, idy;
+   IDX idx, idy;
    constexpr Index2D() : idx(-1), idy(-1) {}
-   constexpr Index2D(RAJA::Index_type init) : idx(init), idy(init) {}
-   constexpr Index2D(RAJA::Index_type ix, RAJA::Index_type iy) : idx(ix), idy(iy) {}
+   constexpr Index2D(IDX ix) : idx(ix), idy(ix) {}
+   constexpr Index2D(IDX ix, IDX iy) : idx(ix), idy(iy) {}
    template<typename T>
    RAJA_HOST_DEVICE void operator=(T rhs) { idx = rhs; idx = rhs; }
 };

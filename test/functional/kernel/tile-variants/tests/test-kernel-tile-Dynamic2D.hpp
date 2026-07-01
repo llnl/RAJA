@@ -12,10 +12,33 @@
 
 #include <numeric>
 
+namespace {
+template <typename T>
+struct val_t_impl {
+  using type = T;
+};
+
+template <RAJA::concepts::IndexValued T>
+struct val_t_impl<T> {
+  using type = typename T::value_type;
+};
+
+template <typename T>
+using VAL_T = typename val_t_impl<T>::type;
+
+template<RAJA::concepts::IndexValued T>
+RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
+
+template<typename T>
+requires (!RAJA::concepts::IndexValued<T>)
+RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
+}
+
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename EXEC_POLICY>
-void KernelTileDynamic2DTestImpl(const int rows, const int cols)
+void KernelTileDynamic2DTestImpl(const INDEX_TYPE rows_t, const INDEX_TYPE cols_t)
 {
   // This test emulates matrix transposition with tiling.
+  using raw_index_type = VAL_T<INDEX_TYPE>;
 
   camp::resources::Resource work_res{WORKING_RES::get_default()};
 
@@ -28,7 +51,7 @@ void KernelTileDynamic2DTestImpl(const int rows, const int cols)
   DATA_TYPE * check_array_t;
   DATA_TYPE * test_array_t;
 
-  INDEX_TYPE array_length = rows * cols;
+  INDEX_TYPE array_length = rows_t * cols_t;
 
   allocateForallTestData<DATA_TYPE> ( array_length,
                                       work_res,
@@ -44,31 +67,35 @@ void KernelTileDynamic2DTestImpl(const int rows, const int cols)
                                       &test_array_t
                                     );
 
-  RAJA::View<DATA_TYPE, RAJA::Layout<2>> HostView( test_array, rows, cols );
-  RAJA::View<DATA_TYPE, RAJA::Layout<2>> HostTView( test_array_t, cols, rows );
-  RAJA::View<DATA_TYPE, RAJA::Layout<2>> WorkView( work_array, rows, cols );
-  RAJA::View<DATA_TYPE, RAJA::Layout<2>> WorkTView( work_array_t, cols, rows );
-  RAJA::View<DATA_TYPE, RAJA::Layout<2>> CheckTView( check_array_t, cols, rows );
+  using LayoutType =
+      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE>>;
+  using ViewType = RAJA::View<DATA_TYPE, LayoutType>;
+
+  ViewType HostView( test_array, rows_t, cols_t );
+  ViewType HostTView( test_array_t, cols_t, rows_t );
+  ViewType WorkView( work_array, rows_t, cols_t );
+  ViewType WorkTView( work_array_t, cols_t, rows_t );
+  ViewType CheckTView( check_array_t, cols_t, rows_t );
 
   // initialize arrays
-  std::iota( test_array, test_array + array_length, 1 );
-  std::iota( test_array_t, test_array_t + array_length, 1 );
+  std::iota( test_array, test_array + get_val(array_length), 1 );
+  std::iota( test_array_t, test_array_t + get_val(array_length), 1 );
 
-  work_res.memcpy( work_array, test_array, sizeof(DATA_TYPE) * array_length );
-  work_res.memcpy( work_array_t, test_array_t, sizeof(DATA_TYPE) * array_length );
+  work_res.memcpy( work_array, test_array, sizeof(DATA_TYPE) * get_val(array_length) );
+  work_res.memcpy( work_array_t, test_array_t, sizeof(DATA_TYPE) * get_val(array_length) );
 
   // transpose test_array on CPU
-  for ( int rr = 0; rr < rows; ++rr )
+  for ( raw_index_type rr = 0; rr < get_val(rows_t); ++rr )
   {
-    for ( int cc = 0; cc < cols; ++cc )
+    for ( raw_index_type cc = 0; cc < get_val(cols_t); ++cc )
     {
-      HostTView( cc, rr ) = HostView( rr, cc ); 
+      HostTView( INDEX_TYPE(cc), INDEX_TYPE(rr) ) = HostView( INDEX_TYPE(rr), INDEX_TYPE(cc) );
     }
   }
 
   // transpose work_array
-  RAJA::TypedRangeSegment<INDEX_TYPE> rowrange( 0, rows );
-  RAJA::TypedRangeSegment<INDEX_TYPE> colrange( 0, cols );
+  RAJA::TypedRangeSegment<INDEX_TYPE> rowrange( 0, rows_t );
+  RAJA::TypedRangeSegment<INDEX_TYPE> colrange( 0, cols_t );
 
   RAJA::kernel_param<EXEC_POLICY> (
     RAJA::make_tuple( colrange, rowrange ),
@@ -77,19 +104,20 @@ void KernelTileDynamic2DTestImpl(const int rows, const int cols)
       WorkTView( cc, rr ) = WorkView( rr, cc );
   });
 
-  work_res.memcpy( check_array_t, work_array_t, sizeof(DATA_TYPE) * array_length );
+  work_res.memcpy( check_array_t, work_array_t, sizeof(DATA_TYPE) * get_val(array_length) );
 
-  for ( int rr = 0; rr < rows; ++rr )
+  for ( raw_index_type rr = 0; rr < get_val(rows_t); ++rr )
   {
-    for ( int cc = 0; cc < cols; ++cc )
+    for ( raw_index_type cc = 0; cc < get_val(cols_t); ++cc )
     {
-      ASSERT_EQ(CheckTView(cc, rr), HostTView(cc, rr));
+      ASSERT_EQ(CheckTView(INDEX_TYPE(cc), INDEX_TYPE(rr)),
+                HostTView(INDEX_TYPE(cc), INDEX_TYPE(rr)));
     }
   }
 
   // reset check and work transpose arrays
-  work_res.memcpy( check_array_t, test_array, sizeof(DATA_TYPE) * array_length );
-  work_res.memcpy( work_array_t, test_array, sizeof(DATA_TYPE) * array_length );
+  work_res.memcpy( check_array_t, test_array, sizeof(DATA_TYPE) * get_val(array_length) );
+  work_res.memcpy( work_array_t, test_array, sizeof(DATA_TYPE) * get_val(array_length) );
 
   // transpose work_array again with different tile sizes
   RAJA::kernel_param<EXEC_POLICY> (
@@ -99,13 +127,14 @@ void KernelTileDynamic2DTestImpl(const int rows, const int cols)
       WorkTView( cc, rr ) = WorkView( rr, cc );
   });
 
-  work_res.memcpy( check_array_t, work_array_t, sizeof(DATA_TYPE) * array_length );
+  work_res.memcpy( check_array_t, work_array_t, sizeof(DATA_TYPE) * get_val(array_length) );
 
-  for ( int rr = 0; rr < rows; ++rr )
+  for ( raw_index_type rr = 0; rr < get_val(rows_t); ++rr )
   {
-    for ( int cc = 0; cc < cols; ++cc )
+    for ( raw_index_type cc = 0; cc < get_val(cols_t); ++cc )
     {
-      ASSERT_EQ(CheckTView(cc, rr), HostTView(cc, rr));
+      ASSERT_EQ(CheckTView(INDEX_TYPE(cc), INDEX_TYPE(rr)),
+                HostTView(INDEX_TYPE(cc), INDEX_TYPE(rr)));
     }
   }
 
@@ -136,9 +165,9 @@ TYPED_TEST_P(KernelTileDynamic2DTest, TileDynamic2DKernel)
   using WORKING_RES = typename camp::at<TypeParam, camp::num<2>>::type;
   using EXEC_POLICY = typename camp::at<TypeParam, camp::num<3>>::type;
 
-  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(10, 10);
-  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(151, 111);
-  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(362, 362);
+  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE(10), INDEX_TYPE(10));
+  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE(151), INDEX_TYPE(111));
+  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE(362), INDEX_TYPE(362));
 }
 
 REGISTER_TYPED_TEST_SUITE_P(KernelTileDynamic2DTest,

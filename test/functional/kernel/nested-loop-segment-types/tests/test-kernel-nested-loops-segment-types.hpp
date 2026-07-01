@@ -18,6 +18,27 @@
 #include <numeric>
 #include <vector>
 
+namespace {
+template <typename T>
+struct val_t_impl {
+  using type = T;
+};
+
+template <RAJA::concepts::IndexValued T>
+struct val_t_impl<T> {
+  using type = typename T::value_type;
+};
+
+template <typename T>
+using VAL_T = typename val_t_impl<T>::type;
+
+template <RAJA::concepts::IndexValued T>
+RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
+
+template <typename T>
+requires (!RAJA::concepts::IndexValued<T>)
+RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
+}
 
 template <typename IDX_TYPE, typename DATA_TYPE, typename EXEC_POLICY>
 void KernelNestedLoopsSegmentTypesTestImpl(
@@ -61,24 +82,25 @@ void KernelNestedLoopsSegmentTypesTestImpl(
                                     &check_array,
                                     &test_array);
 
-  RAJA::View< DATA_TYPE, RAJA::Layout<3> > work_view(work_array, 
-                                                     dim1, dim2, dim3);
-  RAJA::View< DATA_TYPE, RAJA::Layout<3> > test_view(test_array, 
-                                                     dim1, dim2, dim3);
+  using LayoutType = RAJA::TypedLayout<IDX_TYPE, camp::tuple<IDX_TYPE, IDX_TYPE, IDX_TYPE>>;
+  using ViewType = RAJA::View<DATA_TYPE, LayoutType>;
+
+  ViewType work_view(work_array, dim1, dim2, dim3);
+  ViewType test_view(test_array, dim1, dim2, dim3);
 
   memset( static_cast<void*>(test_array), 0, 
-          sizeof(DATA_TYPE) * RAJA::stripIndexType(data_len) );
+          sizeof(DATA_TYPE) * get_val(data_len) );
 
   working_res.memcpy(work_array, test_array, 
-                     sizeof(DATA_TYPE) * RAJA::stripIndexType(data_len));
+                     sizeof(DATA_TYPE) * get_val(data_len));
 
   if ( !zero_legth_segment ) {
     for (IDX_TYPE i1 = 0; i1 < idx1_len; ++i1) {
       for (IDX_TYPE i2 = 0; i2 < idx2_len; ++i2) {
         for (IDX_TYPE i3 = 0; i3 < idx3_len; ++i3) {
-          auto ii1 = RAJA::stripIndexType(i1);
-          auto ii2 = RAJA::stripIndexType(i2);
-          auto ii3 = RAJA::stripIndexType(i3);
+          auto ii1 = get_val(i1);
+          auto ii2 = get_val(i2);
+          auto ii3 = get_val(i3);
           test_view( s1_idx[ii1], s2_idx[ii2], s3_idx[ii3] ) = 
             static_cast<DATA_TYPE>( RAJA::stripIndexType(
                                     s1_idx[ii1] + s2_idx[ii2] + s3_idx[ii3]) );
@@ -115,7 +137,7 @@ void KernelNestedLoopsSegmentTypesTestImpl(
   } 
 
   working_res.memcpy(check_array, work_array, 
-                     sizeof(DATA_TYPE) * RAJA::stripIndexType(data_len));
+                     sizeof(DATA_TYPE) * get_val(data_len));
 
   for (IDX_TYPE i = 0; i < data_len; ++i) {
     auto ii = RAJA::stripIndexType(i);
@@ -140,6 +162,7 @@ TYPED_TEST_P(KernelNestedLoopsSegmentTypesTest, NestedLoopsSegmentTypesKernel)
   using IDX_TYPE    = typename camp::at<TypeParam, camp::num<0>>::type;
   using WORKING_RES = typename camp::at<TypeParam, camp::num<1>>::type;
   using EXEC_POLICY = typename camp::at<TypeParam, camp::num<2>>::type;
+  using raw_idx_type = VAL_T<IDX_TYPE>;
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
 
@@ -153,7 +176,7 @@ TYPED_TEST_P(KernelNestedLoopsSegmentTypesTest, NestedLoopsSegmentTypesKernel)
   RAJA::TypedRangeSegment<IDX_TYPE> s1( 0, 69 );
   RAJA::getIndices(s1_idx, s1);
 
-  RAJA::TypedRangeStrideSegment<IDX_TYPE> s2( 3, 188, 2 );
+  RAJA::TypedRangeStrideSegment<IDX_TYPE> s2( raw_idx_type(3), raw_idx_type(188), raw_idx_type(2) );
   RAJA::getIndices(s2_idx, s2);
 
   IDX_TYPE last = IDX_TYPE(427);
@@ -223,7 +246,7 @@ TYPED_TEST_P(KernelNestedLoopsSegmentTypesTest, NestedLoopsSegmentTypesKernel)
                                         perm);
 
 // Zero-length range stride segment
-  RAJA::TypedRangeStrideSegment<IDX_TYPE> s5( 3, 3, 2 );
+  RAJA::TypedRangeStrideSegment<IDX_TYPE> s5( raw_idx_type(3), raw_idx_type(3), raw_idx_type(2) );
   std::vector<IDX_TYPE> s5_idx;
   RAJA::getIndices(s5_idx, s5);
 

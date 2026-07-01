@@ -10,22 +10,90 @@
 #ifndef RAJA_PARAMS_BASE
 #define RAJA_PARAMS_BASE
 
+#include <type_traits>
+
+#include "RAJA/index/IndexValue.hpp"
+
 namespace RAJA
 {
 namespace expt
 {
+namespace detail
+{
+
+template<typename IndexType>
+using valloc_index_storage_t =
+    std::conditional_t<std::is_base_of<RAJA::IndexValueBase, IndexType>::value,
+                       RAJA::strip_index_type_t<IndexType>,
+                       IndexType>;
+
+template<typename IndexType>
+RAJA_HOST_DEVICE constexpr valloc_index_storage_t<IndexType>
+strip_valloc_index(IndexType const& index)
+{
+  if constexpr (std::is_base_of<RAJA::IndexValueBase, IndexType>::value)
+  {
+    return RAJA::stripIndexType(index);
+  }
+  else
+  {
+    return index;
+  }
+}
+
+template<typename IndexType>
+RAJA_HOST_DEVICE constexpr IndexType
+restore_valloc_index(valloc_index_storage_t<IndexType> const& index)
+{
+  if constexpr (std::is_base_of<RAJA::IndexValueBase, IndexType>::value)
+  {
+    return IndexType(index);
+  }
+  else
+  {
+    return index;
+  }
+}
+
+template<typename IndexType>
+RAJA_HOST_DEVICE constexpr valloc_index_storage_t<IndexType>
+default_valloc_index()
+{
+  using stored_index_type = valloc_index_storage_t<IndexType>;
+
+  if constexpr (std::is_constructible<stored_index_type, int>::value)
+  {
+    return stored_index_type(-1);
+  }
+  else
+  {
+    return stored_index_type {};
+  }
+}
+
+}  // namespace detail
 
 template<typename T, typename IndexType = RAJA::Index_type>
 struct ValLoc
 {
-  using index_type = IndexType;
-  using value_type = T;
+  using index_type        = IndexType;
+  using stored_index_type = detail::valloc_index_storage_t<index_type>;
+  using value_type        = T;
 
   ValLoc() = default;
 
   RAJA_HOST_DEVICE constexpr explicit ValLoc(value_type v) : val(v) {}
 
-  RAJA_HOST_DEVICE constexpr ValLoc(value_type v, index_type l) : val(v), loc(l)
+  RAJA_HOST_DEVICE constexpr ValLoc(value_type v, index_type l)
+      : val(v),
+        loc(detail::strip_valloc_index<index_type>(l))
+  {}
+
+  template<typename U = stored_index_type,
+           std::enable_if_t<!std::is_same<U, index_type>::value>* = nullptr>
+  RAJA_HOST_DEVICE constexpr ValLoc(value_type v, stored_index_type l)
+      : val(v),
+        loc(l)
   {}
 
   ValLoc(ValLoc const&)            = default;
@@ -45,20 +113,31 @@ struct ValLoc
 
   RAJA_HOST_DEVICE constexpr const value_type& getVal() const { return val; }
 
-  RAJA_HOST_DEVICE constexpr const index_type& getLoc() const { return loc; }
+  RAJA_HOST_DEVICE constexpr index_type getLoc() const
+  {
+    return detail::restore_valloc_index<index_type>(loc);
+  }
+
+  RAJA_HOST_DEVICE constexpr const stored_index_type& getStoredLoc() const
+  {
+    return loc;
+  }
 
   RAJA_HOST_DEVICE void set(T inval, IndexType inindex)
   {
     val = inval;
-    loc = inindex;
+    loc = detail::strip_valloc_index<index_type>(inindex);
   }
 
   RAJA_HOST_DEVICE void setVal(T inval) { val = inval; }
 
-  RAJA_HOST_DEVICE void setLoc(IndexType inindex) { loc = inindex; }
+  RAJA_HOST_DEVICE void setLoc(IndexType inindex)
+  {
+    loc = detail::strip_valloc_index<index_type>(inindex);
+  }
 
   value_type val;
-  index_type loc = -1;
+  stored_index_type loc = detail::default_valloc_index<index_type>();
 };
 
 template<typename T, template<typename, typename, typename> class Op>

@@ -236,7 +236,7 @@ using SyclKernelTileTCountExecPols = camp::list<
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@KernelTile@TESTTYPE@Types =
-  Test< camp::cartesian_product<RawIdxTypeList,
+  Test< camp::cartesian_product<StrongIdxTypeList,
                                 @BACKEND@Kernel@TESTTYPE@ExecPols,
                                 @BACKEND@ReducePols,
                                 Use@REDUCER_TYPE@,

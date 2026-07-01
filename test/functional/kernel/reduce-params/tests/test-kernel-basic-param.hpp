@@ -10,17 +10,37 @@
 #ifndef __TEST_KERNEL_REDUCELOC_MAX2D_HPP__
 #define __TEST_KERNEL_REDUCELOC_MAX2D_HPP__
 
+namespace {
+template <typename T>
+struct val_t_impl {
+  using type = T;
+};
+
+template <RAJA::concepts::IndexValued T>
+struct val_t_impl<T> {
+  using type = typename T::value_type;
+};
+
+template <typename T>
+using VAL_T = typename val_t_impl<T>::type;
+
+template<RAJA::concepts::IndexValued T>
+typename T::value_type get_val(T index_val) { return *index_val; }
+
+template<typename T>
+requires (!RAJA::concepts::IndexValued<T>)
+auto get_val(T index_val) { return index_val; }
+
+}
+
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename FORALL_POLICY, typename EXEC_POLICY, typename REDUCE_POLICY>
-void KernelParamReduceTestImpl(const int xdim, const int ydim)
+void KernelParamReduceTestImpl(const INDEX_TYPE xdim, const INDEX_TYPE ydim)
 {
   camp::resources::Resource work_res{WORKING_RES::get_default()};
 
-  DATA_TYPE ** workarr2D;
-  DATA_TYPE ** checkarr2D;
-  DATA_TYPE ** testarr2D;
-  DATA_TYPE * work_array;
-  DATA_TYPE * check_array;
-  DATA_TYPE * test_array;
+  DATA_TYPE* work_array;
+  DATA_TYPE* check_array;
+  DATA_TYPE* test_array;
 
   // square 2D array, xdim x ydim
   INDEX_TYPE array_length = xdim * ydim;
@@ -32,64 +52,53 @@ void KernelParamReduceTestImpl(const int xdim, const int ydim)
                                       &test_array
                                     );
 
-  allocateForallTestData<DATA_TYPE *> ( ydim,
-                                        work_res,
-                                        &workarr2D,
-                                        &checkarr2D,
-                                        &testarr2D
-                                      );
-
+  // using index_setup_type = VAL_T<INDEX_TYPE>;
   // set rows to point to check and work _arrays
-  RAJA::TypedRangeSegment<INDEX_TYPE> seg(0,ydim);
-  RAJA::forall<FORALL_POLICY>(seg, [=] RAJA_HOST_DEVICE(INDEX_TYPE zz)
-  {
-    workarr2D[zz] = work_array + zz * ydim;
-  });
-
-  RAJA::forall<RAJA::seq_exec>(seg, [=] RAJA_HOST_DEVICE (INDEX_TYPE zz)
-  {
-    checkarr2D[zz] = check_array + zz * ydim;
-  });
-
+  RAJA::TypedRangeSegment<INDEX_TYPE> seg(0, ydim);
+  using LayoutType = RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE>>;
+  using ViewType = RAJA::View<DATA_TYPE, LayoutType>;
+  ViewType TestView (test_array, xdim, ydim );
+  ViewType WorkView (work_array, xdim, ydim );
+  ViewType CheckView (check_array, xdim, ydim );
   // initializing  values
   RAJA::forall<RAJA::seq_exec>(seg, [=] RAJA_HOST_DEVICE (INDEX_TYPE zz)
   {
-    for ( int xx = 0; xx < xdim; ++xx )
+    for ( INDEX_TYPE xx (0); xx < xdim; ++xx )
     {
-      checkarr2D[zz][xx] = (zz*xdim + xx ) % 100 + 1;
+      CheckView(zz, xx) = get_val(zz * xdim + xx ) % 100 + 1;
     }
     // Make a unique min
-    checkarr2D[ydim-1][xdim-1] = 0;
+    CheckView(ydim - 1, xdim - 1) = 0;
     // Make a unique max
-    checkarr2D[ydim/2][xdim/2] = 101;
+    CheckView(ydim / 2, xdim / 2) = 101;
   });
 
-  work_res.memcpy(work_array, check_array, sizeof(DATA_TYPE) * array_length);
+  work_res.memcpy(work_array, check_array, sizeof(DATA_TYPE) * get_val(array_length));
 
   RAJA::TypedRangeSegment<INDEX_TYPE> colrange(0, xdim);
   RAJA::TypedRangeSegment<INDEX_TYPE> rowrange(0, ydim);
 
-  using VALLOC_DATA_TYPE = RAJA::expt::ValLoc<DATA_TYPE, Index2D>;
+  using VALLOC_DATA_TYPE = RAJA::expt::ValLoc<DATA_TYPE, Index2D<INDEX_TYPE>>;
   using VALOP_DATA_TYPE_SUM = RAJA::expt::ValOp<DATA_TYPE, RAJA::operators::plus>;
   using VALOP_DATA_TYPE_MIN = RAJA::expt::ValOp<DATA_TYPE, RAJA::operators::minimum>;
   using VALOP_DATA_TYPE_MAX = RAJA::expt::ValOp<DATA_TYPE, RAJA::operators::maximum>;
-  using VALOPLOC_DATA_TYPE_MIN = RAJA::expt::ValLocOp<DATA_TYPE, Index2D, RAJA::operators::minimum>;
-  using VALOPLOC_DATA_TYPE_MAX = RAJA::expt::ValLocOp<DATA_TYPE, Index2D, RAJA::operators::maximum>;
+  using VALOPLOC_DATA_TYPE_MIN = RAJA::expt::ValLocOp<DATA_TYPE, Index2D<INDEX_TYPE>, RAJA::operators::minimum>;
+  using VALOPLOC_DATA_TYPE_MAX = RAJA::expt::ValLocOp<DATA_TYPE, Index2D<INDEX_TYPE>, RAJA::operators::maximum>;
 
-  VALLOC_DATA_TYPE seq_minloc(std::numeric_limits<DATA_TYPE>::max(), Index2D(-1,-1));
-  VALLOC_DATA_TYPE seq_maxloc(std::numeric_limits<DATA_TYPE>::min(), Index2D(-1,-1));
-  Index2D seq_minloc2(-1, -1);
-  Index2D seq_maxloc2(-1, -1);
+  VALLOC_DATA_TYPE seq_minloc(std::numeric_limits<DATA_TYPE>::max(), Index2D<INDEX_TYPE>(-1,-1));
+  VALLOC_DATA_TYPE seq_maxloc(std::numeric_limits<DATA_TYPE>::min(), Index2D<INDEX_TYPE>(-1,-1));
+  Index2D<INDEX_TYPE> seq_minloc2(-1, -1);
+  Index2D<INDEX_TYPE> seq_maxloc2(-1, -1);
   DATA_TYPE seq_sum = 0;
   DATA_TYPE seq_min = std::numeric_limits<DATA_TYPE>::max();
   DATA_TYPE seq_max = std::numeric_limits<DATA_TYPE>::min();
   DATA_TYPE seq_min2 = std::numeric_limits<DATA_TYPE>::max();
   DATA_TYPE seq_max2 = std::numeric_limits<DATA_TYPE>::min();
 
-  VALLOC_DATA_TYPE minloc(std::numeric_limits<DATA_TYPE>::max(), Index2D(-1,-1));
-  VALLOC_DATA_TYPE maxloc(std::numeric_limits<DATA_TYPE>::min(), Index2D(-1,-1));
-  Index2D minloc2(-1, -1);
-  Index2D maxloc2(-1, -1);
+  VALLOC_DATA_TYPE minloc(std::numeric_limits<DATA_TYPE>::max(), Index2D<INDEX_TYPE>(-1,-1));
+  VALLOC_DATA_TYPE maxloc(std::numeric_limits<DATA_TYPE>::min(), Index2D<INDEX_TYPE>(-1,-1));
+  Index2D<INDEX_TYPE> minloc2(-1, -1);
+  Index2D<INDEX_TYPE> maxloc2(-1, -1);
   DATA_TYPE sum = 0;
   DATA_TYPE min2 = std::numeric_limits<DATA_TYPE>::max();
   DATA_TYPE max2 = std::numeric_limits<DATA_TYPE>::min();
@@ -109,8 +118,8 @@ void KernelParamReduceTestImpl(const int xdim, const int ydim)
       RAJA::expt::ReduceLoc<RAJA::operators::minimum>(&min2, &minloc2),
       RAJA::expt::ReduceLoc<RAJA::operators::maximum>(&max2, &maxloc2)
     ),
-      [=] RAJA_HOST_DEVICE (int c,
-                            int r,
+      [=] RAJA_HOST_DEVICE (INDEX_TYPE c,
+                            INDEX_TYPE r,
                             VALOP_DATA_TYPE_SUM &_sum,
                             VALOP_DATA_TYPE_MIN &_min,
                             VALOP_DATA_TYPE_MAX &_max,
@@ -118,15 +127,15 @@ void KernelParamReduceTestImpl(const int xdim, const int ydim)
                             VALOPLOC_DATA_TYPE_MAX &_maxloc,
                             VALOPLOC_DATA_TYPE_MIN &_minloc2,
                             VALOPLOC_DATA_TYPE_MAX &_maxloc2) {
-        _sum += workarr2D[r][c];
-        _min.min(workarr2D[r][c]);
-        _max.max(workarr2D[r][c]);
+        _sum += WorkView(r,c);
+        _min.min(WorkView(r,c));
+        _max.max(WorkView(r,c));
 
         // loc
-        _minloc.minloc(workarr2D[r][c], Index2D(c, r));
-        _maxloc.maxloc(workarr2D[r][c], Index2D(c, r));
-        _minloc2.minloc(workarr2D[r][c], Index2D(c, r));
-        _maxloc2.maxloc(workarr2D[r][c], Index2D(c, r));
+        _minloc.minloc(WorkView(r,c), Index2D<INDEX_TYPE>(c, r));
+        _maxloc.maxloc(WorkView(r,c), Index2D<INDEX_TYPE>(c, r));
+        _minloc2.minloc(WorkView(r,c), Index2D<INDEX_TYPE>(c, r));
+        _maxloc2.maxloc(WorkView(r,c), Index2D<INDEX_TYPE>(c, r));
       });
 
   // CPU answer
@@ -148,24 +157,24 @@ void KernelParamReduceTestImpl(const int xdim, const int ydim)
          VALOPLOC_DATA_TYPE_MIN &_minloc2,
          VALOPLOC_DATA_TYPE_MAX &_maxloc2
     ) {
-    for (int c = 0; c < xdim; ++c)
+    for (INDEX_TYPE c(0); c < xdim; ++c)
     {
-      _sum += checkarr2D[r][c];
-      _min = _min.min(checkarr2D[r][c]);
-      _max = _max.max(checkarr2D[r][c]);
+      _sum += CheckView(r,c);
+      _min = _min.min(CheckView(r,c));
+      _max = _max.max(CheckView(r,c));
 
       // loc
-      _minloc.minloc(checkarr2D[r][c], Index2D(c, r));
-      _maxloc.maxloc(checkarr2D[r][c], Index2D(c, r));
-      _minloc2.minloc(checkarr2D[r][c], Index2D(c, r));
-      _maxloc2.maxloc(checkarr2D[r][c], Index2D(c, r));
+      _minloc.minloc(CheckView(r,c), Index2D<INDEX_TYPE>(c, r));
+      _maxloc.maxloc(CheckView(r,c), Index2D<INDEX_TYPE>(c, r));
+      _minloc2.minloc(CheckView(r,c), Index2D<INDEX_TYPE>(c, r));
+      _maxloc2.maxloc(CheckView(r,c), Index2D<INDEX_TYPE>(c, r));
     }
   });
 
   DATA_TYPE DEBUG_SUM = 0;
-  for (int r = 0 ; r < ydim; ++r) {
-    for (int c = 0; c < xdim; ++c) {
-      DEBUG_SUM += checkarr2D[r][c];
+  for (INDEX_TYPE r (0) ; r < ydim; ++r) {
+    for (INDEX_TYPE c (0); c < xdim; ++c) {
+      DEBUG_SUM += CheckView(r,c);
     }
   }
 
@@ -195,11 +204,6 @@ void KernelParamReduceTestImpl(const int xdim, const int ydim)
                                         test_array
                                       );
 
-  deallocateForallTestData<DATA_TYPE *> ( work_res,
-                                          workarr2D,
-                                          checkarr2D,
-                                          testarr2D
-                                        );
 }
 
 

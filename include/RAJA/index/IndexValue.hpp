@@ -66,10 +66,12 @@ struct IndexValue : public IndexValueBase
   }
 
   /*!
-   * \brief Constructor.
+   * \brief Explicit constructor.
    * \param v   Initial value
    */
-  RAJA_HOST_DEVICE RAJA_INLINE constexpr IndexValue(value_type v) : value(v) {}
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit IndexValue(value_type v)
+      : value(v)
+  {}
 
   //! Dereference provides cast-to-integer.
   RAJA_HOST_DEVICE RAJA_INLINE value_type& operator*() { return value; }

@@ -199,7 +199,7 @@ using HipKernelHyperplaneExecPols =
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@KernelHyperplane =
-  Test< camp::cartesian_product<RawIdxTypeList,
+  Test< camp::cartesian_product<StrongIdxTypeList,
                                 ReduceDataTypeList,
                                 @BACKEND@ResourceList,
                                 @BACKEND@KernelHyperplaneExecPols,
