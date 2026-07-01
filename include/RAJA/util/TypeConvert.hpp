@@ -53,7 +53,7 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr B reinterp_A_as_B(A const& a)
   // TODO: Consider requiring A and B to be trivially copyable
 
   B b;
-  std::memcpy(&b, &a, sizeof(A));
+  memcpy(&b, &a, sizeof(A));
   return b;
 }
 
