@@ -109,9 +109,9 @@ int main(int argc, char **argv) {
     RAJA::loop<global_thread_x>(ctx, Seg, [&](int i) {
       for (int row = 0; row < a; ++row) {
         for (int col = 0; col < b; ++col) {
-          A(i, row, col) = i % row;
-          B(i, row, col) = i % col;
-          C(i, row, col) = i % col;
+          A(i, row, col) = (row == 0) ? 0 : (i % row);
+          B(i, row, col) = (col == 0) ? 0 : (i % col);
+          C(i, row, col) = (col == 0) ? 0 : (i % col);
         }
       }
     });
@@ -133,8 +133,8 @@ int main(int argc, char **argv) {
   });
 
   aot_timer.stop();
-  proteus::enable();
   std::cout << "aot total time = " << aot_timer.elapsed() << "\n";
+  proteus::enable();
 
   RAJA::Timer jit_timer;
   jit_timer.start();
@@ -149,32 +149,32 @@ int main(int argc, char **argv) {
             [&](int i)  {
           for (int row = 0; row < a; ++row) {
             for (int col = 0; col < b; ++col) {
-              A(i, row, col) = i % row;
-              B(i, row, col) = i % col;
-              C(i, row, col) = i % col;
+              A(i, row, col) = (row == 0) ? 0 : (i % row);
+              B(i, row, col) = (col == 0) ? 0 : (i % col);
+              C(i, row, col) = (col == 0) ? 0 : (i % col);
             }
           }
         });
       });
 
-  // RAJA::launch<launch_policy>(
-  //     Params,
-  //     [=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
-  //      accum = RAJA_JIT_VARIABLE(accum)] RAJA_JIT_COMPILE RAJA_HOST_DEVICE (RAJA::LaunchContext ctx) {
-  //       RAJA::loop<global_thread_x>(
-  //           ctx, Seg,
-  //           [&](int i)  {
-  //         for (int row = 0; row < a; ++row) {
-  //           for (int col = 0; col < b; ++col) {
-  //             if (!accum) {
-  //               C(i, row, col) = A(i, row, col) * B(i, col, row);
-  //             } else {
-  //               C(i, row, col) += A(i, row, col) * B(i, col, row);
-  //             }
-  //           }
-  //         }
-  //       });
-  //     });
+  RAJA::launch<launch_policy>(
+      Params,
+      [=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
+       accum = RAJA_JIT_VARIABLE(accum)] RAJA_JIT_COMPILE RAJA_HOST_DEVICE (RAJA::LaunchContext ctx) {
+        RAJA::loop<global_thread_x>(
+            ctx, Seg,
+            [&](int i)  {
+          for (int row = 0; row < a; ++row) {
+            for (int col = 0; col < b; ++col) {
+              if (!accum) {
+                C(i, row, col) = A(i, row, col) * B(i, col, row);
+              } else {
+                C(i, row, col) += A(i, row, col) * B(i, col, row);
+              }
+            }
+          }
+        });
+      });
 
   jit_timer.stop();
 

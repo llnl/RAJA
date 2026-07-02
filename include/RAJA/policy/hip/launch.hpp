@@ -96,14 +96,13 @@ struct LaunchExecute<
        BODY_IN&& body_in,
        ReduceParams& launch_reducers)
   {
-    auto registered_body = RAJA::internal::jit::register_lambda(body_in);
-    using RegisteredBody = std::decay_t<decltype(registered_body)>;
+    using BODY = camp::decay<BODY_IN>;
     using EXEC_POL =
         RAJA::policy::hip::hip_launch_t<async, named_usage::unspecified>;
     EXEC_POL pol {};
 
     auto func = reinterpret_cast<const void*>(
-        &launch_new_reduce_global_fcn<RegisteredBody, camp::decay<ReduceParams>>);
+        &launch_new_reduce_global_fcn<BODY, camp::decay<ReduceParams>>);
 
     resources::Hip hip_res = res.get<RAJA::resources::Hip>();
 
@@ -126,7 +125,7 @@ struct LaunchExecute<
     if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
-
+      RAJA::internal::jit::register_lambda(body_in);
 
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::hip::detail::hipInfo launch_info;
@@ -143,9 +142,9 @@ struct LaunchExecute<
         //
         // Privatize the loop_body, using make_launch_body to setup reductions
         //
-        auto body = RAJA::hip::make_launch_body(func, gridSize, blockSize,
+        BODY body = RAJA::hip::make_launch_body(func, gridSize, blockSize,
                                                 shared_mem_size, hip_res,
-                                                std::forward<RegisteredBody>(registered_body));
+                                                std::forward<BODY_IN>(body_in));
 
         //
         // Launch the kernel
@@ -201,8 +200,7 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
        BODY_IN&& body_in,
        ReduceParams& launch_reducers)
   {
-    auto registered_body = RAJA::internal::jit::register_lambda(body_in);
-    using RegisteredBody = std::decay_t<decltype(registered_body)>;
+    using BODY = camp::decay<BODY_IN>;
     // Use a generic block size policy here to match that used in
     // parampack_combine
     using EXEC_POL =
@@ -210,7 +208,7 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
     EXEC_POL pol {};
 
     auto func = reinterpret_cast<const void*>(
-        &launch_new_reduce_global_fcn_fixed<RegisteredBody, nthreads,
+        &launch_new_reduce_global_fcn_fixed<BODY, nthreads,
                                             camp::decay<ReduceParams>>);
 
     resources::Hip hip_res = res.get<RAJA::resources::Hip>();
@@ -244,16 +242,16 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
       launch_info.res          = hip_res;
 
       {
-
+        RAJA::internal::jit::register_lambda(body_in);
         RAJA::expt::ParamMultiplexer::parampack_init(pol, launch_reducers,
                                                      launch_info);
 
         //
         // Privatize the loop_body, using make_launch_body to setup reductions
         //
-        auto body = RAJA::hip::make_launch_body(func, gridSize, blockSize,
+        BODY body = RAJA::hip::make_launch_body(func, gridSize, blockSize,
                                                 shared_mem_size, hip_res,
-                                                std::forward<RegisteredBody>(registered_body));
+                                                std::forward<BODY_IN>(body_in));
 
         //
         // Launch the kernel

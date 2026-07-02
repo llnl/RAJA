@@ -277,7 +277,7 @@ void launch(LaunchParams const& launch_params,
       expt::get_kernel_name(std::forward<ReduceParams>(rest_of_launch_args)...);
 
   auto&& launch_body =
-      expt::get_lambda(std::forward<ReduceParams>(rest_of_launch_args)...);
+      RAJA::internal::jit::register_lambda(expt::get_lambda(std::forward<ReduceParams>(rest_of_launch_args)...));
 
   // Take the first policy as we assume the second policy is not user defined.
   // We rely on the user to pair launch and loop policies correctly.
@@ -400,7 +400,7 @@ resources::EventProxy<resources::Resource> launch(
       expt::get_kernel_name(std::forward<ReduceParams>(rest_of_launch_args)...);
 
   auto&& launch_body =
-      expt::get_lambda(std::forward<ReduceParams>(rest_of_launch_args)...);
+      RAJA::internal::jit::register_lambda(expt::get_lambda(std::forward<ReduceParams>(rest_of_launch_args)...));
 
   ExecPlace place;
   if (res.get_platform() == RAJA::Platform::host)

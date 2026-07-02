@@ -98,15 +98,13 @@ struct LaunchExecute<
        BODY_IN&& body_in,
        ReduceParams& launch_reducers)
   {
-    auto registered_body = RAJA::internal::jit::register_lambda(body_in);
-    using RegisteredBody = std::decay_t<decltype(registered_body)>;
+    using BODY     = camp::decay<BODY_IN>;
     using EXEC_POL = RAJA::policy::cuda::cuda_launch_explicit_t<
         async, named_usage::unspecified, named_usage::unspecified>;
     EXEC_POL pol {};
 
     auto func = reinterpret_cast<const void*>(
-        &launch_new_reduce_global_fcn<RegisteredBody,
-                                      camp::decay<ReduceParams>>);
+        &launch_new_reduce_global_fcn<BODY, camp::decay<ReduceParams>>);
 
     resources::Cuda cuda_res = res.get<RAJA::resources::Cuda>();
 
@@ -129,6 +127,8 @@ struct LaunchExecute<
     if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
+      RAJA::internal::jit::register_lambda(body_in);
+
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::cuda::detail::cudaInfo launch_info;
       launch_info.gridDim      = gridSize;
@@ -143,9 +143,9 @@ struct LaunchExecute<
         //
         // Privatize the loop_body, using make_launch_body to setup reductions
         //
-        auto body = RAJA::cuda::make_launch_body(
+        BODY body = RAJA::cuda::make_launch_body(
             func, gridSize, blockSize, shared_mem_size, cuda_res,
-            std::forward<RegisteredBody>(registered_body));
+            std::forward<BODY_IN>(body_in));
 
         //
         // Launch the kernel
@@ -206,8 +206,7 @@ struct LaunchExecute<
        BODY_IN&& body_in,
        ReduceParams& launch_reducers)
   {
-    auto registered_body = RAJA::internal::jit::register_lambda(body_in);
-    using RegisteredBody = std::decay_t<decltype(registered_body)>;
+    using BODY = camp::decay<BODY_IN>;
     // Use a generic block size policy here to match that used in
     // parampack_combine
     using EXEC_POL = RAJA::policy::cuda::cuda_launch_explicit_t<
@@ -215,8 +214,7 @@ struct LaunchExecute<
     EXEC_POL pol {};
 
     auto func = reinterpret_cast<const void*>(
-        &launch_new_reduce_global_fcn_fixed<RegisteredBody, nthreads,
-                                            BLOCKS_PER_SM,
+        &launch_new_reduce_global_fcn_fixed<BODY, nthreads, BLOCKS_PER_SM,
                                             camp::decay<ReduceParams>>);
 
     resources::Cuda cuda_res = res.get<RAJA::resources::Cuda>();
@@ -240,6 +238,8 @@ struct LaunchExecute<
     if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
+      RAJA::internal::jit::register_lambda(body_in);
+
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::cuda::detail::cudaInfo launch_info;
       launch_info.gridDim      = gridSize;
@@ -254,9 +254,9 @@ struct LaunchExecute<
         //
         // Privatize the loop_body, using make_launch_body to setup reductions
         //
-        auto body = RAJA::cuda::make_launch_body(
+        BODY body = RAJA::cuda::make_launch_body(
             func, gridSize, blockSize, shared_mem_size, cuda_res,
-            std::forward<RegisteredBody>(registered_body));
+            std::forward<BODY_IN>(body_in));
 
         //
         // Launch the kernel
