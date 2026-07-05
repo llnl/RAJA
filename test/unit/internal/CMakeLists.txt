@@ -15,3 +15,6 @@ raja_add_test(
   NAME test-rajavec
   SOURCES test-rajavec.cpp)
 
+raja_add_test(
+  NAME test-tensor-binary-operator-traits
+  SOURCES test-tensor-binary-operator-traits.cpp)
