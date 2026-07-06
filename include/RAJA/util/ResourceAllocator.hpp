@@ -88,7 +88,11 @@ struct ResourceAllocator
 
     Resource const& get_resource() const { return m_res; }
 
+    Resource get_resource() { return m_res; }
+
     RAJA::resources::MemoryAccess get_mem_access() const { return m_mem_type; }
+
+    RAJA::resources::MemoryAccess get_mem_access() { return m_mem_type; }
 
     template<typename U>
     friend inline bool operator==(allocator const& lhs, allocator<U> const& rhs)
