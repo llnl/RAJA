@@ -421,19 +421,12 @@ public:
 
   void wait_all()
   {
+    // This checks to verify there are callbacks before getting messages
+    // since `get_messages` will force a sync.
     if (!m_callback_map.empty())
     {
       auto messages = get_messages();
-      for (const auto& msg : messages)
-      {
-        msg_id id = std::make_pair(msg->type, msg->hash);
-        for (auto& callback : m_callback_map[id])
-        {
-          (*callback)(msg->args);
-        }
-        msg->~MsgHeader();
-      }
-      messages.clear();
+      handle_all(messages);
     }
     clear();
   }
