@@ -34,8 +34,7 @@ namespace RAJA
  * hash value of each type uses `std::hash`.
  *
  * Note: this is a simple hash combiner that can generate
- * collisons with being useful for combining hashes for
- * maps and sets.
+ * collisons.
  *
  */
 template<typename... Ts>

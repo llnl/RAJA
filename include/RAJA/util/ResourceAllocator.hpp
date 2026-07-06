@@ -96,12 +96,6 @@ struct ResourceAllocator
       return lhs.get_resource() == rhs.get_resource();
     }
 
-    template<typename U>
-    friend inline bool operator!=(allocator const& lhs, allocator<U> const& rhs)
-    {
-      return !(lhs == rhs);
-    }
-
   private:
     Resource m_res;
     RAJA::resources::MemoryAccess m_mem_type;

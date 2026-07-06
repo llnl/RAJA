@@ -52,7 +52,7 @@ public:
   explicit MsgCallback(Callable&& callable) : m_callable {std::move(callable)}
   {}
 
-  std::type_index get_type() const final override { return typeid(Callable); }
+  std::type_index get_type() const final { return typeid(Callable); }
 
   void operator()(char* args_buf) const final override
   {

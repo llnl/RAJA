@@ -114,11 +114,6 @@ private:
       return (cur_ptr == other.cur_ptr);
     }
 
-    bool operator!=(const MsgIterator& other) const
-    {
-      return !(*this == other);
-    }
-
   private:
     pointer cur_ptr;
   };
