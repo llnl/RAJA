@@ -338,7 +338,7 @@ public:
   {
     RAJA::MsgCallback callback {std::forward<Callable>(c)};
     auto& fn_list = m_callback_map.at(id);
-    auto it = std::find_if(fn_list.begin(), fn_list.end(), [](const auto& fn) {
+    auto it       = std::ranges::find_if(fn_list, [](const auto& fn) {
       return std::type_index {typeid(Callable)} == fn->get_type();
     });
 
