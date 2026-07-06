@@ -19,7 +19,7 @@
 # project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
 # So that the comparison with the original job is easier.
 
-## rocm 5.7.1 job is in the shared RSC set of jobs
+## rocm 6.4.2 job is in the shared RSC set of jobs
 
 ############
 # Extra jobs
@@ -28,14 +28,16 @@
 # ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
 # describe the spec here.
 
-rocmcc_5_7_1_hip_openmp:
+rocmcc_6_4_2_hip_openmp:
   variables:
-    SPEC: " ~shared +rocm +openmp +tests +vectorization amdgpu_target=gfx906 %llvm-amdgpu@=5.7.1 ^hip@5.7.1"
+    SPEC: " ~shared +rocm +openmp +tests +vectorization amdgpu_target=gfx906 %llvm-amdgpu@=6.4.2 ^hip@6.4.2"
+    MODULE_LIST: "rocm/6.4.2"
   extends: .job_on_corona
 
-rocmcc_5_7_1_hip_desul_atomics:
+rocmcc_6_4_2_hip_desul_atomics:
   variables:
-    SPEC: " ~shared +rocm ~openmp +tests +desul amdgpu_target=gfx906 %llvm-amdgpu@=5.7.1 ^hip@5.7.1"
+    SPEC: " ~shared +rocm ~openmp +tests +desul amdgpu_target=gfx906 %llvm-amdgpu@=6.4.2 ^hip@6.4.2"
+    MODULE_LIST: "rocm/6.4.2"
   extends: .job_on_corona
 
 clang_22_0_0_sycl_gcc_10_3_1_rocmcc_6_4_3:
