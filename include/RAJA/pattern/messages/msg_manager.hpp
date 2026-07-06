@@ -144,7 +144,7 @@ private:
 
   private:
     resource_type m_res;
-    allocator_type m_alloc;
+    [[no_unique_address]] allocator_type m_alloc;
   };
 
 public:
@@ -164,8 +164,7 @@ public:
 
   template<typename Resource>
   MessageBus(Resource res, Allocator alloc = Allocator {})
-      : m_bus {new(queue_allocator(alloc).allocate(1)) Queue {},
-               ResourceDeleter {res, alloc}}
+      : m_bus {allocate_bus(res, alloc)}
   {}
 
   template<typename Resource>
@@ -287,6 +286,14 @@ public:
   }
 
 private:
+  template<typename Resource>
+  auto allocate_bus(Resource res, Allocator alloc)
+  {
+    ResourceDeleter deleter {res, alloc};
+    Queue* queue {new (deleter.get_allocator().allocate(1)) Queue {}};
+    return std::unique_ptr<Queue, ResourceDeleter> {queue, std::move(deleter)};
+  }
+
   std::unique_ptr<Queue, ResourceDeleter> m_bus;
 };
 
