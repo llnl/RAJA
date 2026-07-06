@@ -25,6 +25,8 @@
 
 namespace RAJA
 {
+namespace detail
+{
 /*!
  * @brief Combines hashes of all types together.
  * @param values Objects to combine hashes for
@@ -59,9 +61,10 @@ struct PairHash
   template<typename T1, typename T2>
   constexpr std::size_t operator()(const std::pair<T1, T2>& p) const
   {
-    return RAJA::hash_combine(p.first, p.second);
+    return RAJA::detail::hash_combine(p.first, p.second);
   }
 };
+}  // end namespace detail
 }  // end namespace RAJA
 
 #endif /* RAJA_HashComber_HPP */

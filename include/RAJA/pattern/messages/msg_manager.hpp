@@ -451,7 +451,8 @@ private:
   }
 
   msg_bus m_bus;
-  std::unordered_map<msg_id, msg_fn_list_t, RAJA::PairHash> m_callback_map;
+  std::unordered_map<msg_id, msg_fn_list_t, RAJA::detail::PairHash>
+      m_callback_map;
 };
 
 template<typename Resource,
