@@ -51,14 +51,6 @@ namespace RAJA
 
 #if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
 
-#if defined(RAJA_CUDA_ACTIVE)
-#define RAJA_DEVICE_BACKEND_PREFIX cuda
-#elif defined(RAJA_HIP_ACTIVE)
-#define RAJA_DEVICE_BACKEND_PREFIX hip
-#endif
-
-#define RAJA_DEVICE_ALIAS(name) RAJA_CONCAT(RAJA_DEVICE_BACKEND_PREFIX, _##name)
-
 // forall
 template<size_t BLOCK_SIZE, bool Async = false>
 using device_exec = RAJA_DEVICE_ALIAS(exec)<BLOCK_SIZE, Async>;
@@ -178,9 +170,6 @@ using device_block_z_direct = RAJA_DEVICE_ALIAS(block_z_direct);
 using device_block_x_loop = RAJA_DEVICE_ALIAS(block_x_loop);
 using device_block_y_loop = RAJA_DEVICE_ALIAS(block_y_loop);
 using device_block_z_loop = RAJA_DEVICE_ALIAS(block_z_loop);
-
-#undef RAJA_DEVICE_ALIAS
-#undef RAJA_DEVICE_BACKEND_PREFIX
 
 #elif defined(RAJA_SYCL_ACTIVE)
 

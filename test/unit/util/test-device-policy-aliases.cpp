@@ -22,14 +22,6 @@ namespace
 
 #if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
 
-#if defined(RAJA_CUDA_ACTIVE)
-#define RAJA_DEVICE_BACKEND_PREFIX cuda
-#elif defined(RAJA_HIP_ACTIVE)
-#define RAJA_DEVICE_BACKEND_PREFIX hip
-#endif
-
-#define RAJA_DEVICE_ALIAS(name) RAJA_CONCAT(RAJA_DEVICE_BACKEND_PREFIX, _##name)
-
 static_assert(std::is_same<RAJA::device_exec<128, false>,
 
                            RAJA::RAJA_DEVICE_ALIAS(exec)<128, false>>::value,
@@ -46,9 +38,6 @@ static_assert(std::is_same<RAJA::device_thread_x_direct,
 static_assert(std::is_same<RAJA::device_block_x_loop,
                            RAJA::RAJA_DEVICE_ALIAS(block_x_loop)>::value,
               "device_block_x_loop should map to the active GPU backend");
-
-#undef RAJA_DEVICE_ALIAS
-#undef RAJA_DEVICE_BACKEND_PREFIX
 
 #elif defined(RAJA_SYCL_ACTIVE)
 static_assert(std::is_same<RAJA::device_exec<128, false>,

@@ -122,6 +122,14 @@ RAJA_HOST_DEVICE RAJA_INLINE void RAJA_UNUSED_VAR(T&&...) noexcept {}
 #define RAJA_CONCAT_IMPL(prefix, suffix) prefix##suffix
 #define RAJA_CONCAT(prefix, suffix) RAJA_CONCAT_IMPL(prefix, suffix)
 
+#if defined(RAJA_CUDA_ACTIVE)
+#define RAJA_DEVICE_BACKEND_PREFIX cuda
+#define RAJA_DEVICE_ALIAS(name) RAJA_CONCAT(RAJA_DEVICE_BACKEND_PREFIX, _##name)
+#elif defined(RAJA_HIP_ACTIVE)
+#define RAJA_DEVICE_BACKEND_PREFIX hip
+#define RAJA_DEVICE_ALIAS(name) RAJA_CONCAT(RAJA_DEVICE_BACKEND_PREFIX, _##name)
+#endif
+
 #define RAJA_DIVIDE_CEILING_INT(dividend, divisor)                             \
   (((dividend) + (divisor) - 1) / (divisor))
 
