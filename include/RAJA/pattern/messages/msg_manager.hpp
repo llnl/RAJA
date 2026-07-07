@@ -352,7 +352,6 @@ public:
     using msg_callback_t = decltype(callback);
     if (it != fn_list.end())
     {
-      // TODO: would it be better to throw or just replace old one?
       *it = std::make_unique<msg_callback_t>(std::move(callback));
     }
     else
