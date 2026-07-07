@@ -28,11 +28,10 @@ namespace
 #define RAJA_DEVICE_BACKEND_PREFIX hip
 #endif
 
-#define RAJA_DEVICE_CONCAT_IMPL(prefix, suffix) prefix##suffix
-#define RAJA_DEVICE_CONCAT(prefix, suffix) RAJA_DEVICE_CONCAT_IMPL(prefix, suffix)
-#define RAJA_DEVICE_ALIAS(name) RAJA_DEVICE_CONCAT(RAJA_DEVICE_BACKEND_PREFIX, _##name)
+#define RAJA_DEVICE_ALIAS(name) RAJA_CONCAT(RAJA_DEVICE_BACKEND_PREFIX, _##name)
 
 static_assert(std::is_same<RAJA::device_exec<128, false>,
+
                            RAJA::RAJA_DEVICE_ALIAS(exec)<128, false>>::value,
               "device_exec should map to the active GPU backend");
 static_assert(std::is_same<RAJA::device_launch_t<false>,
@@ -49,26 +48,44 @@ static_assert(std::is_same<RAJA::device_block_x_loop,
               "device_block_x_loop should map to the active GPU backend");
 
 #undef RAJA_DEVICE_ALIAS
-#undef RAJA_DEVICE_CONCAT
-#undef RAJA_DEVICE_CONCAT_IMPL
 #undef RAJA_DEVICE_BACKEND_PREFIX
 
 #elif defined(RAJA_SYCL_ACTIVE)
 static_assert(std::is_same<RAJA::device_exec<128, false>,
                            RAJA::sycl_exec<128, false>>::value,
               "device_exec should map to sycl_exec when RAJA_SYCL_ACTIVE");
+static_assert(std::is_same<RAJA::device_atomic,
+                           RAJA::sycl_atomic>::value,
+              "device_atomic should map to sycl_atomic when RAJA_SYCL_ACTIVE");
+static_assert(std::is_same<RAJA::device_atomic_explicit<RAJA::seq_atomic>,
+                           RAJA::sycl_atomic_explicit<RAJA::seq_atomic>>::value,
+              "device_atomic_explicit should map to sycl_atomic_explicit");
+static_assert(std::is_same<RAJA::device_reduce, RAJA::sycl_reduce>::value,
+              "device_reduce should map to sycl_reduce when RAJA_SYCL_ACTIVE");
 static_assert(std::is_same<RAJA::device_launch_t<false>,
                            RAJA::sycl_launch_t<false>>::value,
               "device_launch_t should map to sycl_launch_t when RAJA_SYCL_ACTIVE");
 static_assert(std::is_same<RAJA::device_global_size_x_direct<64>,
                            RAJA::sycl_global_2<64>>::value,
               "device_global_size_x_direct should map to sycl_global_2");
+static_assert(std::is_same<RAJA::device_global_thread_x,
+                           RAJA::sycl_global_item_2>::value,
+              "device_global_thread_x should map to sycl_global_item_2");
 static_assert(std::is_same<RAJA::device_thread_x_direct,
                            RAJA::sycl_local_2_direct>::value,
               "device_thread_x_direct should map to sycl_local_2_direct");
+static_assert(std::is_same<RAJA::device_thread_x_loop,
+                           RAJA::sycl_local_2_loop>::value,
+              "device_thread_x_loop should map to sycl_local_2_loop");
 static_assert(std::is_same<RAJA::device_block_x_loop,
                            RAJA::sycl_group_2_loop>::value,
               "device_block_x_loop should map to sycl_group_2_loop");
+static_assert(std::is_same<RAJA::device_flatten_block_threads_xy_direct,
+                           RAJA::sycl_flatten_group_local_21_direct>::value,
+              "device_flatten_block_threads_xy_direct should map to sycl flatten");
+static_assert(std::is_same<RAJA::device_flatten_block_threads_xy_loop,
+                           RAJA::sycl_flatten_group_local_21_loop>::value,
+              "device_flatten_block_threads_xy_loop should map to sycl flatten");
 #endif
 
 }  // namespace

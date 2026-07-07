@@ -25,6 +25,7 @@
 
 #include "RAJA/config.hpp"
 
+#include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 
 #if defined(RAJA_CUDA_ACTIVE)
@@ -56,9 +57,7 @@ namespace RAJA
 #define RAJA_DEVICE_BACKEND_PREFIX hip
 #endif
 
-#define RAJA_DEVICE_CONCAT_IMPL(prefix, suffix) prefix##suffix
-#define RAJA_DEVICE_CONCAT(prefix, suffix) RAJA_DEVICE_CONCAT_IMPL(prefix, suffix)
-#define RAJA_DEVICE_ALIAS(name) RAJA_DEVICE_CONCAT(RAJA_DEVICE_BACKEND_PREFIX, _##name)
+#define RAJA_DEVICE_ALIAS(name) RAJA_CONCAT(RAJA_DEVICE_BACKEND_PREFIX, _##name)
 
 // forall
 template<size_t BLOCK_SIZE, bool Async = false>
@@ -66,6 +65,65 @@ using device_exec = RAJA_DEVICE_ALIAS(exec)<BLOCK_SIZE, Async>;
 
 template<size_t BLOCK_SIZE>
 using device_exec_async = device_exec<BLOCK_SIZE, true>;
+
+template<size_t BLOCK_SIZE, bool Async = false>
+using device_exec_with_reduce = RAJA::hip_exec_with_reduce<BLOCK_SIZE, Async>;
+
+template<size_t BLOCK_SIZE>
+using device_exec_with_reduce_async = device_exec_with_reduce<BLOCK_SIZE, true>;
+
+template<bool with_reduce, size_t BLOCK_SIZE, bool Async = false>
+using device_exec_base = RAJA::hip_exec_base<with_reduce, BLOCK_SIZE, Async>;
+
+template<bool with_reduce, size_t BLOCK_SIZE>
+using device_exec_base_async =
+    RAJA::hip_exec_base_async<with_reduce, BLOCK_SIZE>;
+
+template<size_t BLOCK_SIZE, size_t GRID_SIZE, bool Async = false>
+using device_exec_grid = RAJA::hip_exec_grid<BLOCK_SIZE, GRID_SIZE, Async>;
+
+template<size_t BLOCK_SIZE, size_t GRID_SIZE>
+using device_exec_grid_async = RAJA::hip_exec_grid_async<BLOCK_SIZE, GRID_SIZE>;
+
+template<size_t BLOCK_SIZE, bool Async = false>
+using device_exec_occ_calc = RAJA::hip_exec_occ_calc<BLOCK_SIZE, Async>;
+
+template<size_t BLOCK_SIZE>
+using device_exec_occ_calc_async = RAJA::hip_exec_occ_calc_async<BLOCK_SIZE>;
+
+template<size_t BLOCK_SIZE, bool Async = false>
+using device_exec_occ_max = RAJA::hip_exec_occ_max<BLOCK_SIZE, Async>;
+
+template<size_t BLOCK_SIZE>
+using device_exec_occ_max_async = RAJA::hip_exec_occ_max_async<BLOCK_SIZE>;
+
+template<size_t BLOCK_SIZE, typename Fraction, bool Async = false>
+using device_exec_occ_fraction =
+    RAJA::hip_exec_occ_fraction<BLOCK_SIZE, Fraction, Async>;
+
+template<size_t BLOCK_SIZE, typename Fraction>
+using device_exec_occ_fraction_async =
+    RAJA::hip_exec_occ_fraction_async<BLOCK_SIZE, Fraction>;
+
+template<size_t BLOCK_SIZE, typename Concretizer, bool Async = false>
+using device_exec_occ_custom =
+    RAJA::hip_exec_occ_custom<BLOCK_SIZE, Concretizer, Async>;
+
+template<size_t BLOCK_SIZE, typename Concretizer>
+using device_exec_occ_custom_async =
+    RAJA::hip_exec_occ_custom_async<BLOCK_SIZE, Concretizer>;
+
+// reducers and atomics
+using device_atomic = RAJA::hip_atomic;
+template<typename host_policy>
+using device_atomic_explicit = RAJA::hip_atomic_explicit<host_policy>;
+using device_reduce          = RAJA::hip_reduce;
+using device_reduce_atomic   = RAJA::hip_reduce_atomic;
+template<bool with_atomic>
+using device_reduce_base         = RAJA::hip_reduce_base<with_atomic>;
+using device_multi_reduce_atomic = RAJA::hip_multi_reduce_atomic;
+using device_multi_reduce_atomic_low_performance_low_overhead =
+    RAJA::hip_multi_reduce_atomic_low_performance_low_overhead;
 
 // launch
 template<bool Async, int num_threads = RAJA::named_usage::unspecified>
@@ -81,6 +139,23 @@ using device_global_size_y_direct =
 template<int nz_threads>
 using device_global_size_z_direct =
     RAJA_DEVICE_ALIAS(global_size_z_direct)<nz_threads>;
+
+template<int nx_threads>
+using device_global_size_x_direct_unchecked =
+    RAJA::hip_global_size_x_direct_unchecked<nx_threads>;
+template<int ny_threads>
+using device_global_size_y_direct_unchecked =
+    RAJA::hip_global_size_y_direct_unchecked<ny_threads>;
+template<int nz_threads>
+using device_global_size_z_direct_unchecked =
+    RAJA::hip_global_size_z_direct_unchecked<nz_threads>;
+
+template<int nx_threads>
+using device_global_size_x_loop = RAJA::hip_global_size_x_loop<nx_threads>;
+template<int ny_threads>
+using device_global_size_y_loop = RAJA::hip_global_size_y_loop<ny_threads>;
+template<int nz_threads>
+using device_global_size_z_loop = RAJA::hip_global_size_z_loop<nz_threads>;
 
 // launch (loop) index mapping
 using device_global_thread_x = RAJA_DEVICE_ALIAS(global_thread_x);
@@ -105,8 +180,6 @@ using device_block_y_loop = RAJA_DEVICE_ALIAS(block_y_loop);
 using device_block_z_loop = RAJA_DEVICE_ALIAS(block_z_loop);
 
 #undef RAJA_DEVICE_ALIAS
-#undef RAJA_DEVICE_CONCAT
-#undef RAJA_DEVICE_CONCAT_IMPL
 #undef RAJA_DEVICE_BACKEND_PREFIX
 
 #elif defined(RAJA_SYCL_ACTIVE)
@@ -117,6 +190,12 @@ using device_exec = RAJA::sycl_exec<WORK_GROUP_SIZE, Async>;
 
 template<size_t WORK_GROUP_SIZE>
 using device_exec_async = device_exec<WORK_GROUP_SIZE, true>;
+
+// reducers and atomics
+using device_atomic = RAJA::sycl_atomic;
+template<typename host_policy>
+using device_atomic_explicit = RAJA::sycl_atomic_explicit<host_policy>;
+using device_reduce          = RAJA::sycl_reduce;
 
 // launch
 template<bool Async, int num_threads = RAJA::named_usage::unspecified>
@@ -151,6 +230,56 @@ using device_block_z_direct = RAJA::sycl_group_0_direct;
 using device_block_x_loop = RAJA::sycl_group_2_loop;
 using device_block_y_loop = RAJA::sycl_group_1_loop;
 using device_block_z_loop = RAJA::sycl_group_0_loop;
+
+using device_flatten_block_threads_xy_direct =
+    RAJA::sycl_flatten_group_local_21_direct;
+using device_flatten_block_threads_xz_direct =
+    RAJA::sycl_flatten_group_local_20_direct;
+using device_flatten_block_threads_yx_direct =
+    RAJA::sycl_flatten_group_local_12_direct;
+using device_flatten_block_threads_yz_direct =
+    RAJA::sycl_flatten_group_local_10_direct;
+using device_flatten_block_threads_zx_direct =
+    RAJA::sycl_flatten_group_local_02_direct;
+using device_flatten_block_threads_zy_direct =
+    RAJA::sycl_flatten_group_local_01_direct;
+using device_flatten_block_threads_xyz_direct =
+    RAJA::sycl_flatten_group_local_210_direct;
+using device_flatten_block_threads_xzy_direct =
+    RAJA::sycl_flatten_group_local_201_direct;
+using device_flatten_block_threads_yxz_direct =
+    RAJA::sycl_flatten_group_local_120_direct;
+using device_flatten_block_threads_yzx_direct =
+    RAJA::sycl_flatten_group_local_102_direct;
+using device_flatten_block_threads_zxy_direct =
+    RAJA::sycl_flatten_group_local_021_direct;
+using device_flatten_block_threads_zyx_direct =
+    RAJA::sycl_flatten_group_local_012_direct;
+
+using device_flatten_block_threads_xy_loop =
+    RAJA::sycl_flatten_group_local_21_loop;
+using device_flatten_block_threads_xz_loop =
+    RAJA::sycl_flatten_group_local_20_loop;
+using device_flatten_block_threads_yx_loop =
+    RAJA::sycl_flatten_group_local_12_loop;
+using device_flatten_block_threads_yz_loop =
+    RAJA::sycl_flatten_group_local_10_loop;
+using device_flatten_block_threads_zx_loop =
+    RAJA::sycl_flatten_group_local_02_loop;
+using device_flatten_block_threads_zy_loop =
+    RAJA::sycl_flatten_group_local_01_loop;
+using device_flatten_block_threads_xyz_loop =
+    RAJA::sycl_flatten_group_local_210_loop;
+using device_flatten_block_threads_xzy_loop =
+    RAJA::sycl_flatten_group_local_201_loop;
+using device_flatten_block_threads_yxz_loop =
+    RAJA::sycl_flatten_group_local_120_loop;
+using device_flatten_block_threads_yzx_loop =
+    RAJA::sycl_flatten_group_local_102_loop;
+using device_flatten_block_threads_zxy_loop =
+    RAJA::sycl_flatten_group_local_021_loop;
+using device_flatten_block_threads_zyx_loop =
+    RAJA::sycl_flatten_group_local_012_loop;
 
 #endif  // active backend
 

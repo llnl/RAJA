@@ -15,10 +15,11 @@
 // without downstream #if/#ifdef in user code.
 //
 // It also demonstrates Teams/Threads ordering helpers:
-//   - RAJA::Teams(x,y,z) and RAJA::Threads(x,y,z) are RAJA's canonical
-//   ordering.
+//   - RAJA::Teams(x,y,z) and RAJA::Threads(x,y,z) use RAJA's canonical x/y/z
+//     ordering.
 //   - RAJA::Teams::sycl_order(dim0,dim1,dim2) and Threads::sycl_order(...)
-//     express SYCL's (dim0,dim1,dim2) ordering and map to RAJA (x,y,z).
+//     express SYCL's dim0/dim1/dim2 ordering and map explicitly as
+//     x = dim2, y = dim1, z = dim0.
 //
 
 #include <iostream>
@@ -128,7 +129,8 @@ int main(int argc, char** argv)
 #endif
 
   // RAJA launch grid configuration is specified in (x,y,z). For SYCL-minded
-  // users, sycl_order(dim0,dim1,dim2) provides an explicit mapping.
+  // users, sycl_order(dim0,dim1,dim2) provides an explicit x=dim2, y=dim1,
+  // z=dim0 mapping.
   RAJA::LaunchParams params_raja(RAJA::Teams(nteams_x, nteams_y, 1),
                                  RAJA::Threads(nthreads_x, nthreads_y, 1));
 

@@ -31,7 +31,7 @@ variables:
   # Matrix (SLURM) allocation settings
   MATRIX_SHARED_ALLOC: "OFF"
   # Note: we repeat the reservation, helpful when jobs are manually re-triggered.
-  MATRIX_JOB_ALLOC: "--partition=pci --exclusive=user --time=20 --nodes=1"
+  MATRIX_JOB_ALLOC: "--partition=pci --time=30 --gpus=1"
   # Project specific variants for matrix
   PROJECT_MATRIX_VARIANTS: "~shared +cuda cuda_arch=90 +tests"
   # Project specific deps for matrix

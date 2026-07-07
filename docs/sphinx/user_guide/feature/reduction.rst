@@ -162,6 +162,70 @@ The result of the reduction is the value '13'. In binary representation
 :math:`5 = ...00101` (the initial reduction value).
 So :math:`9 | 5 = ...01001 | ...00101 = ...01101 = 13`.
 
+------------------------
+Reducer Helper Utilities
+------------------------
+
+RAJA also provides small reducer helper classes and functions in
+``RAJA/util/reduce.hpp``. These helpers are useful when values are already in a
+range-like object, or when an algorithm needs to combine values incrementally
+outside a ``RAJA::forall``, ``RAJA::kernel``, or ``RAJA::launch`` body.
+They are also available through the main ``RAJA/RAJA.hpp`` header.
+
+The range helper functions are:
+
+* ``RAJA::accumulate`` and ``RAJA::left_fold_reduce`` - combine values with a
+  left-fold algorithm in input order using ``O(N)`` operations and ``O(1)``
+  extra memory. ``RAJA::accumulate`` is the most direct analogue to
+  ``std::accumulate``.
+
+* ``RAJA::binary_tree_reduce`` - combines values with a binary-tree algorithm
+  using ``O(N)`` operations and ``O(log(N))`` extra memory. Since this changes
+  the grouping of operations, it is best suited to associative operations.
+
+* ``RAJA::high_accuracy_reduce`` - chooses a higher-accuracy implementation
+  when floating-point round-off is a concern, and otherwise uses a left fold.
+
+* ``RAJA::kahan_sum`` and ``RAJA::kahan_sum_volatile`` - perform compensated
+  summation for floating-point ranges. The volatile variant keeps intermediate
+  values volatile to discourage compiler optimizations, such as fast-math
+  transformations, that can remove the compensation steps.
+
+For example::
+
+  std::array<int, 4> ints {1, 2, 3, 4};
+
+  int sum = RAJA::accumulate(ints, 0);
+
+  int max = RAJA::binary_tree_reduce(
+      ints,
+      RAJA::operators::maximum<int>::identity(),
+      RAJA::operators::maximum<int> {});
+
+  std::array<double, 4> vals {1.0e16, 1.0, -1.0e16, 3.0};
+
+  double compensated_sum = RAJA::kahan_sum(vals);
+
+The corresponding reducer helper types are ``RAJA::LeftFoldReduce``,
+``RAJA::BinaryTreeReduce``, ``RAJA::HighAccuracyReduce``, and
+``RAJA::KahanSum``. These types expose a small common interface:
+
+* ``combine(value)`` and ``operator+=(value)`` add a value to the reducer.
+* ``get()`` returns the current reduced value.
+* ``reset(init)`` resets the reducer to an initial value.
+* ``get_and_reset(init)`` returns the current value and then resets the
+  reducer.
+
+For example::
+
+  RAJA::KahanSum<double> reducer(0.0);
+
+  for (double value : vals) {
+    reducer += value;
+  }
+
+  double result = reducer.get_and_reset();
+
 -------------------
 Reduction Policies
 -------------------
