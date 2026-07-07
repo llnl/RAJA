@@ -48,91 +48,66 @@ namespace RAJA
  *   x -> dim2, y -> dim1, z -> dim0
  */
 
+#if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
+
 #if defined(RAJA_CUDA_ACTIVE)
-
-// forall
-template<size_t BLOCK_SIZE, bool Async = false>
-using device_exec = RAJA::cuda_exec<BLOCK_SIZE, Async>;
-
-template<size_t BLOCK_SIZE>
-using device_exec_async = device_exec<BLOCK_SIZE, true>;
-
-// launch
-template<bool Async, int num_threads = RAJA::named_usage::unspecified>
-using device_launch_t = RAJA::cuda_launch_t<Async, num_threads>;
-
-// kernel (For) index mapping
-template<int nx_threads>
-using device_global_size_x_direct = RAJA::cuda_global_size_x_direct<nx_threads>;
-template<int ny_threads>
-using device_global_size_y_direct = RAJA::cuda_global_size_y_direct<ny_threads>;
-template<int nz_threads>
-using device_global_size_z_direct = RAJA::cuda_global_size_z_direct<nz_threads>;
-
-// launch (loop) index mapping
-using device_global_thread_x = RAJA::cuda_global_thread_x;
-using device_global_thread_y = RAJA::cuda_global_thread_y;
-using device_global_thread_z = RAJA::cuda_global_thread_z;
-
-// kernel (loop) index mapping
-using device_thread_x_direct = RAJA::cuda_thread_x_direct;
-using device_thread_y_direct = RAJA::cuda_thread_y_direct;
-using device_thread_z_direct = RAJA::cuda_thread_z_direct;
-
-using device_thread_x_loop = RAJA::cuda_thread_x_loop;
-using device_thread_y_loop = RAJA::cuda_thread_y_loop;
-using device_thread_z_loop = RAJA::cuda_thread_z_loop;
-
-using device_block_x_direct = RAJA::cuda_block_x_direct;
-using device_block_y_direct = RAJA::cuda_block_y_direct;
-using device_block_z_direct = RAJA::cuda_block_z_direct;
-
-using device_block_x_loop = RAJA::cuda_block_x_loop;
-using device_block_y_loop = RAJA::cuda_block_y_loop;
-using device_block_z_loop = RAJA::cuda_block_z_loop;
-
+#define RAJA_DEVICE_BACKEND_PREFIX cuda
 #elif defined(RAJA_HIP_ACTIVE)
+#define RAJA_DEVICE_BACKEND_PREFIX hip
+#endif
+
+#define RAJA_DEVICE_CONCAT_IMPL(prefix, suffix) prefix##suffix
+#define RAJA_DEVICE_CONCAT(prefix, suffix) RAJA_DEVICE_CONCAT_IMPL(prefix, suffix)
+#define RAJA_DEVICE_ALIAS(name) RAJA_DEVICE_CONCAT(RAJA_DEVICE_BACKEND_PREFIX, _##name)
 
 // forall
 template<size_t BLOCK_SIZE, bool Async = false>
-using device_exec = RAJA::hip_exec<BLOCK_SIZE, Async>;
+using device_exec = RAJA_DEVICE_ALIAS(exec)<BLOCK_SIZE, Async>;
 
 template<size_t BLOCK_SIZE>
 using device_exec_async = device_exec<BLOCK_SIZE, true>;
 
 // launch
 template<bool Async, int num_threads = RAJA::named_usage::unspecified>
-using device_launch_t = RAJA::hip_launch_t<Async, num_threads>;
+using device_launch_t = RAJA_DEVICE_ALIAS(launch_t)<Async, num_threads>;
 
 // kernel (For) index mapping
 template<int nx_threads>
-using device_global_size_x_direct = RAJA::hip_global_size_x_direct<nx_threads>;
+using device_global_size_x_direct =
+    RAJA_DEVICE_ALIAS(global_size_x_direct)<nx_threads>;
 template<int ny_threads>
-using device_global_size_y_direct = RAJA::hip_global_size_y_direct<ny_threads>;
+using device_global_size_y_direct =
+    RAJA_DEVICE_ALIAS(global_size_y_direct)<ny_threads>;
 template<int nz_threads>
-using device_global_size_z_direct = RAJA::hip_global_size_z_direct<nz_threads>;
+using device_global_size_z_direct =
+    RAJA_DEVICE_ALIAS(global_size_z_direct)<nz_threads>;
 
 // launch (loop) index mapping
-using device_global_thread_x = RAJA::hip_global_thread_x;
-using device_global_thread_y = RAJA::hip_global_thread_y;
-using device_global_thread_z = RAJA::hip_global_thread_z;
+using device_global_thread_x = RAJA_DEVICE_ALIAS(global_thread_x);
+using device_global_thread_y = RAJA_DEVICE_ALIAS(global_thread_y);
+using device_global_thread_z = RAJA_DEVICE_ALIAS(global_thread_z);
 
 // kernel (loop) index mapping
-using device_thread_x_direct = RAJA::hip_thread_x_direct;
-using device_thread_y_direct = RAJA::hip_thread_y_direct;
-using device_thread_z_direct = RAJA::hip_thread_z_direct;
+using device_thread_x_direct = RAJA_DEVICE_ALIAS(thread_x_direct);
+using device_thread_y_direct = RAJA_DEVICE_ALIAS(thread_y_direct);
+using device_thread_z_direct = RAJA_DEVICE_ALIAS(thread_z_direct);
 
-using device_thread_x_loop = RAJA::hip_thread_x_loop;
-using device_thread_y_loop = RAJA::hip_thread_y_loop;
-using device_thread_z_loop = RAJA::hip_thread_z_loop;
+using device_thread_x_loop = RAJA_DEVICE_ALIAS(thread_x_loop);
+using device_thread_y_loop = RAJA_DEVICE_ALIAS(thread_y_loop);
+using device_thread_z_loop = RAJA_DEVICE_ALIAS(thread_z_loop);
 
-using device_block_x_direct = RAJA::hip_block_x_direct;
-using device_block_y_direct = RAJA::hip_block_y_direct;
-using device_block_z_direct = RAJA::hip_block_z_direct;
+using device_block_x_direct = RAJA_DEVICE_ALIAS(block_x_direct);
+using device_block_y_direct = RAJA_DEVICE_ALIAS(block_y_direct);
+using device_block_z_direct = RAJA_DEVICE_ALIAS(block_z_direct);
 
-using device_block_x_loop = RAJA::hip_block_x_loop;
-using device_block_y_loop = RAJA::hip_block_y_loop;
-using device_block_z_loop = RAJA::hip_block_z_loop;
+using device_block_x_loop = RAJA_DEVICE_ALIAS(block_x_loop);
+using device_block_y_loop = RAJA_DEVICE_ALIAS(block_y_loop);
+using device_block_z_loop = RAJA_DEVICE_ALIAS(block_z_loop);
+
+#undef RAJA_DEVICE_ALIAS
+#undef RAJA_DEVICE_CONCAT
+#undef RAJA_DEVICE_CONCAT_IMPL
+#undef RAJA_DEVICE_BACKEND_PREFIX
 
 #elif defined(RAJA_SYCL_ACTIVE)
 

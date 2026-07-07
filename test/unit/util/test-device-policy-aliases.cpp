@@ -20,39 +20,38 @@
 namespace
 {
 
-#if defined(RAJA_CUDA_ACTIVE)
-static_assert(std::is_same<RAJA::device_exec<128, false>,
-                           RAJA::cuda_exec<128, false>>::value,
-              "device_exec should map to cuda_exec when RAJA_CUDA_ACTIVE");
-static_assert(std::is_same<RAJA::device_launch_t<false>,
-                           RAJA::cuda_launch_t<false>>::value,
-              "device_launch_t should map to cuda_launch_t when RAJA_CUDA_ACTIVE");
-static_assert(std::is_same<RAJA::device_global_size_x_direct<64>,
-                           RAJA::cuda_global_size_x_direct<64>>::value,
-              "device_global_size_x_direct should map to cuda_global_size_x_direct");
-static_assert(std::is_same<RAJA::device_thread_x_direct,
-                           RAJA::cuda_thread_x_direct>::value,
-              "device_thread_x_direct should map to cuda_thread_x_direct");
-static_assert(std::is_same<RAJA::device_block_x_loop,
-                           RAJA::cuda_block_x_loop>::value,
-              "device_block_x_loop should map to cuda_block_x_loop");
+#if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
 
+#if defined(RAJA_CUDA_ACTIVE)
+#define RAJA_DEVICE_BACKEND_PREFIX cuda
 #elif defined(RAJA_HIP_ACTIVE)
+#define RAJA_DEVICE_BACKEND_PREFIX hip
+#endif
+
+#define RAJA_DEVICE_CONCAT_IMPL(prefix, suffix) prefix##suffix
+#define RAJA_DEVICE_CONCAT(prefix, suffix) RAJA_DEVICE_CONCAT_IMPL(prefix, suffix)
+#define RAJA_DEVICE_ALIAS(name) RAJA_DEVICE_CONCAT(RAJA_DEVICE_BACKEND_PREFIX, _##name)
+
 static_assert(std::is_same<RAJA::device_exec<128, false>,
-                           RAJA::hip_exec<128, false>>::value,
-              "device_exec should map to hip_exec when RAJA_HIP_ACTIVE");
+                           RAJA::RAJA_DEVICE_ALIAS(exec)<128, false>>::value,
+              "device_exec should map to the active GPU backend");
 static_assert(std::is_same<RAJA::device_launch_t<false>,
-                           RAJA::hip_launch_t<false>>::value,
-              "device_launch_t should map to hip_launch_t when RAJA_HIP_ACTIVE");
+                           RAJA::RAJA_DEVICE_ALIAS(launch_t)<false>>::value,
+              "device_launch_t should map to the active GPU backend");
 static_assert(std::is_same<RAJA::device_global_size_x_direct<64>,
-                           RAJA::hip_global_size_x_direct<64>>::value,
-              "device_global_size_x_direct should map to hip_global_size_x_direct");
+                           RAJA::RAJA_DEVICE_ALIAS(global_size_x_direct)<64>>::value,
+              "device_global_size_x_direct should map to the active GPU backend");
 static_assert(std::is_same<RAJA::device_thread_x_direct,
-                           RAJA::hip_thread_x_direct>::value,
-              "device_thread_x_direct should map to hip_thread_x_direct");
+                           RAJA::RAJA_DEVICE_ALIAS(thread_x_direct)>::value,
+              "device_thread_x_direct should map to the active GPU backend");
 static_assert(std::is_same<RAJA::device_block_x_loop,
-                           RAJA::hip_block_x_loop>::value,
-              "device_block_x_loop should map to hip_block_x_loop");
+                           RAJA::RAJA_DEVICE_ALIAS(block_x_loop)>::value,
+              "device_block_x_loop should map to the active GPU backend");
+
+#undef RAJA_DEVICE_ALIAS
+#undef RAJA_DEVICE_CONCAT
+#undef RAJA_DEVICE_CONCAT_IMPL
+#undef RAJA_DEVICE_BACKEND_PREFIX
 
 #elif defined(RAJA_SYCL_ACTIVE)
 static_assert(std::is_same<RAJA::device_exec<128, false>,
@@ -75,4 +74,3 @@ static_assert(std::is_same<RAJA::device_block_x_loop,
 }  // namespace
 
 TEST(DevicePolicyAliases, compile_time_coverage) { SUCCEED(); }
-
