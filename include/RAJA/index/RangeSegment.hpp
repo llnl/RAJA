@@ -542,8 +542,8 @@ struct no_strong_index
 
 template<typename T>
 using strong_index_candidate_t =
-    std::conditional_t<std::is_base_of_v<IndexValueBase, std::decay_t<T>>,
-                       std::decay_t<T>,
+    std::conditional_t<RAJA::concepts::IndexValued<T>,
+                       std::remove_cvref_t<T>,
                        no_strong_index>;
 
 template<typename... Ts>
@@ -572,16 +572,16 @@ template<typename... Ts>
 using strong_index_type_t = typename strong_index_type<Ts...>::type;
 
 template<typename T>
-inline constexpr bool is_strong_index_v =
-    std::is_base_of_v<IndexValueBase, std::decay_t<T>>;
+inline constexpr bool is_strong_index_v = RAJA::concepts::IndexValued<T>;
 
 template<typename T>
 inline constexpr bool is_non_strong_integral_index_v =
     !is_strong_index_v<T> &&
-    std::is_integral_v<strip_index_type_t<std::decay_t<T>>>;
+    std::is_integral_v<strip_index_type_t<std::remove_cvref_t<T>>>;
 
 template<typename T>
-using range_stride_type_t = make_signed_t<strip_index_type_t<std::decay_t<T>>>;
+using range_stride_type_t =
+    make_signed_t<strip_index_type_t<std::remove_cvref_t<T>>>;
 
 template<typename StorageT, typename DeducedT>
 struct selected_range_storage
@@ -613,8 +613,9 @@ struct range_storage_from_strong<no_strong_index, Ts...>
 
 template<typename StrongT, typename T>
 struct strong_range_arg_compatible
-    : std::bool_constant<std::is_base_of_v<IndexValueBase, std::decay_t<T>> &&
-                         std::is_same_v<std::decay_t<T>, std::decay_t<StrongT>>>
+    : std::bool_constant<
+          RAJA::concepts::IndexValued<T> &&
+          std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<StrongT>>>
 {};
 
 template<typename StrongT, typename T>
@@ -701,9 +702,8 @@ using deduced_range_stride_diff_type_t =
 
 template<typename StorageT,
          typename T,
-         bool StorageIsStrong =
-             std::is_base_of_v<IndexValueBase, std::decay_t<StorageT>>,
-         bool ArgIsStrong = std::is_base_of_v<IndexValueBase, std::decay_t<T>>>
+         bool StorageIsStrong = RAJA::concepts::IndexValued<StorageT>,
+         bool ArgIsStrong     = RAJA::concepts::IndexValued<T>>
 struct explicit_range_arg_compatible_impl : std::false_type
 {};
 
@@ -715,7 +715,7 @@ struct explicit_range_arg_compatible_impl<StorageT, T, false, false>
 template<typename StorageT, typename T>
 struct explicit_range_arg_compatible_impl<StorageT, T, true, true>
     : std::bool_constant<
-          std::is_same_v<std::decay_t<T>, std::decay_t<StorageT>>>
+          std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<StorageT>>>
 {};
 
 template<typename StorageT, typename T>
@@ -728,9 +728,8 @@ inline constexpr bool explicit_range_arg_compatible_v =
 
 template<typename StorageT,
          typename T,
-         bool StorageIsStrong =
-             std::is_base_of_v<IndexValueBase, std::decay_t<StorageT>>,
-         bool ArgIsStrong = std::is_base_of_v<IndexValueBase, std::decay_t<T>>>
+         bool StorageIsStrong = RAJA::concepts::IndexValued<StorageT>,
+         bool ArgIsStrong     = RAJA::concepts::IndexValued<T>>
 struct explicit_range_stride_arg_compatible_impl
     : explicit_range_arg_compatible_impl<StorageT, T>
 {};
@@ -738,7 +737,7 @@ struct explicit_range_stride_arg_compatible_impl
 template<typename StorageT, typename T>
 struct explicit_range_stride_arg_compatible_impl<StorageT, T, true, false>
     : std::bool_constant<
-          std::is_integral_v<strip_index_type_t<std::decay_t<T>>>>
+          std::is_integral_v<strip_index_type_t<std::remove_cvref_t<T>>>>
 {};
 
 template<typename StorageT, typename T>
@@ -945,19 +944,6 @@ template<
           static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
           static_cast<DiffT>(stripIndexType(stride))};
 }
-
-namespace concepts
-{
-
-template<typename T, typename U>
-concept RangeConstructible =
-    RAJA::detail::deduced_range_storage_compatible_v<T, U>;
-
-template<typename T, typename U, typename V>
-concept RangeStrideConstructible =
-    RAJA::detail::deduced_range_stride_storage_compatible_for_range_v<T, U, V>;
-
-}  // namespace concepts
 
 namespace type_traits
 {

@@ -26,6 +26,7 @@
 #include "RAJA/util/types.hpp"
 #include <type_traits>
 
+#include "RAJA/index/IndexValue.hpp"
 #include "camp/concepts.hpp"
 
 namespace RAJA
@@ -38,6 +39,35 @@ concept BinaryFunction = std::is_invocable_r_v<Return, Function&, Arg1, Arg2>;
 
 template<class Function, class Return, class Arg1 = Return>
 concept UnaryFunction = std::is_invocable_r_v<Return, Function&, Arg1>;
+
+template<typename T, typename U>
+concept RangeConstructible =
+    (IndexValued<T> && IndexValued<U> &&
+     std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<U>>) ||
+    (!IndexValued<T> && !IndexValued<U> && requires {
+      typename std::common_type_t<std::remove_cvref_t<T>,
+                                  std::remove_cvref_t<U>>;
+    });
+
+template<typename StrongT, typename T>
+concept StrongOrIntegralRangeArg =
+    (IndexValued<T> &&
+     std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<StrongT>>) ||
+    (!IndexValued<T> &&
+     std::is_integral_v<strip_index_type_t<std::remove_cvref_t<T>>>);
+
+template<typename BeginT, typename EndT, typename StrideT>
+concept RangeStrideConstructible =
+    (!IndexValued<BeginT> && !IndexValued<EndT> && !IndexValued<StrideT> &&
+     requires {
+       typename std::common_type_t<std::remove_cvref_t<BeginT>,
+                                   std::remove_cvref_t<EndT>>;
+     }) ||
+    (IndexValued<BeginT> && StrongOrIntegralRangeArg<BeginT, EndT> &&
+     StrongOrIntegralRangeArg<BeginT, StrideT>) ||
+    (!IndexValued<BeginT> && IndexValued<EndT> &&
+     StrongOrIntegralRangeArg<EndT, BeginT> &&
+     StrongOrIntegralRangeArg<EndT, StrideT>);
 
 using namespace camp::concepts;
 }  // namespace concepts
