@@ -60,8 +60,8 @@ struct launch_nd_flattened_policy
 };
 
 /*!
- * A flattened launch_nd policy that supports selecting between a host and device
- * exec policy at runtime via RAJA::ExecPlace.
+ * A flattened launch_nd policy that supports selecting between a host and
+ * device exec policy at runtime via RAJA::ExecPlace.
  *
  * This is useful when the caller wants a single launch site but needs to choose
  * between e.g. seq_exec and cuda_exec/hip_exec based on runtime conditions.
@@ -467,8 +467,8 @@ void launch_nd(launch_nd_flattened_policy<ExecPolicy, LayoutTag>,
   util::callPostCapturePlugins(context);
   util::callPreLaunchPlugins(context);
 
-  detail::launch_nd_flattened_execute<ExecPolicy, LayoutTag>(
-      segs, std::move(body));
+  detail::launch_nd_flattened_execute<ExecPolicy, LayoutTag>(segs,
+                                                             std::move(body));
 
   util::callPostLaunchPlugins(context);
 }
@@ -524,8 +524,9 @@ void launch_nd(launch_nd_grid_policy<LaunchPolicy, LoopPolicies...> policy,
   auto&& loop_body = expt::get_lambda(std::forward<Params>(params)...);
   expt::check_forall_optional_args(loop_body, f_params);
 
-  util::PluginContext context {detail::make_launch_nd_context<
-      typename LaunchPolicy::host_policy_t>(std::move(kernel_name))};
+  util::PluginContext context {
+      detail::make_launch_nd_context<typename LaunchPolicy::host_policy_t>(
+          std::move(kernel_name))};
   util::callPreCapturePlugins(context);
 
   using RAJA::util::trigger_updates_before;
@@ -565,8 +566,9 @@ resources::EventProxy<resources::Resource> launch_nd(
   util::PluginContext context {detail::make_launch_nd_context<LaunchPolicy>(
       resource, std::move(kernel_name))};
 #else
-  util::PluginContext context {detail::make_launch_nd_context<
-      typename LaunchPolicy::host_policy_t>(std::move(kernel_name))};
+  util::PluginContext context {
+      detail::make_launch_nd_context<typename LaunchPolicy::host_policy_t>(
+          std::move(kernel_name))};
 #endif
   util::callPreCapturePlugins(context);
 
@@ -576,10 +578,10 @@ resources::EventProxy<resources::Resource> launch_nd(
   util::callPostCapturePlugins(context);
   util::callPreLaunchPlugins(context);
 
-  auto event = detail::launch_nd_grid_execute<LaunchPolicy,
-                                              camp::list<LoopPolicies...>>(
-      resource, policy.launch_params, segs, std::move(body),
-      camp::num<sizeof...(IdxTs)> {});
+  auto event =
+      detail::launch_nd_grid_execute<LaunchPolicy, camp::list<LoopPolicies...>>(
+          resource, policy.launch_params, segs, std::move(body),
+          camp::num<sizeof...(IdxTs)> {});
 
   util::callPostLaunchPlugins(context);
   return event;
@@ -591,22 +593,23 @@ template<typename HostExecPolicy,
          typename... IdxTs,
          typename... Params>
 void launch_nd(ExecPlace place,
-               launch_nd_flattened_place_policy<HostExecPolicy, DeviceExecPolicy, LayoutTag>,
+               launch_nd_flattened_place_policy<HostExecPolicy,
+                                                DeviceExecPolicy,
+                                                LayoutTag>,
                TypedRangeSegmentPack<IdxTs...> const& segs,
                Params&&... params)
 {
   switch (place)
   {
     case ExecPlace::HOST:
-      RAJA::launch_nd(launch_nd_flattened_policy<HostExecPolicy, LayoutTag>{},
-                      segs,
-                      std::forward<Params>(params)...);
+      RAJA::launch_nd(launch_nd_flattened_policy<HostExecPolicy, LayoutTag> {},
+                      segs, std::forward<Params>(params)...);
       break;
 #if defined(RAJA_GPU_ACTIVE)
     case ExecPlace::DEVICE:
-      RAJA::launch_nd(launch_nd_flattened_policy<DeviceExecPolicy, LayoutTag>{},
-                      segs,
-                      std::forward<Params>(params)...);
+      RAJA::launch_nd(
+          launch_nd_flattened_policy<DeviceExecPolicy, LayoutTag> {}, segs,
+          std::forward<Params>(params)...);
       break;
 #endif
     default:
@@ -622,23 +625,23 @@ template<typename HostExecPolicy,
 resources::EventProxy<resources::Resource> launch_nd(
     RAJA::resources::Resource resource,
     ExecPlace place,
-    launch_nd_flattened_place_policy<HostExecPolicy, DeviceExecPolicy, LayoutTag>,
+    launch_nd_flattened_place_policy<HostExecPolicy,
+                                     DeviceExecPolicy,
+                                     LayoutTag>,
     TypedRangeSegmentPack<IdxTs...> const& segs,
     Params&&... params)
 {
   switch (place)
   {
     case ExecPlace::HOST:
-      return RAJA::launch_nd(resource,
-                             launch_nd_flattened_policy<HostExecPolicy, LayoutTag>{},
-                             segs,
-                             std::forward<Params>(params)...);
+      return RAJA::launch_nd(
+          resource, launch_nd_flattened_policy<HostExecPolicy, LayoutTag> {},
+          segs, std::forward<Params>(params)...);
 #if defined(RAJA_GPU_ACTIVE)
     case ExecPlace::DEVICE:
-      return RAJA::launch_nd(resource,
-                             launch_nd_flattened_policy<DeviceExecPolicy, LayoutTag>{},
-                             segs,
-                             std::forward<Params>(params)...);
+      return RAJA::launch_nd(
+          resource, launch_nd_flattened_policy<DeviceExecPolicy, LayoutTag> {},
+          segs, std::forward<Params>(params)...);
 #endif
     default:
       RAJA_ABORT_OR_THROW("Unknown launch place or device is not enabled");
@@ -684,15 +687,11 @@ resources::EventProxy<resources::Resource> launch_nd(
   switch (place)
   {
     case ExecPlace::HOST:
-      return RAJA::launch_nd(resource,
-                             policy.host,
-                             segs,
+      return RAJA::launch_nd(resource, policy.host, segs,
                              std::forward<Params>(params)...);
 #if defined(RAJA_GPU_ACTIVE)
     case ExecPlace::DEVICE:
-      return RAJA::launch_nd(resource,
-                             policy.device,
-                             segs,
+      return RAJA::launch_nd(resource, policy.device, segs,
                              std::forward<Params>(params)...);
 #endif
     default:
