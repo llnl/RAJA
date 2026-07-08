@@ -343,6 +343,12 @@ endif()
 
 if(RAJA_ENABLE_TESTS)
   add_subdirectory(test)
+else()
+  # For Spack stand-alone tests need host config information for building simple
+  # examples even if full tests are not done.
+  configure_file(
+    test/install/using-with-cmake/host-config.cmake.in
+    ${PROJECT_BINARY_DIR}/examples/using-with-cmake/host-config.cmake)
 endif()
 
 if(RAJA_ENABLE_REPRODUCERS)
