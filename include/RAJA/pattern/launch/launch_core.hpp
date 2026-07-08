@@ -28,6 +28,14 @@
 #include "RAJA/util/plugins.hpp"
 #include "RAJA/util/types.hpp"
 
+namespace RAJA
+{
+
+template<typename POLICY>
+struct MaskExecute;
+
+}  // namespace RAJA
+
 // Needed to provide a default indices/dims implementation for LaunchContext
 // when compiling for GPU backends. The default launch context is used by
 // existing examples and user code (e.g. RAJA::LaunchContext), but device-side
@@ -36,6 +44,10 @@
 #include "RAJA/policy/hip/policy.hpp"
 #elif defined(RAJA_CUDA_ACTIVE)
 #include "RAJA/policy/cuda/policy.hpp"
+#endif
+
+#if defined(RAJA_ENABLE_OPENMP)
+#include "RAJA/policy/openmp/policy.hpp"
 #endif
 
 #include "camp/camp.hpp"
@@ -476,6 +488,13 @@ using loop_policy = typename POLICY_LIST::device_policy_t;
 using loop_policy = typename POLICY_LIST::host_policy_t;
 #endif
 
+template<typename POLICY_LIST>
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
+using mask_policy = typename POLICY_LIST::device_policy_t;
+#else
+using mask_policy = typename POLICY_LIST::host_policy_t;
+#endif
+
 template<typename POLICY, typename SEGMENT>
 struct LoopExecute;
 
@@ -506,6 +525,13 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
 
   LoopICountExecute<loop_policy<POLICY_LIST>, SEGMENT>::exec(ctx, segment,
                                                              body);
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename POLICY_LIST, typename CONTEXT, typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void mask(CONTEXT const& ctx, BODY const& body)
+{
+  MaskExecute<mask_policy<POLICY_LIST>>::exec(ctx, body);
 }
 
 namespace expt
@@ -571,6 +597,13 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
 
   LoopICountExecute<loop_policy<POLICY_LIST>, SEGMENT>::exec(
       ctx, segment0, segment1, segment2, body);
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename POLICY_LIST, typename CONTEXT, typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void mask(CONTEXT const& ctx, BODY const& body)
+{
+  MaskExecute<mask_policy<POLICY_LIST>>::exec(ctx, body);
 }
 
 }  // namespace expt

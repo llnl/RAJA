@@ -22,7 +22,7 @@ if [[ $# -lt 2 ]]; then
   echo "For example: "
   echo "    toss4_cce_omptarget.sh 20.0.0-magic gfx942 [3.27.4]"
   echo "If no CMake version is provided, version ${DEFAULT_CMAKE_VER} will be used."
-  exit 1"
+  exit 1
 fi
 
 COMP_VER=$1

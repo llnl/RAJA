@@ -146,10 +146,26 @@ struct DevicePinnedAllocator
     void* ptr;
     CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, &ptr, nbytes,
                                    cudaMemAttachGlobal);
+#if CUDART_VERSION >= 13000
+    cudaMemLocation devLoc {};
+    devLoc.type = cudaMemLocationTypeDevice;
+    devLoc.id   = device;
+
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemAdvise, ptr, nbytes,
+                                   cudaMemAdviseSetPreferredLocation, devLoc);
+
+    cudaMemLocation cpuLoc {};
+    cpuLoc.type = cudaMemLocationTypeHost;
+    cpuLoc.id   = 0;
+
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemAdvise, ptr, nbytes,
+                                   cudaMemAdviseSetAccessedBy, cpuLoc);
+#else
     CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemAdvise, ptr, nbytes,
                                    cudaMemAdviseSetPreferredLocation, device);
     CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMemAdvise, ptr, nbytes,
                                    cudaMemAdviseSetAccessedBy, cudaCpuDeviceId);
+#endif
 
     return ptr;
   }
