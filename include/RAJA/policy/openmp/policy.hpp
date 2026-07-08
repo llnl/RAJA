@@ -24,6 +24,8 @@
 #include <omp.h>
 
 #include "RAJA/policy/PolicyBase.hpp"
+#include "RAJA/pattern/launch/launch_context_policy.hpp"
+#include "RAJA/util/macros.hpp"
 
 // Rely on builtin_atomic when OpenMP can't do the job
 #include "RAJA/policy/atomic_builtin.hpp"
@@ -478,6 +480,24 @@ using policy::omp::omp_synchronize;
 
 ///
 using policy::omp::omp_work;
+
+template<typename POLICY>
+struct MaskExecute;
+
+template<>
+struct MaskExecute<RAJA::policy::omp::omp_thread>
+{
+  template<typename LaunchContextPolicy, typename BODY>
+  static RAJA_INLINE RAJA_HOST_DEVICE void exec(
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
+      BODY const& body)
+  {
+    if (omp_get_thread_num() == 0)
+    {
+      body();
+    }
+  }
+};
 
 }  // namespace RAJA
 
