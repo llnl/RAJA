@@ -42,4 +42,4 @@ if (EXISTS "${PROTEUS_HEADERS_DIR}/proteus")
     DESTINATION include)
 endif()
 
-add_dependencies(RAJA ProteusPass LambdaPass)
+add_dependencies(RAJA ProteusPass)
