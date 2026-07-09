@@ -28,6 +28,11 @@
 #include <type_traits>
 #include <utility>
 
+#if __CUDA__ARCH__ >= 600 && __CUDACC_VER_MAJOR__ >= 11 &&                     \
+    __CUDACC_VER_MINOR__ >= 6
+#define RAJA_ENABLE_CUDA_ATOMIC_REF
+#endif
+
 #include <cuda/atomic>
 
 #include "camp/list.hpp"
