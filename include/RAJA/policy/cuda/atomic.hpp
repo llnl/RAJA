@@ -28,14 +28,7 @@
 #include <type_traits>
 #include <utility>
 
-#if __CUDA__ARCH__ >= 600 && __CUDACC_VER_MAJOR__ >= 11 &&                     \
-    __CUDACC_VER_MINOR__ >= 6
-#define RAJA_ENABLE_CUDA_ATOMIC_REF
-#endif
-
-#if defined(RAJA_ENABLE_CUDA_ATOMIC_REF)
 #include <cuda/atomic>
-#endif
 
 #include "camp/list.hpp"
 
@@ -844,7 +837,17 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(cuda_atomic_explicit<host_policy>,
                                              Operation&& operation)
 {
 #ifdef __CUDA_ARCH__
-  return detail::cuda_atomicCAS_loop(acc, std::forward<Operation>(operation));
+  ::cuda::atomic_ref<T, ::cuda::thread_scope_device> ref(*acc);
+  T expected = ref.load(::cuda::std::memory_order_relaxed);
+  while (true)
+  {
+    if (ref.compare_exchange_weak(expected, operation(expected),
+                                  ::cuda::std::memory_order_relaxed,
+                                  ::cuda::std::memory_order_relaxed))
+    {
+      return expected;
+    }
+  }
 #else
   return RAJA::atomicGeneric(host_policy {}, acc,
                              std::forward<Operation>(operation));
