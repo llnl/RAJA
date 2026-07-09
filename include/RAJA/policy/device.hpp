@@ -59,63 +59,66 @@ template<size_t BLOCK_SIZE>
 using device_exec_async = device_exec<BLOCK_SIZE, true>;
 
 template<size_t BLOCK_SIZE, bool Async = false>
-using device_exec_with_reduce = RAJA::hip_exec_with_reduce<BLOCK_SIZE, Async>;
+using device_exec_with_reduce = RAJA_DEVICE_ALIAS(exec_with_reduce)<BLOCK_SIZE, Async>;
 
 template<size_t BLOCK_SIZE>
 using device_exec_with_reduce_async = device_exec_with_reduce<BLOCK_SIZE, true>;
 
 template<bool with_reduce, size_t BLOCK_SIZE, bool Async = false>
-using device_exec_base = RAJA::hip_exec_base<with_reduce, BLOCK_SIZE, Async>;
+using device_exec_base = RAJA_DEVICE_ALIAS(exec_base)<with_reduce, BLOCK_SIZE, Async>;
 
 template<bool with_reduce, size_t BLOCK_SIZE>
 using device_exec_base_async =
-    RAJA::hip_exec_base_async<with_reduce, BLOCK_SIZE>;
+    RAJA_DEVICE_ALIAS(exec_base_async)<with_reduce, BLOCK_SIZE>;
 
 template<size_t BLOCK_SIZE, size_t GRID_SIZE, bool Async = false>
-using device_exec_grid = RAJA::hip_exec_grid<BLOCK_SIZE, GRID_SIZE, Async>;
+using device_exec_grid = RAJA_DEVICE_ALIAS(exec_grid)<BLOCK_SIZE, GRID_SIZE, Async>;
 
 template<size_t BLOCK_SIZE, size_t GRID_SIZE>
-using device_exec_grid_async = RAJA::hip_exec_grid_async<BLOCK_SIZE, GRID_SIZE>;
+using device_exec_grid_async =
+    RAJA_DEVICE_ALIAS(exec_grid_async)<BLOCK_SIZE, GRID_SIZE>;
 
 template<size_t BLOCK_SIZE, bool Async = false>
-using device_exec_occ_calc = RAJA::hip_exec_occ_calc<BLOCK_SIZE, Async>;
+using device_exec_occ_calc = RAJA_DEVICE_ALIAS(exec_occ_calc)<BLOCK_SIZE, Async>;
 
 template<size_t BLOCK_SIZE>
-using device_exec_occ_calc_async = RAJA::hip_exec_occ_calc_async<BLOCK_SIZE>;
+using device_exec_occ_calc_async =
+    RAJA_DEVICE_ALIAS(exec_occ_calc_async)<BLOCK_SIZE>;
 
 template<size_t BLOCK_SIZE, bool Async = false>
-using device_exec_occ_max = RAJA::hip_exec_occ_max<BLOCK_SIZE, Async>;
+using device_exec_occ_max = RAJA_DEVICE_ALIAS(exec_occ_max)<BLOCK_SIZE, Async>;
 
 template<size_t BLOCK_SIZE>
-using device_exec_occ_max_async = RAJA::hip_exec_occ_max_async<BLOCK_SIZE>;
+using device_exec_occ_max_async =
+    RAJA_DEVICE_ALIAS(exec_occ_max_async)<BLOCK_SIZE>;
 
 template<size_t BLOCK_SIZE, typename Fraction, bool Async = false>
 using device_exec_occ_fraction =
-    RAJA::hip_exec_occ_fraction<BLOCK_SIZE, Fraction, Async>;
+    RAJA_DEVICE_ALIAS(exec_occ_fraction)<BLOCK_SIZE, Fraction, Async>;
 
 template<size_t BLOCK_SIZE, typename Fraction>
 using device_exec_occ_fraction_async =
-    RAJA::hip_exec_occ_fraction_async<BLOCK_SIZE, Fraction>;
+    RAJA_DEVICE_ALIAS(exec_occ_fraction_async)<BLOCK_SIZE, Fraction>;
 
 template<size_t BLOCK_SIZE, typename Concretizer, bool Async = false>
 using device_exec_occ_custom =
-    RAJA::hip_exec_occ_custom<BLOCK_SIZE, Concretizer, Async>;
+    RAJA_DEVICE_ALIAS(exec_occ_custom)<BLOCK_SIZE, Concretizer, Async>;
 
 template<size_t BLOCK_SIZE, typename Concretizer>
 using device_exec_occ_custom_async =
-    RAJA::hip_exec_occ_custom_async<BLOCK_SIZE, Concretizer>;
+    RAJA_DEVICE_ALIAS(exec_occ_custom_async)<BLOCK_SIZE, Concretizer>;
 
 // reducers and atomics
-using device_atomic = RAJA::hip_atomic;
+using device_atomic = RAJA_DEVICE_ALIAS(atomic);
 template<typename host_policy>
-using device_atomic_explicit = RAJA::hip_atomic_explicit<host_policy>;
-using device_reduce          = RAJA::hip_reduce;
-using device_reduce_atomic   = RAJA::hip_reduce_atomic;
+using device_atomic_explicit = RAJA_DEVICE_ALIAS(atomic_explicit)<host_policy>;
+using device_reduce          = RAJA_DEVICE_ALIAS(reduce);
+using device_reduce_atomic   = RAJA_DEVICE_ALIAS(reduce_atomic);
 template<bool with_atomic>
-using device_reduce_base         = RAJA::hip_reduce_base<with_atomic>;
-using device_multi_reduce_atomic = RAJA::hip_multi_reduce_atomic;
+using device_reduce_base         = RAJA_DEVICE_ALIAS(reduce_base)<with_atomic>;
+using device_multi_reduce_atomic = RAJA_DEVICE_ALIAS(multi_reduce_atomic);
 using device_multi_reduce_atomic_low_performance_low_overhead =
-    RAJA::hip_multi_reduce_atomic_low_performance_low_overhead;
+    RAJA_DEVICE_ALIAS(multi_reduce_atomic_low_performance_low_overhead);
 
 // launch
 template<bool Async, int num_threads = RAJA::named_usage::unspecified>
@@ -134,20 +137,20 @@ using device_global_size_z_direct =
 
 template<int nx_threads>
 using device_global_size_x_direct_unchecked =
-    RAJA::hip_global_size_x_direct_unchecked<nx_threads>;
+    RAJA_DEVICE_ALIAS(global_size_x_direct_unchecked)<nx_threads>;
 template<int ny_threads>
 using device_global_size_y_direct_unchecked =
-    RAJA::hip_global_size_y_direct_unchecked<ny_threads>;
+    RAJA_DEVICE_ALIAS(global_size_y_direct_unchecked)<ny_threads>;
 template<int nz_threads>
 using device_global_size_z_direct_unchecked =
-    RAJA::hip_global_size_z_direct_unchecked<nz_threads>;
+    RAJA_DEVICE_ALIAS(global_size_z_direct_unchecked)<nz_threads>;
 
 template<int nx_threads>
-using device_global_size_x_loop = RAJA::hip_global_size_x_loop<nx_threads>;
+using device_global_size_x_loop = RAJA_DEVICE_ALIAS(global_size_x_loop)<nx_threads>;
 template<int ny_threads>
-using device_global_size_y_loop = RAJA::hip_global_size_y_loop<ny_threads>;
+using device_global_size_y_loop = RAJA_DEVICE_ALIAS(global_size_y_loop)<ny_threads>;
 template<int nz_threads>
-using device_global_size_z_loop = RAJA::hip_global_size_z_loop<nz_threads>;
+using device_global_size_z_loop = RAJA_DEVICE_ALIAS(global_size_z_loop)<nz_threads>;
 
 // launch (loop) index mapping
 using device_global_thread_x = RAJA_DEVICE_ALIAS(global_thread_x);
