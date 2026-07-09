@@ -24,6 +24,11 @@
 
 #if defined(RAJA_OPENMP_ACTIVE)
 
+// Include OpenMP header for Windows
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 #include "RAJA/util/macros.hpp"
 
 #include "RAJA/policy/thread_auto.hpp"

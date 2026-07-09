@@ -44,6 +44,19 @@ jobs:
             BUILD_SHARED_LIBS=On 
             CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=On
         - args: BUILD_SHARED_LIBS=Off
+  # This add test coverage for some of axom's pipelines
+  build_windows_openmp:
+    strategy:
+      matrix:
+        shared: 
+        - args: 
+            BUILD_SHARED_LIBS=On 
+            CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=On
+            ENABLE_TESTS=Off
+            RAJA_ENABLE_EXAMPLES=Off
+            RAJA_ENABLE_EXERCISES=Off
+            ENABLE_OPENMP=On
+        - args: BUILD_SHARED_LIBS=Off
           
     runs-on: windows-latest
     steps:
