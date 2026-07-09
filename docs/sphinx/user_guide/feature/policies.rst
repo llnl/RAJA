@@ -750,104 +750,104 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - HIP
      - SYCL
      - Notes
-   * - ``device_exec*``
+   * - device_exec*
      - yes
      - yes
      - partial
-     - ``device_exec`` and ``device_exec_async`` exist for SYCL; the CUDA/HIP
+     - device_exec and device_exec_async exist for SYCL; the CUDA/HIP
        occupancy and reduction variants do not.
-   * - ``device_atomic`` and ``device_atomic_explicit<host_policy>``
+   * - device_atomic and device_atomic_explicit<host_policy>
      - yes
      - yes
      - yes
      - Backend atomic policy aliases are available on all three backends.
-   * - ``device_reduce``
+   * - device_reduce
      - yes
      - yes
      - yes
      - Backend default reduce policy alias.
-   * - ``device_reduce_atomic`` and ``device_reduce_base<with_atomic>``
+   * - device_reduce_atomic and device_reduce_base<with_atomic>
      - yes
      - yes
      - no
      - CUDA/HIP expose tuning and base reduce aliases; SYCL currently only
-       exposes ``device_reduce``.
-   * - ``device_multi_reduce_atomic`` and
-       ``device_multi_reduce_atomic_low_performance_low_overhead``
+       exposes device_reduce.
+   * - device_multi_reduce_atomic and
+       device_multi_reduce_atomic_low_performance_low_overhead
      - yes
      - yes
      - no
-     - CUDA/HIP expose ``multi_reduce`` aliases; SYCL does not currently
-       provide a backend-equivalent ``device_*`` mapping.
-   * - ``device_launch_t``
+     - CUDA/HIP expose multi_reduce aliases; SYCL does not currently
+       provide a backend-equivalent device_* mapping.
+   * - device_launch_t
      - yes
      - yes
      - yes
      - Backend launch policy alias.
-   * - ``device_global_size_{x,y,z}_{direct,direct_unchecked,loop}<N>``
+   * - device_global_size_{x,y,z}_{direct,direct_unchecked,loop}<N>
      - yes
      - yes
      - partial
-     - SYCL currently exposes only ``device_global_size_x_direct``.
-   * - ``device_global_thread_{x,y,z}``
+     - SYCL currently exposes only device_global_size_x_direct.
+   * - device_global_thread_{x,y,z}
      - yes
      - yes
      - yes
      - Launch-space global thread mapping.
-   * - ``device_thread_{x,y,z}_{direct,loop}``
+   * - device_thread_{x,y,z}_{direct,loop}
      - yes
      - yes
      - yes
      - Single-dimension thread mapping.
-   * - ``device_thread_{xy,xz,yx,yz,zx,zy,xyz,xzy,yxz,yzx,zxy,zyx}_{direct,loop}``
+   * - device_thread_{xy,xz,yx,yz,zx,zy,xyz,xzy,yxz,yzx,zxy,zyx}_{direct,loop}
      - yes
      - yes
      - no
      - Multi-dimension thread permutations are not defined for SYCL.
-   * - ``device_thread_syncable_loop`` and named permutations
+   * - device_thread_syncable_loop and named permutations
      - yes
      - yes
      - no
      - Synchronizable thread permutations are CUDA/HIP only.
-   * - ``device_thread_size_*`` families
+   * - device_thread_size_* families
      - yes
      - yes
      - no
      - Includes direct, direct_unchecked, and loop variants for 1D and
        permuted multi-dimension forms.
-   * - ``device_block_{x,y,z}_{direct,loop}``
+   * - device_block_{x,y,z}_{direct,loop}
      - yes
      - yes
      - yes
      - Single-dimension block mapping.
-   * - ``device_block_{xy,xz,yx,yz,zx,zy,xyz,xzy,yxz,yzx,zxy,zyx}_{direct,loop}``
+   * - device_block_{xy,xz,yx,yz,zx,zy,xyz,xzy,yxz,yzx,zxy,zyx}_{direct,loop}
      - yes
      - yes
      - no
      - Multi-dimension block permutations are not defined for SYCL.
-   * - ``device_block_syncable_loop`` and named permutations
+   * - device_block_syncable_loop and named permutations
      - yes
      - yes
      - no
      - Synchronizable block permutations are CUDA/HIP only.
-   * - ``device_block_size_*`` families
+   * - device_block_size_* families
      - yes
      - yes
      - no
      - Includes direct, direct_unchecked, and loop variants for 1D and
        permuted multi-dimension forms.
-   * - ``device_flatten_block_threads_{xy,...,zyx}_{direct,loop}``
+   * - device_flatten_block_threads_{xy,...,zyx}_{direct,loop}
      - yes
      - yes
      - yes
      - Flattened block/thread permutations are available across all backends.
-   * - ``device_flatten_thread_size_*``, ``device_flatten_block_size_*``,
-       ``device_flatten_global_size_*``
+   * - device_flatten_thread_size_*, device_flatten_block_size_*,
+       device_flatten_global_size_*
      - yes
      - yes
      - no
      - These flattened size aliases exist for CUDA/HIP but are not yet
-       provided through ``device_*`` for SYCL.
+       provided through device_* for SYCL.
 
 .. important::
    For SYCL, these aliases use CUDA-like ``(x,y,z)`` naming with the standard
