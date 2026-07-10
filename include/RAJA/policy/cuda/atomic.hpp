@@ -180,7 +180,7 @@ template<typename T>
 RAJA_INLINE __device__ T cuda_atomicLoad(T* acc)
 {
   return ::cuda::atomic_ref<T, ::cuda::thread_scope_device>(*acc).load(
-      ::cuda::memory_order_relaxed {});
+      ::cuda::memory_order_relaxed);
 }
 
 /*!
@@ -190,7 +190,7 @@ template<typename T>
 RAJA_INLINE __device__ void cuda_atomicStore(T* acc, T value)
 {
   ::cuda::atomic_ref<T, ::cuda::thread_scope_device>(*acc).store(
-      value, ::cuda::memory_order_relaxed {});
+      value, ::cuda::memory_order_relaxed);
 }
 
 /*!
