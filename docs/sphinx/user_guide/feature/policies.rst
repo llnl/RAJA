@@ -788,7 +788,8 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - partial
-     - SYCL currently exposes only device_global_size_x_direct.
+     - SYCL currently exposes only the direct x/y/z aliases; the unchecked
+       and loop variants are CUDA/HIP only.
    * - device_global_thread_{x,y,z}
      - yes
      - yes
@@ -804,17 +805,13 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - no
      - Multi-dimension thread permutations are not defined for SYCL.
-   * - device_thread_syncable_loop and named permutations
-     - yes
-     - yes
-     - no
-     - Synchronizable thread permutations are CUDA/HIP only.
    * - device_thread_size_* families
      - yes
      - yes
      - no
      - Includes direct, direct_unchecked, and loop variants for 1D and
-       permuted multi-dimension forms.
+       permuted multi-dimension forms. These aliases are declared as
+       compile-time errors under SYCL.
    * - device_block_{x,y,z}_{direct,loop}
      - yes
      - yes
@@ -825,17 +822,13 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - no
      - Multi-dimension block permutations are not defined for SYCL.
-   * - device_block_syncable_loop and named permutations
-     - yes
-     - yes
-     - no
-     - Synchronizable block permutations are CUDA/HIP only.
    * - device_block_size_* families
      - yes
      - yes
      - no
      - Includes direct, direct_unchecked, and loop variants for 1D and
-       permuted multi-dimension forms.
+       permuted multi-dimension forms. These aliases are declared as
+       compile-time errors under SYCL.
    * - device_flatten_block_threads_{xy,...,zyx}_{direct,loop}
      - yes
      - yes
@@ -846,8 +839,8 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - no
-     - These flattened size aliases exist for CUDA/HIP but are not yet
-       provided through device_* for SYCL.
+     - These flattened size aliases exist for CUDA/HIP but are declared as
+       compile-time errors under SYCL.
 
 .. important::
    For SYCL, these aliases use CUDA-like ``(x,y,z)`` naming with the standard
@@ -856,7 +849,8 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
    the corresponding internal ``RAJA_*_ACTIVE`` compile-time macros used by
    the implementation.
    Device aliases that have no SYCL equivalent are intentionally not defined
-   under SYCL, so using them will fail at compile time.
+   under SYCL as usable policies; they are declared to fail at compile time
+   when instantiated so unsupported code paths are caught immediately.
 
 See also the example ``examples/device-policy-aliases.cpp``.
 

@@ -40,6 +40,18 @@
 namespace RAJA
 {
 
+namespace detail
+{
+
+template<auto... Values>
+struct sycl_device_alias_unavailable
+{
+  static_assert(sizeof...(Values) < 0,
+                "This device alias is not available for the active SYCL backend.");
+};
+
+}  // namespace detail
+
 /*!
  * Generic device policy aliases.
  *
@@ -174,7 +186,361 @@ using device_block_x_loop = RAJA_DEVICE_ALIAS(block_x_loop);
 using device_block_y_loop = RAJA_DEVICE_ALIAS(block_y_loop);
 using device_block_z_loop = RAJA_DEVICE_ALIAS(block_z_loop);
 
+using device_flatten_block_threads_xy_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_xy_direct);
+using device_flatten_block_threads_xz_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_xz_direct);
+using device_flatten_block_threads_yx_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_yx_direct);
+using device_flatten_block_threads_yz_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_yz_direct);
+using device_flatten_block_threads_zx_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_zx_direct);
+using device_flatten_block_threads_zy_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_zy_direct);
+using device_flatten_block_threads_xyz_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_xyz_direct);
+using device_flatten_block_threads_xzy_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_xzy_direct);
+using device_flatten_block_threads_yxz_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_yxz_direct);
+using device_flatten_block_threads_yzx_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_yzx_direct);
+using device_flatten_block_threads_zxy_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_zxy_direct);
+using device_flatten_block_threads_zyx_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_threads_zyx_direct);
+
+using device_flatten_block_threads_xy_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_xy_loop);
+using device_flatten_block_threads_xz_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_xz_loop);
+using device_flatten_block_threads_yx_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_yx_loop);
+using device_flatten_block_threads_yz_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_yz_loop);
+using device_flatten_block_threads_zx_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_zx_loop);
+using device_flatten_block_threads_zy_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_zy_loop);
+using device_flatten_block_threads_xyz_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_xyz_loop);
+using device_flatten_block_threads_xzy_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_xzy_loop);
+using device_flatten_block_threads_yxz_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_yxz_loop);
+using device_flatten_block_threads_yzx_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_yzx_loop);
+using device_flatten_block_threads_zxy_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_zxy_loop);
+using device_flatten_block_threads_zyx_loop = RAJA_DEVICE_ALIAS(flatten_block_threads_zyx_loop);
+
+template<int nx_threads>
+using device_flatten_thread_size_x_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_x_direct)<nx_threads>;
+template<int ny_threads>
+using device_flatten_thread_size_y_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_y_direct)<ny_threads>;
+template<int nz_threads>
+using device_flatten_thread_size_z_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_z_direct)<nz_threads>;
+
+template<int nx_threads>
+using device_flatten_thread_size_x_direct_unchecked =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_x_direct_unchecked)<nx_threads>;
+template<int ny_threads>
+using device_flatten_thread_size_y_direct_unchecked =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_y_direct_unchecked)<ny_threads>;
+template<int nz_threads>
+using device_flatten_thread_size_z_direct_unchecked =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_z_direct_unchecked)<nz_threads>;
+
+template<int nx_threads>
+using device_flatten_thread_size_x_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_x_loop)<nx_threads>;
+template<int ny_threads>
+using device_flatten_thread_size_y_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_y_loop)<ny_threads>;
+template<int nz_threads>
+using device_flatten_thread_size_z_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_z_loop)<nz_threads>;
+
+template<int nx_threads>
+using device_flatten_thread_size_xy_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_xz_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_yx_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yx_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_yz_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_zx_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zx_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_zy_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_xyz_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xyz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_xzy_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xzy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_yxz_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yxz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_yzx_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yzx_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_zxy_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zxy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_zyx_direct =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zyx_direct)<nx_threads>;
+
+template<int nx_threads>
+using device_flatten_thread_size_xy_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_xz_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_yx_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yx_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_yz_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_zx_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zx_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_zy_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_xyz_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xyz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_xzy_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xzy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_yxz_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yxz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_yzx_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yzx_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_zxy_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zxy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_thread_size_zyx_loop =
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zyx_loop)<nx_threads>;
+
+template<int nx_threads>
+using device_flatten_block_size_x_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_x_direct)<nx_threads>;
+template<int ny_threads>
+using device_flatten_block_size_y_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_y_direct)<ny_threads>;
+template<int nz_threads>
+using device_flatten_block_size_z_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_z_direct)<nz_threads>;
+
+template<int nx_threads>
+using device_flatten_block_size_x_direct_unchecked =
+    RAJA_DEVICE_ALIAS(flatten_block_size_x_direct_unchecked)<nx_threads>;
+template<int ny_threads>
+using device_flatten_block_size_y_direct_unchecked =
+    RAJA_DEVICE_ALIAS(flatten_block_size_y_direct_unchecked)<ny_threads>;
+template<int nz_threads>
+using device_flatten_block_size_z_direct_unchecked =
+    RAJA_DEVICE_ALIAS(flatten_block_size_z_direct_unchecked)<nz_threads>;
+
+template<int nx_threads>
+using device_flatten_block_size_x_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_x_loop)<nx_threads>;
+template<int ny_threads>
+using device_flatten_block_size_y_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_y_loop)<ny_threads>;
+template<int nz_threads>
+using device_flatten_block_size_z_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_z_loop)<nz_threads>;
+
+template<int nx_threads>
+using device_flatten_block_size_xy_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_xy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_xz_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_xz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_yx_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_yx_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_yz_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_yz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_zx_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_zx_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_zy_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_zy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_xyz_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_xyz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_xzy_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_xzy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_yxz_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_yxz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_yzx_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_yzx_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_zxy_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_zxy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_zyx_direct =
+    RAJA_DEVICE_ALIAS(flatten_block_size_zyx_direct)<nx_threads>;
+
+template<int nx_threads>
+using device_flatten_block_size_xy_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_xy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_xz_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_xz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_yx_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_yx_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_yz_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_yz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_zx_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_zx_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_zy_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_zy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_xyz_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_xyz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_xzy_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_xzy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_yxz_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_yxz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_yzx_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_yzx_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_zxy_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_zxy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_block_size_zyx_loop =
+    RAJA_DEVICE_ALIAS(flatten_block_size_zyx_loop)<nx_threads>;
+
+template<int nx_threads>
+using device_flatten_global_size_x_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_x_direct)<nx_threads>;
+template<int ny_threads>
+using device_flatten_global_size_y_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_y_direct)<ny_threads>;
+template<int nz_threads>
+using device_flatten_global_size_z_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_z_direct)<nz_threads>;
+
+template<int nx_threads>
+using device_flatten_global_size_x_direct_unchecked =
+    RAJA_DEVICE_ALIAS(flatten_global_size_x_direct_unchecked)<nx_threads>;
+template<int ny_threads>
+using device_flatten_global_size_y_direct_unchecked =
+    RAJA_DEVICE_ALIAS(flatten_global_size_y_direct_unchecked)<ny_threads>;
+template<int nz_threads>
+using device_flatten_global_size_z_direct_unchecked =
+    RAJA_DEVICE_ALIAS(flatten_global_size_z_direct_unchecked)<nz_threads>;
+
+template<int nx_threads>
+using device_flatten_global_size_x_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_x_loop)<nx_threads>;
+template<int ny_threads>
+using device_flatten_global_size_y_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_y_loop)<ny_threads>;
+template<int nz_threads>
+using device_flatten_global_size_z_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_z_loop)<nz_threads>;
+
+template<int nx_threads>
+using device_flatten_global_size_xy_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_xy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_xz_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_xz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_yx_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_yx_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_yz_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_yz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_zx_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_zx_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_zy_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_zy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_xyz_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_xyz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_xzy_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_xzy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_yxz_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_yxz_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_yzx_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_yzx_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_zxy_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_zxy_direct)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_zyx_direct =
+    RAJA_DEVICE_ALIAS(flatten_global_size_zyx_direct)<nx_threads>;
+
+template<int nx_threads>
+using device_flatten_global_size_xy_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_xy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_xz_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_xz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_yx_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_yx_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_yz_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_yz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_zx_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_zx_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_zy_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_zy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_xyz_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_xyz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_xzy_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_xzy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_yxz_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_yxz_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_yzx_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_yzx_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_zxy_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_zxy_loop)<nx_threads>;
+template<int nx_threads>
+using device_flatten_global_size_zyx_loop =
+    RAJA_DEVICE_ALIAS(flatten_global_size_zyx_loop)<nx_threads>;
+
 #elif defined(RAJA_SYCL_ACTIVE)
+
+// SYCL currently exposes only the device aliases that have direct backend
+// equivalents. Unsupported aliases remain declared as compile-time errors so
+// downstream code fails immediately if it relies on a CUDA/HIP-only policy.
 
 // forall
 template<size_t WORK_GROUP_SIZE, bool Async = false>
@@ -183,11 +549,61 @@ using device_exec = RAJA::sycl_exec<WORK_GROUP_SIZE, Async>;
 template<size_t WORK_GROUP_SIZE>
 using device_exec_async = device_exec<WORK_GROUP_SIZE, true>;
 
+template<size_t WORK_GROUP_SIZE, bool Async = false>
+using device_exec_with_reduce = detail::sycl_device_alias_unavailable<>;
+
+template<size_t WORK_GROUP_SIZE>
+using device_exec_with_reduce_async = detail::sycl_device_alias_unavailable<>;
+
+template<bool with_reduce, size_t BLOCK_SIZE, bool Async = false>
+using device_exec_base = detail::sycl_device_alias_unavailable<>;
+
+template<bool with_reduce, size_t BLOCK_SIZE>
+using device_exec_base_async = detail::sycl_device_alias_unavailable<>;
+
+template<size_t BLOCK_SIZE, size_t GRID_SIZE, bool Async = false>
+using device_exec_grid = detail::sycl_device_alias_unavailable<>;
+
+template<size_t BLOCK_SIZE, size_t GRID_SIZE>
+using device_exec_grid_async = detail::sycl_device_alias_unavailable<>;
+
+template<size_t BLOCK_SIZE, bool Async = false>
+using device_exec_occ_calc = detail::sycl_device_alias_unavailable<>;
+
+template<size_t BLOCK_SIZE>
+using device_exec_occ_calc_async = detail::sycl_device_alias_unavailable<>;
+
+template<size_t BLOCK_SIZE, bool Async = false>
+using device_exec_occ_max = detail::sycl_device_alias_unavailable<>;
+
+template<size_t BLOCK_SIZE>
+using device_exec_occ_max_async = detail::sycl_device_alias_unavailable<>;
+
+template<size_t BLOCK_SIZE, typename Fraction, bool Async = false>
+using device_exec_occ_fraction = detail::sycl_device_alias_unavailable<>;
+
+template<size_t BLOCK_SIZE, typename Fraction>
+using device_exec_occ_fraction_async = detail::sycl_device_alias_unavailable<>;
+
+template<size_t BLOCK_SIZE, typename Concretizer, bool Async = false>
+using device_exec_occ_custom = detail::sycl_device_alias_unavailable<>;
+
+template<size_t BLOCK_SIZE, typename Concretizer>
+using device_exec_occ_custom_async = detail::sycl_device_alias_unavailable<>;
+
 // reducers and atomics
 using device_atomic = RAJA::sycl_atomic;
 template<typename host_policy>
 using device_atomic_explicit = RAJA::sycl_atomic_explicit<host_policy>;
 using device_reduce          = RAJA::sycl_reduce;
+using device_reduce_atomic   = detail::sycl_device_alias_unavailable<>;
+
+template<bool with_atomic>
+using device_reduce_base = detail::sycl_device_alias_unavailable<>;
+
+using device_multi_reduce_atomic = detail::sycl_device_alias_unavailable<>;
+using device_multi_reduce_atomic_low_performance_low_overhead =
+    detail::sycl_device_alias_unavailable<>;
 
 // launch
 template<bool Async, int num_threads = RAJA::named_usage::unspecified>
@@ -200,6 +616,20 @@ template<int ny_threads>
 using device_global_size_y_direct = RAJA::sycl_global_1<ny_threads>;
 template<int nz_threads>
 using device_global_size_z_direct = RAJA::sycl_global_0<nz_threads>;
+
+template<int nx_threads>
+using device_global_size_x_direct_unchecked = detail::sycl_device_alias_unavailable<>;
+template<int ny_threads>
+using device_global_size_y_direct_unchecked = detail::sycl_device_alias_unavailable<>;
+template<int nz_threads>
+using device_global_size_z_direct_unchecked = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_global_size_x_loop = detail::sycl_device_alias_unavailable<>;
+template<int ny_threads>
+using device_global_size_y_loop = detail::sycl_device_alias_unavailable<>;
+template<int nz_threads>
+using device_global_size_z_loop = detail::sycl_device_alias_unavailable<>;
 
 // launch (loop) index mapping (x/y/z -> dim2/dim1/dim0)
 using device_global_thread_x = RAJA::sycl_global_item_2;
@@ -272,6 +702,228 @@ using device_flatten_block_threads_zxy_loop =
     RAJA::sycl_flatten_group_local_021_loop;
 using device_flatten_block_threads_zyx_loop =
     RAJA::sycl_flatten_group_local_012_loop;
+
+template<int nx_threads>
+using device_flatten_thread_size_x_direct = detail::sycl_device_alias_unavailable<>;
+template<int ny_threads>
+using device_flatten_thread_size_y_direct = detail::sycl_device_alias_unavailable<>;
+template<int nz_threads>
+using device_flatten_thread_size_z_direct = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_thread_size_x_direct_unchecked =
+    detail::sycl_device_alias_unavailable<>;
+template<int ny_threads>
+using device_flatten_thread_size_y_direct_unchecked =
+    detail::sycl_device_alias_unavailable<>;
+template<int nz_threads>
+using device_flatten_thread_size_z_direct_unchecked =
+    detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_thread_size_x_loop = detail::sycl_device_alias_unavailable<>;
+template<int ny_threads>
+using device_flatten_thread_size_y_loop = detail::sycl_device_alias_unavailable<>;
+template<int nz_threads>
+using device_flatten_thread_size_z_loop = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_thread_size_xy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_xz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_yx_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_yz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_zx_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_zy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_xyz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_xzy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_yxz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_yzx_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_zxy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_zyx_direct = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_thread_size_xy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_xz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_yx_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_yz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_zx_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_zy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_xyz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_xzy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_yxz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_yzx_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_zxy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_thread_size_zyx_loop = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_block_size_x_direct = detail::sycl_device_alias_unavailable<>;
+template<int ny_threads>
+using device_flatten_block_size_y_direct = detail::sycl_device_alias_unavailable<>;
+template<int nz_threads>
+using device_flatten_block_size_z_direct = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_block_size_x_direct_unchecked =
+    detail::sycl_device_alias_unavailable<>;
+template<int ny_threads>
+using device_flatten_block_size_y_direct_unchecked =
+    detail::sycl_device_alias_unavailable<>;
+template<int nz_threads>
+using device_flatten_block_size_z_direct_unchecked =
+    detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_block_size_x_loop = detail::sycl_device_alias_unavailable<>;
+template<int ny_threads>
+using device_flatten_block_size_y_loop = detail::sycl_device_alias_unavailable<>;
+template<int nz_threads>
+using device_flatten_block_size_z_loop = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_block_size_xy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_xz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_yx_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_yz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_zx_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_zy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_xyz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_xzy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_yxz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_yzx_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_zxy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_zyx_direct = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_block_size_xy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_xz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_yx_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_yz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_zx_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_zy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_xyz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_xzy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_yxz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_yzx_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_zxy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_block_size_zyx_loop = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_global_size_x_direct = detail::sycl_device_alias_unavailable<>;
+template<int ny_threads>
+using device_flatten_global_size_y_direct = detail::sycl_device_alias_unavailable<>;
+template<int nz_threads>
+using device_flatten_global_size_z_direct = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_global_size_x_direct_unchecked =
+    detail::sycl_device_alias_unavailable<>;
+template<int ny_threads>
+using device_flatten_global_size_y_direct_unchecked =
+    detail::sycl_device_alias_unavailable<>;
+template<int nz_threads>
+using device_flatten_global_size_z_direct_unchecked =
+    detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_global_size_x_loop = detail::sycl_device_alias_unavailable<>;
+template<int ny_threads>
+using device_flatten_global_size_y_loop = detail::sycl_device_alias_unavailable<>;
+template<int nz_threads>
+using device_flatten_global_size_z_loop = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_global_size_xy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_xz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_yx_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_yz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_zx_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_zy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_xyz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_xzy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_yxz_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_yzx_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_zxy_direct = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_zyx_direct = detail::sycl_device_alias_unavailable<>;
+
+template<int nx_threads>
+using device_flatten_global_size_xy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_xz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_yx_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_yz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_zx_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_zy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_xyz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_xzy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_yxz_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_yzx_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_zxy_loop = detail::sycl_device_alias_unavailable<>;
+template<int nx_threads>
+using device_flatten_global_size_zyx_loop = detail::sycl_device_alias_unavailable<>;
 
 #endif  // active backend
 
