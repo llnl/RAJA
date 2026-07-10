@@ -810,17 +810,7 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(cuda_atomic_explicit<host_policy>,
                                              Operation&& operation)
 {
 #ifdef __CUDA_ARCH__
-  ::cuda::atomic_ref<T, ::cuda::thread_scope_device> ref(*acc);
-  T expected = ref.load(::cuda::std::memory_order_relaxed);
-  while (true)
-  {
-    if (ref.compare_exchange_weak(expected, operation(expected),
-                                  ::cuda::std::memory_order_relaxed,
-                                  ::cuda::std::memory_order_relaxed))
-    {
-      return expected;
-    }
-  }
+  return detail::cuda_atomicCAS_loop(acc, std::forward<Operation>(operation));
 #else
   return RAJA::atomicGeneric(host_policy {}, acc,
                              std::forward<Operation>(operation));
