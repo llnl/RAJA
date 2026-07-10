@@ -996,8 +996,7 @@ RAJA_DEVICE_HIP RAJA_INLINE T atomicGeneric(builtin_atomic,
                                         std::forward<Operation>(operation));
 }
 
-template<typename T, typename Operation, typename StopPredicate>
-  requires std::predicate<StopPredicate, T>
+template<typename T, typename Operation, std::predicate<T> StopPredicate>
 RAJA_DEVICE_HIP RAJA_INLINE T atomicGeneric(builtin_atomic,
                                             T* acc,
                                             Operation&& operation,

@@ -184,8 +184,7 @@ RAJA_SUPPRESS_HD_WARN
 template<typename AtomicPolicy,
          typename T,
          typename Operation,
-         typename StopPredicate>
-  requires std::predicate<StopPredicate, T>
+         std::predicate<T> StopPredicate>
 RAJA_HOST_DEVICE RAJA_INLINE T
 atomicGeneric(AtomicPolicy, T* acc, Operation&& operation, StopPredicate&& stop)
 {
