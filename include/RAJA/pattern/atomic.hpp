@@ -311,8 +311,7 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(T* acc, Operation&& operation)
  * @param operation Callable used to compute the candidate new value
  *                  from the current value.
  * @param stop Predicate that returns true when no further update is needed.
- * @return The old value observed before the successful update,
- *         or the final value if stopped early.
+ * @return The old value observed before the successful update or early exit.
  */
 RAJA_SUPPRESS_HD_WARN
 template<typename Policy, typename T, typename Operation, typename StopPredicate>

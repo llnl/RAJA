@@ -23,7 +23,6 @@
 #include "RAJA/config.hpp"
 
 #include <concepts>
-#include <utility>
 
 #include "RAJA/util/macros.hpp"
 
@@ -181,10 +180,12 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(seq_atomic,
                                              StopPredicate&& stop)
 {
   T ret = *acc;
+
   if (!stop(ret))
   {
-    *acc = std::forward<Operation>(operation)(ret);
+    *acc = operation(ret);
   }
+
   return ret;
 }
 
