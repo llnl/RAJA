@@ -241,6 +241,11 @@ RAJA policies for GPU execution using CUDA or HIP are essentially identical.
 The only difference is that CUDA policies have the prefix ``cuda_`` and HIP
 policies have the prefix ``hip_``.
 
+Rows with angle brackets are templated. Examples include
+``cuda/hip_exec<BLOCK_SIZE>``, ``cuda/hip_exec_base<with_reduce, BLOCK_SIZE>``,
+``cuda/hip_thread_size_x_direct<nx_threads>``, and
+``cuda/hip_block_size_x_direct<nx_blocks>``.
+
 +----------------------------------------------------+---------------+---------------------------------+
 | CUDA/HIP Execution Policies                        | Works with    | Brief description               |
 +====================================================+===============+=================================+
@@ -754,13 +759,15 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - partial
-     - device_exec and device_exec_async exist for SYCL; the CUDA/HIP
-       occupancy and reduction variants do not.
+     - Block-size templated exec aliases, for example
+       ``device_exec<256>``. ``device_exec`` and ``device_exec_async`` exist
+       for SYCL; the CUDA/HIP occupancy and reduction variants do not.
    * - device_atomic and device_atomic_explicit<host_policy>
      - yes
      - yes
      - yes
-     - Backend atomic policy aliases are available on all three backends.
+     - Backend atomic policy aliases are available on all three backends, for
+       example ``device_atomic_explicit<RAJA::seq_atomic>``.
    * - device_reduce
      - yes
      - yes
@@ -770,8 +777,9 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - no
-     - CUDA/HIP expose tuning and base reduce aliases; SYCL currently only
-       exposes device_reduce.
+     - CUDA/HIP expose tuning and base reduce aliases, for example
+       ``device_reduce_base<true>``; SYCL currently only exposes
+       ``device_reduce``.
    * - device_multi_reduce_atomic and
        device_multi_reduce_atomic_low_performance_low_overhead
      - yes
@@ -783,13 +791,14 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - yes
-     - Backend launch policy alias.
+     - Backend launch policy alias, for example ``device_launch_t<false>``.
    * - device_global_size_{x,y,z}_{direct,direct_unchecked,loop}<N>
      - yes
      - yes
      - partial
-     - SYCL currently exposes only the direct x/y/z aliases; the unchecked
-       and loop variants are CUDA/HIP only.
+     - Size-templated aliases, for example ``device_global_size_x_direct<64>``.
+       SYCL currently exposes only the direct x/y/z aliases; the unchecked and
+       loop variants are CUDA/HIP only.
    * - device_global_thread_{x,y,z}
      - yes
      - yes
@@ -809,7 +818,8 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - no
-     - Includes direct, direct_unchecked, and loop variants for 1D and
+     - Size-templated aliases, for example ``device_thread_size_x_direct<128>``.
+       Includes direct, direct_unchecked, and loop variants for 1D and
        permuted multi-dimension forms. These aliases are declared as
        compile-time errors under SYCL.
    * - device_block_{x,y,z}_{direct,loop}
@@ -826,7 +836,8 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - no
-     - Includes direct, direct_unchecked, and loop variants for 1D and
+     - Size-templated aliases, for example ``device_block_size_x_direct<128>``.
+       Includes direct, direct_unchecked, and loop variants for 1D and
        permuted multi-dimension forms. These aliases are declared as
        compile-time errors under SYCL.
    * - device_flatten_block_threads_{xy,...,zyx}_{direct,loop}
@@ -839,8 +850,12 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - no
-     - These flattened size aliases exist for CUDA/HIP but are declared as
-       compile-time errors under SYCL.
+     - Size-templated aliases, for example
+       ``device_flatten_thread_size_x_direct<128>``,
+       ``device_flatten_block_size_x_direct<128>``, and
+       ``device_flatten_global_size_x_direct<128>``. These flattened size
+       aliases exist for CUDA/HIP but are declared as compile-time errors
+       under SYCL.
 
 .. important::
    For SYCL, these aliases use CUDA-like ``(x,y,z)`` naming with the standard
