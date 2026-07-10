@@ -29,7 +29,8 @@
 namespace RAJA
 {
 template<typename T, typename Resource>
-using ResourceAllocator = camp::ResourceAllocator<T, Resource>;
+using ResourceAllocator = typename RAJA::resources::ResourceAllocator<
+    Resource>::template allocator<T>;
 }  // namespace RAJA
 
 #endif  // RAJA_RESOURCE_ALLOCATOR_HPP

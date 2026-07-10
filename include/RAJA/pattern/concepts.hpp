@@ -115,7 +115,7 @@ struct is_execution_policy : std::bool_constant<concepts::ExecutionPolicy<T>>
 {};
 
 template<typename T>
-inline constexpr is_execution_policy_v = is_execution_policy<T>::value;
+inline constexpr bool is_execution_policy_v = is_execution_policy<T>::value;
 
 }  // namespace type_traits
 
