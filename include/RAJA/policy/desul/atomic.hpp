@@ -163,8 +163,6 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(AtomicPolicy,
                                              T* acc,
                                              Operation&& operation)
 {
-  static_assert(std::is_trivially_copyable_v<T>);
-
   T old = desul::atomic_load(acc, desul::MemoryOrderRelaxed {},
                              raja_default_desul_scope {});
   T expected;
@@ -188,8 +186,6 @@ template<typename AtomicPolicy,
 RAJA_HOST_DEVICE RAJA_INLINE T
 atomicGeneric(AtomicPolicy, T* acc, Operation&& operation, StopPredicate&& stop)
 {
-  static_assert(std::is_trivially_copyable_v<T>);
-
   T old = desul::atomic_load(acc, desul::MemoryOrderRelaxed {},
                              raja_default_desul_scope {});
 
