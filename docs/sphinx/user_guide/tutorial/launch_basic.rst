@@ -98,3 +98,12 @@ equivalent of the kernel body using the policy shown above is:
    :start-after: // _device_loop_start
    :end-before: // _device_loop_end
    :language: C++
+
+When only one logical thread should execute a piece of work inside a RAJA::launch
+kernel execution space, use ``RAJA::mask<threads_x>(ctx, ...)``. This keeps the intent explicit
+for per-team setup before a synchronization point:
+
+.. literalinclude:: ../../../../examples/raja-launch.cpp
+   :start-after: // __mask_loop_start
+   :end-before: // __mask_loop_end
+   :language: C++
