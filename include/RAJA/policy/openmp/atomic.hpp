@@ -24,6 +24,7 @@
 
 #if defined(RAJA_ENABLE_OPENMP)
 
+#include <concepts>
 #include <utility>
 
 #include "RAJA/policy/openmp/policy.hpp"
@@ -241,6 +242,21 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(omp_atomic,
   // OpenMP doesn't define a generic atomic operation, so use builtin atomics
   return RAJA::atomicGeneric(builtin_atomic {}, acc,
                              std::forward<Operation>(operation));
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename T, typename Operation, typename StopPredicate>
+requires std::predicate<StopPredicate, T>
+RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(omp_atomic,
+                                             T* acc,
+                                             Operation&& operation,
+                                             StopPredicate&& stop)
+{
+  // OpenMP doesn't define a generic atomic operation, so use builtin atomics
+  return RAJA::atomicGeneric(builtin_atomic {},
+                             acc,
+                             std::forward<Operation>(operation),
+                             std::forward<StopPredicate>(stop));
 }
 
 #endif  // not defined RAJA_COMPILER_MSVC

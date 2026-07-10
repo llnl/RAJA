@@ -24,6 +24,7 @@
 
 #if defined(RAJA_ENABLE_HIP)
 
+#include <concepts>
 #include <cstdint>
 #include <stdexcept>
 #include <type_traits>
@@ -892,6 +893,26 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(hip_atomic_explicit<host_policy>,
 #else
   return RAJA::atomicGeneric(host_policy {}, acc,
                              std::forward<Operation>(operation));
+#endif
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename T, typename Operation, typename StopPredicate, typename host_policy>
+requires std::predicate<StopPredicate, T>
+RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(hip_atomic_explicit<host_policy>,
+                                             T* acc,
+                                             Operation&& operation,
+                                             StopPredicate&& stop)
+{
+#if defined(__HIP_DEVICE_COMPILE__)
+  return detail::hip_atomicCAS_loop(acc,
+                                    std::forward<Operation>(operation),
+                                    std::forward<StopPredicate>(stop));
+#else
+  return RAJA::atomicGeneric(host_policy {},
+                             acc,
+                             std::forward<Operation>(operation),
+                             std::forward<StopPredicate>(stop));
 #endif
 }
 

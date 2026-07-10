@@ -22,6 +22,9 @@
 
 #include "RAJA/config.hpp"
 
+#include <concepts>
+#include <utility>
+
 #include "RAJA/util/macros.hpp"
 
 namespace RAJA
@@ -166,6 +169,22 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(seq_atomic,
 {
   T ret = *acc;
   *acc  = operation(ret);
+  return ret;
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename T, typename Operation, typename StopPredicate>
+requires std::predicate<StopPredicate, T>
+RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(seq_atomic,
+                                             T* acc,
+                                             Operation&& operation,
+                                             StopPredicate&& stop)
+{
+  T ret = *acc;
+  if (!stop(ret))
+  {
+    *acc = std::forward<Operation>(operation)(ret);
+  }
   return ret;
 }
 
