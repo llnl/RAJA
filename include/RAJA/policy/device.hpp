@@ -274,79 +274,79 @@ template<int nz_threads>
 using device_flatten_thread_size_z_loop =
     RAJA_DEVICE_ALIAS(flatten_thread_size_z_loop)<nz_threads>;
 
-template<int nx_threads>
+template<int X_SIZE, int Y_SIZE>
 using device_flatten_thread_size_xy_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_xy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xy_direct)<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
 using device_flatten_thread_size_xz_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_xz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xz_direct)<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
 using device_flatten_thread_size_yx_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_yx_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yx_direct)<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
 using device_flatten_thread_size_yz_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_yz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yz_direct)<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
 using device_flatten_thread_size_zx_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_zx_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zx_direct)<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
 using device_flatten_thread_size_zy_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_zy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zy_direct)<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
 using device_flatten_thread_size_xyz_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_xyz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xyz_direct)<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
 using device_flatten_thread_size_xzy_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_xzy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xzy_direct)<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
 using device_flatten_thread_size_yxz_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_yxz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yxz_direct)<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
 using device_flatten_thread_size_yzx_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_yzx_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yzx_direct)<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
 using device_flatten_thread_size_zxy_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_zxy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zxy_direct)<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
 using device_flatten_thread_size_zyx_direct =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_zyx_direct)<nx_threads>;
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zyx_direct)<Z_SIZE, Y_SIZE, X_SIZE>;
 
-template<int nx_threads>
+template<int X_SIZE, int Y_SIZE>
 using device_flatten_thread_size_xy_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_xy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xy_loop)<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
 using device_flatten_thread_size_xz_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_xz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xz_loop)<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
 using device_flatten_thread_size_yx_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_yx_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yx_loop)<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
 using device_flatten_thread_size_yz_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_yz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yz_loop)<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
 using device_flatten_thread_size_zx_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_zx_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zx_loop)<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
 using device_flatten_thread_size_zy_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_zy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zy_loop)<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
 using device_flatten_thread_size_xyz_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_xyz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xyz_loop)<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
 using device_flatten_thread_size_xzy_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_xzy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_xzy_loop)<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
 using device_flatten_thread_size_yxz_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_yxz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yxz_loop)<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
 using device_flatten_thread_size_yzx_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_yzx_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_yzx_loop)<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
 using device_flatten_thread_size_zxy_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_zxy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zxy_loop)<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
 using device_flatten_thread_size_zyx_loop =
-    RAJA_DEVICE_ALIAS(flatten_thread_size_zyx_loop)<nx_threads>;
+    RAJA_DEVICE_ALIAS(flatten_thread_size_zyx_loop)<Z_SIZE, Y_SIZE, X_SIZE>;
 
 template<int nx_threads>
 using device_flatten_block_size_x_direct =
@@ -378,183 +378,381 @@ template<int nz_threads>
 using device_flatten_block_size_z_loop =
     RAJA_DEVICE_ALIAS(flatten_block_size_z_loop)<nz_threads>;
 
-template<int nx_threads>
+template<int X_SIZE, int Y_SIZE>
 using device_flatten_block_size_xy_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_xy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_xy_direct)<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
 using device_flatten_block_size_xz_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_xz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_xz_direct)<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
 using device_flatten_block_size_yx_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_yx_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_yx_direct)<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
 using device_flatten_block_size_yz_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_yz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_yz_direct)<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
 using device_flatten_block_size_zx_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_zx_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_zx_direct)<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
 using device_flatten_block_size_zy_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_zy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_zy_direct)<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
 using device_flatten_block_size_xyz_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_xyz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_xyz_direct)<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
 using device_flatten_block_size_xzy_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_xzy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_xzy_direct)<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
 using device_flatten_block_size_yxz_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_yxz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_yxz_direct)<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
 using device_flatten_block_size_yzx_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_yzx_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_yzx_direct)<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
 using device_flatten_block_size_zxy_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_zxy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_zxy_direct)<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
 using device_flatten_block_size_zyx_direct =
-    RAJA_DEVICE_ALIAS(flatten_block_size_zyx_direct)<nx_threads>;
+    RAJA_DEVICE_ALIAS(flatten_block_size_zyx_direct)<Z_SIZE, Y_SIZE, X_SIZE>;
 
-template<int nx_threads>
+template<int X_SIZE, int Y_SIZE>
 using device_flatten_block_size_xy_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_xy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_xy_loop)<X_SIZE, Y_SIZE>;
+template<int X_SIZE, int Z_SIZE>
 using device_flatten_block_size_xz_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_xz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_xz_loop)<X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int X_SIZE>
 using device_flatten_block_size_yx_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_yx_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_yx_loop)<Y_SIZE, X_SIZE>;
+template<int Y_SIZE, int Z_SIZE>
 using device_flatten_block_size_yz_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_yz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_yz_loop)<Y_SIZE, Z_SIZE>;
+template<int Z_SIZE, int X_SIZE>
 using device_flatten_block_size_zx_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_zx_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_zx_loop)<Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int Y_SIZE>
 using device_flatten_block_size_zy_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_zy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_zy_loop)<Z_SIZE, Y_SIZE>;
+template<int X_SIZE, int Y_SIZE, int Z_SIZE>
 using device_flatten_block_size_xyz_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_xyz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_xyz_loop)<X_SIZE, Y_SIZE, Z_SIZE>;
+template<int X_SIZE, int Z_SIZE, int Y_SIZE>
 using device_flatten_block_size_xzy_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_xzy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_xzy_loop)<X_SIZE, Z_SIZE, Y_SIZE>;
+template<int Y_SIZE, int X_SIZE, int Z_SIZE>
 using device_flatten_block_size_yxz_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_yxz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_yxz_loop)<Y_SIZE, X_SIZE, Z_SIZE>;
+template<int Y_SIZE, int Z_SIZE, int X_SIZE>
 using device_flatten_block_size_yzx_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_yzx_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_yzx_loop)<Y_SIZE, Z_SIZE, X_SIZE>;
+template<int Z_SIZE, int X_SIZE, int Y_SIZE>
 using device_flatten_block_size_zxy_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_zxy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_block_size_zxy_loop)<Z_SIZE, X_SIZE, Y_SIZE>;
+template<int Z_SIZE, int Y_SIZE, int X_SIZE>
 using device_flatten_block_size_zyx_loop =
-    RAJA_DEVICE_ALIAS(flatten_block_size_zyx_loop)<nx_threads>;
+    RAJA_DEVICE_ALIAS(flatten_block_size_zyx_loop)<Z_SIZE, Y_SIZE, X_SIZE>;
 
-template<int nx_threads>
+template<int X_BLOCK_SIZE, int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_x_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_x_direct)<nx_threads>;
-template<int ny_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_x_direct)<X_BLOCK_SIZE, X_GRID_SIZE>;
+template<int Y_BLOCK_SIZE, int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_y_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_y_direct)<ny_threads>;
-template<int nz_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_y_direct)<Y_BLOCK_SIZE, Y_GRID_SIZE>;
+template<int Z_BLOCK_SIZE, int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_z_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_z_direct)<nz_threads>;
+    RAJA_DEVICE_ALIAS(flatten_global_size_z_direct)<Z_BLOCK_SIZE, Z_GRID_SIZE>;
 
-template<int nx_threads>
+template<int X_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_x_direct_unchecked =
-    RAJA_DEVICE_ALIAS(flatten_global_size_x_direct_unchecked)<nx_threads>;
-template<int ny_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_x_direct_unchecked)<X_BLOCK_SIZE,
+                                                              X_GRID_SIZE>;
+template<int Y_BLOCK_SIZE,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_y_direct_unchecked =
-    RAJA_DEVICE_ALIAS(flatten_global_size_y_direct_unchecked)<ny_threads>;
-template<int nz_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_y_direct_unchecked)<Y_BLOCK_SIZE,
+                                                              Y_GRID_SIZE>;
+template<int Z_BLOCK_SIZE,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_z_direct_unchecked =
-    RAJA_DEVICE_ALIAS(flatten_global_size_z_direct_unchecked)<nz_threads>;
+    RAJA_DEVICE_ALIAS(flatten_global_size_z_direct_unchecked)<Z_BLOCK_SIZE,
+                                                              Z_GRID_SIZE>;
 
-template<int nx_threads>
+template<int X_BLOCK_SIZE, int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_x_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_x_loop)<nx_threads>;
-template<int ny_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_x_loop)<X_BLOCK_SIZE, X_GRID_SIZE>;
+template<int Y_BLOCK_SIZE, int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_y_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_y_loop)<ny_threads>;
-template<int nz_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_y_loop)<Y_BLOCK_SIZE, Y_GRID_SIZE>;
+template<int Z_BLOCK_SIZE, int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_z_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_z_loop)<nz_threads>;
+    RAJA_DEVICE_ALIAS(flatten_global_size_z_loop)<Z_BLOCK_SIZE, Z_GRID_SIZE>;
 
-template<int nx_threads>
+template<int X_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xy_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_xy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_xy_direct)<X_BLOCK_SIZE,
+                                                      Y_BLOCK_SIZE,
+                                                      X_GRID_SIZE,
+                                                      Y_GRID_SIZE>;
+template<int X_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xz_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_xz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_xz_direct)<X_BLOCK_SIZE,
+                                                      Z_BLOCK_SIZE,
+                                                      X_GRID_SIZE,
+                                                      Z_GRID_SIZE>;
+template<int Y_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yx_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_yx_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_yx_direct)<Y_BLOCK_SIZE,
+                                                      X_BLOCK_SIZE,
+                                                      Y_GRID_SIZE,
+                                                      X_GRID_SIZE>;
+template<int Y_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yz_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_yz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_yz_direct)<Y_BLOCK_SIZE,
+                                                      Z_BLOCK_SIZE,
+                                                      Y_GRID_SIZE,
+                                                      Z_GRID_SIZE>;
+template<int Z_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zx_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_zx_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_zx_direct)<Z_BLOCK_SIZE,
+                                                      X_BLOCK_SIZE,
+                                                      Z_GRID_SIZE,
+                                                      X_GRID_SIZE>;
+template<int Z_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zy_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_zy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_zy_direct)<Z_BLOCK_SIZE,
+                                                      Y_BLOCK_SIZE,
+                                                      Z_GRID_SIZE,
+                                                      Y_GRID_SIZE>;
+template<int X_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xyz_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_xyz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_xyz_direct)<X_BLOCK_SIZE,
+                                                       Y_BLOCK_SIZE,
+                                                       Z_BLOCK_SIZE,
+                                                       X_GRID_SIZE,
+                                                       Y_GRID_SIZE,
+                                                       Z_GRID_SIZE>;
+template<int X_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xzy_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_xzy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_xzy_direct)<X_BLOCK_SIZE,
+                                                       Z_BLOCK_SIZE,
+                                                       Y_BLOCK_SIZE,
+                                                       X_GRID_SIZE,
+                                                       Z_GRID_SIZE,
+                                                       Y_GRID_SIZE>;
+template<int Y_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yxz_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_yxz_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_yxz_direct)<Y_BLOCK_SIZE,
+                                                       X_BLOCK_SIZE,
+                                                       Z_BLOCK_SIZE,
+                                                       Y_GRID_SIZE,
+                                                       X_GRID_SIZE,
+                                                       Z_GRID_SIZE>;
+template<int Y_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yzx_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_yzx_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_yzx_direct)<Y_BLOCK_SIZE,
+                                                       Z_BLOCK_SIZE,
+                                                       X_BLOCK_SIZE,
+                                                       Y_GRID_SIZE,
+                                                       Z_GRID_SIZE,
+                                                       X_GRID_SIZE>;
+template<int Z_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zxy_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_zxy_direct)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_zxy_direct)<Z_BLOCK_SIZE,
+                                                       X_BLOCK_SIZE,
+                                                       Y_BLOCK_SIZE,
+                                                       Z_GRID_SIZE,
+                                                       X_GRID_SIZE,
+                                                       Y_GRID_SIZE>;
+template<int Z_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zyx_direct =
-    RAJA_DEVICE_ALIAS(flatten_global_size_zyx_direct)<nx_threads>;
+    RAJA_DEVICE_ALIAS(flatten_global_size_zyx_direct)<Z_BLOCK_SIZE,
+                                                       Y_BLOCK_SIZE,
+                                                       X_BLOCK_SIZE,
+                                                       Z_GRID_SIZE,
+                                                       Y_GRID_SIZE,
+                                                       X_GRID_SIZE>;
 
-template<int nx_threads>
+template<int X_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xy_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_xy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_xy_loop)<X_BLOCK_SIZE,
+                                                    Y_BLOCK_SIZE,
+                                                    X_GRID_SIZE,
+                                                    Y_GRID_SIZE>;
+template<int X_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xz_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_xz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_xz_loop)<X_BLOCK_SIZE,
+                                                    Z_BLOCK_SIZE,
+                                                    X_GRID_SIZE,
+                                                    Z_GRID_SIZE>;
+template<int Y_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yx_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_yx_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_yx_loop)<Y_BLOCK_SIZE,
+                                                    X_BLOCK_SIZE,
+                                                    Y_GRID_SIZE,
+                                                    X_GRID_SIZE>;
+template<int Y_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yz_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_yz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_yz_loop)<Y_BLOCK_SIZE,
+                                                    Z_BLOCK_SIZE,
+                                                    Y_GRID_SIZE,
+                                                    Z_GRID_SIZE>;
+template<int Z_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zx_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_zx_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_zx_loop)<Z_BLOCK_SIZE,
+                                                    X_BLOCK_SIZE,
+                                                    Z_GRID_SIZE,
+                                                    X_GRID_SIZE>;
+template<int Z_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zy_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_zy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_zy_loop)<Z_BLOCK_SIZE,
+                                                    Y_BLOCK_SIZE,
+                                                    Z_GRID_SIZE,
+                                                    Y_GRID_SIZE>;
+template<int X_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xyz_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_xyz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_xyz_loop)<X_BLOCK_SIZE,
+                                                     Y_BLOCK_SIZE,
+                                                     Z_BLOCK_SIZE,
+                                                     X_GRID_SIZE,
+                                                     Y_GRID_SIZE,
+                                                     Z_GRID_SIZE>;
+template<int X_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xzy_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_xzy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_xzy_loop)<X_BLOCK_SIZE,
+                                                     Z_BLOCK_SIZE,
+                                                     Y_BLOCK_SIZE,
+                                                     X_GRID_SIZE,
+                                                     Z_GRID_SIZE,
+                                                     Y_GRID_SIZE>;
+template<int Y_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yxz_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_yxz_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_yxz_loop)<Y_BLOCK_SIZE,
+                                                     X_BLOCK_SIZE,
+                                                     Z_BLOCK_SIZE,
+                                                     Y_GRID_SIZE,
+                                                     X_GRID_SIZE,
+                                                     Z_GRID_SIZE>;
+template<int Y_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yzx_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_yzx_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_yzx_loop)<Y_BLOCK_SIZE,
+                                                     Z_BLOCK_SIZE,
+                                                     X_BLOCK_SIZE,
+                                                     Y_GRID_SIZE,
+                                                     Z_GRID_SIZE,
+                                                     X_GRID_SIZE>;
+template<int Z_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zxy_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_zxy_loop)<nx_threads>;
-template<int nx_threads>
+    RAJA_DEVICE_ALIAS(flatten_global_size_zxy_loop)<Z_BLOCK_SIZE,
+                                                     X_BLOCK_SIZE,
+                                                     Y_BLOCK_SIZE,
+                                                     Z_GRID_SIZE,
+                                                     X_GRID_SIZE,
+                                                     Y_GRID_SIZE>;
+template<int Z_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int X_BLOCK_SIZE,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zyx_loop =
-    RAJA_DEVICE_ALIAS(flatten_global_size_zyx_loop)<nx_threads>;
+    RAJA_DEVICE_ALIAS(flatten_global_size_zyx_loop)<Z_BLOCK_SIZE,
+                                                     Y_BLOCK_SIZE,
+                                                     X_BLOCK_SIZE,
+                                                     Z_GRID_SIZE,
+                                                     Y_GRID_SIZE,
+                                                     X_GRID_SIZE>;
 
 #elif defined(RAJA_SYCL_ACTIVE)
 
