@@ -173,11 +173,9 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(seq_atomic,
 
 RAJA_SUPPRESS_HD_WARN
 template<typename T, typename Operation, typename StopPredicate>
-requires std::predicate<StopPredicate, T>
-RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(seq_atomic,
-                                             T* acc,
-                                             Operation&& operation,
-                                             StopPredicate&& stop)
+  requires std::predicate<StopPredicate, T>
+RAJA_HOST_DEVICE RAJA_INLINE T
+atomicGeneric(seq_atomic, T* acc, Operation&& operation, StopPredicate&& stop)
 {
   T ret = *acc;
 

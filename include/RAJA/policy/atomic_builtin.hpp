@@ -997,14 +997,13 @@ RAJA_DEVICE_HIP RAJA_INLINE T atomicGeneric(builtin_atomic,
 }
 
 template<typename T, typename Operation, typename StopPredicate>
-requires std::predicate<StopPredicate, T>
+  requires std::predicate<StopPredicate, T>
 RAJA_DEVICE_HIP RAJA_INLINE T atomicGeneric(builtin_atomic,
                                             T* acc,
                                             Operation&& operation,
                                             StopPredicate&& stop)
 {
-  return detail::builtin_atomicCAS_loop(acc,
-                                        std::forward<Operation>(operation),
+  return detail::builtin_atomicCAS_loop(acc, std::forward<Operation>(operation),
                                         std::forward<StopPredicate>(stop));
 }
 

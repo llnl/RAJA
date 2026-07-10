@@ -314,15 +314,16 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(T* acc, Operation&& operation)
  * @return The old value observed before the successful update or early exit.
  */
 RAJA_SUPPRESS_HD_WARN
-template<typename Policy, typename T, typename Operation, typename StopPredicate>
-requires std::predicate<StopPredicate, T>
+template<typename Policy,
+         typename T,
+         typename Operation,
+         typename StopPredicate>
+  requires std::predicate<StopPredicate, T>
 RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(T* acc,
                                              Operation&& operation,
                                              StopPredicate&& stop)
 {
-  return RAJA::atomicGeneric(Policy {},
-                             acc,
-                             std::forward<Operation>(operation),
+  return RAJA::atomicGeneric(Policy {}, acc, std::forward<Operation>(operation),
                              std::forward<StopPredicate>(stop));
 }
 

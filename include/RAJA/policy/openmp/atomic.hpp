@@ -246,15 +246,12 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(omp_atomic,
 
 RAJA_SUPPRESS_HD_WARN
 template<typename T, typename Operation, typename StopPredicate>
-requires std::predicate<StopPredicate, T>
-RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(omp_atomic,
-                                             T* acc,
-                                             Operation&& operation,
-                                             StopPredicate&& stop)
+  requires std::predicate<StopPredicate, T>
+RAJA_HOST_DEVICE RAJA_INLINE T
+atomicGeneric(omp_atomic, T* acc, Operation&& operation, StopPredicate&& stop)
 {
   // OpenMP doesn't define a generic atomic operation, so use builtin atomics
-  return RAJA::atomicGeneric(builtin_atomic {},
-                             acc,
+  return RAJA::atomicGeneric(builtin_atomic {}, acc,
                              std::forward<Operation>(operation),
                              std::forward<StopPredicate>(stop));
 }

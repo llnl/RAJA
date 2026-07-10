@@ -181,12 +181,13 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(AtomicPolicy,
 }
 
 RAJA_SUPPRESS_HD_WARN
-template<typename AtomicPolicy, typename T, typename Operation, typename StopPredicate>
-requires std::predicate<StopPredicate, T>
-RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(AtomicPolicy,
-                                             T* acc,
-                                             Operation&& operation,
-                                             StopPredicate&& stop)
+template<typename AtomicPolicy,
+         typename T,
+         typename Operation,
+         typename StopPredicate>
+  requires std::predicate<StopPredicate, T>
+RAJA_HOST_DEVICE RAJA_INLINE T
+atomicGeneric(AtomicPolicy, T* acc, Operation&& operation, StopPredicate&& stop)
 {
   static_assert(std::is_trivially_copyable_v<T>);
 
@@ -203,12 +204,9 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(AtomicPolicy,
   do
   {
     expected = old;
-    old = desul::atomic_compare_exchange(
-        acc,
-        expected,
-        operation(expected),
-        raja_default_desul_order {},
-        raja_default_desul_scope {});
+    old = desul::atomic_compare_exchange(acc, expected, operation(expected),
+                                         raja_default_desul_order {},
+                                         raja_default_desul_scope {});
   } while (!RAJA::util::bit_equal(old, expected) && !stop(old));
 
   return old;
