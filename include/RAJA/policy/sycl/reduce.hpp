@@ -120,13 +120,13 @@ struct Reduce_Data
   Reduce_Data(T initValue, T identityValue, Offload_Info& info)
       : value(initValue)
   {
-    ::sycl::queue* q = ::camp::resources::Sycl::get_default().get_queue();
+    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
 
 
     device = reinterpret_cast<T*>(
-        ::sycl::malloc_device(sycl::MaxNumTeams * sizeof(T), *(q)));
+        ::sycl::malloc_device(sycl::MaxNumTeams * sizeof(T), q));
     host = reinterpret_cast<T*>(
-        ::sycl::malloc_host(sycl::MaxNumTeams * sizeof(T), *(q)));
+        ::sycl::malloc_host(sycl::MaxNumTeams * sizeof(T), q));
 
     if (!host)
     {
@@ -150,18 +150,12 @@ struct Reduce_Data
   //! transfers from the host to the device -- exit() is called upon failure
   RAJA_INLINE void hostToDevice(Offload_Info& RAJA_UNUSED_ARG(info))
   {
-    ::sycl::queue* q = ::camp::resources::Sycl::get_default().get_queue();
-
-    if (!q)
-    {
-      camp::resources::Resource res = camp::resources::Sycl();
-      q = res.get<camp::resources::Sycl>().get_queue();
-    }
+    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
 
     // precondition: host and device are valid pointers
     auto e =
-        q->memcpy(reinterpret_cast<void*>(device),
-                  reinterpret_cast<void*>(host), sycl::MaxNumTeams * sizeof(T));
+        q.memcpy(reinterpret_cast<void*>(device), reinterpret_cast<void*>(host),
+                 sycl::MaxNumTeams * sizeof(T));
 
     e.wait();
   }
@@ -169,18 +163,12 @@ struct Reduce_Data
   //! transfers from the device to the host -- exit() is called upon failure
   RAJA_INLINE void deviceToHost(Offload_Info& RAJA_UNUSED_ARG(info))
   {
-    ::sycl::queue* q = ::camp::resources::Sycl::get_default().get_queue();
-
-    if (!q)
-    {
-      camp::resources::Resource res = camp::resources::Sycl();
-      q = res.get<camp::resources::Sycl>().get_queue();
-    }
+    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
 
     // precondition: host and device are valid pointers
-    auto e = q->memcpy(reinterpret_cast<void*>(host),
-                       reinterpret_cast<void*>(device),
-                       sycl::MaxNumTeams * sizeof(T));
+    auto e =
+        q.memcpy(reinterpret_cast<void*>(host), reinterpret_cast<void*>(device),
+                 sycl::MaxNumTeams * sizeof(T));
 
     e.wait();
   }
@@ -188,16 +176,16 @@ struct Reduce_Data
   //! frees all data from the offload information passed
   RAJA_INLINE void cleanup(Offload_Info& RAJA_UNUSED_ARG(info))
   {
-    ::sycl::queue* q = ::camp::resources::Sycl::get_default().get_queue();
+    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
 
     if (device)
     {
-      ::sycl::free(reinterpret_cast<void*>(device), *q);
+      ::sycl::free(reinterpret_cast<void*>(device), q);
       device = nullptr;
     }
     if (host)
     {
-      ::sycl::free(reinterpret_cast<void*>(host), *q);
+      ::sycl::free(reinterpret_cast<void*>(host), q);
       // delete[] host;
       host = nullptr;
     }
