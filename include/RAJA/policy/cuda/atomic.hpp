@@ -817,6 +817,26 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(cuda_atomic_explicit<host_policy>,
 #endif
 }
 
+RAJA_SUPPRESS_HD_WARN
+template<typename T,
+         typename Operation,
+         std::predicate<T> StopPredicate,
+         typename host_policy>
+RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(cuda_atomic_explicit<host_policy>,
+                                             T* acc,
+                                             Operation&& operation,
+                                             StopPredicate&& stop)
+{
+#ifdef __CUDA_ARCH__
+  return detail::cuda_atomicCAS_loop(acc, std::forward<Operation>(operation),
+                                     std::forward<StopPredicate>(stop));
+#else
+  return RAJA::atomicGeneric(host_policy {}, acc,
+                             std::forward<Operation>(operation),
+                             std::forward<StopPredicate>(stop));
+#endif
+}
+
 }  // namespace RAJA
 
 
