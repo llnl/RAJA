@@ -123,7 +123,7 @@ struct DeviceZeroedAllocator
     void* ptr;
     ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
     ptr              = ::sycl::malloc_device(nbytes, q);
-    q->memset(ptr, 0, nbytes);
+    q.memset(ptr, 0, nbytes);
     return ptr;
   }
 
