@@ -462,21 +462,15 @@ template<int Z_BLOCK_SIZE, int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_z_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_z_direct)<Z_BLOCK_SIZE, Z_GRID_SIZE>;
 
-template<int X_BLOCK_SIZE,
-         int X_GRID_SIZE = RAJA::named_usage::unspecified>
-using device_flatten_global_size_x_direct_unchecked =
-    RAJA_DEVICE_ALIAS(flatten_global_size_x_direct_unchecked)<X_BLOCK_SIZE,
-                                                              X_GRID_SIZE>;
-template<int Y_BLOCK_SIZE,
-         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
-using device_flatten_global_size_y_direct_unchecked =
-    RAJA_DEVICE_ALIAS(flatten_global_size_y_direct_unchecked)<Y_BLOCK_SIZE,
-                                                              Y_GRID_SIZE>;
-template<int Z_BLOCK_SIZE,
-         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
-using device_flatten_global_size_z_direct_unchecked =
-    RAJA_DEVICE_ALIAS(flatten_global_size_z_direct_unchecked)<Z_BLOCK_SIZE,
-                                                              Z_GRID_SIZE>;
+template<int X_BLOCK_SIZE, int X_GRID_SIZE = RAJA::named_usage::unspecified>
+using device_flatten_global_size_x_direct_unchecked = RAJA_DEVICE_ALIAS(
+    flatten_global_size_x_direct_unchecked)<X_BLOCK_SIZE, X_GRID_SIZE>;
+template<int Y_BLOCK_SIZE, int Y_GRID_SIZE = RAJA::named_usage::unspecified>
+using device_flatten_global_size_y_direct_unchecked = RAJA_DEVICE_ALIAS(
+    flatten_global_size_y_direct_unchecked)<Y_BLOCK_SIZE, Y_GRID_SIZE>;
+template<int Z_BLOCK_SIZE, int Z_GRID_SIZE = RAJA::named_usage::unspecified>
+using device_flatten_global_size_z_direct_unchecked = RAJA_DEVICE_ALIAS(
+    flatten_global_size_z_direct_unchecked)<Z_BLOCK_SIZE, Z_GRID_SIZE>;
 
 template<int X_BLOCK_SIZE, int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_x_loop =
@@ -494,54 +488,54 @@ template<int X_BLOCK_SIZE,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xy_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_xy_direct)<X_BLOCK_SIZE,
-                                                      Y_BLOCK_SIZE,
-                                                      X_GRID_SIZE,
-                                                      Y_GRID_SIZE>;
+                                                     Y_BLOCK_SIZE,
+                                                     X_GRID_SIZE,
+                                                     Y_GRID_SIZE>;
 template<int X_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
          int X_GRID_SIZE = RAJA::named_usage::unspecified,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xz_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_xz_direct)<X_BLOCK_SIZE,
-                                                      Z_BLOCK_SIZE,
-                                                      X_GRID_SIZE,
-                                                      Z_GRID_SIZE>;
+                                                     Z_BLOCK_SIZE,
+                                                     X_GRID_SIZE,
+                                                     Z_GRID_SIZE>;
 template<int Y_BLOCK_SIZE,
          int X_BLOCK_SIZE,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified,
          int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yx_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_yx_direct)<Y_BLOCK_SIZE,
-                                                      X_BLOCK_SIZE,
-                                                      Y_GRID_SIZE,
-                                                      X_GRID_SIZE>;
+                                                     X_BLOCK_SIZE,
+                                                     Y_GRID_SIZE,
+                                                     X_GRID_SIZE>;
 template<int Y_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yz_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_yz_direct)<Y_BLOCK_SIZE,
-                                                      Z_BLOCK_SIZE,
-                                                      Y_GRID_SIZE,
-                                                      Z_GRID_SIZE>;
+                                                     Z_BLOCK_SIZE,
+                                                     Y_GRID_SIZE,
+                                                     Z_GRID_SIZE>;
 template<int Z_BLOCK_SIZE,
          int X_BLOCK_SIZE,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified,
          int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zx_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_zx_direct)<Z_BLOCK_SIZE,
-                                                      X_BLOCK_SIZE,
-                                                      Z_GRID_SIZE,
-                                                      X_GRID_SIZE>;
+                                                     X_BLOCK_SIZE,
+                                                     Z_GRID_SIZE,
+                                                     X_GRID_SIZE>;
 template<int Z_BLOCK_SIZE,
          int Y_BLOCK_SIZE,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zy_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_zy_direct)<Z_BLOCK_SIZE,
-                                                      Y_BLOCK_SIZE,
-                                                      Z_GRID_SIZE,
-                                                      Y_GRID_SIZE>;
+                                                     Y_BLOCK_SIZE,
+                                                     Z_GRID_SIZE,
+                                                     Y_GRID_SIZE>;
 template<int X_BLOCK_SIZE,
          int Y_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
@@ -550,11 +544,11 @@ template<int X_BLOCK_SIZE,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xyz_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_xyz_direct)<X_BLOCK_SIZE,
-                                                       Y_BLOCK_SIZE,
-                                                       Z_BLOCK_SIZE,
-                                                       X_GRID_SIZE,
-                                                       Y_GRID_SIZE,
-                                                       Z_GRID_SIZE>;
+                                                      Y_BLOCK_SIZE,
+                                                      Z_BLOCK_SIZE,
+                                                      X_GRID_SIZE,
+                                                      Y_GRID_SIZE,
+                                                      Z_GRID_SIZE>;
 template<int X_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
          int Y_BLOCK_SIZE,
@@ -563,11 +557,11 @@ template<int X_BLOCK_SIZE,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xzy_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_xzy_direct)<X_BLOCK_SIZE,
-                                                       Z_BLOCK_SIZE,
-                                                       Y_BLOCK_SIZE,
-                                                       X_GRID_SIZE,
-                                                       Z_GRID_SIZE,
-                                                       Y_GRID_SIZE>;
+                                                      Z_BLOCK_SIZE,
+                                                      Y_BLOCK_SIZE,
+                                                      X_GRID_SIZE,
+                                                      Z_GRID_SIZE,
+                                                      Y_GRID_SIZE>;
 template<int Y_BLOCK_SIZE,
          int X_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
@@ -576,11 +570,11 @@ template<int Y_BLOCK_SIZE,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yxz_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_yxz_direct)<Y_BLOCK_SIZE,
-                                                       X_BLOCK_SIZE,
-                                                       Z_BLOCK_SIZE,
-                                                       Y_GRID_SIZE,
-                                                       X_GRID_SIZE,
-                                                       Z_GRID_SIZE>;
+                                                      X_BLOCK_SIZE,
+                                                      Z_BLOCK_SIZE,
+                                                      Y_GRID_SIZE,
+                                                      X_GRID_SIZE,
+                                                      Z_GRID_SIZE>;
 template<int Y_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
          int X_BLOCK_SIZE,
@@ -589,11 +583,11 @@ template<int Y_BLOCK_SIZE,
          int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yzx_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_yzx_direct)<Y_BLOCK_SIZE,
-                                                       Z_BLOCK_SIZE,
-                                                       X_BLOCK_SIZE,
-                                                       Y_GRID_SIZE,
-                                                       Z_GRID_SIZE,
-                                                       X_GRID_SIZE>;
+                                                      Z_BLOCK_SIZE,
+                                                      X_BLOCK_SIZE,
+                                                      Y_GRID_SIZE,
+                                                      Z_GRID_SIZE,
+                                                      X_GRID_SIZE>;
 template<int Z_BLOCK_SIZE,
          int X_BLOCK_SIZE,
          int Y_BLOCK_SIZE,
@@ -602,11 +596,11 @@ template<int Z_BLOCK_SIZE,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zxy_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_zxy_direct)<Z_BLOCK_SIZE,
-                                                       X_BLOCK_SIZE,
-                                                       Y_BLOCK_SIZE,
-                                                       Z_GRID_SIZE,
-                                                       X_GRID_SIZE,
-                                                       Y_GRID_SIZE>;
+                                                      X_BLOCK_SIZE,
+                                                      Y_BLOCK_SIZE,
+                                                      Z_GRID_SIZE,
+                                                      X_GRID_SIZE,
+                                                      Y_GRID_SIZE>;
 template<int Z_BLOCK_SIZE,
          int Y_BLOCK_SIZE,
          int X_BLOCK_SIZE,
@@ -615,11 +609,11 @@ template<int Z_BLOCK_SIZE,
          int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zyx_direct =
     RAJA_DEVICE_ALIAS(flatten_global_size_zyx_direct)<Z_BLOCK_SIZE,
-                                                       Y_BLOCK_SIZE,
-                                                       X_BLOCK_SIZE,
-                                                       Z_GRID_SIZE,
-                                                       Y_GRID_SIZE,
-                                                       X_GRID_SIZE>;
+                                                      Y_BLOCK_SIZE,
+                                                      X_BLOCK_SIZE,
+                                                      Z_GRID_SIZE,
+                                                      Y_GRID_SIZE,
+                                                      X_GRID_SIZE>;
 
 template<int X_BLOCK_SIZE,
          int Y_BLOCK_SIZE,
@@ -627,54 +621,54 @@ template<int X_BLOCK_SIZE,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xy_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_xy_loop)<X_BLOCK_SIZE,
-                                                    Y_BLOCK_SIZE,
-                                                    X_GRID_SIZE,
-                                                    Y_GRID_SIZE>;
+                                                   Y_BLOCK_SIZE,
+                                                   X_GRID_SIZE,
+                                                   Y_GRID_SIZE>;
 template<int X_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
          int X_GRID_SIZE = RAJA::named_usage::unspecified,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xz_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_xz_loop)<X_BLOCK_SIZE,
-                                                    Z_BLOCK_SIZE,
-                                                    X_GRID_SIZE,
-                                                    Z_GRID_SIZE>;
+                                                   Z_BLOCK_SIZE,
+                                                   X_GRID_SIZE,
+                                                   Z_GRID_SIZE>;
 template<int Y_BLOCK_SIZE,
          int X_BLOCK_SIZE,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified,
          int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yx_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_yx_loop)<Y_BLOCK_SIZE,
-                                                    X_BLOCK_SIZE,
-                                                    Y_GRID_SIZE,
-                                                    X_GRID_SIZE>;
+                                                   X_BLOCK_SIZE,
+                                                   Y_GRID_SIZE,
+                                                   X_GRID_SIZE>;
 template<int Y_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yz_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_yz_loop)<Y_BLOCK_SIZE,
-                                                    Z_BLOCK_SIZE,
-                                                    Y_GRID_SIZE,
-                                                    Z_GRID_SIZE>;
+                                                   Z_BLOCK_SIZE,
+                                                   Y_GRID_SIZE,
+                                                   Z_GRID_SIZE>;
 template<int Z_BLOCK_SIZE,
          int X_BLOCK_SIZE,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified,
          int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zx_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_zx_loop)<Z_BLOCK_SIZE,
-                                                    X_BLOCK_SIZE,
-                                                    Z_GRID_SIZE,
-                                                    X_GRID_SIZE>;
+                                                   X_BLOCK_SIZE,
+                                                   Z_GRID_SIZE,
+                                                   X_GRID_SIZE>;
 template<int Z_BLOCK_SIZE,
          int Y_BLOCK_SIZE,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zy_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_zy_loop)<Z_BLOCK_SIZE,
-                                                    Y_BLOCK_SIZE,
-                                                    Z_GRID_SIZE,
-                                                    Y_GRID_SIZE>;
+                                                   Y_BLOCK_SIZE,
+                                                   Z_GRID_SIZE,
+                                                   Y_GRID_SIZE>;
 template<int X_BLOCK_SIZE,
          int Y_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
@@ -683,11 +677,11 @@ template<int X_BLOCK_SIZE,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xyz_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_xyz_loop)<X_BLOCK_SIZE,
-                                                     Y_BLOCK_SIZE,
-                                                     Z_BLOCK_SIZE,
-                                                     X_GRID_SIZE,
-                                                     Y_GRID_SIZE,
-                                                     Z_GRID_SIZE>;
+                                                    Y_BLOCK_SIZE,
+                                                    Z_BLOCK_SIZE,
+                                                    X_GRID_SIZE,
+                                                    Y_GRID_SIZE,
+                                                    Z_GRID_SIZE>;
 template<int X_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
          int Y_BLOCK_SIZE,
@@ -696,11 +690,11 @@ template<int X_BLOCK_SIZE,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_xzy_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_xzy_loop)<X_BLOCK_SIZE,
-                                                     Z_BLOCK_SIZE,
-                                                     Y_BLOCK_SIZE,
-                                                     X_GRID_SIZE,
-                                                     Z_GRID_SIZE,
-                                                     Y_GRID_SIZE>;
+                                                    Z_BLOCK_SIZE,
+                                                    Y_BLOCK_SIZE,
+                                                    X_GRID_SIZE,
+                                                    Z_GRID_SIZE,
+                                                    Y_GRID_SIZE>;
 template<int Y_BLOCK_SIZE,
          int X_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
@@ -709,11 +703,11 @@ template<int Y_BLOCK_SIZE,
          int Z_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yxz_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_yxz_loop)<Y_BLOCK_SIZE,
-                                                     X_BLOCK_SIZE,
-                                                     Z_BLOCK_SIZE,
-                                                     Y_GRID_SIZE,
-                                                     X_GRID_SIZE,
-                                                     Z_GRID_SIZE>;
+                                                    X_BLOCK_SIZE,
+                                                    Z_BLOCK_SIZE,
+                                                    Y_GRID_SIZE,
+                                                    X_GRID_SIZE,
+                                                    Z_GRID_SIZE>;
 template<int Y_BLOCK_SIZE,
          int Z_BLOCK_SIZE,
          int X_BLOCK_SIZE,
@@ -722,11 +716,11 @@ template<int Y_BLOCK_SIZE,
          int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_yzx_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_yzx_loop)<Y_BLOCK_SIZE,
-                                                     Z_BLOCK_SIZE,
-                                                     X_BLOCK_SIZE,
-                                                     Y_GRID_SIZE,
-                                                     Z_GRID_SIZE,
-                                                     X_GRID_SIZE>;
+                                                    Z_BLOCK_SIZE,
+                                                    X_BLOCK_SIZE,
+                                                    Y_GRID_SIZE,
+                                                    Z_GRID_SIZE,
+                                                    X_GRID_SIZE>;
 template<int Z_BLOCK_SIZE,
          int X_BLOCK_SIZE,
          int Y_BLOCK_SIZE,
@@ -735,11 +729,11 @@ template<int Z_BLOCK_SIZE,
          int Y_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zxy_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_zxy_loop)<Z_BLOCK_SIZE,
-                                                     X_BLOCK_SIZE,
-                                                     Y_BLOCK_SIZE,
-                                                     Z_GRID_SIZE,
-                                                     X_GRID_SIZE,
-                                                     Y_GRID_SIZE>;
+                                                    X_BLOCK_SIZE,
+                                                    Y_BLOCK_SIZE,
+                                                    Z_GRID_SIZE,
+                                                    X_GRID_SIZE,
+                                                    Y_GRID_SIZE>;
 template<int Z_BLOCK_SIZE,
          int Y_BLOCK_SIZE,
          int X_BLOCK_SIZE,
@@ -748,11 +742,11 @@ template<int Z_BLOCK_SIZE,
          int X_GRID_SIZE = RAJA::named_usage::unspecified>
 using device_flatten_global_size_zyx_loop =
     RAJA_DEVICE_ALIAS(flatten_global_size_zyx_loop)<Z_BLOCK_SIZE,
-                                                     Y_BLOCK_SIZE,
-                                                     X_BLOCK_SIZE,
-                                                     Z_GRID_SIZE,
-                                                     Y_GRID_SIZE,
-                                                     X_GRID_SIZE>;
+                                                    Y_BLOCK_SIZE,
+                                                    X_BLOCK_SIZE,
+                                                    Z_GRID_SIZE,
+                                                    Y_GRID_SIZE,
+                                                    X_GRID_SIZE>;
 
 #elif defined(RAJA_SYCL_ACTIVE)
 
