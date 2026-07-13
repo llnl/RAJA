@@ -154,8 +154,8 @@ struct Reduce_Data
 
     // precondition: host and device are valid pointers
     auto e =
-        q.memcpy(reinterpret_cast<void*>(device),
-                 reinterpret_cast<void*>(host), sycl::MaxNumTeams * sizeof(T));
+        q.memcpy(reinterpret_cast<void*>(device), reinterpret_cast<void*>(host),
+                 sycl::MaxNumTeams * sizeof(T));
 
     e.wait();
   }
@@ -166,9 +166,9 @@ struct Reduce_Data
     ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
 
     // precondition: host and device are valid pointers
-    auto e = q.memcpy(reinterpret_cast<void*>(host),
-                      reinterpret_cast<void*>(device),
-                      sycl::MaxNumTeams * sizeof(T));
+    auto e =
+        q.memcpy(reinterpret_cast<void*>(host), reinterpret_cast<void*>(device),
+                 sycl::MaxNumTeams * sizeof(T));
 
     e.wait();
   }
