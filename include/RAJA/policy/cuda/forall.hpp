@@ -560,7 +560,8 @@ forall_impl(resources::Cuda cuda_res,
     // Note: we cannot fully remove enable_if_t from this file because NVCC is
     // not capable of disambiguating conceptified versions of
     // forallp_cuda_kernel when they are used by address like below.
-    RAJA::internal::jit::register_lambda(loop_body);
+    auto registered_body = RAJA::internal::jit::register_lambda(loop_body);
+    using RegisteredLambdaType = std::decay_t<decltype(registered_body)>;
     auto func = reinterpret_cast<const void*>(
         &impl::forallp_cuda_kernel<EXEC_POL, BlocksPerSM, Iterator, LOOP_BODY,
                                    IndexType, camp::decay<ForallParam>>);
@@ -590,7 +591,7 @@ forall_impl(resources::Cuda cuda_res,
       //
       LOOP_BODY body = RAJA::cuda::make_launch_body(
           func, dims.blocks, dims.threads, shmem, cuda_res,
-          std::forward<LoopBody>(loop_body));
+          std::forward<LoopBody>(registered_body));
 
       //
       // Launch the kernels
@@ -645,7 +646,7 @@ RAJA_INLINE resources::EventProxy<resources::Cuda> forall_impl(
     LoopBody&& loop_body)
 {
   int num_seg = iset.getNumSegments();
-  RAJA::internal::jit::register_lambda(loop_body);
+  auto reg_lambda = RAJA::internal::jit::register_lambda(loop_body);
   for (int isi = 0; isi < num_seg; ++isi)
   {
     iset.segmentCall(
@@ -653,7 +654,7 @@ RAJA_INLINE resources::EventProxy<resources::Cuda> forall_impl(
         ::RAJA::policy::cuda::cuda_exec_explicit<IterationMapping,
                                                  IterationGetter, Concretizer,
                                                  BlocksPerSM, true>(),
-        loop_body);
+        reg_lambda);
   }  // iterate over segments of index set
 
   if (!Async) RAJA::cuda::synchronize(r);

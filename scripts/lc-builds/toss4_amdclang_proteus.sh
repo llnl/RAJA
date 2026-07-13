@@ -40,13 +40,13 @@ fi
 
 HOSTCONFIG="hip_3_X"
 
-if [[ ${COMP_VER} == 4.* ]]
+if [[ ${COMP_VER} == 3.* ]]
+then
+  HOSTCONFIG="hip_3_X"
+elif [[ ${COMP_VER} =~ ^([4-9]|[1-9][0-9]+)\. ]]
 then
 ##HIP_CLANG_FLAGS="-mllvm -amdgpu-fixed-function-abi=1"
   HOSTCONFIG="hip_4_link_X"
-elif [[ ${COMP_VER} == 3.* ]]
-then
-  HOSTCONFIG="hip_3_X"
 else
   echo "Unknown hip version, using ${HOSTCONFIG} host-config"
 fi
@@ -73,6 +73,15 @@ module load cmake/${CMAKE_VER}
 # are inconsistent causing the rocprim from the module to be used unexpectedly
 module unload rocm
 
+# Some interactive shells export hard-coded ROCm paths. Clear them so the
+# requested COMP_VER fully determines which package configs CMake sees.
+unset LLVM_INSTALL_DIR
+unset LLVM_DIR
+unset Clang_DIR
+unset LLD_DIR
+unset hip_DIR
+unset hiprtc_DIR
+
 
 cmake \
   -DCMAKE_BUILD_TYPE=Release \
@@ -80,22 +89,29 @@ cmake \
   -DHIP_ROOT_DIR="/opt/rocm-${COMP_VER}/hip" \
   -DHIP_PATH=/opt/rocm-${COMP_VER}/llvm/bin \
   -DENABLE_CLANGFORMAT=On \
-  -DCLANGFORMAT_EXECUTABLE=/opt/rocm-5.2.3/llvm/bin/clang-format \
+  -DCLANGFORMAT_EXECUTABLE=/opt/rocm-${COMP_VER}/llvm/bin/clang-format \
   -DCMAKE_C_COMPILER=/opt/rocm-${COMP_VER}/llvm/bin/amdclang \
   -DCMAKE_CXX_COMPILER=/opt/rocm-${COMP_VER}/llvm/bin/amdclang++ \
   -DCMAKE_HIP_ARCHITECTURES="${COMP_ARCH}" \
   -DGPU_TARGETS="${COMP_ARCH}" \
   -DAMDGPU_TARGETS="${COMP_ARCH}" \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -C "../host-configs/lc-builds/toss4/${HOSTCONFIG}.cmake" \
   -DENABLE_HIP=ON \
   -DBUILD_SHARED=ON \
   -DRAJA_ENABLE_JIT=ON \
   -DLLVM_INSTALL_DIR="/opt/rocm-${COMP_VER}/llvm"\
+  -DLLVM_DIR="/opt/rocm-${COMP_VER}/llvm/lib/cmake/llvm" \
+  -DClang_DIR="/opt/rocm-${COMP_VER}/llvm/lib/cmake/clang" \
+  -DLLD_DIR="/opt/rocm-${COMP_VER}/llvm/lib/cmake/lld" \
+  -Dhip_DIR="/opt/rocm-${COMP_VER}/lib/cmake/hip" \
+  -Dhiprtc_DIR="/opt/rocm-${COMP_VER}/lib/cmake/hiprtc" \
   -DENABLE_OPENMP=ON \
   -DENABLE_CUDA=OFF \
   -DENABLE_BENCHMARKS=On \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \
+  -DPROTEUS_INSTALL_DIR=/g/g11/bowen36/tmp/proteus/install-tioga-rocm-6.4.2 \
+  -DLLVM_INSTALL_DIR=/opt/rocm-${COMP_VER}/llvm \
   "$@" \
   ..
 

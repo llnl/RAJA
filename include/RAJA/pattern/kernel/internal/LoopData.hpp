@@ -24,6 +24,7 @@
 #include "RAJA/config.hpp"
 
 #include "RAJA/index/IndexSet.hpp"
+#include "RAJA/util/Jit.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 
@@ -177,6 +178,50 @@ struct LoopData
 
   RAJA_HOST_DEVICE RAJA_INLINE Resource get_resource() { return res; }
 };
+
+namespace jit {
+  template<typename... Bodies, std::size_t... Is>
+  inline auto __register_bodies_impl(camp::tuple<Bodies...> const bodies,
+                                     std::index_sequence<Is...>)
+  {
+    return camp::make_tuple(
+        RAJA::internal::jit::register_lambda(camp::get<Is>(bodies))...);
+  }
+
+  template<typename SegmentTuple,
+           typename ParamTuple,
+           typename Resource,
+           typename... Bodies,
+           std::size_t... Is>
+  inline auto __register_loop_bodies_impl(
+      LoopData<SegmentTuple, ParamTuple, Resource, Bodies...> body,
+      std::index_sequence<Is...>)
+  {
+    auto registered_bodies = __register_bodies_impl(
+        body.bodies, std::index_sequence_for<Bodies...> {});
+    return LoopData(body.segment_tuple,
+                    body.param_tuple,
+                    body.get_resource(),
+                    camp::get<Is>(registered_bodies)...);
+  }
+
+  template<typename SegmentTuple,
+           typename ParamTuple,
+           typename Resource,
+           typename... Bodies>
+  inline auto register_loop_bodies(
+      LoopData<SegmentTuple, ParamTuple, Resource, Bodies...> body)
+  {
+  #if defined RAJA_ENABLE_JIT
+    return __register_loop_bodies_impl(
+        std::move(body), std::index_sequence_for<Bodies...> {});
+  #else
+    return std::forward<LoopData<SegmentTuple, ParamTuple, Resource, Bodies...>>(body);
+  #endif
+  }
+
+}
+
 
 template<camp::idx_t ArgumentId, typename Data>
 using segment_diff_type = typename std::iterator_traits<

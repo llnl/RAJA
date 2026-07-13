@@ -27,6 +27,12 @@ if (RAJA_ENABLE_JIT)
   raja_add_executable(
     NAME forall-jit
     SOURCES forall-jit.cpp)
+  raja_add_executable(
+    NAME kernel-jit
+    SOURCES kernel-jit.cpp)
+  raja_add_executable(
+    NAME launch-jit
+    SOURCES launch-jit.cpp)
 endif()
 
 raja_add_executable(
