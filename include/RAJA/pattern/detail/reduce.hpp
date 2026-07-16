@@ -228,12 +228,24 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  BaseReduce() : c {T(), Reduce::identity()} {}
+  BaseReduce() : BaseReduce(Policy::undefined, T(), Reduce::identity()) {}
 
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  BaseReduce(T init_val, T identity_ = Reduce::identity())
+  explicit BaseReduce(Policy p) : BaseReduce(p, T(), Reduce::identity()) {}
+
+  RAJA_SUPPRESS_HD_WARN
+
+  RAJA_HOST_DEVICE
+  explicit BaseReduce(T init_val, T identity_ = Reduce::identity())
+      : BaseReduce(Policy::undefined, init_val, identity_)
+  {}
+
+  RAJA_SUPPRESS_HD_WARN
+
+  RAJA_HOST_DEVICE
+  BaseReduce(Policy RAJA_UNUSED_ARG(p), T init_val, T identity_ = Reduce::identity())
       : c {init_val, identity_}
   {}
 
@@ -241,6 +253,15 @@ public:
 
   RAJA_HOST_DEVICE
   void reset(T val, T identity_ = Reduce::identity())
+  {
+    operator T();  // automatic get() before reset
+    c.reset(val, identity_);
+  }
+
+  RAJA_SUPPRESS_HD_WARN
+
+  RAJA_HOST_DEVICE
+  void reset(Policy RAJA_UNUSED_ARG(p), T val, T identity_ = Reduce::identity())
   {
     operator T();  // automatic get() before reset
     c.reset(val, identity_);
@@ -403,7 +424,19 @@ public:
       IndexType init_idx,
       T identity_val_         = reduce_type::identity(),
       IndexType identity_loc_ = DefaultLoc<IndexType>().value())
-      : Base(value_type(init_val, init_idx),
+      : Base(Policy::undefined,
+             value_type(init_val, init_idx),
+             value_type(identity_val_, identity_loc_))
+  {}
+
+  constexpr BaseReduceMinLoc(
+      Policy p,
+      T init_val,
+      IndexType init_idx,
+      T identity_val_         = reduce_type::identity(),
+      IndexType identity_loc_ = DefaultLoc<IndexType>().value())
+      : Base(p,
+             value_type(init_val, init_idx),
              value_type(identity_val_, identity_loc_))
   {}
 
@@ -414,6 +447,18 @@ public:
   {
     operator T();  // automatic get() before reset
     Base::reset(value_type(init_val, init_idx),
+                value_type(identity_val_, identity_loc_));
+  }
+
+  void reset(Policy p,
+             T init_val,
+             IndexType init_idx,
+             T identity_val_         = reduce_type::identity(),
+             IndexType identity_loc_ = DefaultLoc<IndexType>().value())
+  {
+    operator T();  // automatic get() before reset
+    Base::reset(p,
+                value_type(init_val, init_idx),
                 value_type(identity_val_, identity_loc_));
   }
 
@@ -551,14 +596,26 @@ public:
   using reduce_type = typename Base::reduce_type;
   using Base::Base;
 
-  constexpr BaseReduceMaxLoc() : Base(value_type(T(), IndexType())) {}
+  constexpr BaseReduceMaxLoc() : Base(Policy::undefined, value_type(T(), IndexType())) {}
 
   constexpr BaseReduceMaxLoc(
       T init_val,
       IndexType init_idx,
       T identity_val_         = reduce_type::identity(),
       IndexType identity_loc_ = DefaultLoc<IndexType>().value())
-      : Base(value_type(init_val, init_idx),
+      : Base(Policy::undefined,
+             value_type(init_val, init_idx),
+             value_type(identity_val_, identity_loc_))
+  {}
+
+  constexpr BaseReduceMaxLoc(
+      Policy p,
+      T init_val,
+      IndexType init_idx,
+      T identity_val_         = reduce_type::identity(),
+      IndexType identity_loc_ = DefaultLoc<IndexType>().value())
+      : Base(p,
+             value_type(init_val, init_idx),
              value_type(identity_val_, identity_loc_))
   {}
 
@@ -569,6 +626,18 @@ public:
   {
     operator T();  // automatic get() before reset
     Base::reset(value_type(init_val, init_idx),
+                value_type(identity_val_, identity_loc_));
+  }
+
+  void reset(Policy p,
+             T init_val,
+             IndexType init_idx,
+             T identity_val_         = reduce_type::identity(),
+             IndexType identity_loc_ = DefaultLoc<IndexType>().value())
+  {
+    operator T();  // automatic get() before reset
+    Base::reset(p,
+                value_type(init_val, init_idx),
                 value_type(identity_val_, identity_loc_));
   }
 
