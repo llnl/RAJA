@@ -221,20 +221,14 @@ struct MultiReduceGridAtomicHostInit_TallyData
   MultiReduceGridAtomicHostInit_TallyData(Container const& container,
                                           T const& identity)
       : m_tally_mem(nullptr),
-        m_host_tally_mem(nullptr),
-        m_device_tally_mem(nullptr),
         m_identity(identity),
         m_num_bins(container.size()),
         m_tally_bins(get_tally_bins(m_num_bins)),
         m_tally_replication(get_tally_replication()),
-        m_host_valid(true),
-        m_device_valid(false),
         m_use_device_storage(true)
   {
     m_tally_mem = create_tally(container, identity, m_num_bins, m_tally_bins,
                                m_tally_replication, true);
-    m_host_tally_mem   = m_tally_mem;
-    m_device_tally_mem = nullptr;
   }
 
   template<typename Container>
@@ -242,20 +236,14 @@ struct MultiReduceGridAtomicHostInit_TallyData
                                           T const& identity,
                                           bool use_device_storage)
       : m_tally_mem(nullptr),
-        m_host_tally_mem(nullptr),
-        m_device_tally_mem(nullptr),
         m_identity(identity),
         m_num_bins(container.size()),
         m_tally_bins(get_tally_bins(m_num_bins)),
         m_tally_replication(get_tally_replication()),
-        m_host_valid(true),
-        m_device_valid(false),
         m_use_device_storage(use_device_storage)
   {
     m_tally_mem = create_tally(container, identity, m_num_bins, m_tally_bins,
                                m_tally_replication, use_device_storage);
-    m_host_tally_mem   = m_tally_mem;
-    m_device_tally_mem = nullptr;
   }
 
   MultiReduceGridAtomicHostInit_TallyData() = delete;
@@ -282,10 +270,6 @@ struct MultiReduceGridAtomicHostInit_TallyData
       m_tally_replication = get_tally_replication();
       m_tally_mem = create_tally(container, identity, m_num_bins, m_tally_bins,
                                  m_tally_replication, m_use_device_storage);
-      m_host_tally_mem   = m_tally_mem;
-      m_device_tally_mem = nullptr;
-      m_host_valid       = true;
-      m_device_valid     = false;
     }
     else
     {
@@ -307,7 +291,6 @@ struct MultiReduceGridAtomicHostInit_TallyData
                                         m_tally_replication)] = identity;
         }
       }
-      m_host_valid = true;
     }
     m_identity = identity;
   }
@@ -317,18 +300,14 @@ struct MultiReduceGridAtomicHostInit_TallyData
   {
     destroy_tally(m_tally_mem, m_num_bins, m_tally_bins, m_tally_replication,
                   m_use_device_storage);
-    m_tally_mem        = nullptr;
-    m_host_tally_mem   = nullptr;
-    m_device_tally_mem = nullptr;
-    m_host_valid       = false;
-    m_device_valid     = false;
+    m_tally_mem = nullptr;
   }
 
-  //! setup per launch, switch tally storage to device memory
-  void setup_launch() { m_tally_mem = m_host_tally_mem; }
+  //! setup per launch, no tally changes needed for global atomic storage
+  void setup_launch() {}
 
-  //! teardown per launch, restore host tally storage
-  void teardown_launch() { m_tally_mem = m_host_tally_mem; }
+  //! teardown per launch, no tally changes needed for global atomic storage
+  void teardown_launch() {}
 
   //! get value for bin, assumes synchronization occurred elsewhere
   T get(int bin) const
@@ -437,12 +416,6 @@ private:
     return tally_mem;
   }
 
-  size_t tally_bytes() const
-  {
-    return static_cast<size_t>(m_tally_replication) *
-           static_cast<size_t>(m_tally_bins) * sizeof(T);
-  }
-
   static void destroy_tally(T*& tally_mem,
                             int num_bins,
                             int tally_bins,
@@ -479,15 +452,11 @@ protected:
   using GetTallyOffset = typename GetTallyOffset_rebind::template rebind<int>;
 
   T* m_tally_mem;
-  T* m_host_tally_mem;
-  T* m_device_tally_mem;
   T m_identity;
   int m_num_bins;
   int m_tally_bins;
   int m_tally_replication;  // power of 2, at least the max number of omp
                             // threads
-  bool m_host_valid;
-  bool m_device_valid;
   bool m_use_device_storage;
 };
 
@@ -510,13 +479,13 @@ struct MultiReduceGridAtomicHostInit_Data
   using TallyData::TallyData;
   using TallyData::teardown_permanent;
 
-  //! setup per launch, switch tally storage to device memory
+  //! setup per launch, no tally changes needed for global atomic storage
   void setup_launch(size_t RAJA_UNUSED_ARG(block_size))
   {
     TallyData::setup_launch();
   }
 
-  //! teardown per launch, restore host tally storage
+  //! teardown per launch, no tally changes needed for global atomic storage
   void teardown_launch() { TallyData::teardown_launch(); }
 
   //! setup on device, do nothing
@@ -837,8 +806,7 @@ public:
       if (setupReducers())
       {
         add_resource_to_synchronization_list(currentResource());
-        m_parent->m_data.setup_launch(currentBlockSize());
-        m_data            = m_parent->m_data;
+        m_data.setup_launch(currentBlockSize());
         m_own_launch_data = true;
         m_parent          = nullptr;
       }
@@ -874,7 +842,6 @@ public:
     {
       if (m_own_launch_data)
       {
-        synchronize_resources_and_clear_list();
         m_data.teardown_launch();
         m_own_launch_data = false;
       }

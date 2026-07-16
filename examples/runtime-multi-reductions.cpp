@@ -29,7 +29,10 @@
 
 constexpr int N = 1000000;
 constexpr int NumBins = 10;
+
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
 constexpr int BlockSize = 256;
+#endif
 
 #if defined(RAJA_ENABLE_OPENMP)
 using host_exec_policy = RAJA::omp_parallel_for_exec;
@@ -59,29 +62,42 @@ using exec_policy_list = camp::list<host_exec_policy
 #endif
                                     >;
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 
-  if(argc != 2) {
-    RAJA_ABORT_OR_THROW("Usage ./runtime-multi-reductions host or ./runtime-multi-reductions device");
+  if (argc != 2)
+  {
+    RAJA_ABORT_OR_THROW(
+        "Usage ./runtime-multi-reductions host or "
+        "./runtime-multi-reductions device");
   }
 
   //
-  // Run time policy section is demonstrated in this example by specifying
-  // kernel exection space as a command line argument (host or device).
+  // Runtime policy selection is demonstrated by specifying kernel execution
+  // space as a command line argument (host or device).
   // Example usage ./runtime-multi-reductions host or ./runtime-multi-reductions device
   //
-  std::string exec_space = argv[1];
-  if(!(exec_space.compare("host") == 0 || exec_space.compare("device") == 0 )){
-    RAJA_ABORT_OR_THROW("Usage ./runtime-multi-reductions host or ./runtime-multi-reductions device");
-    return 0;
+  const std::string exec_space = argv[1];
+  if (exec_space != "host" && exec_space != "device")
+  {
+    RAJA_ABORT_OR_THROW(
+        "Usage ./runtime-multi-reductions host or "
+        "./runtime-multi-reductions device");
   }
 
-  RAJA::ExecPlace select_cpu_or_gpu;
-  if(exec_space.compare("host") == 0)
-    { select_cpu_or_gpu = RAJA::ExecPlace::HOST; printf("Running RAJA runtime multi-reductions example on the host \n"); }
-  if(exec_space.compare("device") == 0)
-    { select_cpu_or_gpu = RAJA::ExecPlace::DEVICE; printf("Running RAJA runtime multi-reductions example on the device \n"); }
+  RAJA::ExecPlace select_cpu_or_gpu = RAJA::ExecPlace::HOST;
+  if (exec_space == "device")
+  {
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+    select_cpu_or_gpu = RAJA::ExecPlace::DEVICE;
+#else
+    RAJA_ABORT_OR_THROW(
+        "Device runtime path requires a CUDA or HIP enabled build");
+#endif
+  }
+
+  std::cout << "Running RAJA runtime multi-reductions example on the "
+            << exec_space << '\n';
 
   // _multi_reductions_array_init_start
 //
@@ -97,7 +113,8 @@ int main(int argc, char *argv[])
   int* host_bins = host_res.allocate<int>(num_values);
   int* host_vals = host_res.allocate<int>(num_values);
 
-  for (int i = 0; i < num_values; ++i) {
+  for (int i = 0; i < num_values; ++i)
+  {
     host_bins[i] = i % NumBins;
     host_vals[i] = (i % (2 * NumBins)) - NumBins;
   }
@@ -132,8 +149,9 @@ int main(int argc, char *argv[])
   RAJA::resources::Sycl device_res;
 #endif
 
-  // The reducer policy is selected at compile time, but the storage backend
-  // follows the runtime resource chosen here.
+  // The reducer policy is selected at compile time. For policies that support
+  // runtime storage selection, the resource platform chooses host-accessible or
+  // device-accessible reducer tally storage.
   RAJA::resources::Resource res =
 #if defined(RAJA_ENABLE_CUDA)
       RAJA::Get_Runtime_Resource(host_res, device_res, select_cpu_or_gpu);
@@ -162,20 +180,17 @@ int main(int argc, char *argv[])
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
     policy_index = 1;
     label        = "device runtime path";
-#else
-    RAJA_ABORT_OR_THROW("Device runtime path requires a GPU-enabled build");
 #endif
   }
 
-  // Passing `res` keeps the reducer storage on the same host/device backend
-  // as the input buffers, so the device path uses device-resident tally
-  // storage while the host path stays on host memory.
+  // Passing `res` lets the reducer choose host-accessible or device-accessible
+  // tally storage from the selected resource platform. The reducer does not
+  // allocate directly through `res`; CUDA/HIP use their existing tally mempools.
   //
   // Device-side flow:
   //   1. `res.allocate(...)` places `bins` and `vals` in device memory.
-  //   2. `MultiReduce(..., res, NumBins)` allocates its tally storage from
-  //      the same backend; CUDA uses managed memory with device preference
-  //      for the tally pool, while HIP uses device allocation.
+  //   2. `MultiReduce(..., res, NumBins)` chooses device-accessible tally
+  //      storage because `res` is a device resource.
   //   3. The kernel reads the device buffers and updates the device-side
   //      reducer state.
   //   4. `get()` synchronizes and returns the reduced values to the host.
@@ -204,8 +219,9 @@ int main(int argc, char *argv[])
       });
 
   ok = true;
-  const int expected_sum_scale = N / NumBins;
-  for (int bin = 0; bin < NumBins; ++bin) {
+  const int expected_sum_scale = num_values / NumBins;
+  for (int bin = 0; bin < NumBins; ++bin)
+  {
     const int expected_sum = (bin - (NumBins / 2)) * expected_sum_scale;
     const int expected_min = bin - NumBins;
     const int expected_max = bin;

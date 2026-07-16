@@ -77,6 +77,8 @@ struct MultiReduceDataOMP<
     RAJA::omp::MultiReduceTuning<
         RAJA::omp::multi_reduce_algorithm::combine_on_destruction>>
 {
+  static constexpr bool supports_runtime_resource_storage = false;
+
   using value_type    = T;
   using MultiReduceOp = t_MultiReduceOp;
 
@@ -212,6 +214,8 @@ struct MultiReduceDataOMP<
     RAJA::omp::MultiReduceTuning<
         RAJA::omp::multi_reduce_algorithm::combine_on_get>>
 {
+  static constexpr bool supports_runtime_resource_storage = false;
+
   using value_type    = T;
   using MultiReduceOp = t_MultiReduceOp;
 

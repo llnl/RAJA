@@ -65,6 +65,21 @@ namespace reduce
 namespace detail
 {
 
+template<typename...>
+using void_t = void;
+
+template<typename MultiReduceData, typename = void>
+struct supports_runtime_resource_storage : std::false_type
+{};
+
+template<typename MultiReduceData>
+struct supports_runtime_resource_storage<
+    MultiReduceData,
+    void_t<decltype(MultiReduceData::supports_runtime_resource_storage)>>
+    : std::integral_constant<bool,
+                             MultiReduceData::supports_runtime_resource_storage>
+{};
+
 template<typename t_MultiReduceData>
 struct BaseMultiReduce
 {
@@ -227,7 +242,7 @@ private:
                                    Container const& container,
                                    value_type identity)
   {
-    if constexpr (MultiReduceData::supports_runtime_resource_storage)
+    if constexpr (supports_runtime_resource_storage<MultiReduceData>::value)
     {
       return MultiReduceData(container, identity, use_device_storage(res));
     }
