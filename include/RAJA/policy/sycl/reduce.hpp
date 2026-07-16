@@ -120,7 +120,7 @@ struct Reduce_Data
   Reduce_Data(T initValue, T identityValue, Offload_Info& info)
       : value(initValue)
   {
-    ::sycl::queue q = currentResourceQueue();
+    ::sycl::queue& q = currentResourceQueue();
 
 
     device = reinterpret_cast<T*>(
@@ -153,7 +153,7 @@ struct Reduce_Data
   //! transfers from the host to the device -- exit() is called upon failure
   RAJA_INLINE void hostToDevice(Offload_Info& RAJA_UNUSED_ARG(info))
   {
-    ::sycl::queue q = currentResourceQueue();
+    ::sycl::queue& q = currentResourceQueue();
 
     // precondition: host and device are valid pointers
     auto e =
@@ -166,7 +166,7 @@ struct Reduce_Data
   //! transfers from the device to the host -- exit() is called upon failure
   RAJA_INLINE void deviceToHost(Offload_Info& RAJA_UNUSED_ARG(info))
   {
-    ::sycl::queue q = currentResourceQueue();
+    ::sycl::queue& q = currentResourceQueue();
 
     // precondition: host and device are valid pointers
     auto e =
@@ -179,7 +179,7 @@ struct Reduce_Data
   //! frees all data from the offload information passed
   RAJA_INLINE void cleanup(Offload_Info& RAJA_UNUSED_ARG(info))
   {
-    ::sycl::queue q = currentResourceQueue();
+    ::sycl::queue& q = currentResourceQueue();
 
     if (device)
     {
