@@ -729,7 +729,6 @@ struct ReduceLastBlock_Data
   void grid_reduce(T* output)
   {
     T temp = value;
-
     size_t replicationId =
         impl::grid_reduce_last_block<Combiner, Accessor, replication,
                                      atomic_stride>(temp, identity, device,
@@ -791,7 +790,7 @@ struct ReduceAtomicHostInit_Data
   bool is_setup;
   bool owns_device_pointer;
 
-  ReduceAtomicHostInit_Data() : ReduceAtomicHostInit_Data(T(), T()) {};
+  ReduceAtomicHostInit_Data() : ReduceAtomicHostInit_Data(T(), T()) {}
 
   ReduceAtomicHostInit_Data(T initValue, T identity_)
       : value {initValue},
@@ -879,7 +878,7 @@ struct ReduceAtomicDeviceInit_Data
   T* device;
   bool owns_device_pointer;
 
-  ReduceAtomicDeviceInit_Data() : ReduceAtomicDeviceInit_Data(T(), T()) {};
+  ReduceAtomicDeviceInit_Data() : ReduceAtomicDeviceInit_Data(T(), T()) {}
 
   ReduceAtomicDeviceInit_Data(T initValue, T identity_)
       : value {initValue},

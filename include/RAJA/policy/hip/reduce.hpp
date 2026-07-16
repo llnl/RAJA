@@ -678,9 +678,9 @@ struct ReduceLastBlock_Data
   T identity;
   unsigned int* device_count;
   RAJA::detail::SoAPtr<T, data_mempool_type> device;
-  bool own_device_ptr;
+  bool owns_device_pointer;
 
-  ReduceLastBlock_Data() : ReduceLastBlock_Data(T(), T()) {};
+  ReduceLastBlock_Data() : ReduceLastBlock_Data(T(), T()) {}
 
   /*! \brief create from a default value and offload information
    *
@@ -692,7 +692,7 @@ struct ReduceLastBlock_Data
         identity {identity_},
         device_count {nullptr},
         device {},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   RAJA_HOST_DEVICE
@@ -701,7 +701,7 @@ struct ReduceLastBlock_Data
         identity {other.identity},
         device_count {other.device_count},
         device {other.device},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   ReduceLastBlock_Data& operator=(const ReduceLastBlock_Data&) = default;
@@ -746,7 +746,7 @@ struct ReduceLastBlock_Data
       device_count =
           count_mempool_type::getInstance().template malloc<unsigned int>(
               replication * atomic_stride);
-      own_device_ptr = true;
+      owns_device_pointer = true;
     }
     return act;
   }
@@ -755,13 +755,13 @@ struct ReduceLastBlock_Data
   //  free device pointers
   bool teardownForDevice()
   {
-    bool act = own_device_ptr;
+    bool act = owns_device_pointer;
     if (act)
     {
       device.deallocate();
       count_mempool_type::getInstance().free(device_count);
-      device_count   = nullptr;
-      own_device_ptr = false;
+      device_count        = nullptr;
+      owns_device_pointer = false;
     }
     return act;
   }
@@ -781,7 +781,7 @@ struct ReduceAtomicHostInit_Data
   mutable T value;
   T identity;
   bool is_setup;
-  bool own_device_ptr;
+  bool owns_device_pointer;
 
   ReduceAtomicHostInit_Data() : ReduceAtomicHostInit_Data(T(), T()) {}
 
@@ -789,7 +789,7 @@ struct ReduceAtomicHostInit_Data
       : value {initValue},
         identity {identity_},
         is_setup {false},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   RAJA_HOST_DEVICE
@@ -797,7 +797,7 @@ struct ReduceAtomicHostInit_Data
       : value {other.identity},
         identity {other.identity},
         is_setup {other.is_setup},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   ReduceAtomicHostInit_Data& operator=(const ReduceAtomicHostInit_Data&) =
@@ -831,8 +831,8 @@ struct ReduceAtomicHostInit_Data
     bool act = !is_setup && setupReducers();
     if (act)
     {
-      is_setup       = true;
-      own_device_ptr = true;
+      is_setup            = true;
+      owns_device_pointer = true;
     }
     return act;
   }
@@ -841,11 +841,11 @@ struct ReduceAtomicHostInit_Data
   //  free device pointers
   bool teardownForDevice()
   {
-    bool act = own_device_ptr;
+    bool act = owns_device_pointer;
     if (act)
     {
-      is_setup       = false;
-      own_device_ptr = false;
+      is_setup            = false;
+      owns_device_pointer = false;
     }
     return act;
   }
@@ -869,7 +869,7 @@ struct ReduceAtomicDeviceInit_Data
   T identity;
   unsigned int* device_count;
   T* device;
-  bool own_device_ptr;
+  bool owns_device_pointer;
 
   ReduceAtomicDeviceInit_Data() : ReduceAtomicDeviceInit_Data(T(), T()) {}
 
@@ -878,7 +878,7 @@ struct ReduceAtomicDeviceInit_Data
         identity {identity_},
         device_count {nullptr},
         device {nullptr},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   RAJA_HOST_DEVICE
@@ -887,7 +887,7 @@ struct ReduceAtomicDeviceInit_Data
         identity {other.identity},
         device_count {other.device_count},
         device {other.device},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   ReduceAtomicDeviceInit_Data& operator=(const ReduceAtomicDeviceInit_Data&) =
@@ -932,7 +932,7 @@ struct ReduceAtomicDeviceInit_Data
       device_count =
           count_mempool_type::getInstance().template malloc<unsigned int>(
               replication * atomic_stride);
-      own_device_ptr = true;
+      owns_device_pointer = true;
     }
     return act;
   }
@@ -941,14 +941,14 @@ struct ReduceAtomicDeviceInit_Data
   //  free device pointers
   bool teardownForDevice()
   {
-    bool act = own_device_ptr;
+    bool act = owns_device_pointer;
     if (act)
     {
       data_mempool_type::getInstance().free(device);
       device = nullptr;
       count_mempool_type::getInstance().free(device_count);
-      device_count   = nullptr;
-      own_device_ptr = false;
+      device_count        = nullptr;
+      owns_device_pointer = false;
     }
     return act;
   }
