@@ -288,15 +288,12 @@ protected:
   T mutable my_data;
 
 public:
-  RAJA_SUPPRESS_HD_WARN
-
-  RAJA_HOST_DEVICE
-  constexpr BaseCombinable() : identity {T()}, my_data {T()} {}
+  BaseCombinable() = delete;
 
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  constexpr BaseCombinable(T init_val, T identity_ = T())
+  constexpr BaseCombinable(T init_val, T identity_)
       : identity {identity_},
         my_data {init_val}
   {}
@@ -304,7 +301,7 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  void reset(T init_val, T identity_)
+  constexpr void reset(T init_val, T identity_)
   {
     my_data  = init_val;
     identity = identity_;

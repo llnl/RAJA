@@ -40,15 +40,12 @@ namespace RAJA
 namespace detail
 {
 template<typename T, typename Reduce>
-class ReduceSeq
+class ReduceSeq // This is a Combinable and is an implementation detail
     : public reduce::detail::BaseCombinable<T, Reduce, ReduceSeq<T, Reduce>>
 {
   using Base = reduce::detail::BaseCombinable<T, Reduce, ReduceSeq<T, Reduce>>;
 
 public:
-  //! prohibit compiler-generated default ctor
-  ReduceSeq() = delete;
-
   using Base::Base;
 };
 

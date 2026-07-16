@@ -45,15 +45,13 @@ namespace RAJA
 namespace detail
 {
 template<typename T, typename Reduce>
-class ReduceOMP
+class ReduceOMP // This is a Combinable and is an implementation detail
     : public reduce::detail::BaseCombinable<T, Reduce, ReduceOMP<T, Reduce>>
 {
   using Base = reduce::detail::BaseCombinable<T, Reduce, ReduceOMP>;
 
 public:
   using Base::Base;
-  //! prohibit compiler-generated default ctor
-  ReduceOMP() = delete;
 
   ~ReduceOMP()
   {
@@ -79,7 +77,7 @@ RAJA_DECLARE_ALL_REDUCERS(omp_reduce, detail::ReduceOMP)
 namespace detail
 {
 template<typename T, typename Reduce>
-class ReduceOMPOrdered
+class ReduceOMPOrdered // This is a Combinable and is an implementation detail
     : public reduce::detail::
           BaseCombinable<T, Reduce, ReduceOMPOrdered<T, Reduce>>
 {
@@ -87,19 +85,17 @@ class ReduceOMPOrdered
   std::shared_ptr<std::vector<T>> data;
 
 public:
-  ReduceOMPOrdered() { reset(T(), T()); }
-
-  //! constructor requires a default value for the reducer
-  explicit ReduceOMPOrdered(T init_val, T identity_)
-  {
-    reset(init_val, identity_);
-  }
+  ReduceOMPOrdered(T init_val, T identity_)
+      : Base(init_val, identity_)
+      , data(std::make_shared<std::vector<T>>(omp_get_max_threads(), identity_))
+  { }
 
   void reset(T init_val, T identity_)
   {
     Base::reset(init_val, identity_);
-    data = std::shared_ptr<std::vector<T>>(
-        std::make_shared<std::vector<T>>(omp_get_max_threads(), identity_));
+    for (T& data_i : *data) {
+      data_i = Base::identity;
+    }
   }
 
   ~ReduceOMPOrdered()
@@ -117,9 +113,8 @@ public:
     }
 
     T res = Base::identity;
-    for (size_t i = 0; i < data->size(); ++i)
-    {
-      Reduce {}(res, (*data)[i]);
+    for (T const& data_i : *data) {
+      Reduce {}(res, data_i);
     }
     return res;
   }
