@@ -22,8 +22,11 @@
 
 #include "RAJA/pattern/detail/forall.hpp"
 
+#include <type_traits>
+
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/Operators.hpp"
+#include "RAJA/util/resource.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA/util/RepeatView.hpp"
 
@@ -79,15 +82,63 @@ struct BaseMultiReduce
       : BaseMultiReduce {RepeatView<value_type>(init_val, num_bins), identity}
   {}
 
+  BaseMultiReduce(RAJA::resources::Resource const& res,
+                  size_t num_bins,
+                  value_type init_val = MultiReduceOp::identity(),
+                  value_type identity = MultiReduceOp::identity())
+      : data {make_data(res,
+                        RepeatView<value_type>(init_val, num_bins),
+                        identity)}
+  {}
+
+  template<typename Resource,
+           std::enable_if_t<type_traits::is_resource<
+               std::decay_t<Resource>>::value>* = nullptr>
+  BaseMultiReduce(Resource const& res,
+                  size_t num_bins,
+                  value_type init_val = MultiReduceOp::identity(),
+                  value_type identity = MultiReduceOp::identity())
+      : data {make_data(res,
+                        RepeatView<value_type>(init_val, num_bins),
+                        identity)}
+  {}
+
   template<typename Container,
-           concepts::enable_if_t<
-               type_traits::is_range<Container>,
-               concepts::negate<std::is_convertible<Container, size_t>>,
-               concepts::negate<std::is_base_of<BaseMultiReduce, Container>>>* =
-               nullptr>
+           std::enable_if_t<
+               type_traits::is_range<Container>::value &&
+               !std::is_same<std::decay_t<Container>,
+                             camp::resources::Resource>::value &&
+               !std::is_convertible<Container, size_t>::value &&
+               !std::is_base_of<BaseMultiReduce, Container>::value>* = nullptr>
   explicit BaseMultiReduce(Container const& container,
                            value_type identity = MultiReduceOp::identity())
       : data {container, identity}
+  {}
+
+  template<typename Container,
+           std::enable_if_t<
+               type_traits::is_range<Container>::value &&
+               !std::is_same<std::decay_t<Container>,
+                             camp::resources::Resource>::value &&
+               !std::is_convertible<Container, size_t>::value &&
+               !std::is_base_of<BaseMultiReduce, Container>::value>* = nullptr>
+  explicit BaseMultiReduce(RAJA::resources::Resource const& res,
+                           Container const& container,
+                           value_type identity = MultiReduceOp::identity())
+      : data {make_data(res, container, identity)}
+  {}
+
+  template<typename Resource,
+           typename Container,
+           std::enable_if_t<
+               type_traits::is_resource<std::decay_t<Resource>>::value &&
+               type_traits::is_range<Container>::value &&
+               !std::is_convertible<Container, size_t>::value &&
+               !std::is_base_of<BaseMultiReduce, Container>::value>* = nullptr>
+  explicit BaseMultiReduce(Resource const& res,
+                           Container const& container,
+                           value_type identity = MultiReduceOp::identity())
+      : data {container, identity, use_device_storage(res)}
   {}
 
   RAJA_SUPPRESS_HD_WARN
@@ -160,6 +211,32 @@ struct BaseMultiReduce
   }
 
 private:
+  template<typename Resource>
+  static bool use_device_storage(Resource const& res)
+  {
+    return res.get_platform() != camp::resources::Platform::host;
+  }
+
+  static bool use_device_storage(RAJA::resources::Resource const& res)
+  {
+    return res.get_platform() != camp::resources::Platform::host;
+  }
+
+  template<typename Resource, typename Container>
+  static MultiReduceData make_data(Resource const& res,
+                                   Container const& container,
+                                   value_type identity)
+  {
+    if constexpr (MultiReduceData::supports_runtime_resource_storage)
+    {
+      return MultiReduceData(container, identity, use_device_storage(res));
+    }
+    else
+    {
+      return MultiReduceData(container, identity);
+    }
+  }
+
   MultiReduceData mutable data;
 };
 

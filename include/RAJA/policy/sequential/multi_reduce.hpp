@@ -68,6 +68,8 @@ struct MultiReduceDataSeq<
     RAJA::sequential::MultiReduceTuning<
         RAJA::sequential::multi_reduce_algorithm::left_fold>>
 {
+  static constexpr bool supports_runtime_resource_storage = false;
+
   using value_type    = T;
   using MultiReduceOp = t_MultiReduceOp;
 

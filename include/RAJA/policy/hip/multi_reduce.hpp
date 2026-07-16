@@ -37,6 +37,7 @@
 #include "hip/hip_runtime.h"
 
 #include "RAJA/util/macros.hpp"
+#include "RAJA/util/basic_mempool.hpp"
 #include "RAJA/util/math.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA/util/reduce.hpp"
@@ -220,13 +221,41 @@ struct MultiReduceGridAtomicHostInit_TallyData
   MultiReduceGridAtomicHostInit_TallyData(Container const& container,
                                           T const& identity)
       : m_tally_mem(nullptr),
+        m_host_tally_mem(nullptr),
+        m_device_tally_mem(nullptr),
         m_identity(identity),
         m_num_bins(container.size()),
         m_tally_bins(get_tally_bins(m_num_bins)),
-        m_tally_replication(get_tally_replication())
+        m_tally_replication(get_tally_replication()),
+        m_host_valid(true),
+        m_device_valid(false),
+        m_use_device_storage(true)
   {
     m_tally_mem = create_tally(container, identity, m_num_bins, m_tally_bins,
-                               m_tally_replication);
+                               m_tally_replication, true);
+    m_host_tally_mem   = m_tally_mem;
+    m_device_tally_mem = nullptr;
+  }
+
+  template<typename Container>
+  MultiReduceGridAtomicHostInit_TallyData(Container const& container,
+                                          T const& identity,
+                                          bool use_device_storage)
+      : m_tally_mem(nullptr),
+        m_host_tally_mem(nullptr),
+        m_device_tally_mem(nullptr),
+        m_identity(identity),
+        m_num_bins(container.size()),
+        m_tally_bins(get_tally_bins(m_num_bins)),
+        m_tally_replication(get_tally_replication()),
+        m_host_valid(true),
+        m_device_valid(false),
+        m_use_device_storage(use_device_storage)
+  {
+    m_tally_mem = create_tally(container, identity, m_num_bins, m_tally_bins,
+                               m_tally_replication, use_device_storage);
+    m_host_tally_mem   = m_tally_mem;
+    m_device_tally_mem = nullptr;
   }
 
   MultiReduceGridAtomicHostInit_TallyData() = delete;
@@ -252,7 +281,11 @@ struct MultiReduceGridAtomicHostInit_TallyData
       m_tally_bins        = get_tally_bins(m_num_bins);
       m_tally_replication = get_tally_replication();
       m_tally_mem = create_tally(container, identity, m_num_bins, m_tally_bins,
-                                 m_tally_replication);
+                                 m_tally_replication, m_use_device_storage);
+      m_host_tally_mem   = m_tally_mem;
+      m_device_tally_mem = nullptr;
+      m_host_valid       = true;
+      m_device_valid     = false;
     }
     else
     {
@@ -274,6 +307,7 @@ struct MultiReduceGridAtomicHostInit_TallyData
                                         m_tally_replication)] = identity;
         }
       }
+      m_host_valid = true;
     }
     m_identity = identity;
   }
@@ -281,8 +315,20 @@ struct MultiReduceGridAtomicHostInit_TallyData
   //! teardown permanent settings, free tally memory
   void teardown_permanent()
   {
-    destroy_tally(m_tally_mem, m_num_bins, m_tally_bins, m_tally_replication);
+    destroy_tally(m_tally_mem, m_num_bins, m_tally_bins, m_tally_replication,
+                  m_use_device_storage);
+    m_tally_mem        = nullptr;
+    m_host_tally_mem   = nullptr;
+    m_device_tally_mem = nullptr;
+    m_host_valid       = false;
+    m_device_valid     = false;
   }
+
+  //! setup per launch, switch tally storage to device memory
+  void setup_launch() { m_tally_mem = m_host_tally_mem; }
+
+  //! teardown per launch, restore host tally storage
+  void teardown_launch() { m_tally_mem = m_host_tally_mem; }
 
   //! get value for bin, assumes synchronization occurred elsewhere
   T get(int bin) const
@@ -310,8 +356,10 @@ private:
   static constexpr size_t s_tally_bunch_size =
       RAJA_DIVIDE_CEILING_INT(s_tally_alignment, sizeof(T));
 
-  using tally_mempool_type = device_pinned_mempool_type;
-  using tally_tuning       = typename tuning::GlobalAtomicReplicationTuning;
+  using tally_mempool_type =
+      basic_mempool::MemPool<basic_mempool::generic_allocator>;
+  using launch_tally_mempool_type = device_pinned_mempool_type;
+  using tally_tuning = typename tuning::GlobalAtomicReplicationTuning;
   using TallyAtomicReplicationConcretizer =
       typename tally_tuning::AtomicReplicationConcretizer;
   using GetTallyOffset_rebind_rebunch = typename tally_tuning::OffsetCalculator;
@@ -343,15 +391,25 @@ private:
                          T const& identity,
                          int num_bins,
                          int tally_bins,
-                         int tally_replication)
+                         int tally_replication,
+                         bool use_device_storage)
   {
     if (num_bins == size_t(0))
     {
       return nullptr;
     }
 
-    T* tally_mem = tally_mempool_type::getInstance().template malloc<T>(
-        tally_replication * tally_bins, s_tally_alignment);
+    T* tally_mem = nullptr;
+    if (use_device_storage)
+    {
+      tally_mem = launch_tally_mempool_type::getInstance().template malloc<T>(
+          tally_replication * tally_bins, s_tally_alignment);
+    }
+    else
+    {
+      tally_mem = tally_mempool_type::getInstance().template malloc<T>(
+          tally_replication * tally_bins, s_tally_alignment);
+    }
 
     if (tally_replication > 0)
     {
@@ -379,10 +437,17 @@ private:
     return tally_mem;
   }
 
+  size_t tally_bytes() const
+  {
+    return static_cast<size_t>(m_tally_replication) *
+           static_cast<size_t>(m_tally_bins) * sizeof(T);
+  }
+
   static void destroy_tally(T*& tally_mem,
                             int num_bins,
                             int tally_bins,
-                            int tally_replication)
+                            int tally_replication,
+                            bool use_device_storage)
   {
     if (num_bins == size_t(0))
     {
@@ -398,7 +463,14 @@ private:
         tally_mem[tally_offset].~T();
       }
     }
-    tally_mempool_type::getInstance().free(tally_mem);
+    if (use_device_storage)
+    {
+      launch_tally_mempool_type::getInstance().free(tally_mem);
+    }
+    else
+    {
+      tally_mempool_type::getInstance().free(tally_mem);
+    }
     tally_mem = nullptr;
   }
 
@@ -407,11 +479,16 @@ protected:
   using GetTallyOffset = typename GetTallyOffset_rebind::template rebind<int>;
 
   T* m_tally_mem;
+  T* m_host_tally_mem;
+  T* m_device_tally_mem;
   T m_identity;
   int m_num_bins;
   int m_tally_bins;
   int m_tally_replication;  // power of 2, at least the max number of omp
                             // threads
+  bool m_host_valid;
+  bool m_device_valid;
+  bool m_use_device_storage;
 };
 
 //! MultiReduction data for Hip Offload -- stores value, host pointer
@@ -433,11 +510,14 @@ struct MultiReduceGridAtomicHostInit_Data
   using TallyData::TallyData;
   using TallyData::teardown_permanent;
 
-  //! setup per launch, do nothing
-  void setup_launch(size_t RAJA_UNUSED_ARG(block_size)) {}
+  //! setup per launch, switch tally storage to device memory
+  void setup_launch(size_t RAJA_UNUSED_ARG(block_size))
+  {
+    TallyData::setup_launch();
+  }
 
-  //! teardown per launch, do nothing
-  void teardown_launch() {}
+  //! teardown per launch, restore host tally storage
+  void teardown_launch() { TallyData::teardown_launch(); }
 
   //! setup on device, do nothing
   RAJA_DEVICE
@@ -496,6 +576,15 @@ struct MultiReduceBlockThenGridAtomicHostInit_Data
         m_shared_replication(0)
   {}
 
+  template<typename Container>
+  MultiReduceBlockThenGridAtomicHostInit_Data(Container const& container,
+                                              T const& identity,
+                                              bool use_device_storage)
+      : TallyData(container, identity, use_device_storage),
+        m_shared_offset(s_shared_offset_unknown),
+        m_shared_replication(0)
+  {}
+
   MultiReduceBlockThenGridAtomicHostInit_Data() = delete;
   MultiReduceBlockThenGridAtomicHostInit_Data(
       MultiReduceBlockThenGridAtomicHostInit_Data const&) = default;
@@ -518,6 +607,7 @@ struct MultiReduceBlockThenGridAtomicHostInit_Data
   //! setup per launch, setup shared memory parameters
   void setup_launch(size_t block_size)
   {
+    TallyData::setup_launch();
     if (m_num_bins == size_t(0))
     {
       m_shared_offset = s_shared_offset_invalid;
@@ -553,6 +643,7 @@ struct MultiReduceBlockThenGridAtomicHostInit_Data
   //! teardown per launch, unset shared memory parameters
   void teardown_launch()
   {
+    TallyData::teardown_launch();
     m_shared_replication = 0;
     m_shared_offset      = s_shared_offset_unknown;
   }
@@ -671,6 +762,8 @@ private:
 template<typename T, typename t_MultiReduceOp, typename tuning>
 struct MultiReduceDataHip
 {
+  static constexpr bool supports_runtime_resource_storage = true;
+
   static constexpr bool atomic_available =
       RAJA::reduce::hip::hip_atomic_available<T>::value;
 
@@ -712,6 +805,18 @@ public:
         m_own_launch_data(false)
   {}
 
+  template<typename Container,
+           std::enable_if_t<
+               !std::is_same<Container, MultiReduceDataHip>::value>* = nullptr>
+  MultiReduceDataHip(Container const& container,
+                     T identity,
+                     bool use_device_storage)
+      : m_parent(this),
+        m_sync_list(new SyncList),
+        m_data(container, identity, use_device_storage),
+        m_own_launch_data(false)
+  {}
+
   //! copy and on host attempt to setup for device
   //  init val_ptr to avoid uninitialized read caused by host copy of
   //  reducer in host device lambda not being used on device.
@@ -720,7 +825,7 @@ public:
 #if !defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
       : m_parent(other.m_parent)
 #else
-      : m_parent(&other)
+      : m_parent(const_cast<MultiReduceDataHip*>(&other))
 #endif
         ,
         m_sync_list(other.m_sync_list),
@@ -732,9 +837,9 @@ public:
     {
       if (setupReducers())
       {
-        // the copy made in make_launch_body does this setup
         add_resource_to_synchronization_list(currentResource());
-        m_data.setup_launch(currentBlockSize());
+        m_parent->m_data.setup_launch(currentBlockSize());
+        m_data            = m_parent->m_data;
         m_own_launch_data = true;
         m_parent          = nullptr;
       }
@@ -766,15 +871,11 @@ public:
       m_sync_list = nullptr;
       m_data.teardown_permanent();
     }
-    else if (m_parent)
-    {
-      // do nothing
-    }
-    else
+    else if (!m_parent)
     {
       if (m_own_launch_data)
       {
-        // the copy made in make_launch_body, owns launch data
+        synchronize_resources_and_clear_list();
         m_data.teardown_launch();
         m_own_launch_data = false;
       }
@@ -819,7 +920,7 @@ public:
 
 
 private:
-  MultiReduceDataHip const* m_parent;
+  MultiReduceDataHip* m_parent;
   SyncList* m_sync_list;
   reduce_data_type m_data;
   bool m_own_launch_data;
