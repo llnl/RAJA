@@ -199,6 +199,7 @@ struct Reduce_Data
 
 //! SYCL Target Reduction entity -- generalize on # of teams, reduction, and
 //! type
+// This is the last layer of the user facing Reduction API
 template<typename Reducer, typename T>
 struct TargetReduce
 {
@@ -295,6 +296,7 @@ private:
 
 //! SYCL Target Reduction Location entity -- generalize on # of teams,
 //! reduction, and type
+// This is the last layer of the user facing Reduction API
 template<typename Reducer, typename T, typename IndexType>
 struct TargetReduceLoc
 {
@@ -415,6 +417,7 @@ private:
 };
 
 //! specialization of ReduceSum for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceSum<sycl_reduce, T> : public TargetReduce<RAJA::reduce::sum<T>, T>
 {
@@ -449,6 +452,7 @@ public:
 };
 
 //! specialization of ReduceBitOr for sycl_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceBitOr<sycl_reduce, T>
     : public TargetReduce<RAJA::reduce::or_bit<T>, T>
@@ -494,6 +498,7 @@ public:
 };
 
 //! specialization of ReduceBitAnd for sycl_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceBitAnd<sycl_reduce, T>
     : public TargetReduce<RAJA::reduce::and_bit<T>, T>
@@ -539,6 +544,7 @@ public:
 };
 
 //! specialization of ReduceMin for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceMin<sycl_reduce, T> : public TargetReduce<RAJA::reduce::min<T>, T>
 {
@@ -583,6 +589,7 @@ public:
 };
 
 //! specialization of ReduceMax for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceMax<sycl_reduce, T> : public TargetReduce<RAJA::reduce::max<T>, T>
 {

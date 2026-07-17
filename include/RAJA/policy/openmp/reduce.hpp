@@ -45,7 +45,7 @@ namespace RAJA
 namespace detail
 {
 template<typename T, typename Reduce>
-class ReduceOMP // This is a Combinable and is an implementation detail
+class ReduceOMP // This is a Combinable and is the first layer of that implementation detail used in Reducers
     : public reduce::detail::BaseCombinable<T, Reduce, ReduceOMP<T, Reduce>>
 {
   using Base = reduce::detail::BaseCombinable<T, Reduce, ReduceOMP>;
@@ -77,7 +77,7 @@ RAJA_DECLARE_ALL_REDUCERS(omp_reduce, detail::ReduceOMP)
 namespace detail
 {
 template<typename T, typename Reduce>
-class ReduceOMPOrdered // This is a Combinable and is an implementation detail
+class ReduceOMPOrdered // This is a Combinable and is the first layer of that implementation detail used in Reducers
     : public reduce::detail::
           BaseCombinable<T, Reduce, ReduceOMPOrdered<T, Reduce>>
 {

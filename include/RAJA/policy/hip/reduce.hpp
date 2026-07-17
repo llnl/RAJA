@@ -955,6 +955,7 @@ struct ReduceAtomicDeviceInit_Data
 };
 
 //! Hip Reduction entity -- generalize on reduction, and type
+// This is the last layer of the user facing Reduction API
 template<typename Combiner, typename T, typename tuning>
 class Reduce
 {
@@ -1225,6 +1226,7 @@ private:
 }  // end namespace hip
 
 //! specialization of ReduceSum for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T>
 class ReduceSum<RAJA::policy::hip::hip_reduce_policy<tuning>, T>
     : public hip::Reduce<RAJA::reduce::sum<T>, T, tuning>
@@ -1244,6 +1246,7 @@ public:
 };
 
 //! specialization of ReduceBitOr for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T>
 class ReduceBitOr<RAJA::policy::hip::hip_reduce_policy<tuning>, T>
     : public hip::Reduce<RAJA::reduce::or_bit<T>, T, tuning>
@@ -1263,6 +1266,7 @@ public:
 };
 
 //! specialization of ReduceBitAnd for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T>
 class ReduceBitAnd<RAJA::policy::hip::hip_reduce_policy<tuning>, T>
     : public hip::Reduce<RAJA::reduce::and_bit<T>, T, tuning>
@@ -1282,6 +1286,7 @@ public:
 };
 
 //! specialization of ReduceMin for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T>
 class ReduceMin<RAJA::policy::hip::hip_reduce_policy<tuning>, T>
     : public hip::Reduce<RAJA::reduce::min<T>, T, tuning>
@@ -1301,6 +1306,7 @@ public:
 };
 
 //! specialization of ReduceMax for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T>
 class ReduceMax<RAJA::policy::hip::hip_reduce_policy<tuning>, T>
     : public hip::Reduce<RAJA::reduce::max<T>, T, tuning>
@@ -1320,6 +1326,7 @@ public:
 };
 
 //! specialization of ReduceMinLoc for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T, typename IndexType>
 class ReduceMinLoc<RAJA::policy::hip::hip_reduce_policy<tuning>, T, IndexType>
     : public hip::Reduce<
@@ -1403,6 +1410,7 @@ public:
 };
 
 //! specialization of ReduceMaxLoc for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T, typename IndexType>
 class ReduceMaxLoc<RAJA::policy::hip::hip_reduce_policy<tuning>, T, IndexType>
     : public hip::Reduce<

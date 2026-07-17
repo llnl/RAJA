@@ -23,6 +23,7 @@
 #include "RAJA/util/Operators.hpp"
 #include "RAJA/util/types.hpp"
 
+// This defines specialization of Reducers that are the first layer of the user facing Reduction API
 #define RAJA_DECLARE_REDUCER(OP, POL, COMBINER)                                \
   template<typename T>                                                         \
   class Reduce##OP<POL, T>                                                     \
@@ -33,6 +34,7 @@
     using Base::Base;                                                          \
   };
 
+// This defines specialization of loc Reducers that are the first layer of the user facing Reduction API
 #define RAJA_DECLARE_INDEX_REDUCER(OP, POL, COMBINER)                          \
   template<typename T, typename IndexType>                                     \
   class Reduce##OP<POL, T, IndexType>                                          \
@@ -211,6 +213,7 @@ namespace reduce
 namespace detail
 {
 
+// This is a Reducer and the last layer of the user facing Reduction API
 template<typename T,
          template<typename> class Reduce_,
          template<typename, typename> class Combiner_>
@@ -300,6 +303,7 @@ public:
   T get() const { return c.get(); }
 };
 
+// This is a Combinable and is the last layer of that implementation detail used in Reducers
 template<typename T, typename Reduce, typename Derived>
 class BaseCombinable
 {
@@ -380,6 +384,8 @@ private:
  *
  * \brief  Min reducer class template.
  *
+ * This is a Reducer and the second layer of the user facing Reduction API
+ *
  ******************************************************************************
  */
 template<typename T, template<typename, typename> class Combiner>
@@ -402,6 +408,8 @@ public:
  **************************************************************************
  *
  * \brief  MinLoc reducer class template.
+ *
+ * This is a Reducer and the second layer of the user facing Reduction API
  *
  **************************************************************************
  */
@@ -482,6 +490,8 @@ public:
  *
  * \brief  Max reducer class template.
  *
+ * This is a Reducer and the second layer of the user facing Reduction API
+ *
  **************************************************************************
  */
 template<typename T, template<typename, typename> class Combiner>
@@ -504,6 +514,8 @@ public:
  **************************************************************************
  *
  * \brief  Sum reducer class template.
+ *
+ * This is a Reducer and the second layer of the user facing Reduction API
  *
  **************************************************************************
  */
@@ -530,6 +542,8 @@ public:
  *
  * \brief  Bitwise OR reducer class template.
  *
+ * This is a Reducer and the second layer of the user facing Reduction API
+ *
  **************************************************************************
  */
 template<typename T, template<typename, typename> class Combiner>
@@ -555,6 +569,8 @@ public:
  *
  * \brief  Bitwise AND reducer class template.
  *
+ * This is a Reducer and the second layer of the user facing Reduction API
+ *
  **************************************************************************
  */
 template<typename T, template<typename, typename> class Combiner>
@@ -579,6 +595,8 @@ public:
  **************************************************************************
  *
  * \brief  MaxLoc reducer class template.
+ *
+ * This is a Reducer and the second layer of the user facing Reduction API
  *
  **************************************************************************
  */

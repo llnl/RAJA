@@ -186,6 +186,7 @@ struct Reduce_Data
 
 //! OpenMP Target Reduction entity -- generalize on # of teams, reduction, and
 //! type
+// This is the last layer of the user facing Reduction API
 template<typename Reducer, typename T>
 struct TargetReduce
 {
@@ -276,6 +277,7 @@ private:
 
 //! OpenMP Target Reduction Location entity -- generalize on # of teams,
 //! reduction, and type
+// This is the last layer of the user facing Reduction API
 template<typename Reducer, typename T, typename IndexType>
 struct TargetReduceLoc
 {
@@ -389,6 +391,7 @@ private:
 };
 
 //! specialization of ReduceSum for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceSum<omp_target_reduce, T>
     : public TargetReduce<RAJA::reduce::sum<T>, T>
@@ -414,6 +417,7 @@ public:
 };
 
 //! specialization of ReduceBitOr for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceBitOr<omp_target_reduce, T>
     : public TargetReduce<RAJA::reduce::or_bit<T>, T>
@@ -439,6 +443,7 @@ public:
 };
 
 //! specialization of ReduceBitAnd for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceBitAnd<omp_target_reduce, T>
     : public TargetReduce<RAJA::reduce::and_bit<T>, T>
@@ -464,6 +469,7 @@ public:
 };
 
 //! specialization of ReduceMin for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceMin<omp_target_reduce, T>
     : public TargetReduce<RAJA::reduce::min<T>, T>
@@ -489,6 +495,7 @@ public:
 };
 
 //! specialization of ReduceMax for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceMax<omp_target_reduce, T>
     : public TargetReduce<RAJA::reduce::max<T>, T>
@@ -514,6 +521,7 @@ public:
 };
 
 //! specialization of ReduceMinLoc for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T, typename IndexType>
 class ReduceMinLoc<omp_target_reduce, T, IndexType>
     : public TargetReduceLoc<omp::minloc<T, IndexType>, T, IndexType>
@@ -539,6 +547,7 @@ public:
 };
 
 //! specialization of ReduceMaxLoc for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T, typename IndexType>
 class ReduceMaxLoc<omp_target_reduce, T, IndexType>
     : public TargetReduceLoc<omp::maxloc<T, IndexType>, T, IndexType>
