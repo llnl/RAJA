@@ -26,15 +26,11 @@
 #define RAJA_forall_sequential_HPP
 
 #include "RAJA/config.hpp"
-
 #include "RAJA/util/types.hpp"
-
 #include "RAJA/policy/sequential/policy.hpp"
-
 #include "RAJA/pattern/detail/forall.hpp"
-
 #include "RAJA/util/resource.hpp"
-
+#include "RAJA/pattern/concepts.hpp"
 #include "RAJA/pattern/params/forall.hpp"
 
 namespace RAJA
@@ -55,15 +51,13 @@ namespace sequential
 //////////////////////////////////////////////////////////////////////
 //
 
-template<typename Iterable, typename Func, typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Host>,
-    expt::type_traits::is_ForallParamPack<ForallParam>>
-forall_impl(resources::Host host_res,
-            const seq_exec& pol,
-            Iterable&& iter,
-            Func&& body,
-            ForallParam f_params)
+template<typename Iterable, typename Func, concepts::ForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
+    resources::Host host_res,
+    const seq_exec& pol,
+    Iterable&& iter,
+    Func&& body,
+    ForallParam f_params)
 {
   constexpr bool has_reducers =
       !expt::type_traits::is_ForallParamPack_empty<ForallParam>::value;

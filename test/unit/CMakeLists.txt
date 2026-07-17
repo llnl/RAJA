@@ -9,6 +9,7 @@
 
 add_subdirectory(index)
 add_subdirectory(internal)
+add_subdirectory(pattern)
 add_subdirectory(util)
 add_subdirectory(reducer)
 add_subdirectory(multi_reducer)

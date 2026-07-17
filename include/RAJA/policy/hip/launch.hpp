@@ -269,6 +269,47 @@ struct LaunchExecute<RAJA::policy::hip::hip_launch_t<async, nthreads>>
   }
 };
 
+template<typename IterationMapping,
+         kernel_sync_requirement sync,
+         typename... IndexMappers>
+struct MaskExecute<
+    RAJA::policy::hip::hip_indexer<IterationMapping, sync, IndexMappers...>>
+{
+  template<typename LaunchContextPolicy, typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(
+      LaunchContextT<LaunchContextPolicy> const& ctx,
+      BODY const& body)
+  {
+    auto const& indices_and_dims = ctx.get_indices_and_dims();
+    if (((IndexMappers::template index<camp::idx_t>(indices_and_dims) == 0) &&
+         ...))
+    {
+      body();
+    }
+  }
+};
+
+template<typename IterationMapping,
+         kernel_sync_requirement sync,
+         typename... IndexMappers>
+struct MaskExecute<RAJA::policy::hip::hip_flatten_indexer<IterationMapping,
+                                                          sync,
+                                                          IndexMappers...>>
+{
+  template<typename LaunchContextPolicy, typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(
+      LaunchContextT<LaunchContextPolicy> const& ctx,
+      BODY const& body)
+  {
+    auto const& indices_and_dims = ctx.get_indices_and_dims();
+    if (((IndexMappers::template index<camp::idx_t>(indices_and_dims) == 0) &&
+         ...))
+    {
+      body();
+    }
+  }
+};
+
 /*
    HIP generic loop implementations
 */
