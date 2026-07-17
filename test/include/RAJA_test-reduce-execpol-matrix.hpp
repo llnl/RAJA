@@ -34,6 +34,14 @@ using SequentialSupportedReducePols =
         ,
         HipReducePols
 #endif
+#if defined(RAJA_ENABLE_TARGET_OPENMP)
+        ,
+        OpenMPTargetReducePols
+#endif
+#if defined(RAJA_ENABLE_SYCL)
+        ,
+        SyclReducePols
+#endif
         >::type;
 
 using SequentialSupportedReduceExecPairs =
@@ -59,6 +67,12 @@ using OpenMPSupportedReduceExecPairs =
                             OpenMPSupportedReducePols>;
 #endif
 
+#if defined(RAJA_ENABLE_TARGET_OPENMP)
+using OpenMPTargetSupportedReduceExecPairs =
+    camp::cartesian_product<OpenMPTargetForallReduceExecPols,
+                            OpenMPTargetReducePols>;
+#endif
+
 #if defined(RAJA_ENABLE_CUDA)
 using CudaSupportedReduceExecPairs =
     camp::cartesian_product<CudaForallReduceExecPols, CudaReducePols>;
@@ -69,12 +83,21 @@ using HipSupportedReduceExecPairs =
     camp::cartesian_product<HipForallReduceExecPols, HipReducePols>;
 #endif
 
+#if defined(RAJA_ENABLE_SYCL)
+using SyclSupportedReduceExecPairs =
+    camp::cartesian_product<SyclForallReduceExecPols, SyclReducePols>;
+#endif
+
 using SupportedReduceExecPairs =
     typename camp::join<
         SequentialSupportedReduceExecPairs
 #if defined(RAJA_ENABLE_OPENMP)
         ,
         OpenMPSupportedReduceExecPairs
+#endif
+#if defined(RAJA_ENABLE_TARGET_OPENMP)
+        ,
+        OpenMPTargetSupportedReduceExecPairs
 #endif
 #if defined(RAJA_ENABLE_CUDA)
         ,
@@ -83,6 +106,10 @@ using SupportedReduceExecPairs =
 #if defined(RAJA_ENABLE_HIP)
         ,
         HipSupportedReduceExecPairs
+#endif
+#if defined(RAJA_ENABLE_SYCL)
+        ,
+        SyclSupportedReduceExecPairs
 #endif
         >::type;
 

@@ -36,9 +36,14 @@ endforeach()
 unset( DATATYPES )
 unset( REDUCETYPES )
 
-function(raja_add_supported_reduce_tests TESTPREFIX SUITEPREFIX APITAGLIST)
-  foreach(BACKEND ${REDUCE_MATRIX_BACKENDS})
+function(raja_add_supported_reduce_tests TESTPREFIX SUITEPREFIX APITAGLIST BACKENDS)
+  foreach(BACKEND ${BACKENDS})
     foreach(REDUCETYPE ${REDUCETYPES})
+      if(BACKEND STREQUAL Sycl AND
+         (REDUCETYPE STREQUAL ReduceMinLoc OR REDUCETYPE STREQUAL ReduceMaxLoc))
+        continue()
+      endif()
+
       configure_file(test-forall-basic-supported-reduce.cpp.in
                      ${TESTPREFIX}${REDUCETYPE}-${BACKEND}.cpp)
       raja_add_test(NAME ${TESTPREFIX}${REDUCETYPE}-${BACKEND}
@@ -60,6 +65,10 @@ if(RAJA_ENABLE_OPENMP)
   list(APPEND REDUCE_MATRIX_BACKENDS OpenMP)
 endif()
 
+if(RAJA_ENABLE_TARGET_OPENMP)
+  list(APPEND REDUCE_MATRIX_BACKENDS OpenMPTarget)
+endif()
+
 if(RAJA_ENABLE_CUDA)
   list(APPEND REDUCE_MATRIX_BACKENDS Cuda)
 endif()
@@ -68,15 +77,22 @@ if(RAJA_ENABLE_HIP)
   list(APPEND REDUCE_MATRIX_BACKENDS Hip)
 endif()
 
+if(RAJA_ENABLE_SYCL)
+  list(APPEND REDUCE_MATRIX_BACKENDS Sycl)
+endif()
+
 set(REDUCETYPES ReduceSum ReduceMin ReduceMax ReduceMinLoc ReduceMaxLoc)
 set(DATATYPES CoreReductionDataTypeList)
 
 raja_add_supported_reduce_tests(test-forall-basic-legacy-
                                 LegacyInterface
-                                LegacyReducerApiList)
+                                LegacyReducerApiList
+                                "${REDUCE_MATRIX_BACKENDS}")
+
 raja_add_supported_reduce_tests(test-forall-basic-runtime-policy-
                                 RuntimePolicy
-                                RuntimePolicyReducerApiList)
+                                RuntimePolicyReducerApiList
+                                "${REDUCE_MATRIX_BACKENDS}")
 
 unset( DATATYPES )
 unset( REDUCETYPES )
@@ -86,10 +102,12 @@ set(DATATYPES BitwiseReductionDataTypeList)
 
 raja_add_supported_reduce_tests(test-forall-basic-legacy-
                                 LegacyInterface
-                                LegacyReducerApiList)
+                                LegacyReducerApiList
+                                "${REDUCE_MATRIX_BACKENDS}")
 raja_add_supported_reduce_tests(test-forall-basic-runtime-policy-
                                 RuntimePolicy
-                                RuntimePolicyReducerApiList)
+                                RuntimePolicyReducerApiList
+                                "${REDUCE_MATRIX_BACKENDS}")
 
 unset( DATATYPES )
 unset( REDUCETYPES )

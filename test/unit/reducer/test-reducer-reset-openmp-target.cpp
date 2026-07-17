@@ -18,7 +18,7 @@ using OpenMPTargetReducerResetTypes =
   Test< camp::cartesian_product< OpenMPTargetReducerPolicyList,
                                  DataTypeList,
                                  OpenMPTargetResourceList,
-                                 SequentialUnitTestPolicyList > >::Types;
+                                 OpenMPTargetUnitTestPolicyList > >::Types;
 
 
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPTargetResetTest,

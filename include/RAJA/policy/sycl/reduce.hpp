@@ -25,7 +25,8 @@
 #if defined(RAJA_ENABLE_SYCL)
 
 #include <algorithm>
-
+#include <stdexcept>
+#include <string>
 
 #include "RAJA/util/types.hpp"
 
@@ -38,6 +39,27 @@ namespace RAJA
 
 namespace sycl
 {
+
+constexpr bool uses_runtime_offload(Policy p)
+{
+  return p != Policy::sequential;
+}
+
+RAJA_INLINE void assert_valid(Policy p)
+{
+  switch (p)
+  {
+    case Policy::undefined:
+    case Policy::sequential:
+    case Policy::sycl:
+      return;
+    default:
+      std::string msg;
+      msg += "SyclReduce: unsupported policy ";
+      msg += get_policy_name(p);
+      throw std::runtime_error(msg);
+  }
+}
 
 template<typename T, typename I>
 struct minloc
@@ -107,6 +129,7 @@ template<typename T>
 struct Reduce_Data
 {
   mutable T value;
+  T identity;
   T* device;
   T* host;
 
@@ -117,9 +140,20 @@ struct Reduce_Data
    *
    *  allocates data on the host and device and initializes values to default
    */
-  Reduce_Data(T initValue, T identityValue, Offload_Info& info)
-      : value(initValue)
+  Reduce_Data(T initValue,
+              T identityValue,
+              Offload_Info& info,
+              bool use_offload = true)
+      : value(initValue),
+        identity(identityValue),
+        device(nullptr),
+        host(nullptr)
   {
+    if (!use_offload)
+    {
+      return;
+    }
+
     ::sycl::queue& q = currentResourceQueue();
 
 
@@ -144,6 +178,8 @@ struct Reduce_Data
 
   void reset(T initValue) { value = initValue; }
 
+  bool uses_offload() const { return device != nullptr; }
+
   //! default copy constructor for POD
   Reduce_Data(const Reduce_Data&) = default;
 
@@ -153,6 +189,11 @@ struct Reduce_Data
   //! transfers from the host to the device -- exit() is called upon failure
   RAJA_INLINE void hostToDevice(Offload_Info& RAJA_UNUSED_ARG(info))
   {
+    if (!device || !host)
+    {
+      return;
+    }
+
     ::sycl::queue& q = currentResourceQueue();
 
     // precondition: host and device are valid pointers
@@ -166,12 +207,17 @@ struct Reduce_Data
   //! transfers from the device to the host -- exit() is called upon failure
   RAJA_INLINE void deviceToHost(Offload_Info& RAJA_UNUSED_ARG(info))
   {
+    if (!device || !host)
+    {
+      return;
+    }
+
     ::sycl::queue& q = currentResourceQueue();
 
     // precondition: host and device are valid pointers
     auto e =
         q.memcpy(reinterpret_cast<void*>(host), reinterpret_cast<void*>(device),
-                 sycl::MaxNumTeams * sizeof(T));
+                       sycl::MaxNumTeams * sizeof(T));
 
     e.wait();
   }
@@ -179,6 +225,11 @@ struct Reduce_Data
   //! frees all data from the offload information passed
   RAJA_INLINE void cleanup(Offload_Info& RAJA_UNUSED_ARG(info))
   {
+    if (!device && !host)
+    {
+      return;
+    }
+
     ::sycl::queue& q = currentResourceQueue();
 
     if (device)
@@ -193,6 +244,35 @@ struct Reduce_Data
       host = nullptr;
     }
   }
+
+  RAJA_INLINE void reset_device(T identityValue, Offload_Info& info)
+  {
+    if (!uses_offload())
+    {
+      return;
+    }
+
+    std::fill_n(host, sycl::MaxNumTeams, identityValue);
+    hostToDevice(info);
+  }
+};
+
+template<typename T>
+struct Shared_Host_Data
+{
+  T hostVal;
+  T identity;
+  const void* rootToken;
+};
+
+template<typename T, typename IndexType>
+struct Shared_Host_Loc_Data
+{
+  T hostVal;
+  IndexType hostLoc;
+  T identity;
+  IndexType identityLoc;
+  const void* rootToken;
 };
 
 }  // end namespace sycl
@@ -203,70 +283,92 @@ struct Reduce_Data
 template<typename Reducer, typename T>
 struct TargetReduce
 {
-  TargetReduce()                    = delete;
-  TargetReduce(const TargetReduce&) = default;
+  TargetReduce() : TargetReduce(Policy::undefined, T(), Reducer::identity()) {}
+
+  explicit TargetReduce(Policy p) : TargetReduce(p, T(), Reducer::identity()) {}
 
   explicit TargetReduce(T init_val)
-      : val(Reducer::identity(), Reducer::identity(), info),
-        info(),
-        initVal(init_val),
-        finalVal(Reducer::identity())
+      : TargetReduce(Policy::undefined, init_val, Reducer::identity())
   {}
+
+  TargetReduce(Policy p, T init_val, T identity_ = Reducer::identity())
+      : info(),
+        val(identity_, identity_, info, checked_uses_offload(p)),
+        hostData(new sycl::Shared_Host_Data<T>{init_val, identity_, this})
+  {
+  }
+
+  TargetReduce(const TargetReduce&) = default;
 
   void reset(T init_val_, T identity_ = Reducer::identity())
   {
+    hostData->hostVal  = init_val_;
+    hostData->identity = identity_;
+    val.reset(identity_);
+    if (val.uses_offload())
+    {
+      val.reset_device(identity_, info);
+    }
+  }
+
+  void reset(Policy p, T init_val_, T identity_ = Reducer::identity())
+  {
+    sycl::assert_valid(p);
+    const bool use_offload = sycl::uses_runtime_offload(p);
+    if (val.uses_offload() && use_offload)
+    {
+      val.reset(identity_);
+      val.reset_device(identity_, info);
+    }
+    else if (val.uses_offload() && !use_offload)
+    {
     val.cleanup(info);
-    val           = sycl::Reduce_Data<T>(identity_, identity_, info);
-    info.isMapped = false;
-    initVal       = init_val_;
-    finalVal      = identity_;
+      val = sycl::Reduce_Data<T>(identity_, identity_, info, false);
+    }
+    else if (!val.uses_offload() && use_offload)
+    {
+      val = sycl::Reduce_Data<T>(identity_, identity_, info, true);
+    }
+    else
+    {
+      val.reset(identity_);
+    }
+    hostData->hostVal  = init_val_;
+    hostData->identity = identity_;
   }
 
   //! apply reduction on device upon destruction
-  ~TargetReduce() {}
+  ~TargetReduce()
+  {
+#ifndef __SYCL_DEVICE_ONLY__
+    if (is_root())
+    {
+      val.cleanup(info);
+      delete hostData;
+      hostData = nullptr;
+    }
+#endif
+  }
 
   //! map result value back to host if not done already; return aggregate value
   operator T()
   {
-    if (!info.isMapped)
+    T result = hostData->hostVal;
+    if (val.uses_offload())
     {
       val.deviceToHost(info);
       for (int i = 0; i < sycl::MaxNumTeams; ++i)
       {
-        Reducer {}(val.value, val.host[i]);
+        Reducer {}(result, val.host[i]);
       }
-      //      val.cleanup(info);
-      info.isMapped = true;
     }
-    finalVal = Reducer::identity();
-    Reducer {}(finalVal, initVal);
-    Reducer {}(finalVal, val.value);
-    T returnVal = finalVal;
-    reset(finalVal);
-    return returnVal;
+    return result;
   }
 
   //! alias for operator T()
   T get() { return operator T(); }
 
   //! apply reduction
-  TargetReduce& reduce(T rhsVal)
-  {
-#ifdef __SYCL_DEVICE_ONLY__
-    auto i   = 0;  //__spirv::initLocalInvocationId<1, ::sycl::id<1>>()[0];
-    auto atm = ::sycl::atomic_ref<T, ::sycl::memory_order_acq_rel,
-                                  ::sycl::memory_scope::device,
-                                  ::sycl::access::address_space::global_space>(
-        val.device[i]);
-    Reducer {}(atm, rhsVal);
-    return *this;
-#else
-    Reducer {}(val.value, rhsVal);
-    return *this;
-#endif
-  }
-
-  //! apply reduction (const version) -- still reduces internal values
   const TargetReduce& reduce(T rhsVal) const
   {
 #ifdef __SYCL_DEVICE_ONLY__
@@ -276,22 +378,34 @@ struct TargetReduce
                                   ::sycl::access::address_space::global_space>(
         val.device[i]);
     Reducer {}(atm, rhsVal);
-    return *this;
 #else
-    Reducer {}(val.value, rhsVal);
-    return *this;
+    Reducer {}(hostData->hostVal, rhsVal);
 #endif
+    return *this;
   }
 
+private:
+  static bool checked_uses_offload(Policy p)
+  {
+    sycl::assert_valid(p);
+    return sycl::uses_runtime_offload(p);
+  }
+
+  RAJA_INLINE bool is_root() const
+  {
+    return hostData && hostData->rootToken == this;
+  }
+
+  //! storage for offload information (host ID, device ID)
+  sycl::Offload_Info info;
+
+public:
   //! storage for reduction data (host ptr, device ptr, value)
   sycl::Reduce_Data<T> val;
 
 private:
-  //! storage for offload information (host ID, device ID)
-  sycl::Offload_Info info;
-  //! storage for reduction data (host ptr, device ptr, value)
-  T initVal;
-  T finalVal;
+  //! shared host semantic state owned by the original reducer
+  sycl::Shared_Host_Data<T>* hostData;
 };
 
 //! SYCL Target Reduction Location entity -- generalize on # of teams,
@@ -300,8 +414,21 @@ private:
 template<typename Reducer, typename T, typename IndexType>
 struct TargetReduceLoc
 {
-  TargetReduceLoc()                       = delete;
-  TargetReduceLoc(const TargetReduceLoc&) = default;
+  TargetReduceLoc()
+      : TargetReduceLoc(Policy::undefined,
+                        T(),
+                        IndexType(),
+                        Reducer::identity(),
+                        RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+  {}
+
+  explicit TargetReduceLoc(Policy p)
+      : TargetReduceLoc(p,
+                        T(),
+                        IndexType(),
+                        Reducer::identity(),
+                        RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+  {}
 
   explicit TargetReduceLoc(
       T init_val,
@@ -309,14 +436,32 @@ struct TargetReduceLoc
       T identity_val_ = Reducer::identity(),
       IndexType identity_loc_ =
           RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : info(),
-        val(identity_val_, identity_val_, info),
-        loc(identity_loc_, identity_loc_, info),
-        initVal(init_val),
-        finalVal(identity_val_),
-        initLoc(init_loc),
-        finalLoc(identity_loc_)
+      : TargetReduceLoc(
+            Policy::undefined, init_val, init_loc, identity_val_, identity_loc_)
   {}
+
+  explicit TargetReduceLoc(
+      Policy p,
+      T init_val,
+      IndexType init_loc,
+      T identity_val_ = Reducer::identity(),
+      IndexType identity_loc_ =
+          RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+      : info(),
+        val(identity_val_,
+            identity_val_,
+            info,
+            checked_uses_offload(p)),
+        loc(identity_loc_,
+            identity_loc_,
+            info,
+            checked_uses_offload(p)),
+        hostData(new sycl::Shared_Host_Loc_Data<T, IndexType>{
+            init_val, init_loc, identity_val_, identity_loc_, this})
+  {
+  }
+
+  TargetReduceLoc(const TargetReduceLoc&) = default;
 
   void reset(T init_val_,
              IndexType init_loc_,
@@ -324,42 +469,81 @@ struct TargetReduceLoc
              IndexType identity_loc_ =
                  RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {
+    hostData->hostVal     = init_val_;
+    hostData->hostLoc     = init_loc_;
+    hostData->identity    = identity_val_;
+    hostData->identityLoc = identity_loc_;
+    val.reset(identity_val_);
+    loc.reset(identity_loc_);
+    if (val.uses_offload())
+    {
+      val.reset_device(identity_val_, info);
+      loc.reset_device(identity_loc_, info);
+    }
+  }
+
+  void reset(Policy p,
+             T init_val_,
+             IndexType init_loc_,
+             T identity_val_ = Reducer::identity(),
+             IndexType identity_loc_ =
+                 RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+  {
+    sycl::assert_valid(p);
+    const bool use_offload = sycl::uses_runtime_offload(p);
+    if (val.uses_offload() && use_offload)
+    {
+      val.reset(identity_val_);
+      loc.reset(identity_loc_);
+      val.reset_device(identity_val_, info);
+      loc.reset_device(identity_loc_, info);
+    }
+    else if (val.uses_offload() && !use_offload)
+    {
     val.cleanup(info);
-    val = sycl::Reduce_Data<T>(identity_val_, identity_val_, info);
     loc.cleanup(info);
-    loc = sycl::Reduce_Data<IndexType>(identity_loc_, identity_loc_, info);
-    info.isMapped = false;
-    initVal       = init_val_;
-    finalVal      = identity_val_;
-    initLoc       = init_loc_;
-    finalLoc      = identity_loc_;
+      val = sycl::Reduce_Data<T>(identity_val_, identity_val_, info, false);
+      loc = sycl::Reduce_Data<IndexType>(
+          identity_loc_, identity_loc_, info, false);
+    }
+    else if (!val.uses_offload() && use_offload)
+    {
+      val = sycl::Reduce_Data<T>(identity_val_, identity_val_, info, true);
+      loc = sycl::Reduce_Data<IndexType>(
+          identity_loc_, identity_loc_, info, true);
+    }
+    else
+    {
+      val.reset(identity_val_);
+      loc.reset(identity_loc_);
+    }
+    hostData->hostVal     = init_val_;
+    hostData->hostLoc     = init_loc_;
+    hostData->identity    = identity_val_;
+    hostData->identityLoc = identity_loc_;
   }
 
   //! apply reduction on device upon destruction
-  ~TargetReduceLoc() {}
+  ~TargetReduceLoc()
+  {
+#ifndef __SYCL_DEVICE_ONLY__
+    if (is_root())
+    {
+      val.cleanup(info);
+      loc.cleanup(info);
+      delete hostData;
+      hostData = nullptr;
+    }
+#endif
+  }
 
   //! map result value back to host if not done already; return aggregate value
   operator T()
   {
-    if (!info.isMapped)
-    {
-      val.deviceToHost(info);
-      loc.deviceToHost(info);
-
-      for (int i = 0; i < sycl::MaxNumTeams; ++i)
-      {
-        Reducer {}(val.value, loc.value, val.host[i], loc.host[i]);
-      }
-      info.isMapped = true;
-    }
-    finalVal = Reducer::identity();
-    finalLoc = IndexType(RAJA::reduce::detail::DefaultLoc<IndexType>().value());
-    Reducer {}(finalVal, finalLoc, initVal, initLoc);
-    Reducer {}(finalVal, finalLoc, val.value, loc.value);
-    returnVal = finalVal;
-    returnLoc = finalLoc;
-    reset(finalVal, finalLoc);
-    return returnVal;
+    T result;
+    IndexType resultLoc;
+    compute_result(result, resultLoc);
+    return result;
   }
 
   //! alias for operator T()
@@ -369,13 +553,14 @@ struct TargetReduceLoc
   //! location
   IndexType getLoc()
   {
-    if (!info.isMapped) get();
-    // return loc.value;
-    return (returnLoc);
+    T result;
+    IndexType resultLoc;
+    compute_result(result, resultLoc);
+    return resultLoc;
   }
 
   //! apply reduction
-  TargetReduceLoc& reduce(T rhsVal, IndexType rhsLoc)
+  const TargetReduceLoc& reduce(T rhsVal, IndexType rhsLoc) const
   {
 #ifdef __SYCL_DEVICE_ONLY__
     auto i = 0;  //__spirv::initLocalInvocationId<1, ::sycl::id<1>>()[0];
@@ -384,36 +569,51 @@ struct TargetReduceLoc
     Reducer {}(val.device[i], loc.device[i], rhsVal, rhsLoc);
     ::sycl::atomic_fence(::sycl::memory_order_release,
                          ::sycl::memory_scope::device);
-    return *this;
 #else
-    Reducer {}(val.value, loc.value, rhsVal, rhsLoc);
-    return *this;
+    Reducer {}(hostData->hostVal, hostData->hostLoc, rhsVal, rhsLoc);
 #endif
-  }
-
-  //! apply reduction (const version) -- still reduces internal values
-  const TargetReduceLoc& reduce(T rhsVal, IndexType rhsLoc) const
-  {
-    Reducer {}(val.value, loc.value, rhsVal, rhsLoc);
     return *this;
   }
 
+private:
+  static bool checked_uses_offload(Policy p)
+  {
+    sycl::assert_valid(p);
+    return sycl::uses_runtime_offload(p);
+  }
+
+  RAJA_INLINE bool is_root() const
+  {
+    return hostData && hostData->rootToken == this;
+  }
+
+  //! storage for offload information
+  sycl::Offload_Info info;
+
+public:
   //! storage for reduction data for value
   sycl::Reduce_Data<T> val;
   sycl::Reduce_Data<IndexType> loc;
 
 private:
-  //! storage for offload information
-  sycl::Offload_Info info;
-  //! storage for reduction data for value
-  //  sycl::Reduce_Data<T> val;
-  //! storage for redcution data for location
-  T initVal;
-  T finalVal;
-  T returnVal;
-  IndexType initLoc;
-  IndexType finalLoc;
-  IndexType returnLoc;
+  void compute_result(T& result, IndexType& resultLoc)
+  {
+    result    = hostData->hostVal;
+    resultLoc = hostData->hostLoc;
+    if (val.uses_offload())
+    {
+      val.deviceToHost(info);
+      loc.deviceToHost(info);
+
+      for (int i = 0; i < sycl::MaxNumTeams; ++i)
+      {
+        Reducer {}(result, resultLoc, val.host[i], loc.host[i]);
+      }
+    }
+  }
+
+  //! shared host semantic state owned by the original reducer
+  sycl::Shared_Host_Loc_Data<T, IndexType>* hostData;
 };
 
 //! specialization of ReduceSum for omp_target_reduce
@@ -427,13 +627,6 @@ public:
   using parent::parent;
 
   //! enable operator+= for ReduceSum -- alias for reduce()
-  self& operator+=(T rhsVal)
-  {
-    parent::reduce(rhsVal);
-    return *this;
-  }
-
-  //! enable operator+= for ReduceSum -- alias for reduce()
   const self& operator+=(T rhsVal) const
   {
 #ifdef __SYCL_DEVICE_ONLY__
@@ -443,11 +636,10 @@ public:
                                   ::sycl::access::address_space::global_space>(
         parent::val.device[i]);
     atm.fetch_add(rhsVal);
-    return *this;
 #else
     parent::reduce(rhsVal);
-    return *this;
 #endif
+    return *this;
   }
 };
 
@@ -463,23 +655,6 @@ public:
   using parent::parent;
 
   //! enable operator|= for ReduceBitOr -- alias for reduce()
-  self& operator|=(T rhsVal)
-  {
-#ifdef __SYCL_DEVICE_ONLY__
-    auto i   = 0;  //__spirv::initLocalInvocationId<1, ::sycl::id<1>>()[0];
-    auto atm = ::sycl::atomic_ref<T, ::sycl::memory_order_acq_rel,
-                                  ::sycl::memory_scope::device,
-                                  ::sycl::access::address_space::global_space>(
-        parent::val.device[i]);
-    atm |= rhsVal;
-    return *this;
-#else
-    parent::reduce(rhsVal);
-    return *this;
-#endif
-  }
-
-  //! enable operator|= for ReduceBitOr -- alias for reduce()
   const self& operator|=(T rhsVal) const
   {
 #ifdef __SYCL_DEVICE_ONLY__
@@ -489,11 +664,10 @@ public:
                                   ::sycl::access::address_space::global_space>(
         parent::val.device[i]);
     atm |= rhsVal;
-    return *this;
 #else
     parent::reduce(rhsVal);
-    return *this;
 #endif
+    return *this;
   }
 };
 
@@ -509,23 +683,6 @@ public:
   using parent::parent;
 
   //! enable operator&= for ReduceBitAnd -- alias for reduce()
-  self& operator&=(T rhsVal)
-  {
-#ifdef __SYCL_DEVICE_ONLY__
-    auto i   = 0;  //__spirv::initLocalInvocationId<1, ::sycl::id<1>>()[0];
-    auto atm = ::sycl::atomic_ref<T, ::sycl::memory_order_acq_rel,
-                                  ::sycl::memory_scope::device,
-                                  ::sycl::access::address_space::global_space>(
-        parent::val.device[i]);
-    atm &= rhsVal;
-    return *this;
-#else
-    parent::reduce(rhsVal);
-    return *this;
-#endif
-  }
-
-  //! enable operator&= for ReduceBitAnd -- alias for reduce()
   const self& operator&=(T rhsVal) const
   {
 #ifdef __SYCL_DEVICE_ONLY__
@@ -535,11 +692,10 @@ public:
                                   ::sycl::access::address_space::global_space>(
         parent::val.device[i]);
     atm &= rhsVal;
-    return *this;
 #else
     parent::reduce(rhsVal);
-    return *this;
 #endif
+    return *this;
   }
 };
 
@@ -554,23 +710,6 @@ public:
   using parent::parent;
 
   //! enable min() for ReduceMin -- alias for reduce()
-  self& min(T rhsVal)
-  {
-#ifdef __SYCL_DEVICE_ONLY__
-    auto i   = 0;  //__spirv::initLocalInvocationId<1, ::sycl::id<1>>()[0];
-    auto atm = ::sycl::atomic_ref<T, ::sycl::memory_order_acq_rel,
-                                  ::sycl::memory_scope::device,
-                                  ::sycl::access::address_space::global_space>(
-        parent::val.device[i]);
-    atm.fetch_min(rhsVal);
-    return *this;
-#else
-    parent::reduce(rhsVal);
-    return *this;
-#endif
-  }
-
-  //! enable min() for ReduceMin -- alias for reduce()
   const self& min(T rhsVal) const
   {
 #ifdef __SYCL_DEVICE_ONLY__
@@ -580,11 +719,10 @@ public:
                                   ::sycl::access::address_space::global_space>(
         parent::val.device[i]);
     atm.fetch_min(rhsVal);
-    return *this;
 #else
     parent::reduce(rhsVal);
-    return *this;
 #endif
+    return *this;
   }
 };
 
@@ -599,23 +737,6 @@ public:
   using parent::parent;
 
   //! enable max() for ReduceMax -- alias for reduce()
-  self& max(T rhsVal)
-  {
-#ifdef __SYCL_DEVICE_ONLY__
-    auto i   = 0;  //__spirv::initLocalInvocationId<1, ::sycl::id<1>>()[0];
-    auto atm = ::sycl::atomic_ref<T, ::sycl::memory_order_acq_rel,
-                                  ::sycl::memory_scope::device,
-                                  ::sycl::access::address_space::global_space>(
-        parent::val.device[i]);
-    atm.fetch_max(rhsVal);
-    return *this;
-#else
-    parent::reduce(rhsVal);
-    return *this;
-#endif
-  }
-
-  //! enable max() for ReduceMax -- alias for reduce()
   const self& max(T rhsVal) const
   {
 #ifdef __SYCL_DEVICE_ONLY__
@@ -625,11 +746,10 @@ public:
                                   ::sycl::access::address_space::global_space>(
         parent::val.device[i]);
     atm.fetch_max(rhsVal);
-    return *this;
 #else
     parent::reduce(rhsVal);
-    return *this;
 #endif
+    return *this;
   }
 };
 
