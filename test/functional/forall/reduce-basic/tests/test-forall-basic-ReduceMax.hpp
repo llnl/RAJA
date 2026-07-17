@@ -15,9 +15,11 @@
 #include <numeric>
 #include <vector>
 
+#include "test-forall-basic-reduce-interface.hpp"
+
 template <typename IDX_TYPE, typename DATA_TYPE,
-          typename SEG_TYPE,
-          typename EXEC_POLICY, typename REDUCE_POLICY>
+          typename SEG_TYPE, typename EXEC_POLICY,
+          typename REDUCE_POLICY, typename API_TAG>
 void ForallReduceMaxBasicTestImpl(const SEG_TYPE& seg,
                                   const std::vector<IDX_TYPE>& seg_idx,
                                   camp::resources::Resource working_res)
@@ -50,8 +52,12 @@ void ForallReduceMaxBasicTestImpl(const SEG_TYPE& seg,
 
   working_res.memcpy(working_array, test_array, sizeof(DATA_TYPE) * data_len);
 
-  RAJA::ReduceMax<REDUCE_POLICY, DATA_TYPE> maxinit(big_max);
-  RAJA::ReduceMax<REDUCE_POLICY, DATA_TYPE> max(max_init);
+  using reducer_type = RAJA::ReduceMax<REDUCE_POLICY, DATA_TYPE>;
+
+  reducer_type maxinit =
+      API_TAG::template make<EXEC_POLICY, reducer_type>(big_max);
+  reducer_type max =
+      API_TAG::template make<EXEC_POLICY, reducer_type>(max_init);
 
   RAJA::forall<EXEC_POLICY>(seg, RAJA::Name("Reduce Max"), [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     maxinit.max( working_array[idx] );
@@ -61,7 +67,7 @@ void ForallReduceMaxBasicTestImpl(const SEG_TYPE& seg,
   ASSERT_EQ(static_cast<DATA_TYPE>(maxinit.get()), big_max);
   ASSERT_EQ(static_cast<DATA_TYPE>(max.get()), ref_max);
 
-  max.reset(max_init);
+  API_TAG::template reset<EXEC_POLICY>(max, max_init);
   ASSERT_EQ(static_cast<DATA_TYPE>(max.get()), max_init);
 
   DATA_TYPE factor = 2;
@@ -91,11 +97,13 @@ class ForallReduceMaxBasicTest : public ::testing::Test
 
 TYPED_TEST_P(ForallReduceMaxBasicTest, ReduceMaxBasicForall)
 {
-  using IDX_TYPE      = typename camp::at<TypeParam, camp::num<0>>::type;
-  using DATA_TYPE     = typename camp::at<TypeParam, camp::num<1>>::type;
-  using WORKING_RES   = typename camp::at<TypeParam, camp::num<2>>::type;
-  using EXEC_POLICY   = typename camp::at<TypeParam, camp::num<3>>::type;
-  using REDUCE_POLICY = typename camp::at<TypeParam, camp::num<4>>::type;
+  using IDX_TYPE = typename camp::at<TypeParam, camp::num<0>>::type;
+  using DATA_TYPE = typename camp::at<TypeParam, camp::num<1>>::type;
+  using WORKING_RES = typename camp::at<TypeParam, camp::num<2>>::type;
+  using PAIR = typename camp::at<TypeParam, camp::num<3>>::type;
+  using EXEC_POLICY = typename camp::at<PAIR, camp::num<0>>::type;
+  using REDUCE_POLICY = typename camp::at<PAIR, camp::num<1>>::type;
+  using API_TAG = typename camp::at<TypeParam, camp::num<4>>::type;
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
 
@@ -106,7 +114,7 @@ TYPED_TEST_P(ForallReduceMaxBasicTest, ReduceMaxBasicForall)
   RAJA::getIndices(seg_idx, r1);
   ForallReduceMaxBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedRangeSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  r1, seg_idx, working_res);
 
   seg_idx.clear();
@@ -114,7 +122,7 @@ TYPED_TEST_P(ForallReduceMaxBasicTest, ReduceMaxBasicForall)
   RAJA::getIndices(seg_idx, r2);
   ForallReduceMaxBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedRangeSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  r2, seg_idx, working_res);
 
   seg_idx.clear();
@@ -122,7 +130,7 @@ TYPED_TEST_P(ForallReduceMaxBasicTest, ReduceMaxBasicForall)
   RAJA::getIndices(seg_idx, r3);
   ForallReduceMaxBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedRangeSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  r3, seg_idx, working_res);
 
 // Range-stride segment tests
@@ -131,7 +139,7 @@ TYPED_TEST_P(ForallReduceMaxBasicTest, ReduceMaxBasicForall)
   RAJA::getIndices(seg_idx, r4);
   ForallReduceMaxBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedRangeStrideSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  r4, seg_idx, working_res);
 
   seg_idx.clear();
@@ -139,7 +147,7 @@ TYPED_TEST_P(ForallReduceMaxBasicTest, ReduceMaxBasicForall)
   RAJA::getIndices(seg_idx, r5);
   ForallReduceMaxBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedRangeStrideSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  r5, seg_idx, working_res);
 
 // List segment tests
@@ -156,7 +164,7 @@ TYPED_TEST_P(ForallReduceMaxBasicTest, ReduceMaxBasicForall)
                                        working_res );
   ForallReduceMaxBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedListSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  l1, seg_idx, working_res);
 }
 

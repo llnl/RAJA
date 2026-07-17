@@ -15,9 +15,11 @@
 #include <numeric>
 #include <vector>
 
+#include "test-forall-basic-reduce-interface.hpp"
+
 template <typename IDX_TYPE, typename DATA_TYPE,
-          typename SEG_TYPE,
-          typename EXEC_POLICY, typename REDUCE_POLICY>
+          typename SEG_TYPE, typename EXEC_POLICY,
+          typename REDUCE_POLICY, typename API_TAG>
 void ForallReduceSumBasicTestImpl(const SEG_TYPE& seg, 
                                   const std::vector<IDX_TYPE>& seg_idx,
                                   camp::resources::Resource working_res)
@@ -49,8 +51,10 @@ void ForallReduceSumBasicTestImpl(const SEG_TYPE& seg,
   working_res.memcpy(working_array, test_array, sizeof(DATA_TYPE) * data_len);
 
 
-  RAJA::ReduceSum<REDUCE_POLICY, DATA_TYPE> sum(0);
-  RAJA::ReduceSum<REDUCE_POLICY, DATA_TYPE> sum2(2);
+  using reducer_type = RAJA::ReduceSum<REDUCE_POLICY, DATA_TYPE>;
+
+  reducer_type sum = API_TAG::template make<EXEC_POLICY, reducer_type>(0);
+  reducer_type sum2 = API_TAG::template make<EXEC_POLICY, reducer_type>(2);
 
   RAJA::forall<EXEC_POLICY>(seg, RAJA::Name("Reduce Sum"), [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     sum  += working_array[idx];
@@ -60,7 +64,7 @@ void ForallReduceSumBasicTestImpl(const SEG_TYPE& seg,
   ASSERT_EQ(static_cast<DATA_TYPE>(sum.get()), ref_sum);
   ASSERT_EQ(static_cast<DATA_TYPE>(sum2.get()), ref_sum + 2);
 
-  sum.reset(0);
+  API_TAG::template reset<EXEC_POLICY>(sum, 0);
 
   const int nloops = 2;
 
@@ -88,11 +92,13 @@ class ForallReduceSumBasicTest : public ::testing::Test
 
 TYPED_TEST_P(ForallReduceSumBasicTest, ReduceSumBasicForall)
 {
-  using IDX_TYPE      = typename camp::at<TypeParam, camp::num<0>>::type;
-  using DATA_TYPE     = typename camp::at<TypeParam, camp::num<1>>::type;
-  using WORKING_RES   = typename camp::at<TypeParam, camp::num<2>>::type;
-  using EXEC_POLICY   = typename camp::at<TypeParam, camp::num<3>>::type;
-  using REDUCE_POLICY = typename camp::at<TypeParam, camp::num<4>>::type;
+  using IDX_TYPE = typename camp::at<TypeParam, camp::num<0>>::type;
+  using DATA_TYPE = typename camp::at<TypeParam, camp::num<1>>::type;
+  using WORKING_RES = typename camp::at<TypeParam, camp::num<2>>::type;
+  using PAIR = typename camp::at<TypeParam, camp::num<3>>::type;
+  using EXEC_POLICY = typename camp::at<PAIR, camp::num<0>>::type;
+  using REDUCE_POLICY = typename camp::at<PAIR, camp::num<1>>::type;
+  using API_TAG = typename camp::at<TypeParam, camp::num<4>>::type;
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
 
@@ -103,7 +109,7 @@ TYPED_TEST_P(ForallReduceSumBasicTest, ReduceSumBasicForall)
   RAJA::getIndices(seg_idx, r1);
   ForallReduceSumBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedRangeSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  r1, seg_idx, working_res);
 
   seg_idx.clear();
@@ -111,7 +117,7 @@ TYPED_TEST_P(ForallReduceSumBasicTest, ReduceSumBasicForall)
   RAJA::getIndices(seg_idx, r2);
   ForallReduceSumBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedRangeSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  r2, seg_idx, working_res);
 
   seg_idx.clear();
@@ -119,7 +125,7 @@ TYPED_TEST_P(ForallReduceSumBasicTest, ReduceSumBasicForall)
   RAJA::getIndices(seg_idx, r3);
   ForallReduceSumBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedRangeSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  r3, seg_idx, working_res);
 
 // Range-stride segment tests
@@ -128,7 +134,7 @@ TYPED_TEST_P(ForallReduceSumBasicTest, ReduceSumBasicForall)
   RAJA::getIndices(seg_idx, r4);
   ForallReduceSumBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedRangeStrideSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  r4, seg_idx, working_res);
 
   seg_idx.clear();
@@ -136,7 +142,7 @@ TYPED_TEST_P(ForallReduceSumBasicTest, ReduceSumBasicForall)
   RAJA::getIndices(seg_idx, r5);
   ForallReduceSumBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedRangeStrideSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  r5, seg_idx, working_res);
 
 // List segment tests
@@ -153,7 +159,7 @@ TYPED_TEST_P(ForallReduceSumBasicTest, ReduceSumBasicForall)
                                        working_res );
   ForallReduceSumBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                RAJA::TypedListSegment<IDX_TYPE>,
-                               EXEC_POLICY, REDUCE_POLICY>(
+                               EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                  l1, seg_idx, working_res);
 }
 

@@ -16,6 +16,8 @@
 
 #include "RAJA/internal/MemUtils_CPU.hpp"
 
+#include <type_traits>
+
 #include "../test-reducer.hpp"
 
 template  < typename ReducePolicy,
@@ -166,8 +168,211 @@ void testReducerReset()
   ASSERT_EQ((RAJA::Index_type)reduce_minloc.getLoc(), (RAJA::Index_type)(-1));
   ASSERT_EQ((RAJA::Index_type)reduce_maxloc.getLoc(), (RAJA::Index_type)(-1));
 
+  if constexpr (std::is_integral_v<NumericType>) {
+    RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(initVal);
+    RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand(initVal);
+
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
+      forone<ForOnePol>( [=] __host__ __device__ () {
+        reduce_bitor |= initVal;
+        reduce_bitand &= initVal;
+      });
+    }
+#endif
+
+    reduce_bitor.reset(resetVal[0]);
+    reduce_bitand.reset(resetVal[0]);
+
+    ASSERT_EQ((NumericType)reduce_bitor.get(), resetVal[0]);
+    ASSERT_EQ((NumericType)reduce_bitand.get(), resetVal[0]);
+  }
+
   work_res.deallocate( workVal );
   host_res.deallocate( resetVal );
+}
+
+template <typename ReducePolicy,
+          typename NumericType,
+          typename WORKING_RES,
+          typename ForOnePol>
+void testRuntimePolicyReducerReset()
+{
+  RAJA_UNUSED_VAR((WORKING_RES::get_default()));
+
+  const NumericType initVal = (NumericType)5;
+  const NumericType resetVal = (NumericType)10;
+  const RAJA::Index_type initLoc = 1;
+  const RAJA::Index_type resetLoc = -1;
+  const RAJA::Policy runtime_policy = RAJA::policy_of<ReducePolicy>::value;
+
+  RAJA::ReduceSum<ReducePolicy, NumericType> reduce_sum(runtime_policy, initVal);
+  RAJA::ReduceMin<ReducePolicy, NumericType> reduce_min(runtime_policy, initVal);
+  RAJA::ReduceMax<ReducePolicy, NumericType> reduce_max(runtime_policy, initVal);
+  RAJA::ReduceMinLoc<ReducePolicy, NumericType> reduce_minloc(runtime_policy,
+                                                              initVal,
+                                                              initLoc);
+  RAJA::ReduceMaxLoc<ReducePolicy, NumericType> reduce_maxloc(runtime_policy,
+                                                              initVal,
+                                                              initLoc);
+
+  reduce_sum.reset(runtime_policy, resetVal);
+  reduce_min.reset(runtime_policy, resetVal);
+  reduce_max.reset(runtime_policy, resetVal);
+  reduce_minloc.reset(runtime_policy, resetVal, resetLoc);
+  reduce_maxloc.reset(runtime_policy, resetVal, resetLoc);
+
+  ASSERT_EQ((NumericType)reduce_sum.get(), resetVal);
+  ASSERT_EQ((NumericType)reduce_min.get(), resetVal);
+  ASSERT_EQ((NumericType)reduce_max.get(), resetVal);
+  ASSERT_EQ((NumericType)reduce_minloc.get(), resetVal);
+  ASSERT_EQ((NumericType)reduce_maxloc.get(), resetVal);
+  ASSERT_EQ((RAJA::Index_type)reduce_minloc.getLoc(), resetLoc);
+  ASSERT_EQ((RAJA::Index_type)reduce_maxloc.getLoc(), resetLoc);
+
+  if constexpr (std::is_integral_v<NumericType>) {
+    RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(runtime_policy,
+                                                              initVal);
+    RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand(runtime_policy,
+                                                                initVal);
+
+    reduce_bitor.reset(runtime_policy, resetVal);
+    reduce_bitand.reset(runtime_policy, resetVal);
+
+    ASSERT_EQ((NumericType)reduce_bitor.get(), resetVal);
+    ASSERT_EQ((NumericType)reduce_bitand.get(), resetVal);
+  }
+
+  const RAJA::Policy backend_policy = RAJA::policy_of<ReducePolicy>::value;
+  // Only CUDA/HIP transition coverage is exercised here because this harness
+  // has backend forone policies for test_cuda/test_hip. OpenMP reset tests use
+  // the sequential unit-test policy, so they only validate reset semantics.
+  if (backend_policy == RAJA::Policy::cuda ||
+      backend_policy == RAJA::Policy::hip) {
+    RAJA::ReduceSum<ReducePolicy, NumericType> transition_sum(
+        RAJA::Policy::sequential,
+        NumericType(5));
+    RAJA::ReduceMin<ReducePolicy, NumericType> transition_min(
+        RAJA::Policy::sequential,
+        NumericType(5));
+    RAJA::ReduceMax<ReducePolicy, NumericType> transition_max(
+        RAJA::Policy::sequential,
+        NumericType(5));
+    RAJA::ReduceMinLoc<ReducePolicy, NumericType> transition_minloc(
+        RAJA::Policy::sequential,
+        NumericType(5),
+        RAJA::Index_type(1));
+    RAJA::ReduceMaxLoc<ReducePolicy, NumericType> transition_maxloc(
+        RAJA::Policy::sequential,
+        NumericType(5),
+        RAJA::Index_type(1));
+
+    forone<test_seq>( [=] () {
+      transition_sum += NumericType(4);
+      transition_min.min(NumericType(1));
+      transition_max.max(NumericType(9));
+      transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
+      transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
+    });
+
+    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
+    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
+    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
+    ASSERT_EQ((NumericType)transition_minloc.get(), NumericType(1));
+    ASSERT_EQ((NumericType)transition_maxloc.get(), NumericType(9));
+    ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
+    ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
+
+    transition_sum.reset(backend_policy, NumericType(5));
+    transition_min.reset(backend_policy, NumericType(5));
+    transition_max.reset(backend_policy, NumericType(5));
+    transition_minloc.reset(backend_policy, NumericType(5), RAJA::Index_type(1));
+    transition_maxloc.reset(backend_policy, NumericType(5), RAJA::Index_type(1));
+
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+    forone<ForOnePol>( [=] __host__ __device__ () {
+      transition_sum += NumericType(4);
+      transition_min.min(NumericType(1));
+      transition_max.max(NumericType(9));
+      transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
+      transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
+    });
+#endif
+
+    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
+    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
+    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
+    ASSERT_EQ((NumericType)transition_minloc.get(), NumericType(1));
+    ASSERT_EQ((NumericType)transition_maxloc.get(), NumericType(9));
+    ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
+    ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
+
+    transition_sum.reset(RAJA::Policy::sequential, NumericType(5));
+    transition_min.reset(RAJA::Policy::sequential, NumericType(5));
+    transition_max.reset(RAJA::Policy::sequential, NumericType(5));
+    transition_minloc.reset(RAJA::Policy::sequential,
+                            NumericType(5),
+                            RAJA::Index_type(1));
+    transition_maxloc.reset(RAJA::Policy::sequential,
+                            NumericType(5),
+                            RAJA::Index_type(1));
+
+    forone<test_seq>( [=] () {
+      transition_sum += NumericType(4);
+      transition_min.min(NumericType(1));
+      transition_max.max(NumericType(9));
+      transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
+      transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
+    });
+
+    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
+    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
+    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
+    ASSERT_EQ((NumericType)transition_minloc.get(), NumericType(1));
+    ASSERT_EQ((NumericType)transition_maxloc.get(), NumericType(9));
+    ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
+    ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
+
+    if constexpr (std::is_integral_v<NumericType>) {
+      RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(
+          RAJA::Policy::sequential,
+          NumericType(5));
+      RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand(
+          RAJA::Policy::sequential,
+          NumericType(5));
+
+      forone<test_seq>( [=] () {
+        reduce_bitor |= NumericType(2);
+        reduce_bitand &= NumericType(3);
+      });
+
+      ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
+      ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
+
+      reduce_bitor.reset(backend_policy, NumericType(5));
+      reduce_bitand.reset(backend_policy, NumericType(5));
+
+#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+      forone<ForOnePol>( [=] __host__ __device__ () {
+        reduce_bitor |= NumericType(2);
+        reduce_bitand &= NumericType(3);
+      });
+#endif
+
+      ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
+      ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
+
+      reduce_bitor.reset(RAJA::Policy::sequential, NumericType(5));
+      reduce_bitand.reset(RAJA::Policy::sequential, NumericType(5));
+      forone<test_seq>( [=] () {
+        reduce_bitor |= NumericType(2);
+        reduce_bitand &= NumericType(3);
+      });
+
+      ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
+      ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
+    }
+  }
 }
 
 TYPED_TEST_P(ReducerResetUnitTest, BasicReset)
@@ -179,7 +384,20 @@ TYPED_TEST_P(ReducerResetUnitTest, BasicReset)
   testReducerReset< ReduceType, NumericType, ResourceType, ForOneType >();
 }
 
+TYPED_TEST_P(ReducerResetUnitTest, RuntimePolicyReset)
+{
+  using ReduceType = typename camp::at<TypeParam, camp::num<0>>::type;
+  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
+  using ResourceType = typename camp::at<TypeParam, camp::num<2>>::type;
+  using ForOneType = typename camp::at<TypeParam, camp::num<3>>::type;
+  testRuntimePolicyReducerReset< ReduceType,
+                                 NumericType,
+                                 ResourceType,
+                                 ForOneType >();
+}
+
 REGISTER_TYPED_TEST_SUITE_P(ReducerResetUnitTest,
-                            BasicReset);
+                            BasicReset,
+                            RuntimePolicyReset);
 
 #endif  //__TEST_REDUCER_RESET__

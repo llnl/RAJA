@@ -16,6 +16,8 @@
 
 #include "RAJA/internal/MemUtils_CPU.hpp"
 
+#include <type_traits>
+
 #include "../test-reducer.hpp"
 
 template <typename T>
@@ -88,6 +90,14 @@ testReducerConstructor()
   ASSERT_EQ((RAJA::Index_type)(RAJA::get<1>(reduce_minloctup.getLoc())), RAJA::Index_type());
   ASSERT_EQ((RAJA::Index_type)(RAJA::get<0>(reduce_maxloctup.getLoc())), RAJA::Index_type());
   ASSERT_EQ((RAJA::Index_type)(RAJA::get<1>(reduce_maxloctup.getLoc())), RAJA::Index_type());
+
+  if constexpr (std::is_integral_v<NumericType>) {
+    RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor;
+    RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand;
+
+    ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType());
+    ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType());
+  }
 }
 
 TYPED_TEST_P(ReducerBasicConstructorUnitTest, BasicReducerConstructor)
@@ -186,8 +196,72 @@ void testInitReducerConstructor()
   ASSERT_EQ((RAJA::Index_type)(RAJA::get<0>(reduce_maxloctup.getLoc())), (RAJA::Index_type)1);
   ASSERT_EQ((RAJA::Index_type)(RAJA::get<1>(reduce_maxloctup.getLoc())), (RAJA::Index_type)1);
 
+  if constexpr (std::is_integral_v<NumericType>) {
+    RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(initVal);
+    RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand(initVal);
+
+    ASSERT_EQ((NumericType)reduce_bitor.get(), initVal);
+    ASSERT_EQ((NumericType)reduce_bitand.get(), initVal);
+  }
+
   work_res.deallocate( workVal );
   host_res.deallocate( theVal );
+}
+
+template <typename ReducePolicy,
+          typename NumericType,
+          typename WORKING_RES,
+          typename ForOnePol>
+void testRuntimePolicyReducerConstructor()
+{
+  RAJA_UNUSED_VAR((WORKING_RES::get_default()));
+  RAJA_UNUSED_VAR(sizeof(ForOnePol));
+
+  const NumericType initVal = (NumericType)5;
+  const RAJA::Index_type initLoc = 1;
+  const RAJA::Policy runtime_policy = RAJA::policy_of<ReducePolicy>::value;
+
+  RAJA::ReduceSum<ReducePolicy, NumericType> reduce_sum_default(runtime_policy);
+  RAJA::ReduceMin<ReducePolicy, NumericType> reduce_min_default(runtime_policy);
+  RAJA::ReduceMax<ReducePolicy, NumericType> reduce_max_default(runtime_policy);
+
+  RAJA::ReduceSum<ReducePolicy, NumericType> reduce_sum(runtime_policy, initVal);
+  RAJA::ReduceMin<ReducePolicy, NumericType> reduce_min(runtime_policy, initVal);
+  RAJA::ReduceMax<ReducePolicy, NumericType> reduce_max(runtime_policy, initVal);
+  RAJA::ReduceMinLoc<ReducePolicy, NumericType> reduce_minloc(runtime_policy,
+                                                              initVal,
+                                                              initLoc);
+  RAJA::ReduceMaxLoc<ReducePolicy, NumericType> reduce_maxloc(runtime_policy,
+                                                              initVal,
+                                                              initLoc);
+
+  ASSERT_EQ((NumericType)reduce_sum_default.get(), NumericType());
+  ASSERT_EQ((NumericType)reduce_min_default.get(), NumericType());
+  ASSERT_EQ((NumericType)reduce_max_default.get(), NumericType());
+
+  ASSERT_EQ((NumericType)reduce_sum.get(), initVal);
+  ASSERT_EQ((NumericType)reduce_min.get(), initVal);
+  ASSERT_EQ((NumericType)reduce_max.get(), initVal);
+  ASSERT_EQ((NumericType)reduce_minloc.get(), initVal);
+  ASSERT_EQ((NumericType)reduce_maxloc.get(), initVal);
+  ASSERT_EQ((RAJA::Index_type)reduce_minloc.getLoc(), initLoc);
+  ASSERT_EQ((RAJA::Index_type)reduce_maxloc.getLoc(), initLoc);
+
+  if constexpr (std::is_integral_v<NumericType>) {
+    RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor_default(
+        runtime_policy);
+    RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand_default(
+        runtime_policy);
+    RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(runtime_policy,
+                                                              initVal);
+    RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand(runtime_policy,
+                                                                initVal);
+
+    ASSERT_EQ((NumericType)reduce_bitor_default.get(), NumericType());
+    ASSERT_EQ((NumericType)reduce_bitand_default.get(), NumericType());
+    ASSERT_EQ((NumericType)reduce_bitor.get(), initVal);
+    ASSERT_EQ((NumericType)reduce_bitand.get(), initVal);
+  }
 }
 
 TYPED_TEST_P(ReducerInitConstructorUnitTest, InitReducerConstructor)
@@ -200,11 +274,25 @@ TYPED_TEST_P(ReducerInitConstructorUnitTest, InitReducerConstructor)
   testInitReducerConstructor< ReduceType, NumericType, ResourceType, ForOneType >();
 }
 
+TYPED_TEST_P(ReducerInitConstructorUnitTest, RuntimePolicyInitReducerConstructor)
+{
+  using ReduceType = typename camp::at<TypeParam, camp::num<0>>::type;
+  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
+  using ResourceType = typename camp::at<TypeParam, camp::num<2>>::type;
+  using ForOneType = typename camp::at<TypeParam, camp::num<3>>::type;
+
+  testRuntimePolicyReducerConstructor< ReduceType,
+                                       NumericType,
+                                       ResourceType,
+                                       ForOneType >();
+}
+
 
 REGISTER_TYPED_TEST_SUITE_P(ReducerBasicConstructorUnitTest,
                             BasicReducerConstructor);
 
 REGISTER_TYPED_TEST_SUITE_P(ReducerInitConstructorUnitTest,
-                            InitReducerConstructor);
+                            InitReducerConstructor,
+                            RuntimePolicyInitReducerConstructor);
 
 #endif  //__TEST_REDUCER_CONSTRUCTOR__

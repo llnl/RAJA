@@ -15,10 +15,7 @@
 #include "RAJA_test-index-types.hpp"
 
 #include "RAJA_test-forall-data.hpp"
-#include "RAJA_test-forall-execpol.hpp"
-#include "RAJA_test-reducepol.hpp"
-#include "test-forall-basic-reduce-interface.hpp"
-
+#include "RAJA_test-reduce-execpol-matrix.hpp"
 
 //
 // Header for tests in ./tests directory
@@ -28,42 +25,24 @@
 #include "test-forall-basic-@REDUCETYPE@.hpp"
 
 //
-// Data types for core reduction basic tests
+// Data types for reduction basic tests
 //
 using CoreReductionDataTypeList = camp::list< int,
                                               float,
                                               double >;
 
-//
-// Data types for bitwise reduction basic tests
-//
 using BitwiseReductionDataTypeList = camp::list< int,
                                                  unsigned int >;
 
-
-//
-// These tests exercise only one index type. We parameterize here to 
-// make it easier to expand types in the future if needed.
-//
 using TestIdxTypeList = camp::list< RAJA::Index_type >;
 
-//
-// Cartesian product of types used in parameterized tests
-//
-using @BACKEND@LegacyReduceExecPairs =
-  camp::cartesian_product<@BACKEND@ForallReduceExecPols,
-                          @BACKEND@ReducePols>;
-
-using @BACKEND@ForallReduceBasicTypes =
+using @BACKEND@ForallSupportedReduceBasicTypes =
   Test<camp::cartesian_product<TestIdxTypeList,
                                @DATATYPES@,
                                @BACKEND@ResourceList,
-                               @BACKEND@LegacyReduceExecPairs,
-                               LegacyReducerApiList>>::Types;
+                               @BACKEND@SupportedReduceExecPairs,
+                               @APITAGLIST@>>::Types;
 
-//
-// Instantiate parameterized test
-//
-INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@,
+INSTANTIATE_TYPED_TEST_SUITE_P(@SUITEPREFIX@@BACKEND@,
                                Forall@REDUCETYPE@BasicTest,
-                               @BACKEND@ForallReduceBasicTypes);
+                               @BACKEND@ForallSupportedReduceBasicTypes);

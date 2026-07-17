@@ -15,9 +15,11 @@
 #include <numeric>
 #include <vector>
 
+#include "test-forall-basic-reduce-interface.hpp"
+
 template <typename IDX_TYPE, typename DATA_TYPE,
-          typename SEG_TYPE,
-          typename EXEC_POLICY, typename REDUCE_POLICY>
+          typename SEG_TYPE, typename EXEC_POLICY,
+          typename REDUCE_POLICY, typename API_TAG>
 void ForallReduceBitAndBasicTestImpl(const SEG_TYPE& seg,
                                      const std::vector<IDX_TYPE>& seg_idx,
                                      camp::resources::Resource working_res)
@@ -43,7 +45,10 @@ void ForallReduceBitAndBasicTestImpl(const SEG_TYPE& seg,
   }
   working_res.memcpy(working_array, test_array, sizeof(DATA_TYPE) * data_len);
 
-  RAJA::ReduceBitAnd<REDUCE_POLICY, DATA_TYPE> simpand(21);
+  using reducer_type = RAJA::ReduceBitAnd<REDUCE_POLICY, DATA_TYPE>;
+
+  reducer_type simpand =
+      API_TAG::template make<EXEC_POLICY, reducer_type>(21);
 
   RAJA::forall<EXEC_POLICY>(seg, RAJA::Name("Reduce Bit And"), [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     simpand &= working_array[idx];
@@ -68,8 +73,10 @@ void ForallReduceBitAndBasicTestImpl(const SEG_TYPE& seg,
     ref_and &= test_array[ seg_idx[i] ];
   }
 
-  RAJA::ReduceBitAnd<REDUCE_POLICY, DATA_TYPE> redand(0);
-  RAJA::ReduceBitAnd<REDUCE_POLICY, DATA_TYPE> redand2(2);
+  reducer_type redand =
+      API_TAG::template make<EXEC_POLICY, reducer_type>(0);
+  reducer_type redand2 =
+      API_TAG::template make<EXEC_POLICY, reducer_type>(2);
 
   RAJA::forall<EXEC_POLICY>(seg, [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     redand  &= working_array[idx];
@@ -79,7 +86,7 @@ void ForallReduceBitAndBasicTestImpl(const SEG_TYPE& seg,
   ASSERT_EQ(static_cast<DATA_TYPE>(redand.get()), ref_and);
   ASSERT_EQ(static_cast<DATA_TYPE>(redand2.get()), ref_and);
 
-  redand.reset(0);
+  API_TAG::template reset<EXEC_POLICY>(redand, 0);
 
   const int nloops = 3;
   for (int j = 0; j < nloops; ++j) {
@@ -106,11 +113,13 @@ class ForallReduceBitAndBasicTest : public ::testing::Test
 
 TYPED_TEST_P(ForallReduceBitAndBasicTest, ReduceBitAndBasicForall)
 {
-  using IDX_TYPE      = typename camp::at<TypeParam, camp::num<0>>::type;
-  using DATA_TYPE     = typename camp::at<TypeParam, camp::num<1>>::type;
-  using WORKING_RES   = typename camp::at<TypeParam, camp::num<2>>::type;
-  using EXEC_POLICY   = typename camp::at<TypeParam, camp::num<3>>::type;
-  using REDUCE_POLICY = typename camp::at<TypeParam, camp::num<4>>::type;
+  using IDX_TYPE = typename camp::at<TypeParam, camp::num<0>>::type;
+  using DATA_TYPE = typename camp::at<TypeParam, camp::num<1>>::type;
+  using WORKING_RES = typename camp::at<TypeParam, camp::num<2>>::type;
+  using PAIR = typename camp::at<TypeParam, camp::num<3>>::type;
+  using EXEC_POLICY = typename camp::at<PAIR, camp::num<0>>::type;
+  using REDUCE_POLICY = typename camp::at<PAIR, camp::num<1>>::type;
+  using API_TAG = typename camp::at<TypeParam, camp::num<4>>::type;
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
 
@@ -121,7 +130,7 @@ TYPED_TEST_P(ForallReduceBitAndBasicTest, ReduceBitAndBasicForall)
   RAJA::getIndices(seg_idx, r1);
   ForallReduceBitAndBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                   RAJA::TypedRangeSegment<IDX_TYPE>,
-                                  EXEC_POLICY, REDUCE_POLICY>(
+                                  EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                     r1, seg_idx, working_res);
 
   seg_idx.clear();
@@ -129,7 +138,7 @@ TYPED_TEST_P(ForallReduceBitAndBasicTest, ReduceBitAndBasicForall)
   RAJA::getIndices(seg_idx, r2);
   ForallReduceBitAndBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                   RAJA::TypedRangeSegment<IDX_TYPE>,
-                                  EXEC_POLICY, REDUCE_POLICY>(
+                                  EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                     r2, seg_idx, working_res);
 
   seg_idx.clear();
@@ -137,7 +146,7 @@ TYPED_TEST_P(ForallReduceBitAndBasicTest, ReduceBitAndBasicForall)
   RAJA::getIndices(seg_idx, r3);
   ForallReduceBitAndBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                   RAJA::TypedRangeSegment<IDX_TYPE>,
-                                  EXEC_POLICY, REDUCE_POLICY>(
+                                  EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                     r3, seg_idx, working_res);
 
 // Range-stride segment tests
@@ -146,7 +155,7 @@ TYPED_TEST_P(ForallReduceBitAndBasicTest, ReduceBitAndBasicForall)
   RAJA::getIndices(seg_idx, r4);
   ForallReduceBitAndBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                   RAJA::TypedRangeStrideSegment<IDX_TYPE>,
-                                  EXEC_POLICY, REDUCE_POLICY>(
+                                  EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                     r4, seg_idx, working_res);
 
   seg_idx.clear();
@@ -154,7 +163,7 @@ TYPED_TEST_P(ForallReduceBitAndBasicTest, ReduceBitAndBasicForall)
   RAJA::getIndices(seg_idx, r5);
   ForallReduceBitAndBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                   RAJA::TypedRangeStrideSegment<IDX_TYPE>,
-                                  EXEC_POLICY, REDUCE_POLICY>(
+                                  EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                     r5, seg_idx, working_res);
 
   // List segment tests
@@ -171,7 +180,7 @@ TYPED_TEST_P(ForallReduceBitAndBasicTest, ReduceBitAndBasicForall)
                                        working_res );
   ForallReduceBitAndBasicTestImpl<IDX_TYPE, DATA_TYPE,
                                   RAJA::TypedListSegment<IDX_TYPE>,
-                                  EXEC_POLICY, REDUCE_POLICY>(
+                                  EXEC_POLICY, REDUCE_POLICY, API_TAG>(
                                     l1, seg_idx, working_res);
 }
 

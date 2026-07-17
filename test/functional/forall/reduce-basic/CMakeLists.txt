@@ -36,6 +36,65 @@ endforeach()
 unset( DATATYPES )
 unset( REDUCETYPES )
 
+function(raja_add_supported_reduce_tests TESTPREFIX SUITEPREFIX APITAGLIST)
+  foreach(BACKEND ${REDUCE_MATRIX_BACKENDS})
+    foreach(REDUCETYPE ${REDUCETYPES})
+      configure_file(test-forall-basic-supported-reduce.cpp.in
+                     ${TESTPREFIX}${REDUCETYPE}-${BACKEND}.cpp)
+      raja_add_test(NAME ${TESTPREFIX}${REDUCETYPE}-${BACKEND}
+                    SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${TESTPREFIX}${REDUCETYPE}-${BACKEND}.cpp)
+
+      target_include_directories(${TESTPREFIX}${REDUCETYPE}-${BACKEND}.exe
+                                 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+    endforeach()
+  endforeach()
+endfunction()
+
+#
+# Supported reduce/exec matrix coverage for the legacy and runtime-policy
+# reducer interfaces.
+#
+set(REDUCE_MATRIX_BACKENDS Sequential)
+
+if(RAJA_ENABLE_OPENMP)
+  list(APPEND REDUCE_MATRIX_BACKENDS OpenMP)
+endif()
+
+if(RAJA_ENABLE_CUDA)
+  list(APPEND REDUCE_MATRIX_BACKENDS Cuda)
+endif()
+
+if(RAJA_ENABLE_HIP)
+  list(APPEND REDUCE_MATRIX_BACKENDS Hip)
+endif()
+
+set(REDUCETYPES ReduceSum ReduceMin ReduceMax ReduceMinLoc ReduceMaxLoc)
+set(DATATYPES CoreReductionDataTypeList)
+
+raja_add_supported_reduce_tests(test-forall-basic-legacy-
+                                LegacyInterface
+                                LegacyReducerApiList)
+raja_add_supported_reduce_tests(test-forall-basic-runtime-policy-
+                                RuntimePolicy
+                                RuntimePolicyReducerApiList)
+
+unset( DATATYPES )
+unset( REDUCETYPES )
+
+set(REDUCETYPES ReduceBitAnd ReduceBitOr)
+set(DATATYPES BitwiseReductionDataTypeList)
+
+raja_add_supported_reduce_tests(test-forall-basic-legacy-
+                                LegacyInterface
+                                LegacyReducerApiList)
+raja_add_supported_reduce_tests(test-forall-basic-runtime-policy-
+                                RuntimePolicy
+                                RuntimePolicyReducerApiList)
+
+unset( DATATYPES )
+unset( REDUCETYPES )
+unset( REDUCE_MATRIX_BACKENDS )
+
 #
 # List of bitwise reduction types for generating test files.
 #
