@@ -8,5 +8,5 @@
 ###############################################################################
 
 raja_add_test(
-  NAME test-hip-synchronize
-  SOURCES test-synchronize.cpp)
+  NAME test-pattern-concepts
+  SOURCES test-pattern-concepts.cpp)
