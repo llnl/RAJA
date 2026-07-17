@@ -245,8 +245,10 @@ trigger-rajaperf:
   stage: multi-project
   rules:
     - if: $CI_COMMIT_BRANCH == $MP_BRANCH || $MULTI_PROJECT == "ON" #run only if ...
+  inherit:
+    variables: false
   variables:
     UPDATE_RAJA: ${MP_BRANCH}
   trigger:
-    project: radiuss/rajaperf
+    project: radiuss/multi-project/rajaperf-trigger
     branch: develop
