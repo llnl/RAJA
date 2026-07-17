@@ -43,16 +43,26 @@ enum class Policy
 
 constexpr const char* get_policy_name(Policy p)
 {
-  switch (p) {
-    case Policy::undefined:     return "undefined";
-    case Policy::sequential:    return "sequential";
-    case Policy::simd:          return "simd";
-    case Policy::openmp:        return "openmp";
-    case Policy::target_openmp: return "target_openmp";
-    case Policy::cuda:          return "cuda";
-    case Policy::hip:           return "hip";
-    case Policy::sycl:          return "sycl";
-    default:                    return "unknown";
+  switch (p)
+  {
+    case Policy::undefined:
+      return "undefined";
+    case Policy::sequential:
+      return "sequential";
+    case Policy::simd:
+      return "simd";
+    case Policy::openmp:
+      return "openmp";
+    case Policy::target_openmp:
+      return "target_openmp";
+    case Policy::cuda:
+      return "cuda";
+    case Policy::hip:
+      return "hip";
+    case Policy::sycl:
+      return "sycl";
+    default:
+      return "unknown";
   }
 }
 
@@ -74,20 +84,34 @@ enum class Pattern
 
 constexpr const char* get_pattern_name(Pattern p)
 {
-  switch (p) {
-    case Pattern::undefined:          return "undefined";
-    case Pattern::forall:             return "forall";
-    case Pattern::region:             return "region";
-    case Pattern::reduce:             return "reduce";
-    case Pattern::multi_reduce:       return "multi_reduce";
-    case Pattern::taskgraph:          return "taskgraph";
-    case Pattern::synchronize:        return "synchronize";
-    case Pattern::workgroup:          return "workgroup";
-    case Pattern::workgroup_exec:     return "workgroup_exec";
-    case Pattern::workgroup_order:    return "workgroup_order";
-    case Pattern::workgroup_storage:  return "workgroup_storage";
-    case Pattern::workgroup_dispatch: return "workgroup_dispatch";
-    default:                          return "unknown";
+  switch (p)
+  {
+    case Pattern::undefined:
+      return "undefined";
+    case Pattern::forall:
+      return "forall";
+    case Pattern::region:
+      return "region";
+    case Pattern::reduce:
+      return "reduce";
+    case Pattern::multi_reduce:
+      return "multi_reduce";
+    case Pattern::taskgraph:
+      return "taskgraph";
+    case Pattern::synchronize:
+      return "synchronize";
+    case Pattern::workgroup:
+      return "workgroup";
+    case Pattern::workgroup_exec:
+      return "workgroup_exec";
+    case Pattern::workgroup_order:
+      return "workgroup_order";
+    case Pattern::workgroup_storage:
+      return "workgroup_storage";
+    case Pattern::workgroup_dispatch:
+      return "workgroup_dispatch";
+    default:
+      return "unknown";
   }
 }
 
@@ -100,11 +124,16 @@ enum class Launch
 
 constexpr const char* get_launch_name(Launch l)
 {
-  switch (l) {
-    case Launch::undefined: return "undefined";
-    case Launch::sync:      return "sync";
-    case Launch::async:     return "async";
-    default:                return "unknown";
+  switch (l)
+  {
+    case Launch::undefined:
+      return "undefined";
+    case Launch::sync:
+      return "sync";
+    case Launch::async:
+      return "async";
+    default:
+      return "unknown";
   }
 }
 

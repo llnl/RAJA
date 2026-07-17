@@ -45,7 +45,8 @@ namespace RAJA
 namespace detail
 {
 template<typename T, typename Reduce>
-class ReduceOMP // This is a Combinable and is the first layer of that implementation detail used in Reducers
+class ReduceOMP  // This is a Combinable and is the first layer of that
+                 // implementation detail used in Reducers
     : public reduce::detail::BaseCombinable<T, Reduce, ReduceOMP<T, Reduce>>
 {
   using Base = reduce::detail::BaseCombinable<T, Reduce, ReduceOMP>;
@@ -77,7 +78,8 @@ RAJA_DECLARE_ALL_REDUCERS(omp_reduce, detail::ReduceOMP)
 namespace detail
 {
 template<typename T, typename Reduce>
-class ReduceOMPOrdered // This is a Combinable and is the first layer of that implementation detail used in Reducers
+class ReduceOMPOrdered  // This is a Combinable and is the first layer of that
+                        // implementation detail used in Reducers
     : public reduce::detail::
           BaseCombinable<T, Reduce, ReduceOMPOrdered<T, Reduce>>
 {
@@ -86,14 +88,15 @@ class ReduceOMPOrdered // This is a Combinable and is the first layer of that im
 
 public:
   ReduceOMPOrdered(T init_val, T identity_)
-      : Base(init_val, identity_)
-      , data(std::make_shared<std::vector<T>>(omp_get_max_threads(), identity_))
-  { }
+      : Base(init_val, identity_),
+        data(std::make_shared<std::vector<T>>(omp_get_max_threads(), identity_))
+  {}
 
   void reset(T init_val, T identity_)
   {
     Base::reset(init_val, identity_);
-    for (T& data_i : *data) {
+    for (T& data_i : *data)
+    {
       data_i = Base::identity;
     }
   }
@@ -113,7 +116,8 @@ public:
     }
 
     T res = Base::identity;
-    for (T const& data_i : *data) {
+    for (T const& data_i : *data)
+    {
       Reduce {}(res, data_i);
     }
     return res;

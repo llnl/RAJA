@@ -23,7 +23,8 @@
 #include "RAJA/util/Operators.hpp"
 #include "RAJA/util/types.hpp"
 
-// This defines specialization of Reducers that are the first layer of the user facing Reduction API
+// This defines specialization of Reducers that are the first layer of the user
+// facing Reduction API
 #define RAJA_DECLARE_REDUCER(OP, POL, COMBINER)                                \
   template<typename T>                                                         \
   class Reduce##OP<POL, T>                                                     \
@@ -34,7 +35,8 @@
     using Base::Base;                                                          \
   };
 
-// This defines specialization of loc Reducers that are the first layer of the user facing Reduction API
+// This defines specialization of loc Reducers that are the first layer of the
+// user facing Reduction API
 #define RAJA_DECLARE_INDEX_REDUCER(OP, POL, COMBINER)                          \
   template<typename T, typename IndexType>                                     \
   class Reduce##OP<POL, T, IndexType>                                          \
@@ -248,7 +250,9 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  BaseReduce(Policy RAJA_UNUSED_ARG(p), T init_val, T identity_ = Reduce::identity())
+  BaseReduce(Policy RAJA_UNUSED_ARG(p),
+             T init_val,
+             T identity_ = Reduce::identity())
       : c {init_val, identity_}
   {}
 
@@ -303,7 +307,8 @@ public:
   T get() const { return c.get(); }
 };
 
-// This is a Combinable and is the last layer of that implementation detail used in Reducers
+// This is a Combinable and is the last layer of that implementation detail used
+// in Reducers
 template<typename T, typename Reduce, typename Derived>
 class BaseCombinable
 {
@@ -465,8 +470,7 @@ public:
              IndexType identity_loc_ = DefaultLoc<IndexType>().value())
   {
     operator T();  // automatic get() before reset
-    Base::reset(p,
-                value_type(init_val, init_idx),
+    Base::reset(p, value_type(init_val, init_idx),
                 value_type(identity_val_, identity_loc_));
   }
 
@@ -614,7 +618,9 @@ public:
   using reduce_type = typename Base::reduce_type;
   using Base::Base;
 
-  constexpr BaseReduceMaxLoc() : Base(Policy::undefined, value_type(T(), IndexType())) {}
+  constexpr BaseReduceMaxLoc()
+      : Base(Policy::undefined, value_type(T(), IndexType()))
+  {}
 
   constexpr BaseReduceMaxLoc(
       T init_val,
@@ -654,8 +660,7 @@ public:
              IndexType identity_loc_ = DefaultLoc<IndexType>().value())
   {
     operator T();  // automatic get() before reset
-    Base::reset(p,
-                value_type(init_val, init_idx),
+    Base::reset(p, value_type(init_val, init_idx),
                 value_type(identity_val_, identity_loc_));
   }
 

@@ -278,9 +278,8 @@ struct TargetReduce
   TargetReduce(Policy p, T init_val_, T identity_ = Reducer::identity())
       : info(),
         val(identity_, identity_, info, checked_uses_offload(p)),
-        hostData(new omp::Shared_Host_Data<T>{init_val_, identity_, this})
-  {
-  }
+        hostData(new omp::Shared_Host_Data<T> {init_val_, identity_, this})
+  {}
 
   TargetReduce(const TargetReduce&) = default;
 
@@ -429,8 +428,11 @@ struct TargetReduceLoc
       T identity_val_ = Reducer::identity(),
       IndexType identity_loc_ =
           RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : TargetReduceLoc(
-            Policy::undefined, init_val_, init_loc, identity_val_, identity_loc_)
+      : TargetReduceLoc(Policy::undefined,
+                        init_val_,
+                        init_loc,
+                        identity_val_,
+                        identity_loc_)
   {}
 
   explicit TargetReduceLoc(
@@ -441,18 +443,11 @@ struct TargetReduceLoc
       IndexType identity_loc_ =
           RAJA::reduce::detail::DefaultLoc<IndexType>().value())
       : info(),
-        val(identity_val_,
-            identity_val_,
-            info,
-            checked_uses_offload(p)),
-        loc(identity_loc_,
-            identity_loc_,
-            info,
-            checked_uses_offload(p)),
-        hostData(new omp::Shared_Host_Loc_Data<T, IndexType>{
+        val(identity_val_, identity_val_, info, checked_uses_offload(p)),
+        loc(identity_loc_, identity_loc_, info, checked_uses_offload(p)),
+        hostData(new omp::Shared_Host_Loc_Data<T, IndexType> {
             init_val_, init_loc, identity_val_, identity_loc_, this})
-  {
-  }
+  {}
 
   TargetReduceLoc(const TargetReduceLoc&) = default;
 
@@ -496,14 +491,14 @@ struct TargetReduceLoc
       val.cleanup(info);
       loc.cleanup(info);
       val = omp::Reduce_Data<T>(identity_val_, identity_val_, info, false);
-      loc = omp::Reduce_Data<IndexType>(
-          identity_loc_, identity_loc_, info, false);
+      loc = omp::Reduce_Data<IndexType>(identity_loc_, identity_loc_, info,
+                                        false);
     }
     else if (!val.uses_offload() && use_offload)
     {
       val = omp::Reduce_Data<T>(identity_val_, identity_val_, info, true);
-      loc = omp::Reduce_Data<IndexType>(
-          identity_loc_, identity_loc_, info, true);
+      loc =
+          omp::Reduce_Data<IndexType>(identity_loc_, identity_loc_, info, true);
     }
     else
     {

@@ -1049,12 +1049,13 @@ public:
   {}
 
   Reduce(RAJA::Policy p, T init_val, T identity_ = Combiner::identity())
-      : parent {this}, // the original object's parent is itself
+      : parent {this},  // the original object's parent is itself
         tally_or_val_ptr {},
         val(init_val, identity_)
   {
     assert_valid(p);
-    if (p != Policy::sequential) {
+    if (p != Policy::sequential)
+    {
       tally_or_val_ptr.list = new TallyType;
     }
   }
@@ -1070,13 +1071,18 @@ public:
   {
     assert_valid(p);
     operator T();  // syncs device
-    if (p == Policy::sequential) {
-      if (tally_or_val_ptr.list) {
+    if (p == Policy::sequential)
+    {
+      if (tally_or_val_ptr.list)
+      {
         delete tally_or_val_ptr.list;
         tally_or_val_ptr.list = nullptr;
       }
-    } else {
-      if (!tally_or_val_ptr.list) {
+    }
+    else
+    {
+      if (!tally_or_val_ptr.list)
+      {
         tally_or_val_ptr.list = new TallyType;
       }
     }
@@ -1117,7 +1123,8 @@ public:
 #if !defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
     if (parent == this)
     {
-      if (tally_or_val_ptr.list) {
+      if (tally_or_val_ptr.list)
+      {
         delete tally_or_val_ptr.list;
         tally_or_val_ptr.list = nullptr;
       }
@@ -1126,10 +1133,13 @@ public:
     {
       if (val.value != val.identity)
       {
-        if (tally_or_val_ptr.list) {
+        if (tally_or_val_ptr.list)
+        {
           std::lock_guard<std::mutex> lock(tally_or_val_ptr.list->m_mutex);
           parent->combine(val.value);
-        } else {
+        }
+        else
+        {
           parent->combine(val.value);
         }
       }
@@ -1156,7 +1166,8 @@ public:
   //! map result value back to host if not done already; return aggregate value
   operator T()
   {
-    if (tally_or_val_ptr.list) {
+    if (tally_or_val_ptr.list)
+    {
       auto n   = tally_or_val_ptr.list->begin();
       auto end = tally_or_val_ptr.list->end();
       if (n != end)
@@ -1215,7 +1226,8 @@ private:
 
   void assert_valid(Policy p)
   {
-    switch (p) {
+    switch (p)
+    {
       case Policy::undefined:
       case Policy::sequential:
       case Policy::openmp:
@@ -1393,8 +1405,7 @@ public:
              IndexType identity_idx =
                  RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {
-    Base::reset(p,
-                value_type(init_val, init_idx),
+    Base::reset(p, value_type(init_val, init_idx),
                 value_type(identity_val, identity_idx));
   }
 
@@ -1477,8 +1488,7 @@ public:
              IndexType identity_idx =
                  RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {
-    Base::reset(p,
-                value_type(init_val, init_idx),
+    Base::reset(p, value_type(init_val, init_idx),
                 value_type(identity_val, identity_idx));
   }
 
