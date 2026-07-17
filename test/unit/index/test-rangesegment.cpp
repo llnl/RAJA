@@ -15,6 +15,7 @@
 
 #include "RAJA_unit-test-types.hpp"
 
+#include <concepts>
 #include <utility>
 
 RAJA_INDEX_VALUE(RangeStrongIndex, "RangeStrongIndex");
@@ -36,12 +37,12 @@ class RangeSegmentUnitTest : public ::testing::Test {};
 TYPED_TEST_SUITE(RangeSegmentUnitTest, UnitIndexTypes);
 
 
-template<typename T, typename std::enable_if_t<std::is_unsigned_v<T>>* = nullptr>
+template<std::unsigned_integral T>
 void NegativeRangeSegConstructorsTest()
 {
 }
 
-template<typename T, typename std::enable_if_t<std::is_signed_v<T>>* = nullptr>
+template<std::signed_integral T>
 void NegativeRangeSegConstructorsTest()
 {
   RAJA::TypedRangeSegment<T> r1(-10, 7);
@@ -91,12 +92,12 @@ TYPED_TEST(RangeSegmentUnitTest, Swaps)
   ASSERT_EQ(r2, r3);
 }
 
-template<typename T, typename std::enable_if_t<std::is_unsigned_v<T>>* = nullptr>
+template<std::unsigned_integral T>
 void NegativeRangeSegIteratorsTest()
 {
 }
 
-template<typename T, typename std::enable_if_t<std::is_signed_v<T>>* = nullptr>
+template<std::signed_integral T>
 void NegativeRangeSegIteratorsTest()
 {
   RAJA::TypedRangeSegment<T> r3(-2, 100);
@@ -116,16 +117,14 @@ TYPED_TEST(RangeSegmentUnitTest, Iterators)
   NegativeRangeSegIteratorsTest<TypeParam>();
 }
 
-template<typename IDX_TYPE,
-         typename std::enable_if_t<
-             std::is_unsigned_v<RAJA::strip_index_type_t<IDX_TYPE>>>* = nullptr>
+template<typename IDX_TYPE>
+requires std::unsigned_integral<RAJA::strip_index_type_t<IDX_TYPE>>
 void runNegativeIndexSliceTests()
 {
 }
 
-template<typename IDX_TYPE,
-         typename std::enable_if_t<
-             std::is_signed_v<RAJA::strip_index_type_t<IDX_TYPE>>>* = nullptr>
+template<typename IDX_TYPE>
+requires std::signed_integral<RAJA::strip_index_type_t<IDX_TYPE>>
 void runNegativeIndexSliceTests()
 {
   auto r1 = RAJA::TypedRangeSegment<IDX_TYPE>(-4, 4);
