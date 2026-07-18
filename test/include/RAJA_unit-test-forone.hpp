@@ -121,18 +121,30 @@ inline void forone(test_sycl, L&& run)
 #if defined(RAJA_ENABLE_CUDA)
 
 template <typename L>
-__global__ void forone_cuda_global(L run)
+__global__ void forone_cuda_global(L input_body)
 {
-  run();
+  auto body = input_body;
+  body();
 }
 
 // test_cuda implementation
 template < typename L >
 inline void forone(test_cuda, L&& run)
 {
-   forone_cuda_global<<<1,1>>>(std::forward<L>(run));
-   CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetLastError);
-   CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
+  using BODY = camp::decay<L>;
+
+  auto func = reinterpret_cast<const void*>(&forone_cuda_global<BODY>);
+  dim3 grid(1);
+  dim3 block(1);
+  size_t shmem = 0;
+  auto cuda_res = RAJA::resources::Cuda::get_default();
+  BODY input_body = RAJA::cuda::make_launch_body(
+      func, grid, block, shmem, cuda_res, std::forward<L>(run));
+  void* args[] = {(void*)&input_body};
+
+  RAJA::cuda::launch(func, grid, block, args, shmem, cuda_res, false);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetLastError);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 }
 
 #endif
@@ -140,18 +152,30 @@ inline void forone(test_cuda, L&& run)
 #if defined(RAJA_ENABLE_HIP)
 
 template <typename L>
-__global__ void forone_hip_global(L run)
+__global__ void forone_hip_global(L input_body)
 {
-  run();
+  auto body = input_body;
+  body();
 }
 
 // test_hip implementation
 template < typename L >
 inline void forone(test_hip, L&& run)
 {
-   hipLaunchKernelGGL(forone_hip_global<camp::decay<L>>, dim3(1), dim3(1), 0, 0, std::forward<L>(run));
-   CAMP_HIP_API_INVOKE_AND_CHECK(hipGetLastError);
-   CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
+  using BODY = camp::decay<L>;
+
+  auto func = reinterpret_cast<const void*>(&forone_hip_global<BODY>);
+  dim3 grid(1);
+  dim3 block(1);
+  size_t shmem = 0;
+  auto hip_res = RAJA::resources::Hip::get_default();
+  BODY input_body = RAJA::hip::make_launch_body(
+      func, grid, block, shmem, hip_res, std::forward<L>(run));
+  void* args[] = {(void*)&input_body};
+
+  RAJA::hip::launch(func, grid, block, args, shmem, hip_res, false);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipGetLastError);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
 }
 
 #endif
