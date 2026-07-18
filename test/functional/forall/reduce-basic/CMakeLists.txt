@@ -36,7 +36,7 @@ endforeach()
 unset( DATATYPES )
 unset( REDUCETYPES )
 
-function(raja_add_supported_reduce_tests TESTPREFIX SUITEPREFIX APITAGLIST REDUCE_BACKENDS)
+function(raja_add_supported_reduce_tests TESTPREFIX REDUCE_BACKENDS)
   foreach(REDUCE_BACKEND ${REDUCE_BACKENDS})
     foreach(REDUCETYPE ${REDUCETYPES})
       if(REDUCE_BACKEND STREQUAL Sycl AND
@@ -84,14 +84,7 @@ endif()
 set(REDUCETYPES ReduceSum ReduceMin ReduceMax ReduceMinLoc ReduceMaxLoc)
 set(DATATYPES CoreReductionDataTypeList)
 
-raja_add_supported_reduce_tests(test-forall-basic-legacy-
-                                LegacyInterface
-                                LegacyReducerApiList
-                                "${REDUCE_BACKENDS}")
-
 raja_add_supported_reduce_tests(test-forall-basic-runtime-policy-
-                                RuntimePolicy
-                                RuntimePolicyReducerApiList
                                 "${REDUCE_BACKENDS}")
 
 unset( DATATYPES )
@@ -100,13 +93,7 @@ unset( REDUCETYPES )
 set(REDUCETYPES ReduceBitAnd ReduceBitOr)
 set(DATATYPES BitwiseReductionDataTypeList)
 
-raja_add_supported_reduce_tests(test-forall-basic-legacy-
-                                LegacyInterface
-                                LegacyReducerApiList
-                                "${REDUCE_BACKENDS}")
 raja_add_supported_reduce_tests(test-forall-basic-runtime-policy-
-                                RuntimePolicy
-                                RuntimePolicyReducerApiList
                                 "${REDUCE_BACKENDS}")
 
 unset( DATATYPES )

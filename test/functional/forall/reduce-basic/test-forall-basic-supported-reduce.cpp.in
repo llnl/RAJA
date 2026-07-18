@@ -40,8 +40,8 @@ using @REDUCE_BACKEND@ReduceForallSupportedReduceBasicTypes =
                                @DATATYPES@,
                                @REDUCE_BACKEND@ReduceSupportedForallExecPols,
                                @REDUCE_BACKEND@ReducePols,
-                               @APITAGLIST@>>::Types;
+                               RuntimePolicyReducerApiList>>::Types;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(@SUITEPREFIX@@REDUCE_BACKEND@Reduce,
+INSTANTIATE_TYPED_TEST_SUITE_P(RuntimePolicy@REDUCE_BACKEND@Reduce,
                                Forall@REDUCETYPE@BasicTest,
                                @REDUCE_BACKEND@ReduceForallSupportedReduceBasicTypes);
