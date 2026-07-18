@@ -26,92 +26,41 @@ template  < typename ReducePolicy,
             typename Tuple,
             typename ForOnePol
           >
-typename  std::enable_if< // Empty function for non-device policy.
-            std::is_base_of<RunOnHost, ForOnePol>::value
-#if defined(RAJA_ENABLE_TARGET_OPENMP)
-            && !std::is_same<test_openmp_target, ForOnePol>::value
-#endif
-          >::type
-exec_dispatcher(  RAJA::ReduceSum<ReducePolicy, NumericType> & RAJA_UNUSED_ARG(reduce_sum),
-                  RAJA::ReduceMin<ReducePolicy, NumericType> & RAJA_UNUSED_ARG(reduce_min),
-                  RAJA::ReduceMax<ReducePolicy, NumericType> & RAJA_UNUSED_ARG(reduce_max),
-                  RAJA::ReduceMinLoc<ReducePolicy, NumericType, Indexer> & RAJA_UNUSED_ARG(reduce_minloc),
-                  RAJA::ReduceMaxLoc<ReducePolicy, NumericType, Indexer> & RAJA_UNUSED_ARG(reduce_maxloc),
-                  RAJA::ReduceMinLoc<ReducePolicy, NumericType, Tuple> & RAJA_UNUSED_ARG(reduce_minloctup),
-                  RAJA::ReduceMaxLoc<ReducePolicy, NumericType, Tuple> & RAJA_UNUSED_ARG(reduce_maxloctup),
-                  NumericType RAJA_UNUSED_ARG(initVal)
-               )
+void exec_dispatcher(  RAJA::ReduceSum<ReducePolicy, NumericType> & reduce_sum,
+                       RAJA::ReduceMin<ReducePolicy, NumericType> & reduce_min,
+                       RAJA::ReduceMax<ReducePolicy, NumericType> & reduce_max,
+                       RAJA::ReduceMinLoc<ReducePolicy, NumericType, Indexer> & reduce_minloc,
+                       RAJA::ReduceMaxLoc<ReducePolicy, NumericType, Indexer> & reduce_maxloc,
+                       RAJA::ReduceMinLoc<ReducePolicy, NumericType, Tuple> & reduce_minloctup,
+                       RAJA::ReduceMaxLoc<ReducePolicy, NumericType, Tuple> & reduce_maxloctup,
+                       NumericType initVal
+                    )
 {
-  // Non-device policies should do nothing.
+  if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
+    // Rely on the backend-specific forone implementation to synchronize.
+    forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
+      Tuple temploc(0,0);
+      reduce_sum += initVal;
+      reduce_min.min(0);
+      reduce_max.max(0);
+      reduce_minloc.minloc(0,0);
+      reduce_maxloc.maxloc(0,0);
+      reduce_minloctup.minloc(0,temploc);
+      reduce_maxloctup.maxloc(0,temploc);
+    });
+  } else {
+    forone<ForOnePol>( [=] () {
+      Tuple temploc(0,0);
+      reduce_sum += initVal;
+      reduce_min.min(0);
+      reduce_max.max(0);
+      reduce_minloc.minloc(0,0);
+      reduce_maxloc.maxloc(0,0);
+      reduce_minloctup.minloc(0,temploc);
+      reduce_maxloctup.maxloc(0,temploc);
+    });
+  }
 }
-
-#if defined(RAJA_ENABLE_TARGET_OPENMP)
-template  < typename ReducePolicy,
-            typename NumericType,
-            typename Indexer,
-            typename Tuple,
-            typename ForOnePol
-          >
-typename  std::enable_if<
-            std::is_same<test_openmp_target, ForOnePol>::value
-          >::type
-exec_dispatcher(  RAJA::ReduceSum<ReducePolicy, NumericType> & reduce_sum,
-                  RAJA::ReduceMin<ReducePolicy, NumericType> & reduce_min,
-                  RAJA::ReduceMax<ReducePolicy, NumericType> & reduce_max,
-                  RAJA::ReduceMinLoc<ReducePolicy, NumericType, Indexer> & reduce_minloc,
-                  RAJA::ReduceMaxLoc<ReducePolicy, NumericType, Indexer> & reduce_maxloc,
-                  RAJA::ReduceMinLoc<ReducePolicy, NumericType, Tuple> & reduce_minloctup,
-                  RAJA::ReduceMaxLoc<ReducePolicy, NumericType, Tuple> & reduce_maxloctup,
-                  NumericType initVal
-               )
-{
-  forone<ForOnePol>( [=] () {
-                    Tuple temploc(0,0);
-                    reduce_sum += initVal;
-                    reduce_min.min(0);
-                    reduce_max.max(0);
-                    reduce_minloc.minloc(0,0);
-                    reduce_maxloc.maxloc(0,0);
-                    reduce_minloctup.minloc(0,temploc);
-                    reduce_maxloctup.maxloc(0,temploc);
-                 });
-}
-#endif
-
-#if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-template  < typename ReducePolicy,
-            typename NumericType,
-            typename Indexer,
-            typename Tuple,
-            typename ForOnePol
-          >
-typename  std::enable_if< // GPU policy execution.
-            std::is_base_of<RunOnDevice, ForOnePol>::value
-          >::type
-exec_dispatcher(  RAJA::ReduceSum<ReducePolicy, NumericType> & reduce_sum,
-                  RAJA::ReduceMin<ReducePolicy, NumericType> & reduce_min,
-                  RAJA::ReduceMax<ReducePolicy, NumericType> & reduce_max,
-                  RAJA::ReduceMinLoc<ReducePolicy, NumericType, Indexer> & reduce_minloc,
-                  RAJA::ReduceMaxLoc<ReducePolicy, NumericType, Indexer> & reduce_maxloc,
-                  RAJA::ReduceMinLoc<ReducePolicy, NumericType, Tuple> & reduce_minloctup,
-                  RAJA::ReduceMaxLoc<ReducePolicy, NumericType, Tuple> & reduce_maxloctup,
-                  NumericType initVal
-               )
-{
-  // Use device to activate any value for each reducer.
-  forone<ForOnePol>( [=] __host__ __device__ () {
-                    Tuple temploc(0,0);
-                    reduce_sum += initVal;
-                    reduce_min.min(0);
-                    reduce_max.max(0);
-                    reduce_minloc.minloc(0,0);
-                    reduce_maxloc.maxloc(0,0);
-                    reduce_minloctup.minloc(0,temploc);
-                    reduce_maxloctup.maxloc(0,temploc);
-                 });
-  // Relying on implicit device synchronization in forone.
-}
-#endif
 
 template <typename T>
 class ReducerResetUnitTest : public ::testing::Test
@@ -208,21 +157,17 @@ void testReducerReset()
     RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(initVal);
     RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand(initVal);
 
-#if defined(RAJA_ENABLE_TARGET_OPENMP)
-    if constexpr (std::is_same_v<ForOnePol, test_openmp_target>) {
+    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
+      forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
+        reduce_bitor |= initVal;
+        reduce_bitand &= initVal;
+      });
+    } else {
       forone<ForOnePol>( [=] () {
         reduce_bitor |= initVal;
         reduce_bitand &= initVal;
       });
     }
-#elif defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
-      forone<ForOnePol>( [=] __host__ __device__ () {
-        reduce_bitor |= initVal;
-        reduce_bitand &= initVal;
-      });
-    }
-#endif
 
     reduce_bitor.reset(resetVal[0]);
     reduce_bitand.reset(resetVal[0]);
@@ -288,9 +233,11 @@ void testRuntimePolicyReducerReset()
 
   const RAJA::Policy backend_policy = RAJA::policy_of<ReducePolicy>::value;
   const bool has_backend_transition =
+      backend_policy == RAJA::Policy::openmp ||
       backend_policy == RAJA::Policy::target_openmp ||
       backend_policy == RAJA::Policy::cuda ||
-      backend_policy == RAJA::Policy::hip;
+      backend_policy == RAJA::Policy::hip ||
+      backend_policy == RAJA::Policy::sycl;
 
   if (has_backend_transition) {
     RAJA::ReduceSum<ReducePolicy, NumericType> transition_sum(
@@ -333,23 +280,23 @@ void testRuntimePolicyReducerReset()
     transition_minloc.reset(backend_policy, NumericType(5), RAJA::Index_type(1));
     transition_maxloc.reset(backend_policy, NumericType(5), RAJA::Index_type(1));
 
-#if defined(RAJA_ENABLE_TARGET_OPENMP)
-    forone<ForOnePol>( [=] () {
-      transition_sum += NumericType(4);
-      transition_min.min(NumericType(1));
-      transition_max.max(NumericType(9));
-      transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
-      transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
-    });
-#elif defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-    forone<ForOnePol>( [=] __host__ __device__ () {
-      transition_sum += NumericType(4);
-      transition_min.min(NumericType(1));
-      transition_max.max(NumericType(9));
-      transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
-      transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
-    });
-#endif
+    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
+      forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
+        transition_sum += NumericType(4);
+        transition_min.min(NumericType(1));
+        transition_max.max(NumericType(9));
+        transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
+        transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
+      });
+    } else {
+      forone<ForOnePol>( [=] () {
+        transition_sum += NumericType(4);
+        transition_min.min(NumericType(1));
+        transition_max.max(NumericType(9));
+        transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
+        transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
+      });
+    }
 
     ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
     ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
@@ -404,17 +351,17 @@ void testRuntimePolicyReducerReset()
       reduce_bitor.reset(backend_policy, NumericType(5));
       reduce_bitand.reset(backend_policy, NumericType(5));
 
-#if defined(RAJA_ENABLE_TARGET_OPENMP)
-      forone<ForOnePol>( [=] () {
-        reduce_bitor |= NumericType(2);
-        reduce_bitand &= NumericType(3);
-      });
-#elif defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-      forone<ForOnePol>( [=] __host__ __device__ () {
-        reduce_bitor |= NumericType(2);
-        reduce_bitand &= NumericType(3);
-      });
-#endif
+      if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
+        forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
+          reduce_bitor |= NumericType(2);
+          reduce_bitand &= NumericType(3);
+        });
+      } else {
+        forone<ForOnePol>( [=] () {
+          reduce_bitor |= NumericType(2);
+          reduce_bitand &= NumericType(3);
+        });
+      }
 
       ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
       ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));

@@ -13,15 +13,15 @@
 
 #include "tests/test-reducer-reset.hpp"
 
-#if defined(RAJA_ENABLE_OPENMP)
-using OpenMPReducerResetTypes = 
-  Test< camp::cartesian_product< OpenMPReducerPolicyList,
+#if defined(RAJA_ENABLE_SYCL)
+using SyclReducerResetTypes =
+  Test< camp::cartesian_product< SyclReducerPolicyList,
                                  DataTypeList,
-                                 HostResourceList,
-                                 OpenMPUnitTestPolicyList > >::Types;
+                                 SyclResourceList,
+                                 SyclUnitTestPolicyList > >::Types;
 
 
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPResetTest,
+INSTANTIATE_TYPED_TEST_SUITE_P(SyclResetTest,
                                ReducerResetUnitTest,
-                               OpenMPReducerResetTypes);
+                               SyclReducerResetTypes);
 #endif

@@ -54,3 +54,9 @@ raja_add_test(
   NAME test-reducer-reset-hip
   SOURCES test-reducer-reset-hip.cpp)
 endif()
+
+if(RAJA_ENABLE_SYCL)
+raja_add_test(
+  NAME test-reducer-reset-sycl
+  SOURCES test-reducer-reset-sycl.cpp)
+endif()
