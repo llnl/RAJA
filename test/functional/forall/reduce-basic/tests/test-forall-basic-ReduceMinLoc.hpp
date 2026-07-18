@@ -113,11 +113,10 @@ TYPED_TEST_P(ForallReduceMinLocBasicTest, ReduceMinLocBasicForall)
 {
   using IDX_TYPE = typename camp::at<TypeParam, camp::num<0>>::type;
   using DATA_TYPE = typename camp::at<TypeParam, camp::num<1>>::type;
-  using WORKING_RES = typename camp::at<TypeParam, camp::num<2>>::type;
-  using PAIR = typename camp::at<TypeParam, camp::num<3>>::type;
-  using EXEC_POLICY = typename camp::at<PAIR, camp::num<0>>::type;
-  using REDUCE_POLICY = typename camp::at<PAIR, camp::num<1>>::type;
+  using EXEC_POLICY = typename camp::at<TypeParam, camp::num<2>>::type;
+  using REDUCE_POLICY = typename camp::at<TypeParam, camp::num<3>>::type;
   using API_TAG = typename camp::at<TypeParam, camp::num<4>>::type;
+  using WORKING_RES = typename RAJA::resources::get_resource<EXEC_POLICY>::type;
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
 

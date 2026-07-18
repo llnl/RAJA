@@ -36,20 +36,20 @@ endforeach()
 unset( DATATYPES )
 unset( REDUCETYPES )
 
-function(raja_add_supported_reduce_tests TESTPREFIX SUITEPREFIX APITAGLIST BACKENDS)
-  foreach(BACKEND ${BACKENDS})
+function(raja_add_supported_reduce_tests TESTPREFIX SUITEPREFIX APITAGLIST REDUCE_BACKENDS)
+  foreach(REDUCE_BACKEND ${REDUCE_BACKENDS})
     foreach(REDUCETYPE ${REDUCETYPES})
-      if(BACKEND STREQUAL Sycl AND
+      if(REDUCE_BACKEND STREQUAL Sycl AND
          (REDUCETYPE STREQUAL ReduceMinLoc OR REDUCETYPE STREQUAL ReduceMaxLoc))
         continue()
       endif()
 
       configure_file(test-forall-basic-supported-reduce.cpp.in
-                     ${TESTPREFIX}${REDUCETYPE}-${BACKEND}.cpp)
-      raja_add_test(NAME ${TESTPREFIX}${REDUCETYPE}-${BACKEND}
-                    SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${TESTPREFIX}${REDUCETYPE}-${BACKEND}.cpp)
+                     ${TESTPREFIX}${REDUCETYPE}-${REDUCE_BACKEND}Reduce.cpp)
+      raja_add_test(NAME ${TESTPREFIX}${REDUCETYPE}-${REDUCE_BACKEND}Reduce
+                    SOURCES ${CMAKE_CURRENT_BINARY_DIR}/${TESTPREFIX}${REDUCETYPE}-${REDUCE_BACKEND}Reduce.cpp)
 
-      target_include_directories(${TESTPREFIX}${REDUCETYPE}-${BACKEND}.exe
+      target_include_directories(${TESTPREFIX}${REDUCETYPE}-${REDUCE_BACKEND}Reduce.exe
                                  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
     endforeach()
   endforeach()
@@ -59,26 +59,26 @@ endfunction()
 # Supported reduce/exec matrix coverage for the legacy and runtime-policy
 # reducer interfaces.
 #
-set(REDUCE_MATRIX_BACKENDS Sequential)
+set(REDUCE_BACKENDS Sequential)
 
 if(RAJA_ENABLE_OPENMP)
-  list(APPEND REDUCE_MATRIX_BACKENDS OpenMP)
+  list(APPEND REDUCE_BACKENDS OpenMP)
 endif()
 
 if(RAJA_ENABLE_TARGET_OPENMP)
-  list(APPEND REDUCE_MATRIX_BACKENDS OpenMPTarget)
+  list(APPEND REDUCE_BACKENDS OpenMPTarget)
 endif()
 
 if(RAJA_ENABLE_CUDA)
-  list(APPEND REDUCE_MATRIX_BACKENDS Cuda)
+  list(APPEND REDUCE_BACKENDS Cuda)
 endif()
 
 if(RAJA_ENABLE_HIP)
-  list(APPEND REDUCE_MATRIX_BACKENDS Hip)
+  list(APPEND REDUCE_BACKENDS Hip)
 endif()
 
 if(RAJA_ENABLE_SYCL)
-  list(APPEND REDUCE_MATRIX_BACKENDS Sycl)
+  list(APPEND REDUCE_BACKENDS Sycl)
 endif()
 
 set(REDUCETYPES ReduceSum ReduceMin ReduceMax ReduceMinLoc ReduceMaxLoc)
@@ -87,12 +87,12 @@ set(DATATYPES CoreReductionDataTypeList)
 raja_add_supported_reduce_tests(test-forall-basic-legacy-
                                 LegacyInterface
                                 LegacyReducerApiList
-                                "${REDUCE_MATRIX_BACKENDS}")
+                                "${REDUCE_BACKENDS}")
 
 raja_add_supported_reduce_tests(test-forall-basic-runtime-policy-
                                 RuntimePolicy
                                 RuntimePolicyReducerApiList
-                                "${REDUCE_MATRIX_BACKENDS}")
+                                "${REDUCE_BACKENDS}")
 
 unset( DATATYPES )
 unset( REDUCETYPES )
@@ -103,15 +103,15 @@ set(DATATYPES BitwiseReductionDataTypeList)
 raja_add_supported_reduce_tests(test-forall-basic-legacy-
                                 LegacyInterface
                                 LegacyReducerApiList
-                                "${REDUCE_MATRIX_BACKENDS}")
+                                "${REDUCE_BACKENDS}")
 raja_add_supported_reduce_tests(test-forall-basic-runtime-policy-
                                 RuntimePolicy
                                 RuntimePolicyReducerApiList
-                                "${REDUCE_MATRIX_BACKENDS}")
+                                "${REDUCE_BACKENDS}")
 
 unset( DATATYPES )
 unset( REDUCETYPES )
-unset( REDUCE_MATRIX_BACKENDS )
+unset( REDUCE_BACKENDS )
 
 #
 # List of bitwise reduction types for generating test files.

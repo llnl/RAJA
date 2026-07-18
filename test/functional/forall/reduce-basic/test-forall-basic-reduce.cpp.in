@@ -50,15 +50,11 @@ using TestIdxTypeList = camp::list< RAJA::Index_type >;
 //
 // Cartesian product of types used in parameterized tests
 //
-using @BACKEND@LegacyReduceExecPairs =
-  camp::cartesian_product<@BACKEND@ForallReduceExecPols,
-                          @BACKEND@ReducePols>;
-
 using @BACKEND@ForallReduceBasicTypes =
   Test<camp::cartesian_product<TestIdxTypeList,
                                @DATATYPES@,
-                               @BACKEND@ResourceList,
-                               @BACKEND@LegacyReduceExecPairs,
+                               @BACKEND@ForallReduceExecPols,
+                               @BACKEND@ReducePols,
                                LegacyReducerApiList>>::Types;
 
 //
