@@ -15,10 +15,7 @@
 #include "RAJA_test-index-types.hpp"
 
 #include "RAJA_test-forall-data.hpp"
-#include "RAJA_test-forall-execpol.hpp"
-#include "RAJA_test-reducepol.hpp"
-#include "test-forall-basic-reduce-interface.hpp"
-
+#include "RAJA_test-supported-reduce-execpol.hpp"
 
 //
 // Header for tests in ./tests directory
@@ -40,7 +37,6 @@ using CoreReductionDataTypeList = camp::list< int,
 using BitwiseReductionDataTypeList = camp::list< int,
                                                  unsigned int >;
 
-
 //
 // These tests exercise only one index type. We parameterize here to 
 // make it easier to expand types in the future if needed.
@@ -50,16 +46,16 @@ using TestIdxTypeList = camp::list< RAJA::Index_type >;
 //
 // Cartesian product of types used in parameterized tests
 //
-using @BACKEND@ForallReduceBasicTypes =
+using @REDUCE_BACKEND@ReduceForallBasicTypes =
   Test<camp::cartesian_product<TestIdxTypeList,
                                @DATATYPES@,
-                               @BACKEND@ForallReduceExecPols,
-                               @BACKEND@ReducePols,
-                               LegacyReducerApiList>>::Types;
+                               @REDUCE_BACKEND@ReduceSupportedForallExecPols,
+                               @REDUCE_BACKEND@ReducePols,
+                               @TESTTYPE@ReducerApiList>>::Types;
 
 //
 // Instantiate parameterized test
 //
-INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@,
+INSTANTIATE_TYPED_TEST_SUITE_P(@REDUCE_BACKEND@,
                                Forall@REDUCETYPE@BasicTest,
-                               @BACKEND@ForallReduceBasicTypes);
+                               @REDUCE_BACKEND@ReduceForallBasicTypes);

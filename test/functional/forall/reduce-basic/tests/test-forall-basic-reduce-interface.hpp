@@ -31,7 +31,7 @@ struct LegacyReducerApi
   }
 };
 
-struct RuntimePolicyReducerApi
+struct RuntimeReducerApi
 {
   template <typename EXEC_POLICY, typename REDUCER, typename... Args>
   static REDUCER make(Args&&... args)
@@ -49,6 +49,6 @@ struct RuntimePolicyReducerApi
 };
 
 using LegacyReducerApiList = camp::list<LegacyReducerApi>;
-using RuntimePolicyReducerApiList = camp::list<RuntimePolicyReducerApi>;
+using RuntimeReducerApiList = camp::list<RuntimeReducerApi>;
 
 #endif  // __TEST_FORALL_BASIC_REDUCE_INTERFACE_HPP__
