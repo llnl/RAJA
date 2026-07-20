@@ -687,7 +687,7 @@ struct ReduceLastBlock_Data
   RAJA::detail::SoAPtr<T, data_mempool_type> device;
   bool owns_device_pointer;
 
-  ReduceLastBlock_Data() : ReduceLastBlock_Data(T(), T()) {}
+  ReduceLastBlock_Data() = delete;
 
   /*! \brief create from a default value and offload information
    *
@@ -790,7 +790,7 @@ struct ReduceAtomicHostInit_Data
   bool is_setup;
   bool owns_device_pointer;
 
-  ReduceAtomicHostInit_Data() : ReduceAtomicHostInit_Data(T(), T()) {}
+  ReduceAtomicHostInit_Data() = delete;
 
   ReduceAtomicHostInit_Data(T initValue, T identity_)
       : value {initValue},
@@ -878,7 +878,7 @@ struct ReduceAtomicDeviceInit_Data
   T* device;
   bool owns_device_pointer;
 
-  ReduceAtomicDeviceInit_Data() : ReduceAtomicDeviceInit_Data(T(), T()) {}
+  ReduceAtomicDeviceInit_Data() = delete;
 
   ReduceAtomicDeviceInit_Data(T initValue, T identity_)
       : value {initValue},
