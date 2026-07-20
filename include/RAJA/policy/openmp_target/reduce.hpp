@@ -267,9 +267,9 @@ struct Shared_Host_Loc_Data
 template<typename Reducer, typename T>
 struct TargetReduce
 {
-  TargetReduce() : TargetReduce(Policy::undefined, T(), Reducer::identity()) {}
+  TargetReduce() : TargetReduce(Policy::undefined, Reducer::identity(), Reducer::identity()) {}
 
-  explicit TargetReduce(Policy p) : TargetReduce(p, T(), Reducer::identity()) {}
+  explicit TargetReduce(Policy p) : TargetReduce(p, Reducer::identity(), Reducer::identity()) {}
 
   explicit TargetReduce(T init_val_, T identity_ = Reducer::identity())
       : TargetReduce(Policy::undefined, init_val_, identity_)
@@ -408,16 +408,16 @@ struct TargetReduceLoc
 {
   TargetReduceLoc()
       : TargetReduceLoc(Policy::undefined,
-                        T(),
-                        IndexType(),
+                        Reducer::identity(),
+                        RAJA::reduce::detail::DefaultLoc<IndexType>().value(),
                         Reducer::identity(),
                         RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {}
 
   explicit TargetReduceLoc(Policy p)
       : TargetReduceLoc(p,
-                        T(),
-                        IndexType(),
+                        Reducer::identity(),
+                        RAJA::reduce::detail::DefaultLoc<IndexType>().value(),
                         Reducer::identity(),
                         RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {}
