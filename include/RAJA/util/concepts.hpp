@@ -50,24 +50,30 @@ concept RangeConstructible =
     });
 
 template<typename StrongT, typename T>
-concept StrongOrIntegralRangeArg =
-    (IndexValued<T> &&
-     std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<StrongT>>) ||
-    (!IndexValued<T> &&
-     std::is_integral_v<strip_index_type_t<std::remove_cvref_t<T>>>);
+concept StrongOrSignedIntegralStrideArg =
+    ((IndexValued<T> &&
+      std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<StrongT>>) ||
+     (!IndexValued<T> &&
+      std::is_integral_v<strip_index_type_t<std::remove_cvref_t<T>>>)) &&
+    std::is_signed_v<strip_index_type_t<std::remove_cvref_t<T>>>;
+
+template<typename StrongT, typename T>
+concept StrongRangeBound =
+    IndexValued<T> &&
+    std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<StrongT>>;
 
 template<typename BeginT, typename EndT, typename StrideT>
 concept RangeStrideConstructible =
     (!IndexValued<BeginT> && !IndexValued<EndT> && !IndexValued<StrideT> &&
+     std::is_signed_v<strip_index_type_t<std::remove_cvref_t<StrideT>>> &&
      requires {
        typename std::common_type_t<std::remove_cvref_t<BeginT>,
-                                   std::remove_cvref_t<EndT>>;
+                                   std::remove_cvref_t<EndT>,
+                                   make_signed_t<strip_index_type_t<
+                                       std::remove_cvref_t<StrideT>>>>;
      }) ||
-    (IndexValued<BeginT> && StrongOrIntegralRangeArg<BeginT, EndT> &&
-     StrongOrIntegralRangeArg<BeginT, StrideT>) ||
-    (!IndexValued<BeginT> && IndexValued<EndT> &&
-     StrongOrIntegralRangeArg<EndT, BeginT> &&
-     StrongOrIntegralRangeArg<EndT, StrideT>);
+    (IndexValued<BeginT> && StrongRangeBound<BeginT, EndT> &&
+     StrongOrSignedIntegralStrideArg<BeginT, StrideT>);
 
 using namespace camp::concepts;
 }  // namespace concepts

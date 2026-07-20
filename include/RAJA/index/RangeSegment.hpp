@@ -575,9 +575,13 @@ template<typename T>
 inline constexpr bool is_strong_index_v = RAJA::concepts::IndexValued<T>;
 
 template<typename T>
-inline constexpr bool is_non_strong_integral_index_v =
-    !is_strong_index_v<T> &&
-    std::is_integral_v<strip_index_type_t<std::remove_cvref_t<T>>>;
+inline constexpr bool is_signed_integral_index_v =
+    std::is_integral_v<strip_index_type_t<std::remove_cvref_t<T>>> &&
+    std::is_signed_v<strip_index_type_t<std::remove_cvref_t<T>>>;
+
+template<typename T>
+inline constexpr bool is_non_strong_signed_integral_index_v =
+    !is_strong_index_v<T> && is_signed_integral_index_v<T>;
 
 template<typename T>
 using range_stride_type_t =
@@ -650,33 +654,34 @@ struct range_stride_storage_from_strong<no_strong_index, BeginT, EndT, StrideT>
 
 template<typename StrongT, typename BeginT, typename EndT, typename StrideT>
 struct range_stride_storage_from_strong_compatible
-    : std::bool_constant<std::is_same_v<StrongT, no_strong_index> ||
-                         (strong_range_arg_compatible_v<StrongT, BeginT> &&
-                          strong_range_arg_compatible_v<StrongT, EndT> &&
-                          strong_range_arg_compatible_v<StrongT, StrideT>)>
+    : std::bool_constant<
+          std::is_same_v<StrongT, no_strong_index>
+              ? is_non_strong_signed_integral_index_v<StrideT>
+              : (strong_range_arg_compatible_v<StrongT, BeginT> &&
+                 strong_range_arg_compatible_v<StrongT, EndT> &&
+                 strong_range_arg_compatible_v<StrongT, StrideT> &&
+                 is_signed_integral_index_v<StrideT>)>
 {};
 
 template<typename StrongT, typename BeginT, typename EndT, typename StrideT>
 struct range_stride_storage_from_strong_compatible_for_range
     : std::bool_constant<
           std::is_same_v<StrongT, no_strong_index>
-              ? !is_strong_index_v<StrideT>
-              : ((strong_range_arg_compatible_v<StrongT, BeginT> ||
-                  is_non_strong_integral_index_v<BeginT>) &&
-                 (strong_range_arg_compatible_v<StrongT, EndT> ||
-                  is_non_strong_integral_index_v<EndT>) &&
+              ? is_non_strong_signed_integral_index_v<StrideT>
+              : (strong_range_arg_compatible_v<StrongT, BeginT> &&
+                 strong_range_arg_compatible_v<StrongT, EndT> &&
                  (strong_range_arg_compatible_v<StrongT, StrideT> ||
-                  is_non_strong_integral_index_v<StrideT>))>
+                  is_non_strong_signed_integral_index_v<StrideT>) &&
+                 is_signed_integral_index_v<StrideT>)>
 {};
 
 template<typename StrongT, typename BeginT, typename EndT, typename StrideT>
   requires(std::is_same_v<StrongT, no_strong_index> ||
-           ((strong_range_arg_compatible_v<StrongT, BeginT> ||
-             is_non_strong_integral_index_v<BeginT>) &&
-            (strong_range_arg_compatible_v<StrongT, EndT> ||
-             is_non_strong_integral_index_v<EndT>) &&
+           (strong_range_arg_compatible_v<StrongT, BeginT> &&
+            strong_range_arg_compatible_v<StrongT, EndT> &&
             (strong_range_arg_compatible_v<StrongT, StrideT> ||
-             is_non_strong_integral_index_v<StrideT>)))
+             is_non_strong_signed_integral_index_v<StrideT>) &&
+            is_signed_integral_index_v<StrideT>))
 struct range_stride_storage_from_strong<StrongT, BeginT, EndT, StrideT>
 {
   using type = StrongT;
@@ -755,8 +760,19 @@ struct explicit_range_storage_compatible
 
 template<typename StorageT, typename... Ts>
 struct explicit_range_stride_storage_compatible
-    : std::bool_constant<(
-          explicit_range_stride_arg_compatible_v<StorageT, Ts> && ...)>
+    : std::false_type
+{};
+
+template<typename StorageT, typename BeginT, typename EndT, typename StrideT>
+struct explicit_range_stride_storage_compatible<StorageT,
+                                                BeginT,
+                                                EndT,
+                                                StrideT>
+    : std::bool_constant<
+          explicit_range_stride_arg_compatible_v<StorageT, BeginT> &&
+          explicit_range_stride_arg_compatible_v<StorageT, EndT> &&
+          explicit_range_stride_arg_compatible_v<StorageT, StrideT> &&
+          is_signed_integral_index_v<StrideT>>
 {};
 
 template<typename StorageT, typename... Ts>
