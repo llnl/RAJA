@@ -80,7 +80,7 @@ data type, and can only be used with cuda execution policies. Similarly for othe
 
 Here a simple sum reduction is performed using RAJA::
 
-  RAJA::ReduceSum<reduce_policy, int> vsum(0);
+  RAJA::ReduceSum<reduce_policy, int> vsum(RAJA::policy_of<exec_policy>::value, 0);
 
   RAJA::forall<exec_policy>( RAJA::RangeSegment(0, N),
     [=](RAJA::Index_type i) {
