@@ -49,13 +49,6 @@ set(DATATYPES BitwiseReductionDataTypeList)
 # Note: FORALL_BACKENDS is defined in ../CMakeLists.txt
 #
 foreach( BACKEND ${FORALL_BACKENDS} )
-  #
-  # If building SYCL tests, remove the back-end from
-  # from the list of tests to generate here for the
-  # expt-reduce tests.
-  #if(BACKEND STREQUAL Sycl)
-  #  continue()
-  #endif()
   foreach( REDUCETYPE ${REDUCETYPES} )
     configure_file( test-forall-basic-expt-reduce.cpp.in
                     test-forall-basic-expt-${REDUCETYPE}-${BACKEND}.cpp )
@@ -76,10 +69,13 @@ function(raja_add_reduce_tests TESTTYPE)
     ##
     ## Do not create OpenMP Target tests for "traditional" RAJA reduction interface
     ##
-    #if(REDUCE_BACKEND STREQUAL OpenMPTarget)
-    #  continue()
-    #endif()
+    if(REDUCE_BACKEND STREQUAL OpenMPTarget)
+      continue()
+    endif()
     foreach(REDUCETYPE ${REDUCETYPES})
+      ##
+      ## Do not create Sycl Loc Reduction tests for "traditional" RAJA reduction interface
+      ##
       if(REDUCE_BACKEND STREQUAL Sycl AND
          (REDUCETYPE STREQUAL ReduceMinLoc OR REDUCETYPE STREQUAL ReduceMaxLoc))
         continue()
