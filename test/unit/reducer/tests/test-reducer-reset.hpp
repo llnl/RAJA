@@ -20,48 +20,6 @@
 
 #include "../test-reducer.hpp"
 
-template  < typename ReducePolicy,
-            typename NumericType,
-            typename Indexer,
-            typename Tuple,
-            typename ForOnePol
-          >
-void exec_dispatcher(  RAJA::ReduceSum<ReducePolicy, NumericType> & reduce_sum,
-                       RAJA::ReduceMin<ReducePolicy, NumericType> & reduce_min,
-                       RAJA::ReduceMax<ReducePolicy, NumericType> & reduce_max,
-                       RAJA::ReduceMinLoc<ReducePolicy, NumericType, Indexer> & reduce_minloc,
-                       RAJA::ReduceMaxLoc<ReducePolicy, NumericType, Indexer> & reduce_maxloc,
-                       RAJA::ReduceMinLoc<ReducePolicy, NumericType, Tuple> & reduce_minloctup,
-                       RAJA::ReduceMaxLoc<ReducePolicy, NumericType, Tuple> & reduce_maxloctup,
-                       NumericType initVal
-                    )
-{
-  if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
-    // Rely on the backend-specific forone implementation to synchronize.
-    forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
-      Tuple temploc(0,0);
-      reduce_sum += initVal;
-      reduce_min.min(0);
-      reduce_max.max(0);
-      reduce_minloc.minloc(0,0);
-      reduce_maxloc.maxloc(0,0);
-      reduce_minloctup.minloc(0,temploc);
-      reduce_maxloctup.maxloc(0,temploc);
-    });
-  } else {
-    forone<ForOnePol>( [=] () {
-      Tuple temploc(0,0);
-      reduce_sum += initVal;
-      reduce_min.min(0);
-      reduce_max.max(0);
-      reduce_minloc.minloc(0,0);
-      reduce_maxloc.maxloc(0,0);
-      reduce_minloctup.minloc(0,temploc);
-      reduce_maxloctup.maxloc(0,temploc);
-    });
-  }
-}
-
 template <typename T>
 class ReducerResetUnitTest : public ::testing::Test
 {
@@ -75,83 +33,94 @@ template <  typename ReducePolicy,
             typename ForOnePol  >
 void testReducerReset()
 {
-  camp::resources::Resource work_res{WORKING_RES::get_default()};
-  camp::resources::Resource host_res{camp::resources::Host::get_default()};
+  const NumericType initVal = (NumericType)5;
+  const NumericType resetVal = (NumericType)10;
+  const RAJA::Index_type initLoc = 1;
+  const RAJA::Index_type resetLoc = -1;
+  const RAJA::tuple<RAJA::Index_type, RAJA::Index_type> initLocTup(initLoc, initLoc);
+  const RAJA::tuple<RAJA::Index_type, RAJA::Index_type> resetLocTup(resetLoc, resetLoc);
 
-  NumericType * resetVal = nullptr;
-  NumericType * workVal = nullptr;
+  {
+    RAJA::ReduceSum<ReducePolicy, NumericType> reduce_sum(initVal);
+    RAJA::ReduceMin<ReducePolicy, NumericType> reduce_min(initVal);
+    RAJA::ReduceMax<ReducePolicy, NumericType> reduce_max(initVal);
 
-  NumericType initVal = (NumericType)5;
+    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
+      forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
+        reduce_sum += initVal;
+        reduce_min.min(0);
+        reduce_max.max(0);
+      });
+    } else {
+      forone<ForOnePol>( [=] () {
+        reduce_sum += initVal;
+        reduce_min.min(0);
+        reduce_max.max(0);
+      });
+    }
 
-  workVal = work_res.allocate<NumericType>(1);
-  resetVal = host_res.allocate<NumericType>(1);
+    reduce_sum.reset(resetVal);
+    reduce_min.reset(resetVal);
+    reduce_max.reset(resetVal);
 
-  work_res.memcpy( workVal, &initVal, sizeof(initVal) );
-  work_res.wait();
-  resetVal[0] = (NumericType)10;
+    ASSERT_EQ((NumericType)reduce_sum.get(), resetVal);
+    ASSERT_EQ((NumericType)reduce_min.get(), resetVal);
+    ASSERT_EQ((NumericType)reduce_max.get(), resetVal);
+  }
 
-  RAJA::ReduceSum<ReducePolicy, NumericType> reduce_sum(initVal);
-  RAJA::ReduceMin<ReducePolicy, NumericType> reduce_min(initVal);
-  RAJA::ReduceMax<ReducePolicy, NumericType> reduce_max(initVal);
-  RAJA::ReduceMinLoc<ReducePolicy, NumericType> reduce_minloc(initVal, 1);
-  RAJA::ReduceMaxLoc<ReducePolicy, NumericType> reduce_maxloc(initVal, 1);
+  if constexpr (!RAJA::policy_is<ReducePolicy, RAJA::Policy::sycl>::value) {
+    RAJA::ReduceMinLoc<ReducePolicy, NumericType> reduce_minloc(initVal, initLoc);
+    RAJA::ReduceMaxLoc<ReducePolicy, NumericType> reduce_maxloc(initVal, initLoc);
 
-  RAJA::tuple<RAJA::Index_type, RAJA::Index_type> LocTup(1, 1);
-  RAJA::ReduceMinLoc<ReducePolicy, NumericType, RAJA::tuple<RAJA::Index_type, RAJA::Index_type>> reduce_minloctup(initVal, LocTup);
-  RAJA::ReduceMaxLoc<ReducePolicy, NumericType, RAJA::tuple<RAJA::Index_type, RAJA::Index_type>> reduce_maxloctup(initVal, LocTup);
+    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
+      forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
+        reduce_minloc.minloc(0,0);
+        reduce_maxloc.maxloc(0,0);
+      });
+    } else {
+      forone<ForOnePol>( [=] () {
+        reduce_minloc.minloc(0,0);
+        reduce_maxloc.maxloc(0,0);
+      });
+    }
 
-  // initiate some device computation if using device policy
-  exec_dispatcher < ReducePolicy,
-                    NumericType,
-                    RAJA::Index_type,
-                    RAJA::tuple<RAJA::Index_type, RAJA::Index_type>,
-                    ForOnePol
-                  >
-                 (  reduce_sum,
-                    reduce_min,
-                    reduce_max,
-                    reduce_minloc,
-                    reduce_maxloc,
-                    reduce_minloctup,
-                    reduce_maxloctup,
-                    initVal
-                 );
+    reduce_minloc.reset(resetVal, resetLoc);
+    reduce_maxloc.reset(resetVal, resetLoc);
 
-  // perform real host resets
-  reduce_sum.reset(resetVal[0]);
-  reduce_min.reset(resetVal[0]);
-  reduce_max.reset(resetVal[0]);
-  reduce_minloc.reset(resetVal[0], -1);
-  reduce_maxloc.reset(resetVal[0], -1);
+    ASSERT_EQ((NumericType)reduce_minloc.get(), resetVal);
+    ASSERT_EQ((NumericType)reduce_maxloc.get(), resetVal);
+    ASSERT_EQ((RAJA::Index_type)reduce_minloc.getLoc(), resetLoc);
+    ASSERT_EQ((RAJA::Index_type)reduce_maxloc.getLoc(), resetLoc);
+  }
 
-  RAJA::tuple<RAJA::Index_type, RAJA::Index_type> resetLocTup(0, 0);
-  reduce_maxloctup.reset(resetVal[0], resetLocTup);
-  reduce_minloctup.reset(resetVal[0], resetLocTup);
+  if constexpr (!RAJA::policy_is<ReducePolicy, RAJA::Policy::sycl>::value) {
+    RAJA::ReduceMinLoc<ReducePolicy, NumericType, RAJA::tuple<RAJA::Index_type, RAJA::Index_type>> reduce_minloctup(initVal, initLocTup);
+    RAJA::ReduceMaxLoc<ReducePolicy, NumericType, RAJA::tuple<RAJA::Index_type, RAJA::Index_type>> reduce_maxloctup(initVal, initLocTup);
 
-  ASSERT_EQ((NumericType)reduce_sum.get(), (NumericType)(resetVal[0]));
-  ASSERT_EQ((NumericType)reduce_min.get(), (NumericType)(resetVal[0]));
-  ASSERT_EQ((NumericType)reduce_max.get(), (NumericType)(resetVal[0]));
+    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
+      forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
+        RAJA::tuple<RAJA::Index_type, RAJA::Index_type> temploc(0,0);
+        reduce_minloctup.minloc(0,temploc);
+        reduce_maxloctup.maxloc(0,temploc);
+      });
+    } else {
+      forone<ForOnePol>( [=] () {
+        RAJA::tuple<RAJA::Index_type, RAJA::Index_type> temploc(0,0);
+        reduce_minloctup.minloc(0,temploc);
+        reduce_maxloctup.maxloc(0,temploc);
+      });
+    }
 
-  ASSERT_EQ((NumericType)reduce_minloc.get(), (NumericType)(resetVal[0]));
-  ASSERT_EQ((NumericType)reduce_maxloc.get(), (NumericType)(resetVal[0]));
-  ASSERT_EQ((RAJA::Index_type)reduce_minloc.getLoc(), (RAJA::Index_type)(-1));
-  ASSERT_EQ((RAJA::Index_type)reduce_maxloc.getLoc(), (RAJA::Index_type)(-1));
+    reduce_maxloctup.reset(resetVal, resetLocTup);
+    reduce_minloctup.reset(resetVal, resetLocTup);
 
-  ASSERT_EQ((NumericType)reduce_minloctup.get(), (NumericType)(resetVal[0]));
-  ASSERT_EQ((NumericType)reduce_maxloctup.get(), (NumericType)(resetVal[0]));
-
-  // Reset of tuple loc defaults to 0
-  ASSERT_EQ((RAJA::Index_type)(RAJA::get<0>(reduce_minloctup.getLoc())), (RAJA::Index_type)0);
-  ASSERT_EQ((RAJA::Index_type)(RAJA::get<1>(reduce_minloctup.getLoc())), (RAJA::Index_type)0);
-  ASSERT_EQ((RAJA::Index_type)(RAJA::get<0>(reduce_maxloctup.getLoc())), (RAJA::Index_type)0);
-  ASSERT_EQ((RAJA::Index_type)(RAJA::get<1>(reduce_maxloctup.getLoc())), (RAJA::Index_type)0);
-
-  // reset locs to default of -1.
-  reduce_minloc.reset(resetVal[0], -1);
-  reduce_maxloc.reset(resetVal[0], -1);
-
-  ASSERT_EQ((RAJA::Index_type)reduce_minloc.getLoc(), (RAJA::Index_type)(-1));
-  ASSERT_EQ((RAJA::Index_type)reduce_maxloc.getLoc(), (RAJA::Index_type)(-1));
+    ASSERT_EQ((NumericType)reduce_minloctup.get(), resetVal);
+    ASSERT_EQ((NumericType)reduce_maxloctup.get(), resetVal);
+    ASSERT_EQ((RAJA::Index_type)(RAJA::get<0>(reduce_minloctup.getLoc())), resetLoc);
+    ASSERT_EQ((RAJA::Index_type)(RAJA::get<1>(reduce_minloctup.getLoc())), resetLoc);
+    ASSERT_EQ((RAJA::Index_type)(RAJA::get<0>(reduce_maxloctup.getLoc())), resetLoc);
+    ASSERT_EQ((RAJA::Index_type)(RAJA::get<1>(reduce_maxloctup.getLoc())), resetLoc);
+  }
 
   if constexpr (std::is_integral_v<NumericType>) {
     RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(initVal);
@@ -169,15 +138,12 @@ void testReducerReset()
       });
     }
 
-    reduce_bitor.reset(resetVal[0]);
-    reduce_bitand.reset(resetVal[0]);
+    reduce_bitor.reset(resetVal);
+    reduce_bitand.reset(resetVal);
 
-    ASSERT_EQ((NumericType)reduce_bitor.get(), resetVal[0]);
-    ASSERT_EQ((NumericType)reduce_bitand.get(), resetVal[0]);
+    ASSERT_EQ((NumericType)reduce_bitor.get(), resetVal);
+    ASSERT_EQ((NumericType)reduce_bitand.get(), resetVal);
   }
-
-  work_res.deallocate( workVal );
-  host_res.deallocate( resetVal );
 }
 
 template <typename ReducePolicy,
@@ -194,29 +160,36 @@ void testRuntimePolicyReducerReset()
   const RAJA::Index_type resetLoc = -1;
   const RAJA::Policy runtime_policy = RAJA::policy_of<ReducePolicy>::value;
 
-  RAJA::ReduceSum<ReducePolicy, NumericType> reduce_sum(runtime_policy, initVal);
-  RAJA::ReduceMin<ReducePolicy, NumericType> reduce_min(runtime_policy, initVal);
-  RAJA::ReduceMax<ReducePolicy, NumericType> reduce_max(runtime_policy, initVal);
-  RAJA::ReduceMinLoc<ReducePolicy, NumericType> reduce_minloc(runtime_policy,
-                                                              initVal,
-                                                              initLoc);
-  RAJA::ReduceMaxLoc<ReducePolicy, NumericType> reduce_maxloc(runtime_policy,
-                                                              initVal,
-                                                              initLoc);
+  {
+    RAJA::ReduceSum<ReducePolicy, NumericType> reduce_sum(runtime_policy, initVal);
+    RAJA::ReduceMin<ReducePolicy, NumericType> reduce_min(runtime_policy, initVal);
+    RAJA::ReduceMax<ReducePolicy, NumericType> reduce_max(runtime_policy, initVal);
 
-  reduce_sum.reset(runtime_policy, resetVal);
-  reduce_min.reset(runtime_policy, resetVal);
-  reduce_max.reset(runtime_policy, resetVal);
-  reduce_minloc.reset(runtime_policy, resetVal, resetLoc);
-  reduce_maxloc.reset(runtime_policy, resetVal, resetLoc);
+    reduce_sum.reset(runtime_policy, resetVal);
+    reduce_min.reset(runtime_policy, resetVal);
+    reduce_max.reset(runtime_policy, resetVal);
 
-  ASSERT_EQ((NumericType)reduce_sum.get(), resetVal);
-  ASSERT_EQ((NumericType)reduce_min.get(), resetVal);
-  ASSERT_EQ((NumericType)reduce_max.get(), resetVal);
-  ASSERT_EQ((NumericType)reduce_minloc.get(), resetVal);
-  ASSERT_EQ((NumericType)reduce_maxloc.get(), resetVal);
-  ASSERT_EQ((RAJA::Index_type)reduce_minloc.getLoc(), resetLoc);
-  ASSERT_EQ((RAJA::Index_type)reduce_maxloc.getLoc(), resetLoc);
+    ASSERT_EQ((NumericType)reduce_sum.get(), resetVal);
+    ASSERT_EQ((NumericType)reduce_min.get(), resetVal);
+    ASSERT_EQ((NumericType)reduce_max.get(), resetVal);
+  }
+
+  if constexpr (!RAJA::policy_is<ReducePolicy, RAJA::Policy::sycl>::value) {
+    RAJA::ReduceMinLoc<ReducePolicy, NumericType> reduce_minloc(runtime_policy,
+                                                                initVal,
+                                                                initLoc);
+    RAJA::ReduceMaxLoc<ReducePolicy, NumericType> reduce_maxloc(runtime_policy,
+                                                                initVal,
+                                                                initLoc);
+
+    reduce_minloc.reset(runtime_policy, resetVal, resetLoc);
+    reduce_maxloc.reset(runtime_policy, resetVal, resetLoc);
+
+    ASSERT_EQ((NumericType)reduce_minloc.get(), resetVal);
+    ASSERT_EQ((NumericType)reduce_maxloc.get(), resetVal);
+    ASSERT_EQ((RAJA::Index_type)reduce_minloc.getLoc(), resetLoc);
+    ASSERT_EQ((RAJA::Index_type)reduce_maxloc.getLoc(), resetLoc);
+  }
 
   if constexpr (std::is_integral_v<NumericType>) {
     RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(runtime_policy,
@@ -231,15 +204,7 @@ void testRuntimePolicyReducerReset()
     ASSERT_EQ((NumericType)reduce_bitand.get(), resetVal);
   }
 
-  const RAJA::Policy backend_policy = RAJA::policy_of<ReducePolicy>::value;
-  const bool has_backend_transition =
-      backend_policy == RAJA::Policy::openmp ||
-      backend_policy == RAJA::Policy::target_openmp ||
-      backend_policy == RAJA::Policy::cuda ||
-      backend_policy == RAJA::Policy::hip ||
-      backend_policy == RAJA::Policy::sycl;
-
-  if (has_backend_transition) {
+  {
     RAJA::ReduceSum<ReducePolicy, NumericType> transition_sum(
         RAJA::Policy::sequential,
         NumericType(5));
@@ -249,6 +214,55 @@ void testRuntimePolicyReducerReset()
     RAJA::ReduceMax<ReducePolicy, NumericType> transition_max(
         RAJA::Policy::sequential,
         NumericType(5));
+
+    forone<test_seq>( [=] () {
+      transition_sum += NumericType(4);
+      transition_min.min(NumericType(1));
+      transition_max.max(NumericType(9));
+    });
+
+    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
+    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
+    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
+
+    transition_sum.reset(runtime_policy, NumericType(5));
+    transition_min.reset(runtime_policy, NumericType(5));
+    transition_max.reset(runtime_policy, NumericType(5));
+
+    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
+      forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
+        transition_sum += NumericType(4);
+        transition_min.min(NumericType(1));
+        transition_max.max(NumericType(9));
+      });
+    } else {
+      forone<ForOnePol>( [=] () {
+        transition_sum += NumericType(4);
+        transition_min.min(NumericType(1));
+        transition_max.max(NumericType(9));
+      });
+    }
+
+    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
+    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
+    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
+
+    transition_sum.reset(RAJA::Policy::sequential, NumericType(5));
+    transition_min.reset(RAJA::Policy::sequential, NumericType(5));
+    transition_max.reset(RAJA::Policy::sequential, NumericType(5));
+
+    forone<test_seq>( [=] () {
+      transition_sum += NumericType(4);
+      transition_min.min(NumericType(1));
+      transition_max.max(NumericType(9));
+    });
+
+    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
+    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
+    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
+  }
+
+  if constexpr (!RAJA::policy_is<ReducePolicy, RAJA::Policy::sycl>::value) {
     RAJA::ReduceMinLoc<ReducePolicy, NumericType> transition_minloc(
         RAJA::Policy::sequential,
         NumericType(5),
@@ -259,56 +273,35 @@ void testRuntimePolicyReducerReset()
         RAJA::Index_type(1));
 
     forone<test_seq>( [=] () {
-      transition_sum += NumericType(4);
-      transition_min.min(NumericType(1));
-      transition_max.max(NumericType(9));
       transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
       transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
     });
 
-    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
-    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
-    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
     ASSERT_EQ((NumericType)transition_minloc.get(), NumericType(1));
     ASSERT_EQ((NumericType)transition_maxloc.get(), NumericType(9));
     ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
     ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
 
-    transition_sum.reset(backend_policy, NumericType(5));
-    transition_min.reset(backend_policy, NumericType(5));
-    transition_max.reset(backend_policy, NumericType(5));
-    transition_minloc.reset(backend_policy, NumericType(5), RAJA::Index_type(1));
-    transition_maxloc.reset(backend_policy, NumericType(5), RAJA::Index_type(1));
+    transition_minloc.reset(runtime_policy, NumericType(5), RAJA::Index_type(1));
+    transition_maxloc.reset(runtime_policy, NumericType(5), RAJA::Index_type(1));
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
       forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
-        transition_sum += NumericType(4);
-        transition_min.min(NumericType(1));
-        transition_max.max(NumericType(9));
         transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
         transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
       });
     } else {
       forone<ForOnePol>( [=] () {
-        transition_sum += NumericType(4);
-        transition_min.min(NumericType(1));
-        transition_max.max(NumericType(9));
         transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
         transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
       });
     }
 
-    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
-    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
-    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
     ASSERT_EQ((NumericType)transition_minloc.get(), NumericType(1));
     ASSERT_EQ((NumericType)transition_maxloc.get(), NumericType(9));
     ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
     ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
 
-    transition_sum.reset(RAJA::Policy::sequential, NumericType(5));
-    transition_min.reset(RAJA::Policy::sequential, NumericType(5));
-    transition_max.reset(RAJA::Policy::sequential, NumericType(5));
     transition_minloc.reset(RAJA::Policy::sequential,
                             NumericType(5),
                             RAJA::Index_type(1));
@@ -317,65 +310,59 @@ void testRuntimePolicyReducerReset()
                             RAJA::Index_type(1));
 
     forone<test_seq>( [=] () {
-      transition_sum += NumericType(4);
-      transition_min.min(NumericType(1));
-      transition_max.max(NumericType(9));
       transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
       transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
     });
 
-    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
-    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
-    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
     ASSERT_EQ((NumericType)transition_minloc.get(), NumericType(1));
     ASSERT_EQ((NumericType)transition_maxloc.get(), NumericType(9));
     ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
     ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
+  }
 
-    if constexpr (std::is_integral_v<NumericType>) {
-      RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(
-          RAJA::Policy::sequential,
-          NumericType(5));
-      RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand(
-          RAJA::Policy::sequential,
-          NumericType(5));
+  if constexpr (std::is_integral_v<NumericType>) {
+    RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(
+        RAJA::Policy::sequential,
+        NumericType(5));
+    RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand(
+        RAJA::Policy::sequential,
+        NumericType(5));
 
-      forone<test_seq>( [=] () {
+    forone<test_seq>( [=] () {
+      reduce_bitor |= NumericType(2);
+      reduce_bitand &= NumericType(3);
+    });
+
+    ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
+    ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
+
+    reduce_bitor.reset(runtime_policy, NumericType(5));
+    reduce_bitand.reset(runtime_policy, NumericType(5));
+
+    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
+      forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
         reduce_bitor |= NumericType(2);
         reduce_bitand &= NumericType(3);
       });
-
-      ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
-      ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
-
-      reduce_bitor.reset(backend_policy, NumericType(5));
-      reduce_bitand.reset(backend_policy, NumericType(5));
-
-      if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
-        forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
-          reduce_bitor |= NumericType(2);
-          reduce_bitand &= NumericType(3);
-        });
-      } else {
-        forone<ForOnePol>( [=] () {
-          reduce_bitor |= NumericType(2);
-          reduce_bitand &= NumericType(3);
-        });
-      }
-
-      ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
-      ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
-
-      reduce_bitor.reset(RAJA::Policy::sequential, NumericType(5));
-      reduce_bitand.reset(RAJA::Policy::sequential, NumericType(5));
-      forone<test_seq>( [=] () {
+    } else {
+      forone<ForOnePol>( [=] () {
         reduce_bitor |= NumericType(2);
         reduce_bitand &= NumericType(3);
       });
-
-      ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
-      ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
     }
+
+    ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
+    ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
+
+    reduce_bitor.reset(RAJA::Policy::sequential, NumericType(5));
+    reduce_bitand.reset(RAJA::Policy::sequential, NumericType(5));
+    forone<test_seq>( [=] () {
+      reduce_bitor |= NumericType(2);
+      reduce_bitand &= NumericType(3);
+    });
+
+    ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
+    ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
   }
 }
 
