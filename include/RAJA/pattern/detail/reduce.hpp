@@ -233,12 +233,12 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  BaseReduce() : BaseReduce(Policy::undefined, T(), Reduce::identity()) {}
+  BaseReduce() : BaseReduce(Policy::undefined, Reduce::identity(), Reduce::identity()) {}
 
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  explicit BaseReduce(Policy p) : BaseReduce(p, T(), Reduce::identity()) {}
+  explicit BaseReduce(Policy p) : BaseReduce(p, Reduce::identity(), Reduce::identity()) {}
 
   RAJA_SUPPRESS_HD_WARN
 
@@ -430,8 +430,6 @@ public:
   using reduce_type = typename Base::reduce_type;
   using Base::Base;
 
-  constexpr BaseReduceMinLoc() : Base(value_type(T(), IndexType())) {}
-
   constexpr BaseReduceMinLoc(
       T init_val,
       IndexType init_idx,
@@ -617,10 +615,6 @@ public:
   using value_type  = typename Base::value_type;
   using reduce_type = typename Base::reduce_type;
   using Base::Base;
-
-  constexpr BaseReduceMaxLoc()
-      : Base(Policy::undefined, value_type(T(), IndexType()))
-  {}
 
   constexpr BaseReduceMaxLoc(
       T init_val,
