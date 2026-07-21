@@ -126,7 +126,7 @@ chosen storage type, compilation fails. The explicit-type forms are::
 The return type depends on the arguments:
 
 * ``RAJA::range(end)`` and ``RAJA::range(begin, end)`` return a
-  ``RAJA::TypedRangeSegment``.
+  ``RAJA::TypedRangeSegment<IndexT>``.
 * ``RAJA::range(begin, end, stride)`` returns a
   ``RAJA::TypedRangeStrideSegment``.
 * When one of the bounds is a RAJA strong index type, such as a type created
