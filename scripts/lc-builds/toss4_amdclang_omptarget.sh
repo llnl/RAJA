@@ -77,6 +77,7 @@ cmake \
   -DENABLE_CUDA=OFF \
   -DRAJA_ENABLE_TARGET_OPENMP=ON \
   -DCAMP_ENABLE_TARGET_OPENMP=ON \
+  -DRAJA_ENABLE_DESUL_ATOMICS=ON \
   -DBLT_OPENMP_COMPILE_FLAGS="-fopenmp;-fopenmp-targets=amdgcn-amd-amdhsa;-Xopenmp-target=amdgcn-amd-amdhsa;-march=gfx942" \
   -DBLT_OPENMP_LINK_FLAGS="-fopenmp;-fopenmp-targets=amdgcn-amd-amdhsa;-Xopenmp-target=amdgcn-amd-amdhsa;-march=gfx942" \
   -DENABLE_BENCHMARKS=On \
