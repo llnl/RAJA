@@ -128,7 +128,7 @@ The return type depends on the arguments:
 * ``RAJA::range(end)`` and ``RAJA::range(begin, end)`` return a
   ``RAJA::TypedRangeSegment<IndexT>``.
 * ``RAJA::range(begin, end, stride)`` returns a
-  ``RAJA::TypedRangeStrideSegment``.
+  ``RAJA::TypedRangeStrideSegment<IndexT>``.
 * When one of the bounds is a RAJA strong index type, such as a type created
   with ``RAJA_INDEX_VALUE``, all bounds must use that same strong type. Mixed
   strong and plain integral bounds are rejected rather than narrowed. A
@@ -173,7 +173,7 @@ For example::
                                });
 
 Strided ranges follow the same half-open interval convention as
-``RAJA::TypedRangeStrideSegment``. The stride argument must have a signed
+``RAJA::TypedRangeStrideSegment<IndexT>``. The stride argument must have a signed
 integral type. Positive strides move forward, and negative strides move
 backward. For example, ``RAJA::range(N - 1, -1, -2)`` visits ``N - 1,
 N - 3, ...`` down to the last value in the sequence that is greater than ``-1``. A zero
