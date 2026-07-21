@@ -13,9 +13,11 @@
 Messages
 ===============================
 
-RAJA provides a portable interface and type-safe way to store function arguments that are
-passed to a function at a later time. For example, from a GPU, arguments can be stored
-and passed to function that prints to a file on the CPU. 
+``RAJA::messages`` provides a portable interface and type-safe way to store messages that can
+be handled at a later time. In this context, a message will store function arguments and handled
+typically means passed to a function. For example, one use case could be logging error messages
+from the GPU to file. In this case, arguments from the GPU can be stored and passed
+to function that prints to a file on the CPU.
 
 .. warning:: This capability is new. We would like users to try it out and give feedback to improve it.
 
