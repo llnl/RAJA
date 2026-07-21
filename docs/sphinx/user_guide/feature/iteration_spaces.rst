@@ -176,7 +176,7 @@ Strided ranges follow the same half-open interval convention as
 ``RAJA::TypedRangeStrideSegment``. The stride argument must have a signed
 integral type. Positive strides move forward, and negative strides move
 backward. For example, ``RAJA::range(N - 1, -1, -2)`` visits ``N - 1,
-N - 3, ...`` down to the first value that remains greater than ``-1``. A zero
+N - 3, ...`` down to the last value in the sequence that is greater than ``-1``. A zero
 stride is invalid and causes RAJA to abort or throw, depending on the build
 configuration.
 
