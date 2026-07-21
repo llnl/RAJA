@@ -657,10 +657,10 @@ struct range_stride_storage_from_strong_compatible
     : std::bool_constant<
           std::is_same_v<StrongT, no_strong_index>
               ? is_non_strong_signed_integral_index_v<StrideT>
-              : (strong_range_arg_compatible_v<StrongT, BeginT> &&
-                 strong_range_arg_compatible_v<StrongT, EndT> &&
-                 strong_range_arg_compatible_v<StrongT, StrideT> &&
-                 is_signed_integral_index_v<StrideT>)>
+              : (strong_range_arg_compatible_v<StrongT, BeginT>&&
+                     strong_range_arg_compatible_v<StrongT, EndT>&&
+                         strong_range_arg_compatible_v<StrongT, StrideT>&&
+                             is_signed_integral_index_v<StrideT>)>
 {};
 
 template<typename StrongT, typename BeginT, typename EndT, typename StrideT>
@@ -668,8 +668,8 @@ struct range_stride_storage_from_strong_compatible_for_range
     : std::bool_constant<
           std::is_same_v<StrongT, no_strong_index>
               ? is_non_strong_signed_integral_index_v<StrideT>
-              : (strong_range_arg_compatible_v<StrongT, BeginT> &&
-                 strong_range_arg_compatible_v<StrongT, EndT> &&
+              : (strong_range_arg_compatible_v<StrongT, BeginT>&&
+                     strong_range_arg_compatible_v<StrongT, EndT> &&
                  (strong_range_arg_compatible_v<StrongT, StrideT> ||
                   is_non_strong_signed_integral_index_v<StrideT>) &&
                  is_signed_integral_index_v<StrideT>)>
@@ -759,15 +759,11 @@ struct explicit_range_storage_compatible
 {};
 
 template<typename StorageT, typename... Ts>
-struct explicit_range_stride_storage_compatible
-    : std::false_type
+struct explicit_range_stride_storage_compatible : std::false_type
 {};
 
 template<typename StorageT, typename BeginT, typename EndT, typename StrideT>
-struct explicit_range_stride_storage_compatible<StorageT,
-                                                BeginT,
-                                                EndT,
-                                                StrideT>
+struct explicit_range_stride_storage_compatible<StorageT, BeginT, EndT, StrideT>
     : std::bool_constant<
           explicit_range_stride_arg_compatible_v<StorageT, BeginT> &&
           explicit_range_stride_arg_compatible_v<StorageT, EndT> &&

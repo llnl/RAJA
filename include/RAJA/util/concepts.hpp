@@ -67,10 +67,9 @@ concept RangeStrideConstructible =
     (!IndexValued<BeginT> && !IndexValued<EndT> && !IndexValued<StrideT> &&
      std::is_signed_v<strip_index_type_t<std::remove_cvref_t<StrideT>>> &&
      requires {
-       typename std::common_type_t<std::remove_cvref_t<BeginT>,
-                                   std::remove_cvref_t<EndT>,
-                                   make_signed_t<strip_index_type_t<
-                                       std::remove_cvref_t<StrideT>>>>;
+       typename std::common_type_t<
+           std::remove_cvref_t<BeginT>, std::remove_cvref_t<EndT>,
+           make_signed_t<strip_index_type_t<std::remove_cvref_t<StrideT>>>>;
      }) ||
     (IndexValued<BeginT> && StrongRangeBound<BeginT, EndT> &&
      StrongOrSignedIntegralStrideArg<BeginT, StrideT>);
