@@ -112,9 +112,16 @@ interfaces.
 The supported forms are::
 
   RAJA::range(end)                 // [0, end)
-  RAJA::range<IndexT>(end)         // [0, end) with explicit storage type
   RAJA::range(begin, end)          // [begin, end)
   RAJA::range(begin, end, stride)  // [begin, end) with stride
+
+The storage type can be explicitly specified if desired, and the arguments
+are converted to that storage type. If an argument cannot be converted to the
+chosen storage type, compilation fails. The explicit-type forms are::
+
+  RAJA::range<IndexT>(end)                 // [0, end)
+  RAJA::range<IndexT>(begin, end)          // [begin, end)
+  RAJA::range<IndexT>(begin, end, stride)  // [begin, end) with stride
 
 The return type depends on the arguments:
 

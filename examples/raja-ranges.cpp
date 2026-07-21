@@ -16,9 +16,9 @@
  *
  * Demonstrates Python-like range helpers backed by RAJA segments:
  *   1. RAJA::range(N) for [0, N)
- *   2. RAJA::range<T>(N) for a TypedRangeSegment<T> over [0, N)
- *   3. RAJA::range(begin, end) for [begin, end)
- *   4. RAJA::range(begin, end, step) for a strided half-open interval
+ *   2. RAJA::range(begin, end) for [begin, end)
+ *   3. RAJA::range(begin, end, step) for a strided half-open interval
+ *   4. Explicit storage types with RAJA::range<T>(...)
  *   5. Strong-index ranges using consistent strong types
  */
 

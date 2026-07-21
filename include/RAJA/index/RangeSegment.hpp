@@ -831,15 +831,15 @@ template<
     typename StorageT = void,
     typename EndT,
     typename Common =
-        detail::selected_range_storage_t<StorageT, detail::common_type_t<EndT>>,
-    typename StripCommon = strip_index_type_t<Common>>
+        detail::selected_range_storage_t<StorageT, detail::common_type_t<EndT>>>
   requires detail::range_storage_compatible_v<StorageT, EndT, EndT>
-RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> range(
-    EndT&& end) noexcept
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(EndT&& end) noexcept
 {
+  using StripCommon = strip_index_type_t<Common>;
   static_assert(!std::is_floating_point_v<StripCommon>,
                 "range requires a non-floating point index type.");
-  return {StripCommon {0}, static_cast<StripCommon>(stripIndexType(end))};
+  return TypedRangeSegment<Common> {
+      StripCommon {0}, static_cast<StripCommon>(stripIndexType(end))};
 }
 
 /*!
@@ -855,15 +855,15 @@ template<typename StorageT = void,
          typename EndT,
          typename Common = detail::selected_range_storage_t<
              StorageT,
-             detail::deduced_range_storage_type_t<BeginT, EndT>>,
-         typename StripCommon = strip_index_type_t<Common>>
+             detail::deduced_range_storage_type_t<BeginT, EndT>>>
   requires detail::range_storage_compatible_v<StorageT, BeginT, EndT>
-RAJA_HOST_DEVICE RAJA_INLINE constexpr TypedRangeSegment<Common> range(
-    BeginT&& begin,
-    EndT&& end) noexcept
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(BeginT&& begin,
+                                                  EndT&& end) noexcept
 {
-  return {static_cast<StripCommon>(stripIndexType(begin)),
-          static_cast<StripCommon>(stripIndexType(end))};
+  using StripCommon = strip_index_type_t<Common>;
+  return TypedRangeSegment<Common> {
+      static_cast<StripCommon>(stripIndexType(begin)),
+      static_cast<StripCommon>(stripIndexType(end))};
 }
 
 /*!
@@ -883,15 +883,14 @@ template<
     typename StrideT,
     typename Common = detail::selected_range_storage_t<
         StorageT,
-        detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>>,
-    typename DiffT = detail::deduced_range_stride_diff_type_t<Common, StrideT>>
+        detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>>>
   requires detail::
       range_stride_storage_compatible_v<StorageT, BeginT, EndT, StrideT>
-    RAJA_HOST_DEVICE RAJA_INLINE TypedRangeStrideSegment<Common, DiffT> range(
-        BeginT&& begin,
-        EndT&& end,
-        StrideT&& stride)
+    RAJA_HOST_DEVICE RAJA_INLINE auto range(BeginT&& begin,
+                                            EndT&& end,
+                                            StrideT&& stride)
 {
+  using DiffT = detail::deduced_range_stride_diff_type_t<Common, StrideT>;
   static_assert(std::is_integral_v<strip_index_type_t<StrideT>>,
                 "range requires an integral stride type.");
 
@@ -901,9 +900,10 @@ template<
     RAJA_ABORT_OR_THROW("RAJA::range requires a non-zero stride.");
   }
 
-  return {static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
-          static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
-          typed_stride};
+  return TypedRangeStrideSegment<Common, DiffT> {
+      static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
+      static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
+      typed_stride};
 }
 
 /*!
@@ -916,14 +916,14 @@ template<
  */
 template<typename BeginT,
          typename EndT,
-         typename Common = detail::deduced_range_storage_type_t<BeginT, EndT>,
-         typename StripCommon = strip_index_type_t<Common>>
+         typename Common = detail::deduced_range_storage_type_t<BeginT, EndT>>
   requires detail::deduced_range_storage_compatible_v<BeginT, EndT>
-RAJA_HOST_DEVICE TypedRangeSegment<Common> make_range(BeginT&& begin,
-                                                      EndT&& end)
+RAJA_HOST_DEVICE auto make_range(BeginT&& begin, EndT&& end)
 {
-  return {static_cast<StripCommon>(stripIndexType(begin)),
-          static_cast<StripCommon>(stripIndexType(end))};
+  using StripCommon = strip_index_type_t<Common>;
+  return TypedRangeSegment<Common> {
+      static_cast<StripCommon>(stripIndexType(begin)),
+      static_cast<StripCommon>(stripIndexType(end))};
 }
 
 /*!
@@ -935,26 +935,25 @@ RAJA_HOST_DEVICE TypedRangeSegment<Common> make_range(BeginT&& begin,
  *          @begin, @end, and @stride. If there is no common
  *          type, then a compiler error will be produced.
  */
-template<
-    typename BeginT,
-    typename EndT,
-    typename StrideT,
-    typename Common =
-        detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>,
-    typename DiffT = detail::deduced_range_stride_diff_type_t<Common, StrideT>>
+template<typename BeginT,
+         typename EndT,
+         typename StrideT,
+         typename Common =
+             detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>>
   requires detail::
       deduced_range_stride_storage_compatible_v<BeginT, EndT, StrideT>
-    RAJA_HOST_DEVICE TypedRangeStrideSegment<Common, DiffT> make_strided_range(
-        BeginT&& begin,
-        EndT&& end,
-        StrideT&& stride)
+    RAJA_HOST_DEVICE auto make_strided_range(BeginT&& begin,
+                                             EndT&& end,
+                                             StrideT&& stride)
 {
+  using DiffT = detail::deduced_range_stride_diff_type_t<Common, StrideT>;
   static_assert(std::is_integral_v<strip_index_type_t<StrideT>>,
                 "make_strided_segment : stride must be integral.");
 
-  return {static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
-          static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
-          static_cast<DiffT>(stripIndexType(stride))};
+  return TypedRangeStrideSegment<Common, DiffT> {
+      static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
+      static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
+      static_cast<DiffT>(stripIndexType(stride))};
 }
 
 namespace type_traits
