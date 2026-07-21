@@ -827,14 +827,12 @@ inline constexpr bool range_stride_storage_compatible_v =
  *          starting at zero and ending at @end. An explicit template argument
  *          may be used to select the segment storage type.
  */
-template<
-    typename StorageT = void,
-    typename EndT,
-    typename Common =
-        detail::selected_range_storage_t<StorageT, detail::common_type_t<EndT>>>
+template<typename StorageT = void, typename EndT>
   requires detail::range_storage_compatible_v<StorageT, EndT, EndT>
 RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(EndT&& end) noexcept
 {
+  using Common =
+      detail::selected_range_storage_t<StorageT, detail::common_type_t<EndT>>;
   using StripCommon = strip_index_type_t<Common>;
   static_assert(!std::is_floating_point_v<StripCommon>,
                 "range requires a non-floating point index type.");
@@ -850,16 +848,13 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(EndT&& end) noexcept
  *          @begin and @end unless an explicit template argument
  *          is provided for the segment storage type.
  */
-template<typename StorageT = void,
-         typename BeginT,
-         typename EndT,
-         typename Common = detail::selected_range_storage_t<
-             StorageT,
-             detail::deduced_range_storage_type_t<BeginT, EndT>>>
+template<typename StorageT = void, typename BeginT, typename EndT>
   requires detail::range_storage_compatible_v<StorageT, BeginT, EndT>
 RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(BeginT&& begin,
                                                   EndT&& end) noexcept
 {
+  using Common = detail::selected_range_storage_t<
+      StorageT, detail::deduced_range_storage_type_t<BeginT, EndT>>;
   using StripCommon = strip_index_type_t<Common>;
   return TypedRangeSegment<Common> {
       static_cast<StripCommon>(stripIndexType(begin)),
@@ -876,20 +871,19 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(BeginT&& begin,
  *          is provided for the segment storage type. If stride is zero,
  *          execution aborts or throws.
  */
-template<
-    typename StorageT = void,
-    typename BeginT,
-    typename EndT,
-    typename StrideT,
-    typename Common = detail::selected_range_storage_t<
-        StorageT,
-        detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>>>
+template<typename StorageT = void,
+         typename BeginT,
+         typename EndT,
+         typename StrideT>
   requires detail::
       range_stride_storage_compatible_v<StorageT, BeginT, EndT, StrideT>
     RAJA_HOST_DEVICE RAJA_INLINE auto range(BeginT&& begin,
                                             EndT&& end,
                                             StrideT&& stride)
 {
+  using Common = detail::selected_range_storage_t<
+      StorageT,
+      detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>>;
   using DiffT = detail::deduced_range_stride_diff_type_t<Common, StrideT>;
   static_assert(std::is_integral_v<strip_index_type_t<StrideT>>,
                 "range requires an integral stride type.");
@@ -914,12 +908,11 @@ template<
  *          @begin and @end. If there is no common type, then
  *          a compiler error will be produced.
  */
-template<typename BeginT,
-         typename EndT,
-         typename Common = detail::deduced_range_storage_type_t<BeginT, EndT>>
+template<typename BeginT, typename EndT>
   requires detail::deduced_range_storage_compatible_v<BeginT, EndT>
 RAJA_HOST_DEVICE auto make_range(BeginT&& begin, EndT&& end)
 {
+  using Common      = detail::deduced_range_storage_type_t<BeginT, EndT>;
   using StripCommon = strip_index_type_t<Common>;
   return TypedRangeSegment<Common> {
       static_cast<StripCommon>(stripIndexType(begin)),
@@ -935,17 +928,15 @@ RAJA_HOST_DEVICE auto make_range(BeginT&& begin, EndT&& end)
  *          @begin, @end, and @stride. If there is no common
  *          type, then a compiler error will be produced.
  */
-template<typename BeginT,
-         typename EndT,
-         typename StrideT,
-         typename Common =
-             detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>>
+template<typename BeginT, typename EndT, typename StrideT>
   requires detail::
       deduced_range_stride_storage_compatible_v<BeginT, EndT, StrideT>
     RAJA_HOST_DEVICE auto make_strided_range(BeginT&& begin,
                                              EndT&& end,
                                              StrideT&& stride)
 {
+  using Common =
+      detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>;
   using DiffT = detail::deduced_range_stride_diff_type_t<Common, StrideT>;
   static_assert(std::is_integral_v<strip_index_type_t<StrideT>>,
                 "make_strided_segment : stride must be integral.");
