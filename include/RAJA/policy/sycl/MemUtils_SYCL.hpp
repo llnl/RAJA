@@ -66,6 +66,10 @@ extern std::unordered_map<::sycl::queue, bool> g_queue_info_map;
 
 }  // namespace detail
 
+//! get queue for current launch
+RAJA_INLINE
+::sycl::queue& currentResourceQueue() { return detail::tl_status.qu; }
+
 //! Allocator for pinned memory for use in basic_mempool
 struct PinnedAllocator
 {

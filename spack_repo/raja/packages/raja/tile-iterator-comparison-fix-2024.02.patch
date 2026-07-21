@@ -1,0 +1,20 @@
+diff --git a/include/RAJA/pattern/kernel/Tile.hpp b/include/RAJA/pattern/kernel/Tile.hpp
+index 351c263..9b1d65d 100644
+--- a/include/RAJA/pattern/kernel/Tile.hpp
++++ b/include/RAJA/pattern/kernel/Tile.hpp
+@@ -169,13 +169,13 @@ struct IterableTiler {
+     }
+ 
+     RAJA_HOST_DEVICE
+-    RAJA_INLINE bool operator!=(const IterableTiler &rhs) const
++    RAJA_INLINE bool operator!=(const iterator &rhs) const
+     {
+       return block_id != rhs.block_id;
+     }
+ 
+     RAJA_HOST_DEVICE
+-    RAJA_INLINE bool operator<(const IterableTiler &rhs) const
++    RAJA_INLINE bool operator<(const iterator &rhs) const
+     {
+       return block_id < rhs.block_id;
+     }

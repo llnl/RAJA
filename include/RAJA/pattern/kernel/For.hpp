@@ -110,7 +110,7 @@ struct StatementExecutor<
     auto len    = segment_length<ArgumentId>(data);
     using len_t = decltype(len);
 
-    auto r = data.res;
+    auto&& r = data.get_resource();
 
     forall_impl(r, ExecPolicy {}, TypedRangeSegment<len_t>(0, len), for_wrapper,
                 RAJA::expt::get_empty_forall_param_pack());
