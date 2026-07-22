@@ -25,6 +25,7 @@
 #include "RAJA/util/concepts.hpp"
 
 #include <cstddef>
+#include <stdexcept>
 
 namespace RAJA
 {
@@ -64,6 +65,82 @@ constexpr const char* get_policy_name(Policy p)
     default:
       return "unknown";
   }
+}
+
+template < Policy p >
+inline constexpr bool policy_active = false;
+
+template < >
+inline constexpr bool policy_active<Policy::undefined> = false;
+
+template < >
+inline constexpr bool policy_active<Policy::sequential> = true;
+
+template < >
+inline constexpr bool policy_active<Policy::simd> = true;
+
+template < >
+inline constexpr bool policy_active<Policy::openmp> =
+#ifdef RAJA_OPENMP_ACTIVE
+    true;
+#else
+    false;
+#endif
+
+template < >
+inline constexpr bool policy_active<Policy::target_openmp> =
+#if defined(RAJA_OPENMP_ACTIVE) && defined(RAJA_ENABLE_TARGET_OPENMP)
+    true;
+#else
+    false;
+#endif
+
+template < >
+inline constexpr bool policy_active<Policy::cuda> =
+#ifdef RAJA_CUDA_ACTIVE
+    true;
+#else
+    false;
+#endif
+
+template < >
+inline constexpr bool policy_active<Policy::hip> =
+#ifdef RAJA_HIP_ACTIVE
+    true;
+#else
+    false;
+#endif
+
+template < >
+inline constexpr bool policy_active<Policy::sycl> =
+#ifdef RAJA_SYCL_ACTIVE
+    true;
+#else
+    false;
+#endif
+
+// check that policy is supported, undefined or an active policy in the list
+template < Policy... supported_policies >
+constexpr bool policy_supported(Policy p)
+{
+  return ((p == Policy::undefined) || ... ||
+      (p == supported_policies && policy_active<supported_policies>));
+}
+
+// check that policy is supported, otherwise throw an exception
+template < Policy... supported_policies >
+inline bool policy_supported_or_throw(const char* context_name,
+                                      Policy p)
+{
+  if (policy_supported<supported_policies...>(p)) {
+    return true;
+  }
+  std::string msg;
+  msg += context_name;
+  msg += ": unsupported policy ";
+  msg += get_policy_name(p);
+  throw std::runtime_error(msg);
+  return false;
 }
 
 enum class Pattern
