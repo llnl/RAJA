@@ -20,6 +20,10 @@ raja_add_executable(
   SOURCES resource-forall.cpp)
 
 raja_add_executable(
+  NAME raja-ranges
+  SOURCES raja-ranges.cpp)
+
+raja_add_executable(
   NAME messages-forall
   SOURCES messages-forall.cpp)
 
