@@ -54,7 +54,7 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
     EXEC_POL pol {};
 
     /*Get the queue from concrete resource */
-    ::sycl::queue* q = res.get<camp::resources::Sycl>().get_queue();
+    ::sycl::queue& q = res.get<camp::resources::Sycl>().get_queue();
 
     if constexpr (!is_parampack_empty)
     {
@@ -94,8 +94,8 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
     //
     if constexpr (!is_lbody_trivially_copyable)
     {
-      lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LOOP_BODY), *q);
-      q->memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
+      lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LOOP_BODY), q);
+      q.memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
     }
     // Both the parallel_for call, combinations, and resolution are all
     // unique to the parameter case, so we make a constexpr branch here
@@ -106,11 +106,11 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
         return x;
       };
 
-      ReduceParams* res = ::sycl::malloc_shared<ReduceParams>(1, *q);
+      ReduceParams* res = ::sycl::malloc_shared<ReduceParams>(1, q);
       RAJA::expt::ParamMultiplexer::parampack_init(pol, *res);
       auto reduction = ::sycl::reduction(res, launch_reducers, combiner);
 
-      q->submit([&](::sycl::handler& h) {
+      q.submit([&](::sycl::handler& h) {
          auto s_vec =
              ::sycl::local_accessor<char, 1>(launch_params.shared_mem_size, h);
 
@@ -141,13 +141,13 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
 
       RAJA::expt::ParamMultiplexer::parampack_combine(pol, launch_reducers,
                                                       *res);
-      ::sycl::free(res, *q);
-      ::sycl::free(lbody, *q);
+      ::sycl::free(res, q);
+      ::sycl::free(lbody, q);
       RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);
     }
     else
     {
-      q->submit([&](::sycl::handler& h) {
+      q.submit([&](::sycl::handler& h) {
         auto s_vec =
             ::sycl::local_accessor<char, 1>(launch_params.shared_mem_size, h);
 
@@ -173,7 +173,7 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
 
       if (!async)
       {
-        q->wait();
+        q.wait();
       }
     }
 
