@@ -28,6 +28,7 @@ jobs:
           submodules: recursive
       - uses: threeal/cmake-action@v1.3.0
         with:
+          cmake-version: '3.29.x'  # Back off version of cmake with known issue
           build-dir: build
           options:
             CMAKE_CXX_STANDARD=20
