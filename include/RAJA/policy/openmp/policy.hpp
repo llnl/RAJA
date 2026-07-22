@@ -346,7 +346,7 @@ struct omp_atomic
 
 #endif
 
-struct omp_thread
+struct omp_thread : make_policy_pattern_t<Policy::openmp, Pattern::undefined>
 {};
 
 template<RAJA::omp::multi_reduce_algorithm algorithm>
