@@ -11,17 +11,15 @@
 /// Source file containing tests for RAJA reducer reset.
 ///
 
-#include "tests/test-reducer-reset.hpp"
+#include "test-reducer-reset.hpp"
 
-#if defined(RAJA_ENABLE_SYCL)
-using SyclReducerResetTypes =
-  Test< camp::cartesian_product< SyclReducerPolicyList,
+using @BACKEND@ReducerResetTypes =
+  Test< camp::cartesian_product< @BACKEND@ReducerPolicyList,
                                  DataTypeList,
-                                 SyclResourceList,
-                                 SyclUnitTestPolicyList > >::Types;
+                                 @BACKEND@UnitTestPolicyList > >::Types;
 
 
-INSTANTIATE_TYPED_TEST_SUITE_P(SyclResetTest,
+INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@ResetTest,
                                ReducerResetUnitTest,
-                               SyclReducerResetTypes);
-#endif
+                               @BACKEND@ReducerResetTypes);
+
