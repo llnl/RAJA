@@ -233,12 +233,16 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  BaseReduce() : BaseReduce(Policy::undefined, Reduce::identity(), Reduce::identity()) {}
+  BaseReduce()
+      : BaseReduce(Policy::undefined, Reduce::identity(), Reduce::identity())
+  {}
 
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  explicit BaseReduce(Policy p) : BaseReduce(p, Reduce::identity(), Reduce::identity()) {}
+  explicit BaseReduce(Policy p)
+      : BaseReduce(p, Reduce::identity(), Reduce::identity())
+  {}
 
   RAJA_SUPPRESS_HD_WARN
 

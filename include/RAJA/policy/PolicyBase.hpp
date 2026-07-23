@@ -67,22 +67,23 @@ constexpr const char* get_policy_name(Policy p)
   }
 }
 
-template < RAJA::Policy... policies >
-using PolicyList = camp::list<camp::integral_constant<RAJA::Policy, policies>...>;
+template<RAJA::Policy... policies>
+using PolicyList =
+    camp::list<camp::integral_constant<RAJA::Policy, policies>...>;
 
-template < Policy p >
+template<Policy p>
 inline constexpr bool policy_active = false;
 
-template < >
+template<>
 inline constexpr bool policy_active<Policy::undefined> = false;
 
-template < >
+template<>
 inline constexpr bool policy_active<Policy::sequential> = true;
 
-template < >
+template<>
 inline constexpr bool policy_active<Policy::simd> = true;
 
-template < >
+template<>
 inline constexpr bool policy_active<Policy::openmp> =
 #ifdef RAJA_OPENMP_ACTIVE
     true;
@@ -90,7 +91,7 @@ inline constexpr bool policy_active<Policy::openmp> =
     false;
 #endif
 
-template < >
+template<>
 inline constexpr bool policy_active<Policy::target_openmp> =
 #if defined(RAJA_OPENMP_ACTIVE) && defined(RAJA_ENABLE_TARGET_OPENMP)
     true;
@@ -98,7 +99,7 @@ inline constexpr bool policy_active<Policy::target_openmp> =
     false;
 #endif
 
-template < >
+template<>
 inline constexpr bool policy_active<Policy::cuda> =
 #ifdef RAJA_CUDA_ACTIVE
     true;
@@ -106,7 +107,7 @@ inline constexpr bool policy_active<Policy::cuda> =
     false;
 #endif
 
-template < >
+template<>
 inline constexpr bool policy_active<Policy::hip> =
 #ifdef RAJA_HIP_ACTIVE
     true;
@@ -114,7 +115,7 @@ inline constexpr bool policy_active<Policy::hip> =
     false;
 #endif
 
-template < >
+template<>
 inline constexpr bool policy_active<Policy::sycl> =
 #ifdef RAJA_SYCL_ACTIVE
     true;
@@ -123,19 +124,19 @@ inline constexpr bool policy_active<Policy::sycl> =
 #endif
 
 // check that policy is supported, undefined or an active policy in the list
-template < Policy... supported_policies >
+template<Policy... supported_policies>
 constexpr bool policy_supported(Policy p)
 {
   return ((p == Policy::undefined) || ... ||
-      (p == supported_policies && policy_active<supported_policies>));
+          (p == supported_policies && policy_active<supported_policies>));
 }
 
 // check that policy is supported, otherwise throw an exception
-template < Policy... supported_policies >
-inline bool policy_supported_or_throw(const char* context_name,
-                                      Policy p)
+template<Policy... supported_policies>
+inline bool policy_supported_or_throw(const char* context_name, Policy p)
 {
-  if (policy_supported<supported_policies...>(p)) {
+  if (policy_supported<supported_policies...>(p))
+  {
     return true;
   }
   std::string msg;

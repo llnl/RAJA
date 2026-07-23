@@ -228,8 +228,8 @@ struct MultiReduceGridAtomicHostInit_TallyData
         m_tally_bins(get_tally_bins(m_num_bins)),
         m_tally_replication(get_tally_replication(support_gpu, support_openmp))
   {
-    m_tally_mem = create_tally(support_gpu, container, identity, m_num_bins, m_tally_bins,
-                               m_tally_replication);
+    m_tally_mem = create_tally(support_gpu, container, identity, m_num_bins,
+                               m_tally_bins, m_tally_replication);
   }
 
   MultiReduceGridAtomicHostInit_TallyData() = delete;
@@ -249,14 +249,10 @@ struct MultiReduceGridAtomicHostInit_TallyData
                        T const& identity,
                        bool old_support_gpu)
   {
-    int new_num_bins = std::ranges::size(container);
+    int new_num_bins   = std::ranges::size(container);
     int new_tally_bins = get_tally_bins(new_num_bins);
-    reset_permanent_impl(old_support_gpu,
-                         new_num_bins,
-                         new_tally_bins,
-                         m_tally_replication,
-                         container,
-                         identity,
+    reset_permanent_impl(old_support_gpu, new_num_bins, new_tally_bins,
+                         m_tally_replication, container, identity,
                          old_support_gpu);
   }
 
@@ -268,22 +264,20 @@ struct MultiReduceGridAtomicHostInit_TallyData
                        T const& identity,
                        bool old_support_gpu)
   {
-    int new_num_bins = std::ranges::size(container);
+    int new_num_bins   = std::ranges::size(container);
     int new_tally_bins = get_tally_bins(new_num_bins);
-    int new_tally_replication = get_tally_replication(new_support_gpu, new_support_openmp);
-    reset_permanent_impl(new_support_gpu,
-                         new_num_bins,
-                         new_tally_bins,
-                         new_tally_replication,
-                         container,
-                         identity,
+    int new_tally_replication =
+        get_tally_replication(new_support_gpu, new_support_openmp);
+    reset_permanent_impl(new_support_gpu, new_num_bins, new_tally_bins,
+                         new_tally_replication, container, identity,
                          old_support_gpu);
   }
 
   //! teardown permanent settings, free tally memory
   void teardown_permanent(bool support_gpu)
   {
-    destroy_tally(support_gpu, m_tally_mem, m_num_bins, m_tally_bins, m_tally_replication);
+    destroy_tally(support_gpu, m_tally_mem, m_num_bins, m_tally_bins,
+                  m_tally_replication);
   }
 
   //! get value for bin, assumes synchronization occurred elsewhere
@@ -318,7 +312,7 @@ private:
       typename tally_tuning::AtomicReplicationConcretizer;
   using HostAtomicReplicationConcretizer =
       typename GlobalAtomicReplicationConcretizer::template rebind<
-        ConstantPreferredReplicationConcretizer<1>>;
+          ConstantPreferredReplicationConcretizer<1>>;
   using GetTallyOffset_rebind_rebunch = typename tally_tuning::OffsetCalculator;
   using GetTallyOffset_rebind =
       typename GetTallyOffset_rebind_rebunch::template rebunch<
@@ -332,19 +326,21 @@ private:
 
   static int get_tally_replication(bool support_gpu, bool support_openmp)
   {
-    int min_tally_replication = support_openmp
-        ? RAJA::get_max_threads<ThreadPolicy>()
-        : 1;
+    int min_tally_replication =
+        support_openmp ? RAJA::get_max_threads<ThreadPolicy>() : 1;
 
     struct
     {
       int func_min_global_replication;
     } func_data {min_tally_replication};
 
-    if (support_gpu) {
+    if (support_gpu)
+    {
       return GlobalAtomicReplicationConcretizer {}
           .template get_global_replication<int>(func_data);
-    } else {
+    }
+    else
+    {
       return HostAtomicReplicationConcretizer {}
           .template get_global_replication<int>(func_data);
     }
@@ -364,10 +360,13 @@ private:
     }
 
     T* tally_mem = nullptr;
-    if (support_gpu) {
+    if (support_gpu)
+    {
       tally_mem = tally_mempool_type::getInstance().template malloc<T>(
           tally_replication * tally_bins, s_tally_alignment);
-    } else {
+    }
+    else
+    {
       tally_mem = RAJA::allocate_aligned_type<T>(
           s_tally_alignment, tally_replication * tally_bins * sizeof(T));
     }
@@ -376,7 +375,7 @@ private:
     {
       {
         const int tally_rep = 0;
-        auto iter = std::ranges::begin(container);
+        auto iter           = std::ranges::begin(container);
         for (int bin = 0; bin < num_bins; ++bin)
         {
           int tally_offset =
@@ -418,9 +417,12 @@ private:
         tally_mem[tally_offset].~T();
       }
     }
-    if (support_gpu) {
+    if (support_gpu)
+    {
       tally_mempool_type::getInstance().free(tally_mem);
-    } else {
+    }
+    else
+    {
       RAJA::free_aligned(tally_mem);
     }
     tally_mem = nullptr;
@@ -436,14 +438,15 @@ private:
                             T const& identity,
                             bool old_support_gpu)
   {
-    if (new_support_gpu != old_support_gpu ||
-        new_tally_bins != m_tally_bins ||
+    if (new_support_gpu != old_support_gpu || new_tally_bins != m_tally_bins ||
         new_tally_replication != m_tally_replication)
     {
       // get new storage
-      destroy_tally(old_support_gpu, m_tally_mem, m_num_bins, m_tally_bins, m_tally_replication);
-      m_tally_mem = create_tally(new_support_gpu,
-          container, identity, new_num_bins, new_tally_bins, new_tally_replication);
+      destroy_tally(old_support_gpu, m_tally_mem, m_num_bins, m_tally_bins,
+                    m_tally_replication);
+      m_tally_mem =
+          create_tally(new_support_gpu, container, identity, new_num_bins,
+                       new_tally_bins, new_tally_replication);
     }
     else
     {
@@ -451,25 +454,30 @@ private:
       const int copy_bins = std::min(m_num_bins, new_num_bins);
       {
         const int tally_rep = 0;
-        auto iter = std::ranges::begin(container);
+        auto iter           = std::ranges::begin(container);
         for (int bin = 0; bin < copy_bins; ++bin)
         {
-          int tally_offset =
-              GetTallyOffset {}(bin, m_tally_bins, tally_rep, m_tally_replication);
+          int tally_offset = GetTallyOffset {}(bin, m_tally_bins, tally_rep,
+                                               m_tally_replication);
           m_tally_mem[tally_offset] = *iter;
           ++iter;
         }
-        if (new_num_bins > m_num_bins) {
-          for (int bin = m_num_bins; bin < new_num_bins; ++bin) {
-            int tally_offset =
-                GetTallyOffset {}(bin, m_tally_bins, tally_rep, m_tally_replication);
+        if (new_num_bins > m_num_bins)
+        {
+          for (int bin = m_num_bins; bin < new_num_bins; ++bin)
+          {
+            int tally_offset = GetTallyOffset {}(bin, m_tally_bins, tally_rep,
+                                                 m_tally_replication);
             new (&m_tally_mem[tally_offset]) T(*iter);
             ++iter;
           }
-        } else if (new_num_bins < m_num_bins) {
-          for (int bin = new_num_bins; bin < m_num_bins; ++bin) {
-            int tally_offset =
-                GetTallyOffset {}(bin, m_tally_bins, tally_rep, m_tally_replication);
+        }
+        else if (new_num_bins < m_num_bins)
+        {
+          for (int bin = new_num_bins; bin < m_num_bins; ++bin)
+          {
+            int tally_offset = GetTallyOffset {}(bin, m_tally_bins, tally_rep,
+                                                 m_tally_replication);
             m_tally_mem[tally_offset].~T();
           }
         }
@@ -478,20 +486,25 @@ private:
       {
         for (int bin = 0; bin < copy_bins; ++bin)
         {
-            int tally_offset =
-                GetTallyOffset {}(bin, m_tally_bins, tally_rep, m_tally_replication);
+          int tally_offset = GetTallyOffset {}(bin, m_tally_bins, tally_rep,
+                                               m_tally_replication);
           m_tally_mem[tally_offset] = identity;
         }
-        if (new_num_bins > m_num_bins) {
-          for (int bin = m_num_bins; bin < new_num_bins; ++bin) {
-            int tally_offset =
-                GetTallyOffset {}(bin, m_tally_bins, tally_rep, m_tally_replication);
+        if (new_num_bins > m_num_bins)
+        {
+          for (int bin = m_num_bins; bin < new_num_bins; ++bin)
+          {
+            int tally_offset = GetTallyOffset {}(bin, m_tally_bins, tally_rep,
+                                                 m_tally_replication);
             new (&m_tally_mem[tally_offset]) T(identity);
           }
-        } else if (new_num_bins < m_num_bins) {
-          for (int bin = new_num_bins; bin < m_num_bins; ++bin) {
-            int tally_offset =
-                GetTallyOffset {}(bin, m_tally_bins, tally_rep, m_tally_replication);
+        }
+        else if (new_num_bins < m_num_bins)
+        {
+          for (int bin = new_num_bins; bin < m_num_bins; ++bin)
+          {
+            int tally_offset = GetTallyOffset {}(bin, m_tally_bins, tally_rep,
+                                                 m_tally_replication);
             m_tally_mem[tally_offset].~T();
           }
         }
@@ -590,7 +603,8 @@ struct MultiReduceBlockThenGridAtomicHostInit_Data
 
   //! setup permanent settings, defer to tally data
   template<typename Container>
-  MultiReduceBlockThenGridAtomicHostInit_Data(bool support_gpu, bool support_openmp,
+  MultiReduceBlockThenGridAtomicHostInit_Data(bool support_gpu,
+                                              bool support_openmp,
                                               Container const& container,
                                               T const& identity)
       : TallyData(support_gpu, support_openmp, container, identity),
@@ -810,7 +824,8 @@ public:
         m_sync_list(policy_supported<Policy::cuda>(p) ? new SyncList : nullptr),
         m_data(policy_supported<Policy::cuda>(p),
                policy_supported<Policy::openmp>(p),
-               container, identity)
+               container,
+               identity)
   {
     policy_supported_or_throw<Policy::sequential, Policy::openmp, Policy::cuda>(
         "CudaMultiReduce", p);
@@ -822,13 +837,14 @@ public:
   RAJA_HOST_DEVICE
   MultiReduceDataCuda(MultiReduceDataCuda const& other)
 #if !defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
-      : m_parent(other.m_parent)
-      , m_sync_list(other.m_parent ? other.m_sync_list : nullptr)
+      : m_parent(other.m_parent),
+        m_sync_list(other.m_parent ? other.m_sync_list : nullptr)
 #else
-      : m_parent(&other)
-      , m_sync_list(other.m_sync_list)
+      : m_parent(&other),
+        m_sync_list(other.m_sync_list)
 #endif
-      , m_data(other.m_data)
+        ,
+        m_data(other.m_data)
   {
 #if !defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
     if (m_parent)
@@ -838,7 +854,7 @@ public:
         // the copy made in make_launch_body does this setup
         add_resource_to_synchronization_list(currentResource());
         m_data.setup_launch(currentBlockSize());
-        m_parent          = nullptr;
+        m_parent = nullptr;
         // owner of launch data has a null parent and non-null sync_list
       }
     }
@@ -865,7 +881,8 @@ public:
     {
       // the original object, owns permanent storage
       const bool support_gpu = m_sync_list ? true : false;
-      if (support_gpu) {
+      if (support_gpu)
+      {
         synchronize_resources_and_clear_list();
         delete m_sync_list;
         m_sync_list = nullptr;
@@ -900,7 +917,8 @@ public:
   {
     // the original object
     const bool support_gpu = m_sync_list ? true : false;
-    if (support_gpu) {
+    if (support_gpu)
+    {
       synchronize_resources_and_clear_list();
     }
     m_data.reset_permanent(container, identity, support_gpu);
@@ -913,12 +931,13 @@ public:
     policy_supported_or_throw<Policy::sequential, Policy::openmp, Policy::cuda>(
         "CudaMultiReduce::reset", p);
     const bool support_gpu = m_sync_list ? true : false;
-    if (support_gpu) {
+    if (support_gpu)
+    {
       synchronize_resources_and_clear_list();
     }
     m_data.reset_permanent(policy_supported<Policy::cuda>(p),
-                           policy_supported<Policy::openmp>(p),
-                           container, identity, support_gpu);
+                           policy_supported<Policy::openmp>(p), container,
+                           identity, support_gpu);
   }
 
   //! apply reduction (const version) -- still combines internal values
@@ -937,7 +956,8 @@ public:
   {
     // the original object
     const bool support_gpu = m_sync_list ? true : false;
-    if (support_gpu) {
+    if (support_gpu)
+    {
       synchronize_resources_and_clear_list();
     }
     return m_data.get(bin);

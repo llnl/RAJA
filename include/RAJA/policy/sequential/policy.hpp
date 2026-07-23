@@ -126,7 +126,8 @@ struct seq_multi_reduce_policy : make_policy_pattern_launch_platform_t<
 struct seq_atomic
 {};
 
-struct seq_thread : make_policy_pattern_t<Policy::sequential, Pattern::undefined>
+struct seq_thread
+    : make_policy_pattern_t<Policy::sequential, Pattern::undefined>
 {};
 
 template<RAJA::sequential::multi_reduce_algorithm algorithm>

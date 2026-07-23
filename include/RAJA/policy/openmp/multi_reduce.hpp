@@ -100,11 +100,14 @@ struct MultiReduceDataOMP<
         m_identity(other.m_identity),
         m_create_data_on_copy(other.m_create_data_on_copy)
   {
-    if (m_create_data_on_copy) {
-      m_data =
-          create_data(RepeatView<value_type>(other.m_identity, other.m_num_bins),
-                      other.m_num_bins);
-    } else {
+    if (m_create_data_on_copy)
+    {
+      m_data = create_data(
+          RepeatView<value_type>(other.m_identity, other.m_num_bins),
+          other.m_num_bins);
+    }
+    else
+    {
       m_data = other.m_data;
     }
   }
@@ -295,7 +298,8 @@ struct MultiReduceDataOMP<
 
   void combine(size_t bin, T const& val)
   {
-    size_t thread_idx = (m_data_helper.m_max_threads > 1) ? omp_get_thread_num() : 0;
+    size_t thread_idx =
+        (m_data_helper.m_max_threads > 1) ? omp_get_thread_num() : 0;
     MultiReduceOp {}(m_data[m_data_helper.index(bin, thread_idx)], val);
   }
 
@@ -303,10 +307,10 @@ struct MultiReduceDataOMP<
   {
     ::RAJA::HighAccuracyReduce<T, typename MultiReduceOp::operator_type>
         reducer(m_identity);
-    for (size_t thread_idx = 0; thread_idx < m_data_helper.m_max_threads; ++thread_idx)
+    for (size_t thread_idx = 0; thread_idx < m_data_helper.m_max_threads;
+         ++thread_idx)
     {
-      reducer.combine(
-          m_data[m_data_helper.index(bin, thread_idx)]);
+      reducer.combine(m_data[m_data_helper.index(bin, thread_idx)]);
     }
     return reducer.get_and_reset();
   }
@@ -316,7 +320,8 @@ private:
   {
     static size_t get_max_threads(Policy p)
     {
-      if (policy_supported<Policy::openmp>(p)) {
+      if (policy_supported<Policy::openmp>(p))
+      {
         return omp_get_max_threads();
       }
       return 1;
@@ -341,15 +346,15 @@ private:
     size_t m_padded_bins;
 
     DataHelper(Policy p, size_t num_bins)
-      : m_max_threads(get_max_threads(p))
-      , m_num_bins(num_bins)
-      , m_padded_threads(pad_threads(m_max_threads))
-      , m_padded_bins(pad_bins(num_bins))
-    { }
+        : m_max_threads(get_max_threads(p)),
+          m_num_bins(num_bins),
+          m_padded_threads(pad_threads(m_max_threads)),
+          m_padded_bins(pad_bins(num_bins))
+    {}
 
     constexpr void reset(size_t num_bins)
     {
-      m_num_bins = num_bins;
+      m_num_bins    = num_bins;
       m_padded_bins = pad_bins(num_bins);
     }
 
@@ -377,7 +382,7 @@ private:
     {
       destroy_data(m_data, m_data_helper);
       m_data_helper = new_data_helper;
-      m_data = create_data(container, identity, new_data_helper);
+      m_data        = create_data(container, identity, new_data_helper);
     }
     else
     {
@@ -392,7 +397,8 @@ private:
             ++bin;
           }
         }
-        for (size_t thread_idx = 1; thread_idx < m_data_helper.m_max_threads; ++thread_idx)
+        for (size_t thread_idx = 1; thread_idx < m_data_helper.m_max_threads;
+             ++thread_idx)
         {
           for (size_t bin = 0; bin < m_data_helper.m_num_bins; ++bin)
           {
@@ -413,7 +419,8 @@ private:
       return nullptr;
     }
     auto data = RAJA::allocate_aligned_type<T>(
-        RAJA::DATA_ALIGN, data_helper.m_padded_threads * data_helper.m_padded_bins * sizeof(T));
+        RAJA::DATA_ALIGN,
+        data_helper.m_padded_threads * data_helper.m_padded_bins * sizeof(T));
     if (data_helper.m_max_threads > 0)
     {
       {
@@ -421,31 +428,30 @@ private:
         size_t bin        = 0;
         for (auto const& value : container)
         {
-          new (&data[data_helper.index(bin, thread_idx)])
-              T(value);
+          new (&data[data_helper.index(bin, thread_idx)]) T(value);
           ++bin;
         }
       }
-      for (size_t thread_idx = 1; thread_idx < data_helper.m_max_threads; ++thread_idx)
+      for (size_t thread_idx = 1; thread_idx < data_helper.m_max_threads;
+           ++thread_idx)
       {
         for (size_t bin = 0; bin < data_helper.m_num_bins; ++bin)
         {
-          new (&data[data_helper.index(bin, thread_idx)])
-              T(identity);
+          new (&data[data_helper.index(bin, thread_idx)]) T(identity);
         }
       }
     }
     return data;
   }
 
-  static void destroy_data(T*& data,
-                           DataHelper const& data_helper)
+  static void destroy_data(T*& data, DataHelper const& data_helper)
   {
     if (data_helper.m_num_bins == size_t(0))
     {
       return;
     }
-    for (size_t thread_idx = data_helper.m_max_threads; thread_idx > 0; --thread_idx)
+    for (size_t thread_idx = data_helper.m_max_threads; thread_idx > 0;
+         --thread_idx)
     {
       for (size_t bin = data_helper.m_num_bins; bin > 0; --bin)
       {

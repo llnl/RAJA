@@ -227,9 +227,9 @@ struct ThreadsPerBlockCutoffPreferredReplicationConcretizer
 template<typename GetPreferredReplication>
 struct SharedAtomicReplicationMaxPow2Concretizer
 {
-  template < typename OtherGetPreferredReplication >
-  using rebind = SharedAtomicReplicationMaxPow2Concretizer<
-      OtherGetPreferredReplication>;
+  template<typename OtherGetPreferredReplication>
+  using rebind =
+      SharedAtomicReplicationMaxPow2Concretizer<OtherGetPreferredReplication>;
 
   template<typename IdxT, typename Data>
   static IdxT get_shared_replication(Data const& data)
@@ -254,9 +254,9 @@ struct SharedAtomicReplicationMaxPow2Concretizer
 template<typename GetPreferredReplication>
 struct GlobalAtomicReplicationMinPow2Concretizer
 {
-  template < typename OtherGetPreferredReplication >
-  using rebind = GlobalAtomicReplicationMinPow2Concretizer<
-      OtherGetPreferredReplication>;
+  template<typename OtherGetPreferredReplication>
+  using rebind =
+      GlobalAtomicReplicationMinPow2Concretizer<OtherGetPreferredReplication>;
 
   template<typename IdxT, typename Data>
   static IdxT get_global_replication(Data const& data)

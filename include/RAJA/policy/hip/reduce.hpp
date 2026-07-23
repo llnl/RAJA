@@ -1033,9 +1033,13 @@ class Reduce
   };
 
 public:
-  Reduce() : Reduce(Policy::undefined, Combiner::identity(), Combiner::identity()) {}
+  Reduce()
+      : Reduce(Policy::undefined, Combiner::identity(), Combiner::identity())
+  {}
 
-  explicit Reduce(RAJA::Policy p) : Reduce(p, Combiner::identity(), Combiner::identity()) {}
+  explicit Reduce(RAJA::Policy p)
+      : Reduce(p, Combiner::identity(), Combiner::identity())
+  {}
 
   explicit Reduce(T init_val, T identity_ = Combiner::identity())
       : Reduce(Policy::undefined, init_val, identity_)
