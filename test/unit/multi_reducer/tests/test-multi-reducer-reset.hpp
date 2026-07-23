@@ -121,34 +121,6 @@ struct TestMultiReducerBasicReset
   }
 };
 
-TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerBasicReset)
-{
-  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
-  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
-  using ForOnePol = typename camp::at<TypeParam, camp::num<2>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
-
-  auto tester = [](size_t num_bins)
-  {
-    TestMultiReducerBasicReset< MultiReducePolicy, NumericType, ForOnePol > test{num_bins};
-
-    test.test_core(not_policy);
-    test.test_core(runtime_policy);
-    if constexpr (std::is_integral_v<NumericType>) {
-      test.test_bitwise(not_policy);
-      test.test_bitwise(runtime_policy);
-    }
-  };
-
-  tester(0);
-  tester(1);
-  tester(2);
-  tester(10);
-}
-
-
-
 template <  typename MultiReducePolicy,
             typename NumericType,
             typename ForOnePol  >
@@ -239,41 +211,6 @@ struct TestMultiReducerSingleResetSize
     }
   }
 };
-
-TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerSingleReset)
-{
-  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
-  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
-  using ForOnePol = typename camp::at<TypeParam, camp::num<2>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
-
-  auto tester = [](size_t num_bins, NumericType initVal)
-  {
-    auto tester = [&](size_t init_bins)
-    {
-      TestMultiReducerSingleResetSize< MultiReducePolicy, NumericType, ForOnePol > test{init_bins, num_bins, initVal};
-
-      test.test_core(not_policy);
-      test.test_core(runtime_policy);
-      if constexpr (std::is_integral_v<NumericType>) {
-        test.test_bitwise(not_policy);
-        test.test_bitwise(runtime_policy);
-      }
-    };
-
-    tester(0);
-    tester(4);
-    tester(num_bins);
-  };
-
-  tester(0, NumericType(3));
-  tester(1, NumericType(5));
-  tester(2, NumericType(0));
-  tester(10, NumericType(8));
-}
-
-
 
 template <  typename MultiReducePolicy,
             typename NumericType,
@@ -375,6 +312,66 @@ struct TestMultiReducerContainerResetSize
     }
   }
 };
+
+
+TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerBasicReset)
+{
+  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
+  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
+  using ForOnePol = typename camp::at<TypeParam, camp::num<2>>::type;
+  static constexpr RAJA::PolicyList<> not_policy{};
+  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
+
+  auto tester = [](size_t num_bins)
+  {
+    TestMultiReducerBasicReset< MultiReducePolicy, NumericType, ForOnePol > test{num_bins};
+
+    test.test_core(not_policy);
+    test.test_core(runtime_policy);
+    if constexpr (std::is_integral_v<NumericType>) {
+      test.test_bitwise(not_policy);
+      test.test_bitwise(runtime_policy);
+    }
+  };
+
+  tester(0);
+  tester(1);
+  tester(2);
+  tester(10);
+}
+
+TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerSingleReset)
+{
+  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
+  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
+  using ForOnePol = typename camp::at<TypeParam, camp::num<2>>::type;
+  static constexpr RAJA::PolicyList<> not_policy{};
+  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
+
+  auto tester = [](size_t num_bins, NumericType initVal)
+  {
+    auto tester = [&](size_t init_bins)
+    {
+      TestMultiReducerSingleResetSize< MultiReducePolicy, NumericType, ForOnePol > test{init_bins, num_bins, initVal};
+
+      test.test_core(not_policy);
+      test.test_core(runtime_policy);
+      if constexpr (std::is_integral_v<NumericType>) {
+        test.test_bitwise(not_policy);
+        test.test_bitwise(runtime_policy);
+      }
+    };
+
+    tester(0);
+    tester(4);
+    tester(num_bins);
+  };
+
+  tester(0, NumericType(3));
+  tester(1, NumericType(5));
+  tester(2, NumericType(0));
+  tester(10, NumericType(8));
+}
 
 TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerContainerReset)
 {

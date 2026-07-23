@@ -391,6 +391,7 @@ struct TestReducerResetTransition
   }
 };
 
+
 TYPED_TEST_P(ReducerResetUnitTest, ReducerBasicReset)
 {
   using ReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;

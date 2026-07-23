@@ -82,7 +82,6 @@ struct TestBasicReducerConstructor
   }
 };
 
-
 template <typename ReducePolicy,
           typename NumericType>
 struct TestInitReducerConstructor
@@ -139,6 +138,7 @@ struct TestInitReducerConstructor
     ASSERT_EQ((NumericType)reduce_bitand.get(), initVal);
   }
 };
+
 
 TYPED_TEST_P(ReducerConstructorUnitTest, BasicReducerConstructor)
 {

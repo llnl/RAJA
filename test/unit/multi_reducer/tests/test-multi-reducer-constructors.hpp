@@ -77,32 +77,6 @@ struct TestBasicMultiReducerConstructor
   }
 };
 
-TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerBasicConstructor)
-{
-  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
-  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
-
-  auto tester = [](size_t num_bins)
-  {
-    TestBasicMultiReducerConstructor< MultiReducePolicy, NumericType > test{num_bins};
-
-    test.test_core(not_policy);
-    test.test_core(runtime_policy);
-    if constexpr (std::is_integral_v<NumericType>) {
-      test.test_bitwise(not_policy);
-      test.test_bitwise(runtime_policy);
-    }
-  };
-
-  tester(0);
-  tester(1);
-  tester(2);
-  tester(10);
-}
-
-
 template <typename MultiReducePolicy,
           typename NumericType>
 struct TestMultiReducerSingleInitConstructor
@@ -150,32 +124,6 @@ struct TestMultiReducerSingleInitConstructor
     }
   }
 };
-
-TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerSingleInitConstructor)
-{
-  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
-  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
-
-  auto tester = [](size_t num_bins, NumericType initVal)
-  {
-    TestMultiReducerSingleInitConstructor< MultiReducePolicy, NumericType > test{num_bins, initVal};
-
-    test.test_core(not_policy);
-    test.test_core(runtime_policy);
-    if constexpr (std::is_integral_v<NumericType>) {
-      test.test_bitwise(not_policy);
-      test.test_bitwise(runtime_policy);
-    }
-  };
-
-  tester(0, NumericType(2));
-  tester(1, NumericType(4));
-  tester(2, NumericType(0));
-  tester(10, NumericType(9));
-}
-
 
 template <typename MultiReducePolicy,
           typename NumericType,
@@ -228,6 +176,57 @@ struct TestMultiReducerContainerInitConstructor
     }
   }
 };
+
+
+TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerBasicConstructor)
+{
+  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
+  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
+  static constexpr RAJA::PolicyList<> not_policy{};
+  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
+
+  auto tester = [](size_t num_bins)
+  {
+    TestBasicMultiReducerConstructor< MultiReducePolicy, NumericType > test{num_bins};
+
+    test.test_core(not_policy);
+    test.test_core(runtime_policy);
+    if constexpr (std::is_integral_v<NumericType>) {
+      test.test_bitwise(not_policy);
+      test.test_bitwise(runtime_policy);
+    }
+  };
+
+  tester(0);
+  tester(1);
+  tester(2);
+  tester(10);
+}
+
+TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerSingleInitConstructor)
+{
+  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
+  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
+  static constexpr RAJA::PolicyList<> not_policy{};
+  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
+
+  auto tester = [](size_t num_bins, NumericType initVal)
+  {
+    TestMultiReducerSingleInitConstructor< MultiReducePolicy, NumericType > test{num_bins, initVal};
+
+    test.test_core(not_policy);
+    test.test_core(runtime_policy);
+    if constexpr (std::is_integral_v<NumericType>) {
+      test.test_bitwise(not_policy);
+      test.test_bitwise(runtime_policy);
+    }
+  };
+
+  tester(0, NumericType(2));
+  tester(1, NumericType(4));
+  tester(2, NumericType(0));
+  tester(10, NumericType(9));
+}
 
 TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerContainerInitConstructor)
 {
