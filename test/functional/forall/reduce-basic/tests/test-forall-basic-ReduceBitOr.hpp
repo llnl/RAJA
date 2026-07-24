@@ -46,9 +46,10 @@ void ForallReduceBitOrBasicTestImpl(const SEG_TYPE& seg,
   working_res.memcpy(working_array, test_array, sizeof(DATA_TYPE) * data_len);
 
   using reducer_type = RAJA::ReduceBitOr<REDUCE_POLICY, DATA_TYPE>;
+  using API = typename API_TAG::template type<EXEC_POLICY>;
 
   reducer_type simpor =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(5);
+      API::template make<reducer_type>(5);
 
   RAJA::forall<EXEC_POLICY>(seg, [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     simpor |= working_array[idx];
@@ -75,9 +76,9 @@ void ForallReduceBitOrBasicTestImpl(const SEG_TYPE& seg,
 
 
   reducer_type redor =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(0);
+      API::template make<reducer_type>(0);
   reducer_type redor2 =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(2);
+      API::template make<reducer_type>(2);
 
   RAJA::forall<EXEC_POLICY>(seg, RAJA::Name("Reduce Bit Or"), [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     redor  |= working_array[idx];
@@ -87,7 +88,7 @@ void ForallReduceBitOrBasicTestImpl(const SEG_TYPE& seg,
   ASSERT_EQ(static_cast<DATA_TYPE>(redor.get()), ref_or);
   ASSERT_EQ(static_cast<DATA_TYPE>(redor2.get()), ref_or);
 
-  API_TAG::template reset<EXEC_POLICY>(redor, 0);
+  API::reset(redor, 0);
 
   const int nloops = 3;
   for (int j = 0; j < nloops; ++j) {

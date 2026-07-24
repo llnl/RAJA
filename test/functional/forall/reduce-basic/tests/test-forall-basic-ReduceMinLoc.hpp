@@ -62,11 +62,12 @@ void ForallReduceMinLocBasicTestImpl(const SEG_TYPE& seg,
 
 
   using reducer_type = RAJA::ReduceMinLoc<REDUCE_POLICY, DATA_TYPE, IDX_TYPE>;
+  using API = typename API_TAG::template type<EXEC_POLICY>;
 
   reducer_type mininit =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(small_min, minloc_init);
+      API::template make<reducer_type>(small_min, minloc_init);
   reducer_type min =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(min_init, minloc_init);
+      API::template make<reducer_type>(min_init, minloc_init);
 
   RAJA::forall<EXEC_POLICY>(seg, RAJA::Name("Reduce Min Loc"), [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     mininit.minloc( working_array[idx], idx );
@@ -78,7 +79,7 @@ void ForallReduceMinLocBasicTestImpl(const SEG_TYPE& seg,
   ASSERT_EQ(static_cast<DATA_TYPE>(min.get()), ref_min);
   ASSERT_EQ(static_cast<IDX_TYPE>(min.getLoc()), ref_minloc);
 
-  API_TAG::template reset<EXEC_POLICY>(min, min_init, minloc_init);
+  API::reset(min, min_init, minloc_init);
   ASSERT_EQ(static_cast<DATA_TYPE>(min.get()), min_init);
   ASSERT_EQ(static_cast<IDX_TYPE>(min.getLoc()), minloc_init);
 

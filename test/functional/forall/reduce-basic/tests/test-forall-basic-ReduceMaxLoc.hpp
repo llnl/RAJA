@@ -62,11 +62,12 @@ void ForallReduceMaxLocBasicTestImpl(const SEG_TYPE& seg,
 
 
   using reducer_type = RAJA::ReduceMaxLoc<REDUCE_POLICY, DATA_TYPE, IDX_TYPE>;
+  using API = typename API_TAG::template type<EXEC_POLICY>;
 
   reducer_type maxinit =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(big_max, maxloc_init);
+      API::template make<reducer_type>(big_max, maxloc_init);
   reducer_type max =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(max_init, maxloc_init);
+      API::template make<reducer_type>(max_init, maxloc_init);
 
   RAJA::forall<EXEC_POLICY>(seg, RAJA::Name("Reduce Max Loc"), [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     maxinit.maxloc( working_array[idx], idx );
@@ -78,7 +79,7 @@ void ForallReduceMaxLocBasicTestImpl(const SEG_TYPE& seg,
   ASSERT_EQ(static_cast<DATA_TYPE>(max.get()), ref_max);
   ASSERT_EQ(static_cast<IDX_TYPE>(max.getLoc()), ref_maxloc);
 
-  API_TAG::template reset<EXEC_POLICY>(max, max_init, maxloc_init);
+  API::reset(max, max_init, maxloc_init);
   ASSERT_EQ(static_cast<DATA_TYPE>(max.get()), max_init);
   ASSERT_EQ(static_cast<IDX_TYPE>(max.getLoc()), maxloc_init);
 

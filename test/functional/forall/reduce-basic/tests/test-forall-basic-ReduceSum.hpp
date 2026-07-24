@@ -52,9 +52,10 @@ void ForallReduceSumBasicTestImpl(const SEG_TYPE& seg,
 
 
   using reducer_type = RAJA::ReduceSum<REDUCE_POLICY, DATA_TYPE>;
+  using API = typename API_TAG::template type<EXEC_POLICY>;
 
-  reducer_type sum = API_TAG::template make<EXEC_POLICY, reducer_type>(0);
-  reducer_type sum2 = API_TAG::template make<EXEC_POLICY, reducer_type>(2);
+  reducer_type sum = API::template make<reducer_type>(0);
+  reducer_type sum2 = API::template make<reducer_type>(2);
 
   RAJA::forall<EXEC_POLICY>(seg, RAJA::Name("Reduce Sum"), [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     sum  += working_array[idx];
@@ -64,7 +65,7 @@ void ForallReduceSumBasicTestImpl(const SEG_TYPE& seg,
   ASSERT_EQ(static_cast<DATA_TYPE>(sum.get()), ref_sum);
   ASSERT_EQ(static_cast<DATA_TYPE>(sum2.get()), ref_sum + 2);
 
-  API_TAG::template reset<EXEC_POLICY>(sum, 0);
+  API::reset(sum, 0);
 
   const int nloops = 2;
 

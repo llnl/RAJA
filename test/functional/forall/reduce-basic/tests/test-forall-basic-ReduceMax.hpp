@@ -53,11 +53,12 @@ void ForallReduceMaxBasicTestImpl(const SEG_TYPE& seg,
   working_res.memcpy(working_array, test_array, sizeof(DATA_TYPE) * data_len);
 
   using reducer_type = RAJA::ReduceMax<REDUCE_POLICY, DATA_TYPE>;
+  using API = typename API_TAG::template type<EXEC_POLICY>;
 
   reducer_type maxinit =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(big_max);
+      API::template make<reducer_type>(big_max);
   reducer_type max =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(max_init);
+      API::template make<reducer_type>(max_init);
 
   RAJA::forall<EXEC_POLICY>(seg, RAJA::Name("Reduce Max"), [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     maxinit.max( working_array[idx] );
@@ -67,7 +68,7 @@ void ForallReduceMaxBasicTestImpl(const SEG_TYPE& seg,
   ASSERT_EQ(static_cast<DATA_TYPE>(maxinit.get()), big_max);
   ASSERT_EQ(static_cast<DATA_TYPE>(max.get()), ref_max);
 
-  API_TAG::template reset<EXEC_POLICY>(max, max_init);
+  API::reset(max, max_init);
   ASSERT_EQ(static_cast<DATA_TYPE>(max.get()), max_init);
 
   DATA_TYPE factor = 2;

@@ -16,36 +16,36 @@
 
 #include <utility>
 
-struct LegacyReducerApi
+template <typename PolicyList>
+struct ReducerApi;
+
+template <RAJA::Policy... Ps>
+struct ReducerApi<RAJA::PolicyList<Ps...>>
 {
-  template <typename EXEC_POLICY, typename REDUCER, typename... Args>
+  template <typename REDUCER, typename... Args>
   static REDUCER make(Args&&... args)
   {
-    return REDUCER(std::forward<Args>(args)...);
+    return REDUCER(Ps..., std::forward<Args>(args)...);
   }
 
-  template <typename EXEC_POLICY, typename REDUCER, typename... Args>
+  template <typename REDUCER, typename... Args>
   static void reset(REDUCER& reducer, Args&&... args)
   {
-    reducer.reset(std::forward<Args>(args)...);
+    reducer.reset(Ps..., std::forward<Args>(args)...);
   }
+};
+
+struct LegacyReducerApi
+{
+  template <typename EXEC_POLICY>
+  using type = ReducerApi<RAJA::PolicyList<>>;
 };
 
 struct RuntimeReducerApi
 {
-  template <typename EXEC_POLICY, typename REDUCER, typename... Args>
-  static REDUCER make(Args&&... args)
-  {
-    return REDUCER(RAJA::policy_of<EXEC_POLICY>::value,
-                   std::forward<Args>(args)...);
-  }
-
-  template <typename EXEC_POLICY, typename REDUCER, typename... Args>
-  static void reset(REDUCER& reducer, Args&&... args)
-  {
-    reducer.reset(RAJA::policy_of<EXEC_POLICY>::value,
-                  std::forward<Args>(args)...);
-  }
+  template <typename EXEC_POLICY>
+  using type =
+      ReducerApi<RAJA::PolicyList<RAJA::policy_of<EXEC_POLICY>::value>>;
 };
 
 using LegacyReducerApiList = camp::list<LegacyReducerApi>;

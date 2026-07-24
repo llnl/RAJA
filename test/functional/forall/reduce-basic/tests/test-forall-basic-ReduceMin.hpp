@@ -54,11 +54,12 @@ void ForallReduceMinBasicTestImpl(const SEG_TYPE& seg,
 
 
   using reducer_type = RAJA::ReduceMin<REDUCE_POLICY, DATA_TYPE>;
+  using API = typename API_TAG::template type<EXEC_POLICY>;
 
   reducer_type mininit =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(small_min);
+      API::template make<reducer_type>(small_min);
   reducer_type min =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(min_init);
+      API::template make<reducer_type>(min_init);
 
   RAJA::forall<EXEC_POLICY>(seg, RAJA::Name("Reduce Min"), [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     mininit.min( working_array[idx] );
@@ -68,7 +69,7 @@ void ForallReduceMinBasicTestImpl(const SEG_TYPE& seg,
   ASSERT_EQ(static_cast<DATA_TYPE>(mininit.get()), small_min);
   ASSERT_EQ(static_cast<DATA_TYPE>(min.get()), ref_min);
 
-  API_TAG::template reset<EXEC_POLICY>(min, min_init);
+  API::reset(min, min_init);
   ASSERT_EQ(static_cast<DATA_TYPE>(min.get()), min_init);
 
   DATA_TYPE factor = 3; 

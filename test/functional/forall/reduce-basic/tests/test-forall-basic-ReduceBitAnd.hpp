@@ -46,9 +46,10 @@ void ForallReduceBitAndBasicTestImpl(const SEG_TYPE& seg,
   working_res.memcpy(working_array, test_array, sizeof(DATA_TYPE) * data_len);
 
   using reducer_type = RAJA::ReduceBitAnd<REDUCE_POLICY, DATA_TYPE>;
+  using API = typename API_TAG::template type<EXEC_POLICY>;
 
   reducer_type simpand =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(21);
+      API::template make<reducer_type>(21);
 
   RAJA::forall<EXEC_POLICY>(seg, RAJA::Name("Reduce Bit And"), [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     simpand &= working_array[idx];
@@ -74,9 +75,9 @@ void ForallReduceBitAndBasicTestImpl(const SEG_TYPE& seg,
   }
 
   reducer_type redand =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(0);
+      API::template make<reducer_type>(0);
   reducer_type redand2 =
-      API_TAG::template make<EXEC_POLICY, reducer_type>(2);
+      API::template make<reducer_type>(2);
 
   RAJA::forall<EXEC_POLICY>(seg, [=] RAJA_HOST_DEVICE(IDX_TYPE idx) {
     redand  &= working_array[idx];
@@ -86,7 +87,7 @@ void ForallReduceBitAndBasicTestImpl(const SEG_TYPE& seg,
   ASSERT_EQ(static_cast<DATA_TYPE>(redand.get()), ref_and);
   ASSERT_EQ(static_cast<DATA_TYPE>(redand2.get()), ref_and);
 
-  API_TAG::template reset<EXEC_POLICY>(redand, 0);
+  API::reset(redand, 0);
 
   const int nloops = 3;
   for (int j = 0; j < nloops; ++j) {
