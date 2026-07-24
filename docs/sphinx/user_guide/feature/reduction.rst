@@ -34,9 +34,9 @@ Also
           * Each RAJA reduction type accepts an **initial reduction value or
             values** at construction (see below).
           * Each RAJA reduction type optionally accepts a **``RAJA::Policy``
-            enum value** argument at construction and reset (see below). **The
-            policy argument must match the execution policy used by the kernel
-            in which it is used.**
+            enum value** argument at construction and reset (see below). A
+            specific policy argument must match the execution-policy family
+            used by the kernel in which the reducer is used.
           * Each RAJA reduction type has a 'get' method to access reduced
             values after kernel execution completes.
 
@@ -92,6 +92,33 @@ Reduction Policies
 For more information about available RAJA reduction policies and guidance
 on which to use with RAJA execution policies, please see
 :ref:`reducepolicy-label`.
+
+------------------------
+Runtime Policy Selection
+------------------------
+
+The optional ``RAJA::Policy`` argument on a reducer constructor or ``reset``
+call selects the family of loop execution policies that the reducer object
+will support at runtime.
+
+* Constructing a reducer with no ``RAJA::Policy`` argument, or with
+  ``RAJA::Policy::undefined``, supports any loop execution policy supported
+  by the reducer's reduction policy.
+* Constructing a reducer with a specific policy, such as
+  ``RAJA::Policy::sequential``, restricts that object to that execution-policy
+  family.
+* Calling ``reset(...)`` with no policy argument preserves the object's
+  current runtime policy support.
+* Calling ``reset(RAJA::Policy::undefined, ...)`` broadens the object back to
+  any loop execution policy supported by the reduction policy.
+* Calling ``reset(specific_policy, ...)`` narrows the object to that
+  execution-policy family.
+
+Using a reducer in a loop whose execution policy does not match the most recent
+constructor or ``reset`` policy setup is undefined behavior. When the execution
+policy is known by type, ``RAJA::policy_of<exec_policy>::value`` is the
+preferred way to pass the matching ``RAJA::Policy`` value. Use an explicit
+``RAJA::Policy::*`` value when selecting the policy at runtime.
 
 -------------------
 Reduction Examples
