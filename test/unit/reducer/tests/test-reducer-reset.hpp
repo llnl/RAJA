@@ -171,26 +171,25 @@ struct TestReducerReset
 };
 
 template <typename ReducePolicy,
-          typename NumericType,
-          typename ConstructPhase>
+          typename NumericType>
 struct CoreTransitionHelper
 {
-  using ConstructApi = typename ConstructPhase::Api;
-
   RAJA::ReduceSum<ReducePolicy, NumericType> transition_sum;
   RAJA::ReduceMin<ReducePolicy, NumericType> transition_min;
   RAJA::ReduceMax<ReducePolicy, NumericType> transition_max;
 
-  CoreTransitionHelper(NumericType initVal,
+  template <typename ConstructPhase>
+  CoreTransitionHelper(ConstructPhase,
+                       NumericType initVal,
                        RAJA::Index_type RAJA_UNUSED_ARG(initLoc))
       : transition_sum(
-            ConstructApi::template make<RAJA::ReduceSum<ReducePolicy, NumericType>>(
+            ConstructPhase::Api::template make<RAJA::ReduceSum<ReducePolicy, NumericType>>(
                 initVal)),
         transition_min(
-            ConstructApi::template make<RAJA::ReduceMin<ReducePolicy, NumericType>>(
+            ConstructPhase::Api::template make<RAJA::ReduceMin<ReducePolicy, NumericType>>(
                 initVal)),
         transition_max(
-            ConstructApi::template make<RAJA::ReduceMax<ReducePolicy, NumericType>>(
+            ConstructPhase::Api::template make<RAJA::ReduceMax<ReducePolicy, NumericType>>(
                 initVal))
   {
   }
@@ -236,21 +235,19 @@ struct CoreTransitionHelper
 };
 
 template <typename ReducePolicy,
-          typename NumericType,
-          typename ConstructPhase>
+          typename NumericType>
 struct LocTransitionHelper
 {
-  using ConstructApi = typename ConstructPhase::Api;
-
   RAJA::ReduceMinLoc<ReducePolicy, NumericType> transition_minloc;
   RAJA::ReduceMaxLoc<ReducePolicy, NumericType> transition_maxloc;
 
-  LocTransitionHelper(NumericType initVal, RAJA::Index_type initLoc)
+  template <typename ConstructPhase>
+  LocTransitionHelper(ConstructPhase, NumericType initVal, RAJA::Index_type initLoc)
       : transition_minloc(
-            ConstructApi::template make<RAJA::ReduceMinLoc<ReducePolicy, NumericType>>(
+            ConstructPhase::Api::template make<RAJA::ReduceMinLoc<ReducePolicy, NumericType>>(
                 initVal, initLoc)),
         transition_maxloc(
-            ConstructApi::template make<RAJA::ReduceMaxLoc<ReducePolicy, NumericType>>(
+            ConstructPhase::Api::template make<RAJA::ReduceMaxLoc<ReducePolicy, NumericType>>(
                 initVal, initLoc))
   {
   }
@@ -292,22 +289,21 @@ struct LocTransitionHelper
 };
 
 template <typename ReducePolicy,
-          typename NumericType,
-          typename ConstructPhase>
+          typename NumericType>
 struct TupleLocTransitionHelper
 {
   using LocType = RAJA::tuple<RAJA::Index_type, RAJA::Index_type>;
-  using ConstructApi = typename ConstructPhase::Api;
 
   RAJA::ReduceMinLoc<ReducePolicy, NumericType, LocType> transition_minloctup;
   RAJA::ReduceMaxLoc<ReducePolicy, NumericType, LocType> transition_maxloctup;
 
-  TupleLocTransitionHelper(NumericType initVal, RAJA::Index_type initLoc)
+  template <typename ConstructPhase>
+  TupleLocTransitionHelper(ConstructPhase, NumericType initVal, RAJA::Index_type initLoc)
       : transition_minloctup(
-            ConstructApi::template make<RAJA::ReduceMinLoc<ReducePolicy, NumericType, LocType>>(
+            ConstructPhase::Api::template make<RAJA::ReduceMinLoc<ReducePolicy, NumericType, LocType>>(
                 initVal, LocType(initLoc, initLoc))),
         transition_maxloctup(
-            ConstructApi::template make<RAJA::ReduceMaxLoc<ReducePolicy, NumericType, LocType>>(
+            ConstructPhase::Api::template make<RAJA::ReduceMaxLoc<ReducePolicy, NumericType, LocType>>(
                 initVal, LocType(initLoc, initLoc)))
   {
   }
@@ -358,22 +354,21 @@ struct TupleLocTransitionHelper
 };
 
 template <typename ReducePolicy,
-          typename NumericType,
-          typename ConstructPhase>
+          typename NumericType>
 struct BitwiseTransitionHelper
 {
-  using ConstructApi = typename ConstructPhase::Api;
-
   RAJA::ReduceBitOr<ReducePolicy, NumericType> transition_bitor;
   RAJA::ReduceBitAnd<ReducePolicy, NumericType> transition_bitand;
 
-  BitwiseTransitionHelper(NumericType initVal,
+  template <typename ConstructPhase>
+  BitwiseTransitionHelper(ConstructPhase,
+                          NumericType initVal,
                           RAJA::Index_type RAJA_UNUSED_ARG(initLoc))
       : transition_bitor(
-            ConstructApi::template make<RAJA::ReduceBitOr<ReducePolicy, NumericType>>(
+            ConstructPhase::Api::template make<RAJA::ReduceBitOr<ReducePolicy, NumericType>>(
                 initVal)),
         transition_bitand(
-            ConstructApi::template make<RAJA::ReduceBitAnd<ReducePolicy, NumericType>>(
+            ConstructPhase::Api::template make<RAJA::ReduceBitAnd<ReducePolicy, NumericType>>(
                 initVal))
   {
   }
@@ -417,7 +412,7 @@ struct BitwiseTransitionHelper
 template <typename ReducePolicy,
           typename NumericType,
           typename ForOnePol,
-          template <typename, typename, typename> class Helper>
+          template <typename, typename> class Helper>
 void run_reducer_reset_transition_chains()
 {
   using SeqPhase =
@@ -434,28 +429,30 @@ void run_reducer_reset_transition_chains()
                       ForOnePol>;
 
   {
-    Helper<ReducePolicy, NumericType, SeqPhase> tester(
-                                       NumericType(5),  RAJA::Index_type(1));
-    tester.phase(RuntimePhase{},       NumericType(11), RAJA::Index_type(2));
-    tester.phase(SeqPhase{},           NumericType(17), RAJA::Index_type(3));
-    tester.phase(RuntimePhase{},       NumericType(23), RAJA::Index_type(4));
-    tester.phase(LegacyRuntimePhase{}, NumericType(29), RAJA::Index_type(5));
-    tester.phase(RuntimePhase{},       NumericType(37), RAJA::Index_type(6));
+    Helper<ReducePolicy, NumericType> tester(
+                 SeqPhase{},           NumericType(10), RAJA::Index_type(1));
+    tester.phase(RuntimePhase{},       NumericType(20), RAJA::Index_type(2));
+    tester.phase(SeqPhase{},           NumericType(30), RAJA::Index_type(3));
+    tester.phase(RuntimePhase{},       NumericType(40), RAJA::Index_type(4));
+    tester.phase(LegacyRuntimePhase{}, NumericType(50), RAJA::Index_type(5));
+    tester.phase(RuntimePhase{},       NumericType(60), RAJA::Index_type(6));
   }
 
   {
-    Helper<ReducePolicy, NumericType, RuntimePhase> tester(
-                                 NumericType(43), RAJA::Index_type(7));
-    tester.phase(SeqPhase{},     NumericType(47), RAJA::Index_type(8));
-    tester.phase(RuntimePhase{}, NumericType(53), RAJA::Index_type(9));
+    Helper<ReducePolicy, NumericType> tester(
+                 RuntimePhase{},       NumericType(110), RAJA::Index_type(10));
+    tester.phase(SeqPhase{},           NumericType(120), RAJA::Index_type(11));
+    tester.phase(RuntimePhase{},       NumericType(130), RAJA::Index_type(12));
+    tester.phase(LegacyRuntimePhase{}, NumericType(140), RAJA::Index_type(13));
   }
 
   {
-    Helper<ReducePolicy, NumericType, LegacyRuntimePhase> tester(
-                                   NumericType(59), RAJA::Index_type(10));
-    tester.phase(RuntimePhase{},   NumericType(67), RAJA::Index_type(11));
-    tester.phase(SeqPhase{},       NumericType(73), RAJA::Index_type(12));
-    tester.phase(LegacySeqPhase{}, NumericType(79), RAJA::Index_type(13));
+    Helper<ReducePolicy, NumericType> tester(
+                 LegacyRuntimePhase{}, NumericType(210), RAJA::Index_type(20));
+    tester.phase(LegacySeqPhase{},     NumericType(220), RAJA::Index_type(21));
+    tester.phase(LegacyRuntimePhase{}, NumericType(230), RAJA::Index_type(22));
+    tester.phase(SeqPhase{},           NumericType(240), RAJA::Index_type(23));
+    tester.phase(LegacySeqPhase{},     NumericType(250), RAJA::Index_type(24));
   }
 }
 
