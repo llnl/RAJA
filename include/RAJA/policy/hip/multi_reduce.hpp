@@ -429,6 +429,9 @@ private:
   }
 
   //! reset permanent settings, reallocate and reset tally memory
+  //  The old support flag selects the correct deallocation path for existing
+  //  storage. The new support flag selects the next allocation path and
+  //  replication strategy.
   template<typename Container>
   void reset_permanent_impl(bool new_support_gpu,
                             int new_num_bins,
@@ -782,6 +785,17 @@ private:
  * - device, setup all device threads in a kernel before any block work and
  *           teardown all device threads after all block work is finished
  *
+ * Object state is encoded by pointer values:
+ * - the original object has m_parent == this and owns permanent storage
+ * - ordinary host copies have m_parent != nullptr and own no storage
+ * - the host copy prepared for a kernel launch has m_parent == nullptr and owns
+ *   per-launch setup/teardown
+ * - the first device copy detects the launch copy through the parent chain and
+ *   performs device setup/finalization
+ *
+ * The original object must outlive all copies. Calls to get or reset must be
+ * made only when no copies are alive.
+ *
  **************************************************************************
  */
 template<typename T, typename t_MultiReduceOp, typename tuning>
@@ -989,7 +1003,9 @@ private:
   SyncList* m_sync_list;
   reduce_data_type m_data;
 
-  // initially decide support_gpu by policy, later by if m_sync_list exists
+  // m_sync_list encodes current GPU support in the original object. nullptr
+  // means host-only support; non-null means HIP-capable support and owns the
+  // resources that must be synchronized before get, reset, or destruction.
 
   // only safe to call if support_gpu
 
