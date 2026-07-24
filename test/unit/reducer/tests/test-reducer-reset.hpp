@@ -180,22 +180,18 @@ struct TestReducerResetTransition
   const NumericType initVal = (NumericType)5;
   const RAJA::Index_type initLoc = 1;
 
-  template < RAJA::Policy... policy1_or_not,
-             RAJA::Policy... policy2_or_not,
-             RAJA::Policy... policy3_or_not >
-  void test_core(RAJA::PolicyList<policy1_or_not...>,
-                 RAJA::PolicyList<policy2_or_not...>,
-                 RAJA::PolicyList<policy3_or_not...>)
+  template < typename Api1, typename Api2, typename Api3 >
+  void test_core(Api1 api1, Api2 api2, Api3 api3)
   {
-    RAJA::ReduceSum<ReducePolicy, NumericType> transition_sum(
-        policy1_or_not...,
-        initVal);
-    RAJA::ReduceMin<ReducePolicy, NumericType> transition_min(
-        policy1_or_not...,
-        initVal);
-    RAJA::ReduceMax<ReducePolicy, NumericType> transition_max(
-        policy1_or_not...,
-        initVal);
+    auto transition_sum =
+        api1.template make<RAJA::ReduceSum<ReducePolicy, NumericType>>(
+            initVal);
+    auto transition_min =
+        api1.template make<RAJA::ReduceMin<ReducePolicy, NumericType>>(
+            initVal);
+    auto transition_max =
+        api1.template make<RAJA::ReduceMax<ReducePolicy, NumericType>>(
+            initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol1>) {
       forone<ForOnePol1>( [=] RAJA_HOST_DEVICE () {
@@ -215,9 +211,9 @@ struct TestReducerResetTransition
     ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
     ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
 
-    transition_sum.reset(policy2_or_not..., initVal);
-    transition_min.reset(policy2_or_not..., initVal);
-    transition_max.reset(policy2_or_not..., initVal);
+    api2.reset(transition_sum, initVal);
+    api2.reset(transition_min, initVal);
+    api2.reset(transition_max, initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol2>) {
       forone<ForOnePol2>( [=] RAJA_HOST_DEVICE () {
@@ -237,9 +233,9 @@ struct TestReducerResetTransition
     ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
     ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
 
-    transition_sum.reset(policy3_or_not..., initVal);
-    transition_min.reset(policy3_or_not..., initVal);
-    transition_max.reset(policy3_or_not..., initVal);
+    api3.reset(transition_sum, initVal);
+    api3.reset(transition_min, initVal);
+    api3.reset(transition_max, initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol3>) {
       forone<ForOnePol3>( [=] RAJA_HOST_DEVICE () {
@@ -260,21 +256,17 @@ struct TestReducerResetTransition
     ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
   }
 
-  template < RAJA::Policy... policy1_or_not,
-             RAJA::Policy... policy2_or_not,
-             RAJA::Policy... policy3_or_not >
-  void test_loc(RAJA::PolicyList<policy1_or_not...>,
-                RAJA::PolicyList<policy2_or_not...>,
-                RAJA::PolicyList<policy3_or_not...>)
+  template < typename Api1, typename Api2, typename Api3 >
+  void test_loc(Api1 api1, Api2 api2, Api3 api3)
   {
-    RAJA::ReduceMinLoc<ReducePolicy, NumericType> transition_minloc(
-        policy1_or_not...,
-        initVal,
-        initLoc);
-    RAJA::ReduceMaxLoc<ReducePolicy, NumericType> transition_maxloc(
-        policy1_or_not...,
-        initVal,
-        initLoc);
+    auto transition_minloc =
+        api1.template make<RAJA::ReduceMinLoc<ReducePolicy, NumericType>>(
+            initVal,
+            initLoc);
+    auto transition_maxloc =
+        api1.template make<RAJA::ReduceMaxLoc<ReducePolicy, NumericType>>(
+            initVal,
+            initLoc);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol1>) {
       forone<ForOnePol1>( [=] RAJA_HOST_DEVICE () {
@@ -293,8 +285,8 @@ struct TestReducerResetTransition
     ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
     ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
 
-    transition_minloc.reset(policy2_or_not..., initVal, initLoc);
-    transition_maxloc.reset(policy2_or_not..., initVal, initLoc);
+    api2.reset(transition_minloc, initVal, initLoc);
+    api2.reset(transition_maxloc, initVal, initLoc);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol2>) {
       forone<ForOnePol2>( [=] RAJA_HOST_DEVICE () {
@@ -313,12 +305,8 @@ struct TestReducerResetTransition
     ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
     ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
 
-    transition_minloc.reset(policy3_or_not...,
-                            initVal,
-                            initLoc);
-    transition_maxloc.reset(policy3_or_not...,
-                            initVal,
-                            initLoc);
+    api3.reset(transition_minloc, initVal, initLoc);
+    api3.reset(transition_maxloc, initVal, initLoc);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol3>) {
       forone<ForOnePol3>( [=] RAJA_HOST_DEVICE () {
@@ -338,19 +326,15 @@ struct TestReducerResetTransition
     ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
   }
 
-  template < RAJA::Policy... policy1_or_not,
-             RAJA::Policy... policy2_or_not,
-             RAJA::Policy... policy3_or_not >
-  void test_bitwise(RAJA::PolicyList<policy1_or_not...>,
-                    RAJA::PolicyList<policy2_or_not...>,
-                    RAJA::PolicyList<policy3_or_not...>)
+  template < typename Api1, typename Api2, typename Api3 >
+  void test_bitwise(Api1 api1, Api2 api2, Api3 api3)
   {
-    RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(
-        policy1_or_not...,
-        initVal);
-    RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand(
-        policy1_or_not...,
-        initVal);
+    auto reduce_bitor =
+        api1.template make<RAJA::ReduceBitOr<ReducePolicy, NumericType>>(
+            initVal);
+    auto reduce_bitand =
+        api1.template make<RAJA::ReduceBitAnd<ReducePolicy, NumericType>>(
+            initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol1>) {
       forone<ForOnePol1>( [=] RAJA_HOST_DEVICE () {
@@ -367,8 +351,8 @@ struct TestReducerResetTransition
     ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
     ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
 
-    reduce_bitor.reset(policy2_or_not..., initVal);
-    reduce_bitand.reset(policy2_or_not..., initVal);
+    api2.reset(reduce_bitor, initVal);
+    api2.reset(reduce_bitand, initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol2>) {
       forone<ForOnePol2>( [=] RAJA_HOST_DEVICE () {
@@ -385,8 +369,8 @@ struct TestReducerResetTransition
     ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
     ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
 
-    reduce_bitor.reset(policy3_or_not..., initVal);
-    reduce_bitand.reset(policy3_or_not..., initVal);
+    api3.reset(reduce_bitor, initVal);
+    api3.reset(reduce_bitand, initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol3>) {
       forone<ForOnePol3>( [=] RAJA_HOST_DEVICE () {
@@ -434,22 +418,21 @@ TYPED_TEST_P(ReducerResetUnitTest, ReducerResetTransition)
   using ReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
   using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
   using ForOnePol = typename camp::at<TypeParam, camp::num<2>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::Policy::undefined> undef_policy{};
-  static constexpr RAJA::PolicyList<RAJA::Policy::sequential> seq_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<ReducePolicy>::value> runtime_policy{};
+  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::Policy::sequential>> seq_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<ReducePolicy>::value>> runtime_api{};
 
   TestReducerResetTransition< ReducePolicy, NumericType,
       test_seq, ForOnePol, test_seq > test;
-  test.test_core(not_policy, not_policy, not_policy);
-  test.test_core(seq_policy, runtime_policy, seq_policy);
+  test.test_core(legacy_api, legacy_api, legacy_api);
+  test.test_core(seq_api, runtime_api, seq_api);
   if constexpr (!RAJA::policy_is<ReducePolicy, RAJA::Policy::sycl>::value) {
-    test.test_loc(not_policy, not_policy, not_policy);
-    test.test_loc(seq_policy, runtime_policy, seq_policy);
+    test.test_loc(legacy_api, legacy_api, legacy_api);
+    test.test_loc(seq_api, runtime_api, seq_api);
   }
   if constexpr (std::is_integral_v<NumericType>) {
-    test.test_bitwise(not_policy, not_policy, not_policy);
-    test.test_bitwise(seq_policy, runtime_policy, seq_policy);
+    test.test_bitwise(legacy_api, legacy_api, legacy_api);
+    test.test_bitwise(seq_api, runtime_api, seq_api);
   }
 }
 
