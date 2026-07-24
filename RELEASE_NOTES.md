@@ -31,25 +31,27 @@ IMPORTANT: As of this release, RAJA requires C++20.
 Notable changes include:
 
   * New features / API changes:
-    * Introduced JIT compilation with Proteus. Currently, this is only supported as a compile time configuration option. Please see the RAJA User Guide for more information.
+    * Added Python-like range helpers for common loop iteration patterns. They mirror the Python "range" feature and can be used with RAJA kernel execution interfaces. Please see the RAJA User Guide for a description and examples.
     * Added support for non-arithmetic types, generic comparison operators, and non-pointer iterators in RAJA::sort and RAJA::sort_pairs for CUDA and HIP. The sorts now use the CUB and ROCprim merge sort implementations that were unavailable previously.  
-    * Added `RAJA::atomicGeneric` to enable user-defined atomic operations implemented using a compare-and-swap loop.
-    * Added RAJA::mask type for use with RAJA::launch. This is a per-team helper intended to run kernel setup workin a single thread before a team sync call.
+    * Added `RAJA::atomicGeneric` to enable user-defined atomic operations implemented using a compare-and-swap loop. The `RAJA::atomicGeneric` operation can also take a predicate that is used to determine if the CAS loop can be exited early.
+    * Added `RAJA::mask` type for use with `RAJA::launch`. This is a per-team helper intended to run kernel setup workin a single thread before a team sync call.
+    * Code cleanup and consistency improvements in Camp required some cosmetic changes to method signatures that may be visible to RAJA user code. For example, the Camp event `wait_for()` method now takes a reference instead of a pointer.
+    * Introduced JIT compilation with Proteus. Currently, this is only supported as a compile time configuration option. Please see the RAJA User Guide for more information.
 
   * Build changes/improvements:
     * C++20 is now required to build RAJA. 
-    * Updated Camp submodule to v2026.07.0 Camp release.
+    * Updated Camp submodule to v2026.07.1 Camp release.
     * Updated BLT submodule to v0.7.2 BLT release.
-    * Support for CUDA 13 was added. RAJA can be built with CUDA 12 or CUDA 13 versions. However, CUDA versions earlier than 12 are not supported due to the C++20 requirement. 
+    * Support for CUDA 13 was added. RAJA can be built with CUDA 12 or CUDA 13 versions. However, CUDA versions earlier than 12 are no longer supported due to the C++20 requirement. 
 
   * Bug fixes/improvements:
-    * Fixed an issue in RAJA::forall_Icount related to the number of template parameters that are supported.
+    * Fixed an issue in `RAJA::forall_Icount` related to the number of template parameters that are supported.
     * Fixed MSVC compatibility issues in RAJA vectorization support.
     * Fixed indexing/layout issue for column matrix subtraction in RAJA vectorization support.
     * Fixed ambiguous naming issue in RAJA sort support related to C++ standard library header inclusions.
     * Replaced std::memcpy with memcpy in RAJA internal implementation that was causing user code compilation issue.
     * Fixed potential vectorization bug caused by internal binary operator traits implementation.
-    * Fixed issues related to accumulation vairable type consistency in RAJA scan support. Prior to the fix, different back-end implementations used different variable types to accumulate intermediate values. Now everything is consistent across RAJA back-ends.
+    * Fixed issues related to accumulation variable type consistency in RAJA scan support. Prior to the fix, different back-end implementations used different variable types to accumulate intermediate values. Now everything is consistent across RAJA back-ends.
 
 
 Version 2025.12.2 -- Release date 2026-03-04
