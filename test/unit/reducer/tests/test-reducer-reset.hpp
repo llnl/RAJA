@@ -15,6 +15,7 @@
 #define __TEST_REDUCER_RESET__
 
 #include "RAJA/internal/MemUtils_CPU.hpp"
+#include "RAJA_test-reducer-api.hpp"
 
 #include <type_traits>
 
@@ -40,12 +41,15 @@ struct TestReducerReset
   const RAJA::tuple<RAJA::Index_type, RAJA::Index_type> initLocTup{1, 1};
   const RAJA::tuple<RAJA::Index_type, RAJA::Index_type> resetLocTup{-1, -1};
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_core(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_core(Api api)
   {
-    RAJA::ReduceSum<ReducePolicy, NumericType> reduce_sum(runtime_policy_or_not..., initVal);
-    RAJA::ReduceMin<ReducePolicy, NumericType> reduce_min(runtime_policy_or_not..., initVal);
-    RAJA::ReduceMax<ReducePolicy, NumericType> reduce_max(runtime_policy_or_not..., initVal);
+    auto reduce_sum =
+        api.template make<RAJA::ReduceSum<ReducePolicy, NumericType>>(initVal);
+    auto reduce_min =
+        api.template make<RAJA::ReduceMin<ReducePolicy, NumericType>>(initVal);
+    auto reduce_max =
+        api.template make<RAJA::ReduceMax<ReducePolicy, NumericType>>(initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
       forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
@@ -61,20 +65,24 @@ struct TestReducerReset
       });
     }
 
-    reduce_sum.reset(runtime_policy_or_not..., resetVal);
-    reduce_min.reset(runtime_policy_or_not..., resetVal);
-    reduce_max.reset(runtime_policy_or_not..., resetVal);
+    api.reset(reduce_sum, resetVal);
+    api.reset(reduce_min, resetVal);
+    api.reset(reduce_max, resetVal);
 
     ASSERT_EQ((NumericType)reduce_sum.get(), resetVal);
     ASSERT_EQ((NumericType)reduce_min.get(), resetVal);
     ASSERT_EQ((NumericType)reduce_max.get(), resetVal);
   }
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_loc(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_loc(Api api)
   {
-    RAJA::ReduceMinLoc<ReducePolicy, NumericType> reduce_minloc(runtime_policy_or_not..., initVal, initLoc);
-    RAJA::ReduceMaxLoc<ReducePolicy, NumericType> reduce_maxloc(runtime_policy_or_not..., initVal, initLoc);
+    auto reduce_minloc =
+        api.template make<RAJA::ReduceMinLoc<ReducePolicy, NumericType>>(
+            initVal, initLoc);
+    auto reduce_maxloc =
+        api.template make<RAJA::ReduceMaxLoc<ReducePolicy, NumericType>>(
+            initVal, initLoc);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
       forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
@@ -88,8 +96,8 @@ struct TestReducerReset
       });
     }
 
-    reduce_minloc.reset(runtime_policy_or_not..., resetVal, resetLoc);
-    reduce_maxloc.reset(runtime_policy_or_not..., resetVal, resetLoc);
+    api.reset(reduce_minloc, resetVal, resetLoc);
+    api.reset(reduce_maxloc, resetVal, resetLoc);
 
     ASSERT_EQ((NumericType)reduce_minloc.get(), resetVal);
     ASSERT_EQ((NumericType)reduce_maxloc.get(), resetVal);
@@ -97,11 +105,15 @@ struct TestReducerReset
     ASSERT_EQ((RAJA::Index_type)reduce_maxloc.getLoc(), resetLoc);
   }
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_loctup(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_loctup(Api api)
   {
-    RAJA::ReduceMinLoc<ReducePolicy, NumericType, RAJA::tuple<RAJA::Index_type, RAJA::Index_type>> reduce_minloctup(runtime_policy_or_not..., initVal, initLocTup);
-    RAJA::ReduceMaxLoc<ReducePolicy, NumericType, RAJA::tuple<RAJA::Index_type, RAJA::Index_type>> reduce_maxloctup(runtime_policy_or_not..., initVal, initLocTup);
+    auto reduce_minloctup =
+        api.template make<RAJA::ReduceMinLoc<ReducePolicy, NumericType, RAJA::tuple<RAJA::Index_type, RAJA::Index_type>>>(
+            initVal, initLocTup);
+    auto reduce_maxloctup =
+        api.template make<RAJA::ReduceMaxLoc<ReducePolicy, NumericType, RAJA::tuple<RAJA::Index_type, RAJA::Index_type>>>(
+            initVal, initLocTup);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
       forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
@@ -117,8 +129,8 @@ struct TestReducerReset
       });
     }
 
-    reduce_maxloctup.reset(runtime_policy_or_not..., resetVal, resetLocTup);
-    reduce_minloctup.reset(runtime_policy_or_not..., resetVal, resetLocTup);
+    api.reset(reduce_maxloctup, resetVal, resetLocTup);
+    api.reset(reduce_minloctup, resetVal, resetLocTup);
 
     ASSERT_EQ((NumericType)reduce_minloctup.get(), resetVal);
     ASSERT_EQ((NumericType)reduce_maxloctup.get(), resetVal);
@@ -128,11 +140,15 @@ struct TestReducerReset
     ASSERT_EQ((RAJA::Index_type)(RAJA::get<1>(reduce_maxloctup.getLoc())), resetLoc);
   }
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_bitwise(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_bitwise(Api api)
   {
-    RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(runtime_policy_or_not..., initVal);
-    RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand(runtime_policy_or_not..., initVal);
+    auto reduce_bitor =
+        api.template make<RAJA::ReduceBitOr<ReducePolicy, NumericType>>(
+            initVal);
+    auto reduce_bitand =
+        api.template make<RAJA::ReduceBitAnd<ReducePolicy, NumericType>>(
+            initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
       forone<ForOnePol>( [=] RAJA_HOST_DEVICE () {
@@ -146,8 +162,8 @@ struct TestReducerReset
       });
     }
 
-    reduce_bitor.reset(runtime_policy_or_not..., resetVal);
-    reduce_bitand.reset(runtime_policy_or_not..., resetVal);
+    api.reset(reduce_bitor, resetVal);
+    api.reset(reduce_bitand, resetVal);
 
     ASSERT_EQ((NumericType)reduce_bitor.get(), resetVal);
     ASSERT_EQ((NumericType)reduce_bitand.get(), resetVal);
@@ -395,21 +411,21 @@ TYPED_TEST_P(ReducerResetUnitTest, ReducerBasicReset)
   using ReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
   using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
   using ForOnePol = typename camp::at<TypeParam, camp::num<2>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<ReducePolicy>::value> runtime_policy{};
+  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<ReducePolicy>::value>> runtime_api{};
 
   TestReducerReset< ReducePolicy, NumericType, ForOnePol > test;
-  test.test_core(not_policy);
-  test.test_core(runtime_policy);
+  test.test_core(legacy_api);
+  test.test_core(runtime_api);
   if constexpr (!RAJA::policy_is<ReducePolicy, RAJA::Policy::sycl>::value) {
-    test.test_loc(not_policy);
-    test.test_loc(runtime_policy);
-    test.test_loctup(not_policy);
-    test.test_loctup(runtime_policy);
+    test.test_loc(legacy_api);
+    test.test_loc(runtime_api);
+    test.test_loctup(legacy_api);
+    test.test_loctup(runtime_api);
   }
   if constexpr (std::is_integral_v<NumericType>) {
-    test.test_bitwise(not_policy);
-    test.test_bitwise(runtime_policy);
+    test.test_bitwise(legacy_api);
+    test.test_bitwise(runtime_api);
   }
 }
 

@@ -15,6 +15,7 @@
 #define __TEST_MULTI_REDUCER_RESET__
 
 #include "RAJA/internal/MemUtils_CPU.hpp"
+#include "RAJA_test-reducer-api.hpp"
 
 #include "../test-multi-reducer.hpp"
 
@@ -39,12 +40,18 @@ struct TestMultiReducerBasicReset
   const size_t num_bins;
   const NumericType initVal = NumericType(5);
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_core(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_core(Api api)
   {
-    RAJA::MultiReduceSum<MultiReducePolicy, NumericType> multi_reduce_sum(runtime_policy_or_not..., num_bins, initVal);
-    RAJA::MultiReduceMin<MultiReducePolicy, NumericType> multi_reduce_min(runtime_policy_or_not..., num_bins, initVal);
-    RAJA::MultiReduceMax<MultiReducePolicy, NumericType> multi_reduce_max(runtime_policy_or_not..., num_bins, initVal);
+    auto multi_reduce_sum =
+        api.template make<RAJA::MultiReduceSum<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
+    auto multi_reduce_min =
+        api.template make<RAJA::MultiReduceMin<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
+    auto multi_reduce_max =
+        api.template make<RAJA::MultiReduceMax<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
       forone<ForOnePol>( [=, *this] RAJA_HOST_DEVICE() {
@@ -64,9 +71,9 @@ struct TestMultiReducerBasicReset
       });
     }
 
-    multi_reduce_sum.reset(runtime_policy_or_not...);
-    multi_reduce_min.reset(runtime_policy_or_not...);
-    multi_reduce_max.reset(runtime_policy_or_not...);
+    api.reset(multi_reduce_sum);
+    api.reset(multi_reduce_min);
+    api.reset(multi_reduce_max);
 
     ASSERT_EQ(multi_reduce_sum.size(), num_bins);
     ASSERT_EQ(multi_reduce_min.size(), num_bins);
@@ -83,11 +90,15 @@ struct TestMultiReducerBasicReset
     }
   }
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_bitwise(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_bitwise(Api api)
   {
-    RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType> multi_reduce_and(runtime_policy_or_not..., num_bins, initVal);
-    RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType> multi_reduce_or(runtime_policy_or_not..., num_bins, initVal);
+    auto multi_reduce_and =
+        api.template make<RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
+    auto multi_reduce_or =
+        api.template make<RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
       forone<ForOnePol>( [=, *this] RAJA_HOST_DEVICE() {
@@ -105,8 +116,8 @@ struct TestMultiReducerBasicReset
       });
     }
 
-    multi_reduce_and.reset(runtime_policy_or_not...);
-    multi_reduce_or.reset(runtime_policy_or_not...);
+    api.reset(multi_reduce_and);
+    api.reset(multi_reduce_or);
 
     ASSERT_EQ(multi_reduce_and.size(), num_bins);
     ASSERT_EQ(multi_reduce_or.size(), num_bins);
@@ -130,12 +141,18 @@ struct TestMultiReducerSingleResetSize
   const size_t num_bins;
   const NumericType initVal;
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_core(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_core(Api api)
   {
-    RAJA::MultiReduceSum<MultiReducePolicy, NumericType> multi_reduce_sum(runtime_policy_or_not..., init_bins, initVal);
-    RAJA::MultiReduceMin<MultiReducePolicy, NumericType> multi_reduce_min(runtime_policy_or_not..., init_bins, initVal);
-    RAJA::MultiReduceMax<MultiReducePolicy, NumericType> multi_reduce_max(runtime_policy_or_not..., init_bins, initVal);
+    auto multi_reduce_sum =
+        api.template make<RAJA::MultiReduceSum<MultiReducePolicy, NumericType>>(
+            init_bins, initVal);
+    auto multi_reduce_min =
+        api.template make<RAJA::MultiReduceMin<MultiReducePolicy, NumericType>>(
+            init_bins, initVal);
+    auto multi_reduce_max =
+        api.template make<RAJA::MultiReduceMax<MultiReducePolicy, NumericType>>(
+            init_bins, initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
       forone<ForOnePol>( [=, *this] RAJA_HOST_DEVICE() {
@@ -155,9 +172,9 @@ struct TestMultiReducerSingleResetSize
       });
     }
 
-    multi_reduce_sum.reset(runtime_policy_or_not..., num_bins, initVal);
-    multi_reduce_min.reset(runtime_policy_or_not..., num_bins, initVal);
-    multi_reduce_max.reset(runtime_policy_or_not..., num_bins, initVal);
+    api.reset(multi_reduce_sum, num_bins, initVal);
+    api.reset(multi_reduce_min, num_bins, initVal);
+    api.reset(multi_reduce_max, num_bins, initVal);
 
     ASSERT_EQ(multi_reduce_sum.size(), num_bins);
     ASSERT_EQ(multi_reduce_min.size(), num_bins);
@@ -174,11 +191,15 @@ struct TestMultiReducerSingleResetSize
     }
   }
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_bitwise(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_bitwise(Api api)
   {
-    RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType> multi_reduce_and(runtime_policy_or_not..., init_bins, initVal);
-    RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType> multi_reduce_or(runtime_policy_or_not..., init_bins, initVal);
+    auto multi_reduce_and =
+        api.template make<RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType>>(
+            init_bins, initVal);
+    auto multi_reduce_or =
+        api.template make<RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType>>(
+            init_bins, initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
       forone<ForOnePol>( [=, *this] RAJA_HOST_DEVICE() {
@@ -196,8 +217,8 @@ struct TestMultiReducerSingleResetSize
       });
     }
 
-    multi_reduce_and.reset(runtime_policy_or_not..., num_bins, initVal);
-    multi_reduce_or.reset(runtime_policy_or_not..., num_bins, initVal);
+    api.reset(multi_reduce_and, num_bins, initVal);
+    api.reset(multi_reduce_or, num_bins, initVal);
 
     ASSERT_EQ(multi_reduce_and.size(), num_bins);
     ASSERT_EQ(multi_reduce_or.size(), num_bins);
@@ -221,15 +242,21 @@ struct TestMultiReducerContainerResetSize
   const size_t init_bins;
   Container const& container;
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_core(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_core(Api api)
   {
     const size_t num_bins = container.size();
     NumericType initVal = NumericType(5);
 
-    RAJA::MultiReduceSum<MultiReducePolicy, NumericType> multi_reduce_sum(runtime_policy_or_not..., init_bins, initVal);
-    RAJA::MultiReduceMin<MultiReducePolicy, NumericType> multi_reduce_min(runtime_policy_or_not..., init_bins, initVal);
-    RAJA::MultiReduceMax<MultiReducePolicy, NumericType> multi_reduce_max(runtime_policy_or_not..., init_bins, initVal);
+    auto multi_reduce_sum =
+        api.template make<RAJA::MultiReduceSum<MultiReducePolicy, NumericType>>(
+            init_bins, initVal);
+    auto multi_reduce_min =
+        api.template make<RAJA::MultiReduceMin<MultiReducePolicy, NumericType>>(
+            init_bins, initVal);
+    auto multi_reduce_max =
+        api.template make<RAJA::MultiReduceMax<MultiReducePolicy, NumericType>>(
+            init_bins, initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
       forone<ForOnePol>( [=, *this] RAJA_HOST_DEVICE() {
@@ -249,9 +276,9 @@ struct TestMultiReducerContainerResetSize
       });
     }
 
-    multi_reduce_sum.reset(runtime_policy_or_not..., container);
-    multi_reduce_min.reset(runtime_policy_or_not..., container);
-    multi_reduce_max.reset(runtime_policy_or_not..., container);
+    api.reset(multi_reduce_sum, container);
+    api.reset(multi_reduce_min, container);
+    api.reset(multi_reduce_max, container);
 
     ASSERT_EQ(multi_reduce_sum.size(), num_bins);
     ASSERT_EQ(multi_reduce_min.size(), num_bins);
@@ -270,14 +297,18 @@ struct TestMultiReducerContainerResetSize
     }
   }
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_bitwise(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_bitwise(Api api)
   {
     const size_t num_bins = container.size();
     NumericType initVal = NumericType(5);
 
-    RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType> multi_reduce_and(init_bins, initVal);
-    RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType> multi_reduce_or(init_bins, initVal);
+    auto multi_reduce_and =
+        api.template make<RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType>>(
+            init_bins, initVal);
+    auto multi_reduce_or =
+        api.template make<RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType>>(
+            init_bins, initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol>) {
       forone<ForOnePol>( [=, *this] RAJA_HOST_DEVICE() {
@@ -295,8 +326,8 @@ struct TestMultiReducerContainerResetSize
       });
     }
 
-    multi_reduce_and.reset(container);
-    multi_reduce_or.reset(container);
+    api.reset(multi_reduce_and, container);
+    api.reset(multi_reduce_or, container);
 
     ASSERT_EQ(multi_reduce_and.size(), num_bins);
     ASSERT_EQ(multi_reduce_or.size(), num_bins);
@@ -319,18 +350,18 @@ TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerBasicReset)
   using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
   using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
   using ForOnePol = typename camp::at<TypeParam, camp::num<2>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
+  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value>> runtime_api{};
 
   auto tester = [](size_t num_bins)
   {
     TestMultiReducerBasicReset< MultiReducePolicy, NumericType, ForOnePol > test{num_bins};
 
-    test.test_core(not_policy);
-    test.test_core(runtime_policy);
+    test.test_core(legacy_api);
+    test.test_core(runtime_api);
     if constexpr (std::is_integral_v<NumericType>) {
-      test.test_bitwise(not_policy);
-      test.test_bitwise(runtime_policy);
+      test.test_bitwise(legacy_api);
+      test.test_bitwise(runtime_api);
     }
   };
 
@@ -345,8 +376,8 @@ TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerSingleReset)
   using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
   using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
   using ForOnePol = typename camp::at<TypeParam, camp::num<2>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
+  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value>> runtime_api{};
 
   auto tester = [](size_t num_bins, NumericType initVal)
   {
@@ -354,11 +385,11 @@ TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerSingleReset)
     {
       TestMultiReducerSingleResetSize< MultiReducePolicy, NumericType, ForOnePol > test{init_bins, num_bins, initVal};
 
-      test.test_core(not_policy);
-      test.test_core(runtime_policy);
+      test.test_core(legacy_api);
+      test.test_core(runtime_api);
       if constexpr (std::is_integral_v<NumericType>) {
-        test.test_bitwise(not_policy);
-        test.test_bitwise(runtime_policy);
+        test.test_bitwise(legacy_api);
+        test.test_bitwise(runtime_api);
       }
     };
 
@@ -378,8 +409,8 @@ TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerContainerReset)
   using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
   using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
   using ForOnePol = typename camp::at<TypeParam, camp::num<2>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
+  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value>> runtime_api{};
 
   std::vector<NumericType> c0(0);
   std::vector<NumericType> c1(1, 3);
@@ -397,11 +428,11 @@ TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerContainerReset)
     {
       TestMultiReducerContainerResetSize< MultiReducePolicy, NumericType, ForOnePol, std::decay_t<decltype(c)> > test{init_bins, c};
 
-      test.test_core(not_policy);
-      test.test_core(runtime_policy);
+      test.test_core(legacy_api);
+      test.test_core(runtime_api);
       if constexpr (std::is_integral_v<NumericType>) {
-        test.test_bitwise(not_policy);
-        test.test_bitwise(runtime_policy);
+        test.test_bitwise(legacy_api);
+        test.test_bitwise(runtime_api);
       }
     };
 

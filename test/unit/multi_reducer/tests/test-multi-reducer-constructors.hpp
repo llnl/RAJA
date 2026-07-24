@@ -15,6 +15,7 @@
 #define __TEST_MULTI_REDUCER_CONSTRUCTOR__
 
 #include "RAJA/internal/MemUtils_CPU.hpp"
+#include "RAJA_test-reducer-api.hpp"
 
 #include "../test-multi-reducer.hpp"
 
@@ -36,12 +37,18 @@ struct TestBasicMultiReducerConstructor
 {
   const size_t num_bins;
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_core(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_core(Api api)
   {
-    RAJA::MultiReduceSum<MultiReducePolicy, NumericType> multi_reduce_sum(runtime_policy_or_not..., num_bins);
-    RAJA::MultiReduceMin<MultiReducePolicy, NumericType> multi_reduce_min(runtime_policy_or_not..., num_bins);
-    RAJA::MultiReduceMax<MultiReducePolicy, NumericType> multi_reduce_max(runtime_policy_or_not..., num_bins);
+    auto multi_reduce_sum =
+        api.template make<RAJA::MultiReduceSum<MultiReducePolicy, NumericType>>(
+            num_bins);
+    auto multi_reduce_min =
+        api.template make<RAJA::MultiReduceMin<MultiReducePolicy, NumericType>>(
+            num_bins);
+    auto multi_reduce_max =
+        api.template make<RAJA::MultiReduceMax<MultiReducePolicy, NumericType>>(
+            num_bins);
 
     ASSERT_EQ(multi_reduce_sum.size(), num_bins);
     ASSERT_EQ(multi_reduce_min.size(), num_bins);
@@ -58,11 +65,15 @@ struct TestBasicMultiReducerConstructor
     }
   }
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_bitwise(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_bitwise(Api api)
   {
-    RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType> multi_reduce_or(runtime_policy_or_not..., num_bins);
-    RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType> multi_reduce_and(runtime_policy_or_not..., num_bins);
+    auto multi_reduce_or =
+        api.template make<RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType>>(
+            num_bins);
+    auto multi_reduce_and =
+        api.template make<RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType>>(
+            num_bins);
 
     ASSERT_EQ(multi_reduce_or.size(), num_bins);
     ASSERT_EQ(multi_reduce_and.size(), num_bins);
@@ -84,12 +95,18 @@ struct TestMultiReducerSingleInitConstructor
   const size_t num_bins;
   const NumericType initVal;
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_core(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_core(Api api)
   {
-    RAJA::MultiReduceSum<MultiReducePolicy, NumericType> multi_reduce_sum(runtime_policy_or_not..., num_bins, initVal);
-    RAJA::MultiReduceMin<MultiReducePolicy, NumericType> multi_reduce_min(runtime_policy_or_not..., num_bins, initVal);
-    RAJA::MultiReduceMax<MultiReducePolicy, NumericType> multi_reduce_max(runtime_policy_or_not..., num_bins, initVal);
+    auto multi_reduce_sum =
+        api.template make<RAJA::MultiReduceSum<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
+    auto multi_reduce_min =
+        api.template make<RAJA::MultiReduceMin<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
+    auto multi_reduce_max =
+        api.template make<RAJA::MultiReduceMax<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
 
     ASSERT_EQ(multi_reduce_sum.size(), num_bins);
     ASSERT_EQ(multi_reduce_min.size(), num_bins);
@@ -106,11 +123,15 @@ struct TestMultiReducerSingleInitConstructor
     }
   }
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_bitwise(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_bitwise(Api api)
   {
-    RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType> multi_reduce_or(runtime_policy_or_not..., num_bins, initVal);
-    RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType> multi_reduce_and(runtime_policy_or_not..., num_bins, initVal);
+    auto multi_reduce_or =
+        api.template make<RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
+    auto multi_reduce_and =
+        api.template make<RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
 
     ASSERT_EQ(multi_reduce_or.size(), num_bins);
     ASSERT_EQ(multi_reduce_and.size(), num_bins);
@@ -132,12 +153,18 @@ struct TestMultiReducerContainerInitConstructor
 {
   Container const& container;
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_core(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_core(Api api)
   {
-    RAJA::MultiReduceSum<MultiReducePolicy, NumericType> multi_reduce_sum(runtime_policy_or_not..., container);
-    RAJA::MultiReduceMin<MultiReducePolicy, NumericType> multi_reduce_min(runtime_policy_or_not..., container);
-    RAJA::MultiReduceMax<MultiReducePolicy, NumericType> multi_reduce_max(runtime_policy_or_not..., container);
+    auto multi_reduce_sum =
+        api.template make<RAJA::MultiReduceSum<MultiReducePolicy, NumericType>>(
+            container);
+    auto multi_reduce_min =
+        api.template make<RAJA::MultiReduceMin<MultiReducePolicy, NumericType>>(
+            container);
+    auto multi_reduce_max =
+        api.template make<RAJA::MultiReduceMax<MultiReducePolicy, NumericType>>(
+            container);
 
     ASSERT_EQ(multi_reduce_sum.size(), container.size());
     ASSERT_EQ(multi_reduce_min.size(), container.size());
@@ -156,11 +183,15 @@ struct TestMultiReducerContainerInitConstructor
     }
   }
 
-  template < RAJA::Policy... runtime_policy_or_not >
-  void test_bitwise(RAJA::PolicyList<runtime_policy_or_not...>)
+  template < typename Api >
+  void test_bitwise(Api api)
   {
-    RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType> multi_reduce_and(runtime_policy_or_not..., container);
-    RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType> multi_reduce_or(runtime_policy_or_not..., container);
+    auto multi_reduce_and =
+        api.template make<RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType>>(
+            container);
+    auto multi_reduce_or =
+        api.template make<RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType>>(
+            container);
 
     ASSERT_EQ(multi_reduce_and.size(), container.size());
     ASSERT_EQ(multi_reduce_or.size(), container.size());
@@ -182,18 +213,18 @@ TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerBasicConstructor)
 {
   using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
   using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
+  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value>> runtime_api{};
 
   auto tester = [](size_t num_bins)
   {
     TestBasicMultiReducerConstructor< MultiReducePolicy, NumericType > test{num_bins};
 
-    test.test_core(not_policy);
-    test.test_core(runtime_policy);
+    test.test_core(legacy_api);
+    test.test_core(runtime_api);
     if constexpr (std::is_integral_v<NumericType>) {
-      test.test_bitwise(not_policy);
-      test.test_bitwise(runtime_policy);
+      test.test_bitwise(legacy_api);
+      test.test_bitwise(runtime_api);
     }
   };
 
@@ -207,18 +238,18 @@ TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerSingleInitConstructor)
 {
   using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
   using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
+  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value>> runtime_api{};
 
   auto tester = [](size_t num_bins, NumericType initVal)
   {
     TestMultiReducerSingleInitConstructor< MultiReducePolicy, NumericType > test{num_bins, initVal};
 
-    test.test_core(not_policy);
-    test.test_core(runtime_policy);
+    test.test_core(legacy_api);
+    test.test_core(runtime_api);
     if constexpr (std::is_integral_v<NumericType>) {
-      test.test_bitwise(not_policy);
-      test.test_bitwise(runtime_policy);
+      test.test_bitwise(legacy_api);
+      test.test_bitwise(runtime_api);
     }
   };
 
@@ -232,8 +263,8 @@ TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerContainerInitConstruct
 {
   using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
   using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
-  static constexpr RAJA::PolicyList<> not_policy{};
-  static constexpr RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value> runtime_policy{};
+  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value>> runtime_api{};
 
   std::vector<NumericType> c0(0);
   std::vector<NumericType> c1(1, 3);
@@ -249,11 +280,11 @@ TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerContainerInitConstruct
   {
     TestMultiReducerContainerInitConstructor< MultiReducePolicy, NumericType, std::decay_t<decltype(c)> > test{c};
 
-    test.test_core(not_policy);
-    test.test_core(runtime_policy);
+    test.test_core(legacy_api);
+    test.test_core(runtime_api);
     if constexpr (std::is_integral_v<NumericType>) {
-      test.test_bitwise(not_policy);
-      test.test_bitwise(runtime_policy);
+      test.test_bitwise(legacy_api);
+      test.test_bitwise(runtime_api);
     }
   };
 
