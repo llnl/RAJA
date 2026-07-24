@@ -934,15 +934,26 @@ public:
     policy_supported_or_throw("HipMultiReduce::reset",
                               reduction_supported_policies_t<Policy::hip> {},
                               p);
-    const bool support_gpu = m_sync_list ? true : false;
-    if (support_gpu)
+    const bool old_support_gpu = m_sync_list ? true : false;
+    const bool new_support_gpu =
+        policy_supported(PolicyList<Policy::hip> {}, p);
+    if (old_support_gpu)
     {
       synchronize_resources_and_clear_list();
     }
-    m_data.reset_permanent(policy_supported(PolicyList<Policy::hip> {}, p),
+    m_data.reset_permanent(new_support_gpu,
                            policy_supported(PolicyList<Policy::openmp> {}, p),
                            container,
-                           identity, support_gpu);
+                           identity, old_support_gpu);
+    if (!old_support_gpu && new_support_gpu)
+    {
+      m_sync_list = new SyncList;
+    }
+    else if (old_support_gpu && !new_support_gpu)
+    {
+      delete m_sync_list;
+      m_sync_list = nullptr;
+    }
   }
 
   //! apply reduction (const version) -- still combines internal values
