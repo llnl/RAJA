@@ -162,9 +162,7 @@ template <typename ReducePolicy,
 struct TestReducerResetTransition
 {
   const NumericType initVal = (NumericType)5;
-  const NumericType resetVal = (NumericType)10;
   const RAJA::Index_type initLoc = 1;
-  const RAJA::Index_type resetLoc = -1;
 
   template < RAJA::Policy... policy1_or_not,
              RAJA::Policy... policy2_or_not,
@@ -175,13 +173,13 @@ struct TestReducerResetTransition
   {
     RAJA::ReduceSum<ReducePolicy, NumericType> transition_sum(
         policy1_or_not...,
-        NumericType(5));
+        initVal);
     RAJA::ReduceMin<ReducePolicy, NumericType> transition_min(
         policy1_or_not...,
-        NumericType(5));
+        initVal);
     RAJA::ReduceMax<ReducePolicy, NumericType> transition_max(
         policy1_or_not...,
-        NumericType(5));
+        initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol1>) {
       forone<ForOnePol1>( [=] RAJA_HOST_DEVICE () {
@@ -201,9 +199,9 @@ struct TestReducerResetTransition
     ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
     ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
 
-    transition_sum.reset(policy2_or_not..., NumericType(5));
-    transition_min.reset(policy2_or_not..., NumericType(5));
-    transition_max.reset(policy2_or_not..., NumericType(5));
+    transition_sum.reset(policy2_or_not..., initVal);
+    transition_min.reset(policy2_or_not..., initVal);
+    transition_max.reset(policy2_or_not..., initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol2>) {
       forone<ForOnePol2>( [=] RAJA_HOST_DEVICE () {
@@ -223,9 +221,9 @@ struct TestReducerResetTransition
     ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
     ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
 
-    transition_sum.reset(policy3_or_not..., NumericType(5));
-    transition_min.reset(policy3_or_not..., NumericType(5));
-    transition_max.reset(policy3_or_not..., NumericType(5));
+    transition_sum.reset(policy3_or_not..., initVal);
+    transition_min.reset(policy3_or_not..., initVal);
+    transition_max.reset(policy3_or_not..., initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol3>) {
       forone<ForOnePol3>( [=] RAJA_HOST_DEVICE () {
@@ -250,17 +248,17 @@ struct TestReducerResetTransition
              RAJA::Policy... policy2_or_not,
              RAJA::Policy... policy3_or_not >
   void test_loc(RAJA::PolicyList<policy1_or_not...>,
-                 RAJA::PolicyList<policy2_or_not...>,
-                 RAJA::PolicyList<policy3_or_not...>)
+                RAJA::PolicyList<policy2_or_not...>,
+                RAJA::PolicyList<policy3_or_not...>)
   {
     RAJA::ReduceMinLoc<ReducePolicy, NumericType> transition_minloc(
         policy1_or_not...,
-        NumericType(5),
-        RAJA::Index_type(1));
+        initVal,
+        initLoc);
     RAJA::ReduceMaxLoc<ReducePolicy, NumericType> transition_maxloc(
         policy1_or_not...,
-        NumericType(5),
-        RAJA::Index_type(1));
+        initVal,
+        initLoc);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol1>) {
       forone<ForOnePol1>( [=] RAJA_HOST_DEVICE () {
@@ -279,8 +277,8 @@ struct TestReducerResetTransition
     ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
     ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
 
-    transition_minloc.reset(policy2_or_not..., NumericType(5), RAJA::Index_type(1));
-    transition_maxloc.reset(policy2_or_not..., NumericType(5), RAJA::Index_type(1));
+    transition_minloc.reset(policy2_or_not..., initVal, initLoc);
+    transition_maxloc.reset(policy2_or_not..., initVal, initLoc);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol2>) {
       forone<ForOnePol2>( [=] RAJA_HOST_DEVICE () {
@@ -300,11 +298,11 @@ struct TestReducerResetTransition
     ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
 
     transition_minloc.reset(policy3_or_not...,
-                            NumericType(5),
-                            RAJA::Index_type(1));
+                            initVal,
+                            initLoc);
     transition_maxloc.reset(policy3_or_not...,
-                            NumericType(5),
-                            RAJA::Index_type(1));
+                            initVal,
+                            initLoc);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol3>) {
       forone<ForOnePol3>( [=] RAJA_HOST_DEVICE () {
@@ -333,10 +331,10 @@ struct TestReducerResetTransition
   {
     RAJA::ReduceBitOr<ReducePolicy, NumericType> reduce_bitor(
         policy1_or_not...,
-        NumericType(5));
+        initVal);
     RAJA::ReduceBitAnd<ReducePolicy, NumericType> reduce_bitand(
         policy1_or_not...,
-        NumericType(5));
+        initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol1>) {
       forone<ForOnePol1>( [=] RAJA_HOST_DEVICE () {
@@ -353,8 +351,8 @@ struct TestReducerResetTransition
     ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
     ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
 
-    reduce_bitor.reset(policy2_or_not..., NumericType(5));
-    reduce_bitand.reset(policy2_or_not..., NumericType(5));
+    reduce_bitor.reset(policy2_or_not..., initVal);
+    reduce_bitand.reset(policy2_or_not..., initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol2>) {
       forone<ForOnePol2>( [=] RAJA_HOST_DEVICE () {
@@ -371,8 +369,8 @@ struct TestReducerResetTransition
     ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
     ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
 
-    reduce_bitor.reset(policy3_or_not..., NumericType(5));
-    reduce_bitand.reset(policy3_or_not..., NumericType(5));
+    reduce_bitor.reset(policy3_or_not..., initVal);
+    reduce_bitand.reset(policy3_or_not..., initVal);
 
     if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol3>) {
       forone<ForOnePol3>( [=] RAJA_HOST_DEVICE () {
