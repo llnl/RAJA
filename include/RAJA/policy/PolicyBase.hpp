@@ -68,8 +68,7 @@ constexpr const char* get_policy_name(Policy p)
 }
 
 template<RAJA::Policy... policies>
-using PolicyList =
-    camp::list<camp::integral_constant<RAJA::Policy, policies>...>;
+struct PolicyList {};
 
 template<Policy p>
 inline constexpr bool policy_active = false;
