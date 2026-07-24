@@ -15,7 +15,7 @@
 #include <numeric>
 #include <vector>
 
-#include "test-forall-basic-reduce-interface.hpp"
+#include "RAJA_test-reducer-api.hpp"
 
 template <typename IDX_TYPE, typename DATA_TYPE,
           typename SEG_TYPE, typename EXEC_POLICY,

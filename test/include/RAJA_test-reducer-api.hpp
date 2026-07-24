@@ -7,8 +7,8 @@
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
-#ifndef __TEST_FORALL_BASIC_REDUCE_INTERFACE_HPP__
-#define __TEST_FORALL_BASIC_REDUCE_INTERFACE_HPP__
+#ifndef __RAJA_TEST_REDUCER_API_HPP__
+#define __RAJA_TEST_REDUCER_API_HPP__
 
 #include "RAJA/RAJA.hpp"
 
@@ -51,4 +51,4 @@ struct RuntimeReducerApi
 using LegacyReducerApiList = camp::list<LegacyReducerApi>;
 using RuntimeReducerApiList = camp::list<RuntimeReducerApi>;
 
-#endif  // __TEST_FORALL_BASIC_REDUCE_INTERFACE_HPP__
+#endif  // __RAJA_TEST_REDUCER_API_HPP__
