@@ -172,222 +172,292 @@ struct TestReducerReset
 
 template <typename ReducePolicy,
           typename NumericType,
-          typename ForOnePol1,
-          typename ForOnePol2,
-          typename ForOnePol3>
-struct TestReducerResetTransition
+          typename ConstructPhase>
+struct CoreTransitionHelper
 {
-  const NumericType initVal = (NumericType)5;
-  const RAJA::Index_type initLoc = 1;
+  using ConstructApi = typename ConstructPhase::Api;
 
-  template < typename Api1, typename Api2, typename Api3 >
-  void test_core(Api1 api1, Api2 api2, Api3 api3)
+  RAJA::ReduceSum<ReducePolicy, NumericType> transition_sum;
+  RAJA::ReduceMin<ReducePolicy, NumericType> transition_min;
+  RAJA::ReduceMax<ReducePolicy, NumericType> transition_max;
+
+  CoreTransitionHelper(NumericType initVal,
+                       RAJA::Index_type RAJA_UNUSED_ARG(initLoc))
+      : transition_sum(
+            ConstructApi::template make<RAJA::ReduceSum<ReducePolicy, NumericType>>(
+                initVal)),
+        transition_min(
+            ConstructApi::template make<RAJA::ReduceMin<ReducePolicy, NumericType>>(
+                initVal)),
+        transition_max(
+            ConstructApi::template make<RAJA::ReduceMax<ReducePolicy, NumericType>>(
+                initVal))
   {
-    auto transition_sum =
-        api1.template make<RAJA::ReduceSum<ReducePolicy, NumericType>>(
-            initVal);
-    auto transition_min =
-        api1.template make<RAJA::ReduceMin<ReducePolicy, NumericType>>(
-            initVal);
-    auto transition_max =
-        api1.template make<RAJA::ReduceMax<ReducePolicy, NumericType>>(
-            initVal);
-
-    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol1>) {
-      forone<ForOnePol1>( [=] RAJA_HOST_DEVICE () {
-        transition_sum += NumericType(4);
-        transition_min.min(NumericType(1));
-        transition_max.max(NumericType(9));
-      });
-    } else {
-      forone<ForOnePol1>( [=] () {
-        transition_sum += NumericType(4);
-        transition_min.min(NumericType(1));
-        transition_max.max(NumericType(9));
-      });
-    }
-
-    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
-    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
-    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
-
-    api2.reset(transition_sum, initVal);
-    api2.reset(transition_min, initVal);
-    api2.reset(transition_max, initVal);
-
-    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol2>) {
-      forone<ForOnePol2>( [=] RAJA_HOST_DEVICE () {
-        transition_sum += NumericType(4);
-        transition_min.min(NumericType(1));
-        transition_max.max(NumericType(9));
-      });
-    } else {
-      forone<ForOnePol2>( [=] () {
-        transition_sum += NumericType(4);
-        transition_min.min(NumericType(1));
-        transition_max.max(NumericType(9));
-      });
-    }
-
-    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
-    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
-    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
-
-    api3.reset(transition_sum, initVal);
-    api3.reset(transition_min, initVal);
-    api3.reset(transition_max, initVal);
-
-    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol3>) {
-      forone<ForOnePol3>( [=] RAJA_HOST_DEVICE () {
-        transition_sum += NumericType(4);
-        transition_min.min(NumericType(1));
-        transition_max.max(NumericType(9));
-      });
-    } else {
-      forone<ForOnePol3>( [=] () {
-        transition_sum += NumericType(4);
-        transition_min.min(NumericType(1));
-        transition_max.max(NumericType(9));
-      });
-    }
-
-    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(9));
-    ASSERT_EQ((NumericType)transition_min.get(), NumericType(1));
-    ASSERT_EQ((NumericType)transition_max.get(), NumericType(9));
   }
 
-  template < typename Api1, typename Api2, typename Api3 >
-  void test_loc(Api1 api1, Api2 api2, Api3 api3)
+  template <typename Phase>
+  void phase(Phase,
+             NumericType initVal,
+             RAJA::Index_type RAJA_UNUSED_ARG(initLoc))
   {
-    auto transition_minloc =
-        api1.template make<RAJA::ReduceMinLoc<ReducePolicy, NumericType>>(
-            initVal,
-            initLoc);
-    auto transition_maxloc =
-        api1.template make<RAJA::ReduceMaxLoc<ReducePolicy, NumericType>>(
-            initVal,
-            initLoc);
+    using Api = typename Phase::Api;
+    using PhaseForOnePol = typename Phase::ForOne;
 
-    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol1>) {
-      forone<ForOnePol1>( [=] RAJA_HOST_DEVICE () {
-        transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
-        transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
+    Api::reset(transition_sum, initVal);
+    Api::reset(transition_min, initVal);
+    Api::reset(transition_max, initVal);
+
+    auto& reduce_sum = transition_sum;
+    auto& reduce_min = transition_min;
+    auto& reduce_max = transition_max;
+
+    const NumericType addend = NumericType(3);
+    const NumericType minVal = NumericType(initVal - NumericType(2));
+    const NumericType maxVal = NumericType(initVal + NumericType(4));
+
+    if constexpr (std::is_base_of_v<RunOnDevice, PhaseForOnePol>) {
+      forone<PhaseForOnePol>( [=] RAJA_HOST_DEVICE () {
+        reduce_sum += addend;
+        reduce_min.min(minVal);
+        reduce_max.max(maxVal);
       });
     } else {
-      forone<ForOnePol1>( [=] () {
-        transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
-        transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
+      forone<PhaseForOnePol>( [=] () {
+        reduce_sum += addend;
+        reduce_min.min(minVal);
+        reduce_max.max(maxVal);
       });
     }
 
-    ASSERT_EQ((NumericType)transition_minloc.get(), NumericType(1));
-    ASSERT_EQ((NumericType)transition_maxloc.get(), NumericType(9));
-    ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
-    ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
-
-    api2.reset(transition_minloc, initVal, initLoc);
-    api2.reset(transition_maxloc, initVal, initLoc);
-
-    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol2>) {
-      forone<ForOnePol2>( [=] RAJA_HOST_DEVICE () {
-        transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
-        transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
-      });
-    } else {
-      forone<ForOnePol2>( [=] () {
-        transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
-        transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
-      });
-    }
-
-    ASSERT_EQ((NumericType)transition_minloc.get(), NumericType(1));
-    ASSERT_EQ((NumericType)transition_maxloc.get(), NumericType(9));
-    ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
-    ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
-
-    api3.reset(transition_minloc, initVal, initLoc);
-    api3.reset(transition_maxloc, initVal, initLoc);
-
-    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol3>) {
-      forone<ForOnePol3>( [=] RAJA_HOST_DEVICE () {
-        transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
-        transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
-      });
-    } else {
-      forone<ForOnePol3>( [=] () {
-        transition_minloc.minloc(NumericType(1), RAJA::Index_type(7));
-        transition_maxloc.maxloc(NumericType(9), RAJA::Index_type(7));
-      });
-    }
-
-    ASSERT_EQ((NumericType)transition_minloc.get(), NumericType(1));
-    ASSERT_EQ((NumericType)transition_maxloc.get(), NumericType(9));
-    ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), RAJA::Index_type(7));
-    ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), RAJA::Index_type(7));
-  }
-
-  template < typename Api1, typename Api2, typename Api3 >
-  void test_bitwise(Api1 api1, Api2 api2, Api3 api3)
-  {
-    auto reduce_bitor =
-        api1.template make<RAJA::ReduceBitOr<ReducePolicy, NumericType>>(
-            initVal);
-    auto reduce_bitand =
-        api1.template make<RAJA::ReduceBitAnd<ReducePolicy, NumericType>>(
-            initVal);
-
-    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol1>) {
-      forone<ForOnePol1>( [=] RAJA_HOST_DEVICE () {
-        reduce_bitor |= NumericType(2);
-        reduce_bitand &= NumericType(3);
-      });
-    } else {
-      forone<ForOnePol1>( [=] () {
-        reduce_bitor |= NumericType(2);
-        reduce_bitand &= NumericType(3);
-      });
-    }
-
-    ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
-    ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
-
-    api2.reset(reduce_bitor, initVal);
-    api2.reset(reduce_bitand, initVal);
-
-    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol2>) {
-      forone<ForOnePol2>( [=] RAJA_HOST_DEVICE () {
-        reduce_bitor |= NumericType(2);
-        reduce_bitand &= NumericType(3);
-      });
-    } else {
-      forone<ForOnePol2>( [=] () {
-        reduce_bitor |= NumericType(2);
-        reduce_bitand &= NumericType(3);
-      });
-    }
-
-    ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
-    ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
-
-    api3.reset(reduce_bitor, initVal);
-    api3.reset(reduce_bitand, initVal);
-
-    if constexpr (std::is_base_of_v<RunOnDevice, ForOnePol3>) {
-      forone<ForOnePol3>( [=] RAJA_HOST_DEVICE () {
-        reduce_bitor |= NumericType(2);
-        reduce_bitand &= NumericType(3);
-      });
-    } else {
-      forone<ForOnePol3>( [=] () {
-        reduce_bitor |= NumericType(2);
-        reduce_bitand &= NumericType(3);
-      });
-    }
-
-    ASSERT_EQ((NumericType)reduce_bitor.get(), NumericType(7));
-    ASSERT_EQ((NumericType)reduce_bitand.get(), NumericType(1));
+    ASSERT_EQ((NumericType)transition_sum.get(), NumericType(initVal + addend));
+    ASSERT_EQ((NumericType)transition_min.get(), minVal);
+    ASSERT_EQ((NumericType)transition_max.get(), maxVal);
   }
 };
+
+template <typename ReducePolicy,
+          typename NumericType,
+          typename ConstructPhase>
+struct LocTransitionHelper
+{
+  using ConstructApi = typename ConstructPhase::Api;
+
+  RAJA::ReduceMinLoc<ReducePolicy, NumericType> transition_minloc;
+  RAJA::ReduceMaxLoc<ReducePolicy, NumericType> transition_maxloc;
+
+  LocTransitionHelper(NumericType initVal, RAJA::Index_type initLoc)
+      : transition_minloc(
+            ConstructApi::template make<RAJA::ReduceMinLoc<ReducePolicy, NumericType>>(
+                initVal, initLoc)),
+        transition_maxloc(
+            ConstructApi::template make<RAJA::ReduceMaxLoc<ReducePolicy, NumericType>>(
+                initVal, initLoc))
+  {
+  }
+
+  template <typename Phase>
+  void phase(Phase, NumericType initVal, RAJA::Index_type initLoc)
+  {
+    using Api = typename Phase::Api;
+    using PhaseForOnePol = typename Phase::ForOne;
+
+    Api::reset(transition_minloc, initVal, initLoc);
+    Api::reset(transition_maxloc, initVal, initLoc);
+
+    auto& reduce_minloc = transition_minloc;
+    auto& reduce_maxloc = transition_maxloc;
+
+    const NumericType minVal = NumericType(initVal - NumericType(2));
+    const NumericType maxVal = NumericType(initVal + NumericType(4));
+    const RAJA::Index_type minLoc = RAJA::Index_type(initLoc + 11);
+    const RAJA::Index_type maxLoc = RAJA::Index_type(initLoc + 13);
+
+    if constexpr (std::is_base_of_v<RunOnDevice, PhaseForOnePol>) {
+      forone<PhaseForOnePol>( [=] RAJA_HOST_DEVICE () {
+        reduce_minloc.minloc(minVal, minLoc);
+        reduce_maxloc.maxloc(maxVal, maxLoc);
+      });
+    } else {
+      forone<PhaseForOnePol>( [=] () {
+        reduce_minloc.minloc(minVal, minLoc);
+        reduce_maxloc.maxloc(maxVal, maxLoc);
+      });
+    }
+
+    ASSERT_EQ((NumericType)transition_minloc.get(), minVal);
+    ASSERT_EQ((NumericType)transition_maxloc.get(), maxVal);
+    ASSERT_EQ((RAJA::Index_type)transition_minloc.getLoc(), minLoc);
+    ASSERT_EQ((RAJA::Index_type)transition_maxloc.getLoc(), maxLoc);
+  }
+};
+
+template <typename ReducePolicy,
+          typename NumericType,
+          typename ConstructPhase>
+struct TupleLocTransitionHelper
+{
+  using LocType = RAJA::tuple<RAJA::Index_type, RAJA::Index_type>;
+  using ConstructApi = typename ConstructPhase::Api;
+
+  RAJA::ReduceMinLoc<ReducePolicy, NumericType, LocType> transition_minloctup;
+  RAJA::ReduceMaxLoc<ReducePolicy, NumericType, LocType> transition_maxloctup;
+
+  TupleLocTransitionHelper(NumericType initVal, RAJA::Index_type initLoc)
+      : transition_minloctup(
+            ConstructApi::template make<RAJA::ReduceMinLoc<ReducePolicy, NumericType, LocType>>(
+                initVal, LocType(initLoc, initLoc))),
+        transition_maxloctup(
+            ConstructApi::template make<RAJA::ReduceMaxLoc<ReducePolicy, NumericType, LocType>>(
+                initVal, LocType(initLoc, initLoc)))
+  {
+  }
+
+  template <typename Phase>
+  void phase(Phase, NumericType initVal, RAJA::Index_type initLoc)
+  {
+    using Api = typename Phase::Api;
+    using PhaseForOnePol = typename Phase::ForOne;
+
+    const LocType resetLoc(initLoc, initLoc);
+    Api::reset(transition_minloctup, initVal, resetLoc);
+    Api::reset(transition_maxloctup, initVal, resetLoc);
+
+    auto& reduce_minloctup = transition_minloctup;
+    auto& reduce_maxloctup = transition_maxloctup;
+
+    const NumericType minVal = NumericType(initVal - NumericType(2));
+    const NumericType maxVal = NumericType(initVal + NumericType(4));
+    const LocType minLoc(RAJA::Index_type(initLoc + 17),
+                         RAJA::Index_type(initLoc + 19));
+    const LocType maxLoc(RAJA::Index_type(initLoc + 23),
+                         RAJA::Index_type(initLoc + 29));
+
+    if constexpr (std::is_base_of_v<RunOnDevice, PhaseForOnePol>) {
+      forone<PhaseForOnePol>( [=] RAJA_HOST_DEVICE () {
+        reduce_minloctup.minloc(minVal, minLoc);
+        reduce_maxloctup.maxloc(maxVal, maxLoc);
+      });
+    } else {
+      forone<PhaseForOnePol>( [=] () {
+        reduce_minloctup.minloc(minVal, minLoc);
+        reduce_maxloctup.maxloc(maxVal, maxLoc);
+      });
+    }
+
+    ASSERT_EQ((NumericType)transition_minloctup.get(), minVal);
+    ASSERT_EQ((NumericType)transition_maxloctup.get(), maxVal);
+    ASSERT_EQ((RAJA::Index_type)(RAJA::get<0>(transition_minloctup.getLoc())),
+              RAJA::get<0>(minLoc));
+    ASSERT_EQ((RAJA::Index_type)(RAJA::get<1>(transition_minloctup.getLoc())),
+              RAJA::get<1>(minLoc));
+    ASSERT_EQ((RAJA::Index_type)(RAJA::get<0>(transition_maxloctup.getLoc())),
+              RAJA::get<0>(maxLoc));
+    ASSERT_EQ((RAJA::Index_type)(RAJA::get<1>(transition_maxloctup.getLoc())),
+              RAJA::get<1>(maxLoc));
+  }
+};
+
+template <typename ReducePolicy,
+          typename NumericType,
+          typename ConstructPhase>
+struct BitwiseTransitionHelper
+{
+  using ConstructApi = typename ConstructPhase::Api;
+
+  RAJA::ReduceBitOr<ReducePolicy, NumericType> transition_bitor;
+  RAJA::ReduceBitAnd<ReducePolicy, NumericType> transition_bitand;
+
+  BitwiseTransitionHelper(NumericType initVal,
+                          RAJA::Index_type RAJA_UNUSED_ARG(initLoc))
+      : transition_bitor(
+            ConstructApi::template make<RAJA::ReduceBitOr<ReducePolicy, NumericType>>(
+                initVal)),
+        transition_bitand(
+            ConstructApi::template make<RAJA::ReduceBitAnd<ReducePolicy, NumericType>>(
+                initVal))
+  {
+  }
+
+  template <typename Phase>
+  void phase(Phase,
+             NumericType initVal,
+             RAJA::Index_type RAJA_UNUSED_ARG(initLoc))
+  {
+    using Api = typename Phase::Api;
+    using PhaseForOnePol = typename Phase::ForOne;
+
+    Api::reset(transition_bitor, initVal);
+    Api::reset(transition_bitand, initVal);
+
+    auto& reduce_bitor = transition_bitor;
+    auto& reduce_bitand = transition_bitand;
+
+    const NumericType orMask = NumericType(2);
+    const NumericType andMask = NumericType(7);
+
+    if constexpr (std::is_base_of_v<RunOnDevice, PhaseForOnePol>) {
+      forone<PhaseForOnePol>( [=] RAJA_HOST_DEVICE () {
+        reduce_bitor |= orMask;
+        reduce_bitand &= andMask;
+      });
+    } else {
+      forone<PhaseForOnePol>( [=] () {
+        reduce_bitor |= orMask;
+        reduce_bitand &= andMask;
+      });
+    }
+
+    ASSERT_EQ((NumericType)transition_bitor.get(),
+              NumericType(initVal | orMask));
+    ASSERT_EQ((NumericType)transition_bitand.get(),
+              NumericType(initVal & andMask));
+  }
+};
+
+template <typename ReducePolicy,
+          typename NumericType,
+          typename ForOnePol,
+          template <typename, typename, typename> class Helper>
+void run_reducer_reset_transition_chains()
+{
+  using SeqPhase =
+      TransitionPhase<ReducerApi<RAJA::PolicyList<RAJA::Policy::sequential>>,
+                      test_seq>;
+  using RuntimePhase =
+      TransitionPhase<ReducerApi<RAJA::PolicyList<RAJA::policy_of<ReducePolicy>::value>>,
+                      ForOnePol>;
+  using LegacySeqPhase =
+      TransitionPhase<ReducerApi<RAJA::PolicyList<>>,
+                      test_seq>;
+  using LegacyRuntimePhase =
+      TransitionPhase<ReducerApi<RAJA::PolicyList<>>,
+                      ForOnePol>;
+
+  {
+    Helper<ReducePolicy, NumericType, SeqPhase> tester(
+                                       NumericType(5),  RAJA::Index_type(1));
+    tester.phase(RuntimePhase{},       NumericType(11), RAJA::Index_type(2));
+    tester.phase(SeqPhase{},           NumericType(17), RAJA::Index_type(3));
+    tester.phase(RuntimePhase{},       NumericType(23), RAJA::Index_type(4));
+    tester.phase(LegacyRuntimePhase{}, NumericType(29), RAJA::Index_type(5));
+    tester.phase(RuntimePhase{},       NumericType(37), RAJA::Index_type(6));
+  }
+
+  {
+    Helper<ReducePolicy, NumericType, RuntimePhase> tester(
+                                 NumericType(43), RAJA::Index_type(7));
+    tester.phase(SeqPhase{},     NumericType(47), RAJA::Index_type(8));
+    tester.phase(RuntimePhase{}, NumericType(53), RAJA::Index_type(9));
+  }
+
+  {
+    Helper<ReducePolicy, NumericType, LegacyRuntimePhase> tester(
+                                   NumericType(59), RAJA::Index_type(10));
+    tester.phase(RuntimePhase{},   NumericType(67), RAJA::Index_type(11));
+    tester.phase(SeqPhase{},       NumericType(73), RAJA::Index_type(12));
+    tester.phase(LegacySeqPhase{}, NumericType(79), RAJA::Index_type(13));
+  }
+}
 
 
 TYPED_TEST_P(ReducerResetUnitTest, ReducerBasicReset)
@@ -418,21 +488,18 @@ TYPED_TEST_P(ReducerResetUnitTest, ReducerResetTransition)
   using ReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
   using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
   using ForOnePol = typename camp::at<TypeParam, camp::num<2>>::type;
-  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
-  static constexpr ReducerApi<RAJA::PolicyList<RAJA::Policy::sequential>> seq_api{};
-  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<ReducePolicy>::value>> runtime_api{};
 
-  TestReducerResetTransition< ReducePolicy, NumericType,
-      test_seq, ForOnePol, test_seq > test;
-  test.test_core(legacy_api, legacy_api, legacy_api);
-  test.test_core(seq_api, runtime_api, seq_api);
+  run_reducer_reset_transition_chains<
+      ReducePolicy, NumericType, ForOnePol, CoreTransitionHelper>();
   if constexpr (!RAJA::policy_is<ReducePolicy, RAJA::Policy::sycl>::value) {
-    test.test_loc(legacy_api, legacy_api, legacy_api);
-    test.test_loc(seq_api, runtime_api, seq_api);
+    run_reducer_reset_transition_chains<
+        ReducePolicy, NumericType, ForOnePol, LocTransitionHelper>();
+    run_reducer_reset_transition_chains<
+        ReducePolicy, NumericType, ForOnePol, TupleLocTransitionHelper>();
   }
   if constexpr (std::is_integral_v<NumericType>) {
-    test.test_bitwise(legacy_api, legacy_api, legacy_api);
-    test.test_bitwise(seq_api, runtime_api, seq_api);
+    run_reducer_reset_transition_chains<
+        ReducePolicy, NumericType, ForOnePol, BitwiseTransitionHelper>();
   }
 }
 

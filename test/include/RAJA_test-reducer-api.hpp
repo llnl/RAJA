@@ -35,6 +35,13 @@ struct ReducerApi<RAJA::PolicyList<Ps...>>
   }
 };
 
+template <typename ApiT, typename ForOneT>
+struct TransitionPhase
+{
+  using Api = ApiT;
+  using ForOne = ForOneT;
+};
+
 struct LegacyReducerApi
 {
   template <typename EXEC_POLICY>
