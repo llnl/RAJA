@@ -46,6 +46,13 @@ typedef enum omp_sched_t
 
 namespace RAJA
 {
+
+template<>
+struct reduction_supported_policies<Policy::openmp>
+{
+  using type = PolicyList<Policy::sequential, Policy::openmp>;
+};
+
 namespace omp
 {
 

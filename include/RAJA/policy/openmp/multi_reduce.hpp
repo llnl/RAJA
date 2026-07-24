@@ -245,8 +245,9 @@ struct MultiReduceDataOMP<
         m_data(nullptr),
         m_identity(identity)
   {
-    policy_supported_or_throw<Policy::sequential, Policy::openmp>(
-        "OpenMPMultiReduce", p);
+    policy_supported_or_throw("OpenMPMultiReduce",
+                              reduction_supported_policies_t<Policy::openmp> {},
+                              p);
     m_data = create_data(container, identity, m_data_helper);
   }
 
@@ -284,8 +285,9 @@ struct MultiReduceDataOMP<
   template<typename Container>
   void reset(Policy p, Container const& container, T identity)
   {
-    policy_supported_or_throw<Policy::sequential, Policy::openmp>(
-        "OpenMPMultiReduce::reset", p);
+    policy_supported_or_throw("OpenMPMultiReduce::reset",
+                              reduction_supported_policies_t<Policy::openmp> {},
+                              p);
 
     DataHelper new_data_helper(p, container.size());
 
@@ -320,7 +322,7 @@ private:
   {
     static size_t get_max_threads(Policy p)
     {
-      if (policy_supported<Policy::openmp>(p))
+      if (policy_supported(PolicyList<Policy::openmp> {}, p))
       {
         return omp_get_max_threads();
       }

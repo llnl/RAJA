@@ -70,6 +70,16 @@ constexpr const char* get_policy_name(Policy p)
 template<RAJA::Policy... policies>
 struct PolicyList {};
 
+template<RAJA::Policy BackendPolicy>
+struct reduction_supported_policies
+{
+  using type = RAJA::PolicyList<>;
+};
+
+template<RAJA::Policy BackendPolicy>
+using reduction_supported_policies_t =
+    typename reduction_supported_policies<BackendPolicy>::type;
+
 template<Policy p>
 inline constexpr bool policy_active = false;
 
@@ -124,7 +134,7 @@ inline constexpr bool policy_active<Policy::sycl> =
 
 // check that policy is supported, undefined or an active policy in the list
 template<Policy... supported_policies>
-constexpr bool policy_supported(Policy p)
+constexpr bool policy_supported(PolicyList<supported_policies...>, Policy p)
 {
   return ((p == Policy::undefined) || ... ||
           (p == supported_policies && policy_active<supported_policies>));
@@ -132,9 +142,11 @@ constexpr bool policy_supported(Policy p)
 
 // check that policy is supported, otherwise throw an exception
 template<Policy... supported_policies>
-inline bool policy_supported_or_throw(const char* context_name, Policy p)
+inline bool policy_supported_or_throw(const char* context_name,
+                                      PolicyList<supported_policies...> list,
+                                      Policy p)
 {
-  if (policy_supported<supported_policies...>(p))
+  if (policy_supported(list, p))
   {
     return true;
   }

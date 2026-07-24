@@ -25,6 +25,7 @@
 #if defined(RAJA_HIP_ACTIVE)
 
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 
 #include "hip/hip_runtime.h"
@@ -46,6 +47,17 @@ namespace RAJA
 using hip_dim_t = RAJA_HIP_DIM_T;
 
 using hip_dim_member_t = camp::decay<decltype(std::declval<hip_dim_t>().x)>;
+
+template<>
+struct reduction_supported_policies<Policy::hip>
+{
+  using type = std::conditional_t<policy_active<Policy::openmp>,
+                                  PolicyList<Policy::sequential,
+                                             Policy::openmp,
+                                             Policy::hip>,
+                                  PolicyList<Policy::sequential,
+                                             Policy::hip>>;
+};
 
 //
 /////////////////////////////////////////////////////////////////////

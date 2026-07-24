@@ -24,6 +24,13 @@
 
 namespace RAJA
 {
+
+template<>
+struct reduction_supported_policies<Policy::sequential>
+{
+  using type = PolicyList<Policy::sequential>;
+};
+
 namespace sequential
 {
 

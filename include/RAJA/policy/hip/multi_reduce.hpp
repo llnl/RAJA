@@ -821,14 +821,17 @@ public:
   template<typename Container>
   MultiReduceDataHip(Policy p, Container const& container, T identity)
       : m_parent(this),
-        m_sync_list(policy_supported<Policy::hip>(p) ? new SyncList : nullptr),
-        m_data(policy_supported<Policy::hip>(p),
-               policy_supported<Policy::openmp>(p),
+        m_sync_list(
+            policy_supported(PolicyList<Policy::hip> {}, p) ? new SyncList
+                                                            : nullptr),
+        m_data(policy_supported(PolicyList<Policy::hip> {}, p),
+               policy_supported(PolicyList<Policy::openmp> {}, p),
                container,
                identity)
   {
-    policy_supported_or_throw<Policy::sequential, Policy::openmp, Policy::hip>(
-        "HipMultiReduce", p);
+    policy_supported_or_throw("HipMultiReduce",
+                              reduction_supported_policies_t<Policy::hip> {},
+                              p);
   }
 
   //! copy and on host attempt to setup for device
@@ -928,15 +931,17 @@ public:
   void reset(Policy p, Container const& container, T identity)
   {
     // the original object
-    policy_supported_or_throw<Policy::sequential, Policy::openmp, Policy::hip>(
-        "HipMultiReduce::reset", p);
+    policy_supported_or_throw("HipMultiReduce::reset",
+                              reduction_supported_policies_t<Policy::hip> {},
+                              p);
     const bool support_gpu = m_sync_list ? true : false;
     if (support_gpu)
     {
       synchronize_resources_and_clear_list();
     }
-    m_data.reset_permanent(policy_supported<Policy::hip>(p),
-                           policy_supported<Policy::openmp>(p), container,
+    m_data.reset_permanent(policy_supported(PolicyList<Policy::hip> {}, p),
+                           policy_supported(PolicyList<Policy::openmp> {}, p),
+                           container,
                            identity, support_gpu);
   }
 

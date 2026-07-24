@@ -25,6 +25,7 @@
 #if defined(RAJA_CUDA_ACTIVE)
 
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 
 #include "RAJA/pattern/reduce.hpp"
@@ -44,6 +45,17 @@ namespace RAJA
 using cuda_dim_t = RAJA_CUDA_DIM_T;
 
 using cuda_dim_member_t = camp::decay<decltype(std::declval<cuda_dim_t>().x)>;
+
+template<>
+struct reduction_supported_policies<Policy::cuda>
+{
+  using type = std::conditional_t<policy_active<Policy::openmp>,
+                                  PolicyList<Policy::sequential,
+                                             Policy::openmp,
+                                             Policy::cuda>,
+                                  PolicyList<Policy::sequential,
+                                             Policy::cuda>>;
+};
 
 //
 /////////////////////////////////////////////////////////////////////
