@@ -19,6 +19,7 @@
 
 #include "../test-multi-reducer.hpp"
 
+#include <type_traits>
 #include <vector>
 #include <list>
 #include <set>
@@ -345,6 +346,216 @@ struct TestMultiReducerContainerResetSize
 };
 
 
+template <typename MultiReducePolicy,
+          typename NumericType>
+struct CoreMultiReducerTransitionHelper
+{
+  static constexpr size_t num_bins = 4;
+
+  RAJA::MultiReduceSum<MultiReducePolicy, NumericType> transition_sum;
+  RAJA::MultiReduceMin<MultiReducePolicy, NumericType> transition_min;
+  RAJA::MultiReduceMax<MultiReducePolicy, NumericType> transition_max;
+
+  template <typename ConstructPhase>
+  CoreMultiReducerTransitionHelper(ConstructPhase, NumericType initVal)
+      : transition_sum(
+            ConstructPhase::Api::template make<RAJA::MultiReduceSum<MultiReducePolicy, NumericType>>(
+                num_bins, initVal)),
+        transition_min(
+            ConstructPhase::Api::template make<RAJA::MultiReduceMin<MultiReducePolicy, NumericType>>(
+                num_bins, initVal)),
+        transition_max(
+            ConstructPhase::Api::template make<RAJA::MultiReduceMax<MultiReducePolicy, NumericType>>(
+                num_bins, initVal))
+  {
+  }
+
+  template <typename Phase>
+  void phase(Phase, NumericType initVal)
+  {
+    using Api = typename Phase::Api;
+    using PhaseForOnePol = typename Phase::ForOne;
+
+    Api::reset(transition_sum, num_bins, initVal);
+    Api::reset(transition_min, num_bins, initVal);
+    Api::reset(transition_max, num_bins, initVal);
+
+    ASSERT_EQ(transition_sum.size(), num_bins);
+    ASSERT_EQ(transition_min.size(), num_bins);
+    ASSERT_EQ(transition_max.size(), num_bins);
+
+    for (size_t bin = 0; bin < num_bins; ++bin) {
+      ASSERT_EQ(transition_sum.get(bin), initVal);
+      ASSERT_EQ(transition_min.get(bin), initVal);
+      ASSERT_EQ(transition_max.get(bin), initVal);
+
+      ASSERT_EQ((NumericType)transition_sum[bin].get(), initVal);
+      ASSERT_EQ((NumericType)transition_min[bin].get(), initVal);
+      ASSERT_EQ((NumericType)transition_max[bin].get(), initVal);
+    }
+
+    auto& multi_reduce_sum = transition_sum;
+    auto& multi_reduce_min = transition_min;
+    auto& multi_reduce_max = transition_max;
+
+    const NumericType addend = NumericType(3);
+    const NumericType delta = NumericType(2);
+
+    if constexpr (std::is_base_of_v<RunOnDevice, PhaseForOnePol>) {
+      forone<PhaseForOnePol>( [=] RAJA_HOST_DEVICE () {
+        for (size_t bin = 0; bin < num_bins; ++bin) {
+          multi_reduce_sum[bin] += addend;
+          multi_reduce_min[bin].min(initVal - delta);
+          multi_reduce_max[bin].max(initVal + delta);
+        }
+      });
+    } else {
+      forone<PhaseForOnePol>( [=] () {
+        for (size_t bin = 0; bin < num_bins; ++bin) {
+          multi_reduce_sum[bin] += addend;
+          multi_reduce_min[bin].min(initVal - delta);
+          multi_reduce_max[bin].max(initVal + delta);
+        }
+      });
+    }
+
+    for (size_t bin = 0; bin < num_bins; ++bin) {
+      ASSERT_EQ(transition_sum.get(bin), NumericType(initVal + addend));
+      ASSERT_EQ(transition_min.get(bin), NumericType(initVal - delta));
+      ASSERT_EQ(transition_max.get(bin), NumericType(initVal + delta));
+
+      ASSERT_EQ((NumericType)transition_sum[bin].get(),
+                NumericType(initVal + addend));
+      ASSERT_EQ((NumericType)transition_min[bin].get(),
+                NumericType(initVal - delta));
+      ASSERT_EQ((NumericType)transition_max[bin].get(),
+                NumericType(initVal + delta));
+    }
+  }
+};
+
+template <typename MultiReducePolicy,
+          typename NumericType>
+struct BitwiseMultiReducerTransitionHelper
+{
+  static constexpr size_t num_bins = 4;
+
+  RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType> transition_bitand;
+  RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType> transition_bitor;
+
+  template <typename ConstructPhase>
+  BitwiseMultiReducerTransitionHelper(ConstructPhase, NumericType initVal)
+      : transition_bitand(
+            ConstructPhase::Api::template make<RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType>>(
+                num_bins, initVal)),
+        transition_bitor(
+            ConstructPhase::Api::template make<RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType>>(
+                num_bins, initVal))
+  {
+  }
+
+  template <typename Phase>
+  void phase(Phase, NumericType initVal)
+  {
+    using Api = typename Phase::Api;
+    using PhaseForOnePol = typename Phase::ForOne;
+
+    Api::reset(transition_bitand, num_bins, initVal);
+    Api::reset(transition_bitor, num_bins, initVal);
+
+    ASSERT_EQ(transition_bitand.size(), num_bins);
+    ASSERT_EQ(transition_bitor.size(), num_bins);
+
+    for (size_t bin = 0; bin < num_bins; ++bin) {
+      ASSERT_EQ(transition_bitand.get(bin), initVal);
+      ASSERT_EQ(transition_bitor.get(bin), initVal);
+
+      ASSERT_EQ((NumericType)transition_bitand[bin].get(), initVal);
+      ASSERT_EQ((NumericType)transition_bitor[bin].get(), initVal);
+    }
+
+    auto& multi_reduce_bitand = transition_bitand;
+    auto& multi_reduce_bitor = transition_bitor;
+
+    const NumericType andMask = NumericType(7);
+    const NumericType orMask = NumericType(2);
+
+    if constexpr (std::is_base_of_v<RunOnDevice, PhaseForOnePol>) {
+      forone<PhaseForOnePol>( [=] RAJA_HOST_DEVICE () {
+        for (size_t bin = 0; bin < num_bins; ++bin) {
+          multi_reduce_bitand[bin] &= andMask;
+          multi_reduce_bitor[bin] |= orMask;
+        }
+      });
+    } else {
+      forone<PhaseForOnePol>( [=] () {
+        for (size_t bin = 0; bin < num_bins; ++bin) {
+          multi_reduce_bitand[bin] &= andMask;
+          multi_reduce_bitor[bin] |= orMask;
+        }
+      });
+    }
+
+    for (size_t bin = 0; bin < num_bins; ++bin) {
+      ASSERT_EQ(transition_bitand.get(bin), NumericType(initVal & andMask));
+      ASSERT_EQ(transition_bitor.get(bin), NumericType(initVal | orMask));
+
+      ASSERT_EQ((NumericType)transition_bitand[bin].get(),
+                NumericType(initVal & andMask));
+      ASSERT_EQ((NumericType)transition_bitor[bin].get(),
+                NumericType(initVal | orMask));
+    }
+  }
+};
+
+template <typename MultiReducePolicy,
+          typename NumericType,
+          typename ForOnePol,
+          template <typename, typename> class Helper>
+void run_multi_reducer_reset_transition_chains()
+{
+  using SeqPhase =
+      TransitionPhase<ReducerApi<RAJA::PolicyList<RAJA::Policy::sequential>>,
+                      test_seq>;
+  using RuntimePhase =
+      TransitionPhase<ReducerApi<RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value>>,
+                      ForOnePol>;
+  using LegacySeqPhase =
+      TransitionPhase<ReducerApi<RAJA::PolicyList<>>,
+                      test_seq>;
+  using LegacyRuntimePhase =
+      TransitionPhase<ReducerApi<RAJA::PolicyList<>>,
+                      ForOnePol>;
+
+  {
+    Helper<MultiReducePolicy, NumericType> tester(
+                 SeqPhase{},           NumericType(10));
+    tester.phase(RuntimePhase{},       NumericType(20));
+    tester.phase(SeqPhase{},           NumericType(30));
+    tester.phase(RuntimePhase{},       NumericType(40));
+    tester.phase(LegacyRuntimePhase{}, NumericType(50));
+    tester.phase(RuntimePhase{},       NumericType(60));
+  }
+
+  {
+    Helper<MultiReducePolicy, NumericType> tester(
+                 RuntimePhase{},       NumericType(110));
+    tester.phase(SeqPhase{},           NumericType(120));
+    tester.phase(RuntimePhase{},       NumericType(130));
+    tester.phase(LegacyRuntimePhase{}, NumericType(140));
+  }
+
+  {
+    Helper<MultiReducePolicy, NumericType> tester(
+                 LegacyRuntimePhase{}, NumericType(210));
+    tester.phase(LegacySeqPhase{},     NumericType(220));
+    tester.phase(LegacyRuntimePhase{}, NumericType(230));
+    tester.phase(SeqPhase{},           NumericType(240));
+    tester.phase(LegacySeqPhase{},     NumericType(250));
+  }
+}
+
+
 TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerBasicReset)
 {
   using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
@@ -447,11 +658,28 @@ TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerContainerReset)
   tester(c10);
 }
 
+TYPED_TEST_P(MultiReducerResetUnitTest, MultiReducerResetTransition)
+{
+  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
+  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
+  using ForOnePol = typename camp::at<TypeParam, camp::num<2>>::type;
+
+  run_multi_reducer_reset_transition_chains<
+      MultiReducePolicy, NumericType, ForOnePol,
+      CoreMultiReducerTransitionHelper>();
+  if constexpr (std::is_integral_v<NumericType>) {
+    run_multi_reducer_reset_transition_chains<
+        MultiReducePolicy, NumericType, ForOnePol,
+        BitwiseMultiReducerTransitionHelper>();
+  }
+}
+
 
 
 REGISTER_TYPED_TEST_SUITE_P(MultiReducerResetUnitTest,
                             MultiReducerBasicReset,
                             MultiReducerSingleReset,
-                            MultiReducerContainerReset);
+                            MultiReducerContainerReset,
+                            MultiReducerResetTransition);
 
 #endif  //__TEST_MULTI_REDUCER_RESET__
