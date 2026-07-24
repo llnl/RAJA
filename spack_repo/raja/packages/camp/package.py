@@ -25,6 +25,9 @@ class Camp(CMakePackage, CudaPackage, ROCmPackage):
     license("BSD-3-Clause")
 
     version("main", branch="main", submodules=False)
+    # This is for testing CAMP under RAJA prior to CAMP release; DO NOT push this change to spack-packages
+    # This is the commit for CAMP and should match the tpl/camp submodule being used
+    version("develop", commit="f67aeaafb7430e21a72d5aed7b5a18b322ef9ce5", submodules=False)
     version(
         "2026.07.0",
         tag="v2026.07.0",
