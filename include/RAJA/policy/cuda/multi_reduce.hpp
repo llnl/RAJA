@@ -408,7 +408,7 @@ private:
       return;
     }
 
-    for (int tally_rep = tally_replication + 1; tally_rep > 0; --tally_rep)
+    for (int tally_rep = tally_replication; tally_rep > 0; --tally_rep)
     {
       for (int bin = num_bins; bin > 0; --bin)
       {
