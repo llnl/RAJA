@@ -254,10 +254,8 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  BaseReduce(Policy RAJA_UNUSED_ARG(p),
-             T init_val,
-             T identity_ = Reduce::identity())
-      : c {init_val, identity_}
+  BaseReduce(Policy p, T init_val, T identity_ = Reduce::identity())
+      : c {p, init_val, identity_}
   {}
 
   RAJA_SUPPRESS_HD_WARN
@@ -272,10 +270,10 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  void reset(Policy RAJA_UNUSED_ARG(p), T val, T identity_ = Reduce::identity())
+  void reset(Policy p, T val, T identity_ = Reduce::identity())
   {
     operator T();  // automatic get() before reset
-    c.reset(val, identity_);
+    c.reset(p, val, identity_);
   }
 
   //! prohibit compiler-generated copy assignment

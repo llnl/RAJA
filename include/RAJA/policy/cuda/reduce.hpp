@@ -1057,7 +1057,9 @@ public:
         tally_or_val_ptr {},
         val(init_val, identity_)
   {
-    assert_valid(p);
+    policy_supported_or_throw("CudaReduce",
+                              reduction_supported_policies_t<Policy::cuda> {},
+                              p);
     if (p != Policy::sequential)
     {
       tally_or_val_ptr.list = new TallyType;
@@ -1073,7 +1075,9 @@ public:
 
   void reset(RAJA::Policy p, T in_val, T identity_ = Combiner::identity())
   {
-    assert_valid(p);
+    policy_supported_or_throw("CudaReduce::reset",
+                              reduction_supported_policies_t<Policy::cuda> {},
+                              p);
     operator T();  // syncs device
     if (p == Policy::sequential)
     {
@@ -1227,23 +1231,6 @@ private:
   tally_u tally_or_val_ptr;
 
   reduce_data_type val;
-
-  void assert_valid(Policy p)
-  {
-    switch (p)
-    {
-      case Policy::undefined:
-      case Policy::sequential:
-      case Policy::openmp:
-      case Policy::cuda:
-        return;
-      default:
-        std::string msg;
-        msg += "CudaReduce: unsupported policy ";
-        msg += get_policy_name(p);
-        throw std::runtime_error(msg);
-    }
-  }
 };
 
 }  // end namespace cuda

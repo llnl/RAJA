@@ -54,6 +54,21 @@ class ReduceOMP  // This is a Combinable and is the first layer of that
 public:
   using Base::Base;
 
+  ReduceOMP(Policy p, T init_val, T identity_) : Base(init_val, identity_)
+  {
+    policy_supported_or_throw("OpenMPReduce",
+                              reduction_supported_policies_t<Policy::openmp> {},
+                              p);
+  }
+
+  void reset(Policy p, T init_val, T identity_)
+  {
+    policy_supported_or_throw("OpenMPReduce::reset",
+                              reduction_supported_policies_t<Policy::openmp> {},
+                              p);
+    Base::reset(init_val, identity_);
+  }
+
   ~ReduceOMP()
   {
     if (Base::parent && Base::my_data != Base::identity)
@@ -87,6 +102,14 @@ class ReduceOMPOrdered  // This is a Combinable and is the first layer of that
   std::shared_ptr<std::vector<T>> data;
 
 public:
+  ReduceOMPOrdered(Policy p, T init_val, T identity_)
+      : ReduceOMPOrdered(init_val, identity_)
+  {
+    policy_supported_or_throw("OpenMPReduceOrdered",
+                              reduction_supported_policies_t<Policy::openmp> {},
+                              p);
+  }
+
   ReduceOMPOrdered(T init_val, T identity_)
       : Base(init_val, identity_),
         data(std::make_shared<std::vector<T>>(omp_get_max_threads(), identity_))
@@ -99,6 +122,14 @@ public:
     {
       data_i = Base::identity;
     }
+  }
+
+  void reset(Policy p, T init_val, T identity_)
+  {
+    policy_supported_or_throw("OpenMPReduceOrdered::reset",
+                              reduction_supported_policies_t<Policy::openmp> {},
+                              p);
+    reset(init_val, identity_);
   }
 
   ~ReduceOMPOrdered()
