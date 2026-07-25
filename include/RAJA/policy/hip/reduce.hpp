@@ -1053,7 +1053,7 @@ public:
     policy_supported_or_throw("HipReduce",
                               reduction_supported_policies_t<Policy::hip> {},
                               p);
-    if (p != Policy::sequential)
+    if (policy_supported(PolicyList<Policy::openmp, Policy::hip> {}, p))
     {
       tally_or_val_ptr.list = new TallyType;
     }
@@ -1072,7 +1072,7 @@ public:
                               reduction_supported_policies_t<Policy::hip> {},
                               p);
     operator T();  // syncs device
-    if (p == Policy::sequential)
+    if (!policy_supported(PolicyList<Policy::openmp, Policy::hip> {}, p))
     {
       if (tally_or_val_ptr.list)
       {

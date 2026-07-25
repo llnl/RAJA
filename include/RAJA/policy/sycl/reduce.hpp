@@ -34,6 +34,8 @@
 
 #include "RAJA/policy/sycl/policy.hpp"
 
+#include "camp/resource/sycl.hpp"
+
 namespace RAJA
 {
 
@@ -42,23 +44,7 @@ namespace sycl
 
 constexpr bool uses_runtime_offload(Policy p)
 {
-  return p != Policy::sequential;
-}
-
-RAJA_INLINE void assert_valid(Policy p)
-{
-  switch (p)
-  {
-    case Policy::undefined:
-    case Policy::sequential:
-    case Policy::sycl:
-      return;
-    default:
-      std::string msg;
-      msg += "SyclReduce: unsupported policy ";
-      msg += get_policy_name(p);
-      throw std::runtime_error(msg);
-  }
+  return policy_supported(PolicyList<Policy::sycl> {}, p);
 }
 
 template<typename T, typename I>
@@ -318,7 +304,9 @@ struct TargetReduce
 
   void reset(Policy p, T init_val_, T identity_ = Reducer::identity())
   {
-    sycl::assert_valid(p);
+    policy_supported_or_throw("SyclReduce::reset",
+                              reduction_supported_policies_t<Policy::sycl> {},
+                              p);
     const bool use_offload = sycl::uses_runtime_offload(p);
     if (val.uses_offload() && use_offload)
     {
@@ -392,7 +380,9 @@ struct TargetReduce
 private:
   static bool checked_uses_offload(Policy p)
   {
-    sycl::assert_valid(p);
+    policy_supported_or_throw("SyclReduce",
+                              reduction_supported_policies_t<Policy::sycl> {},
+                              p);
     return sycl::uses_runtime_offload(p);
   }
 
@@ -490,7 +480,9 @@ struct TargetReduceLoc
              IndexType identity_loc_ =
                  RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {
-    sycl::assert_valid(p);
+    policy_supported_or_throw("SyclReduceLoc::reset",
+                              reduction_supported_policies_t<Policy::sycl> {},
+                              p);
     const bool use_offload = sycl::uses_runtime_offload(p);
     if (val.uses_offload() && use_offload)
     {
@@ -579,7 +571,9 @@ struct TargetReduceLoc
 private:
   static bool checked_uses_offload(Policy p)
   {
-    sycl::assert_valid(p);
+    policy_supported_or_throw("SyclReduceLoc",
+                              reduction_supported_policies_t<Policy::sycl> {},
+                              p);
     return sycl::uses_runtime_offload(p);
   }
 

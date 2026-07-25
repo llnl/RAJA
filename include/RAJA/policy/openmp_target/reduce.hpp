@@ -26,7 +26,7 @@
 
 #include "RAJA/pattern/reduce.hpp"
 
-#include "RAJA/policy/openmp/policy.hpp"
+#include "RAJA/policy/openmp_target/policy.hpp"
 
 namespace RAJA
 {
@@ -35,23 +35,7 @@ namespace omp
 {
 constexpr bool uses_runtime_offload(Policy p)
 {
-  return p != Policy::sequential;
-}
-
-RAJA_INLINE void assert_valid(Policy p)
-{
-  switch (p)
-  {
-    case Policy::undefined:
-    case Policy::sequential:
-    case Policy::target_openmp:
-      return;
-    default:
-      std::string msg;
-      msg += "OpenMPTargetReduce: unsupported policy ";
-      msg += get_policy_name(p);
-      throw std::runtime_error(msg);
-  }
+  return policy_supported(PolicyList<Policy::target_openmp> {}, p);
 }
 
 #pragma omp declare target
@@ -302,7 +286,9 @@ struct TargetReduce
 
   void reset(Policy p, T init_val_, T identity_ = Reducer::identity())
   {
-    omp::assert_valid(p);
+    policy_supported_or_throw(
+        "OpenMPTargetReduce::reset",
+        reduction_supported_policies_t<Policy::target_openmp> {}, p);
     const bool use_offload = omp::uses_runtime_offload(p);
     if (val.uses_offload() && use_offload)
     {
@@ -389,7 +375,9 @@ struct TargetReduce
 private:
   static bool checked_uses_offload(Policy p)
   {
-    omp::assert_valid(p);
+    policy_supported_or_throw(
+        "OpenMPTargetReduce",
+        reduction_supported_policies_t<Policy::target_openmp> {}, p);
     return omp::uses_runtime_offload(p);
   }
 
@@ -483,7 +471,9 @@ struct TargetReduceLoc
              IndexType identity_loc_ =
                  RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {
-    omp::assert_valid(p);
+    policy_supported_or_throw(
+        "OpenMPTargetReduceLoc::reset",
+        reduction_supported_policies_t<Policy::target_openmp> {}, p);
     const bool use_offload = omp::uses_runtime_offload(p);
     if (val.uses_offload() && use_offload)
     {
@@ -578,7 +568,9 @@ struct TargetReduceLoc
 private:
   static bool checked_uses_offload(Policy p)
   {
-    omp::assert_valid(p);
+    policy_supported_or_throw(
+        "OpenMPTargetReduceLoc",
+        reduction_supported_policies_t<Policy::target_openmp> {}, p);
     return omp::uses_runtime_offload(p);
   }
 

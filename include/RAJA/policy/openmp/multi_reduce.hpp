@@ -88,7 +88,8 @@ struct MultiReduceDataOMP<
         m_num_bins(container.size()),
         m_data(nullptr),
         m_identity(identity),
-        m_create_data_on_copy(p != Policy::sequential)
+        m_create_data_on_copy(policy_supported(PolicyList<Policy::openmp> {},
+                                               p))
   {
     m_data = create_data(container, m_num_bins);
   }
@@ -166,7 +167,7 @@ struct MultiReduceDataOMP<
   void reset(Policy p, Container const& container, T identity)
   {
     reset(container, identity);
-    m_create_data_on_copy = (p != Policy::sequential);
+    m_create_data_on_copy = policy_supported(PolicyList<Policy::openmp> {}, p);
   }
 
   size_t num_bins() const { return m_num_bins; }
