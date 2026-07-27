@@ -140,8 +140,7 @@ struct Reduce_Data
       return;
     }
 
-    ::sycl::queue& q = currentResourceQueue();
-
+    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
 
     device = reinterpret_cast<T*>(
         ::sycl::malloc_device(sycl::MaxNumTeams * sizeof(T), q));
@@ -180,7 +179,7 @@ struct Reduce_Data
       return;
     }
 
-    ::sycl::queue& q = currentResourceQueue();
+    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
 
     // precondition: host and device are valid pointers
     auto e =
@@ -198,12 +197,12 @@ struct Reduce_Data
       return;
     }
 
-    ::sycl::queue& q = currentResourceQueue();
+    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
 
     // precondition: host and device are valid pointers
     auto e =
         q.memcpy(reinterpret_cast<void*>(host), reinterpret_cast<void*>(device),
-                       sycl::MaxNumTeams * sizeof(T));
+                 sycl::MaxNumTeams * sizeof(T));
 
     e.wait();
   }
@@ -216,7 +215,7 @@ struct Reduce_Data
       return;
     }
 
-    ::sycl::queue& q = currentResourceQueue();
+    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
 
     if (device)
     {
@@ -315,7 +314,7 @@ struct TargetReduce
     }
     else if (val.uses_offload() && !use_offload)
     {
-    val.cleanup(info);
+      val.cleanup(info);
       val = sycl::Reduce_Data<T>(identity_, identity_, info, false);
     }
     else if (!val.uses_offload() && use_offload)
@@ -493,8 +492,8 @@ struct TargetReduceLoc
     }
     else if (val.uses_offload() && !use_offload)
     {
-    val.cleanup(info);
-    loc.cleanup(info);
+      val.cleanup(info);
+      loc.cleanup(info);
       val = sycl::Reduce_Data<T>(identity_val_, identity_val_, info, false);
       loc = sycl::Reduce_Data<IndexType>(identity_loc_, identity_loc_, info,
                                          false);

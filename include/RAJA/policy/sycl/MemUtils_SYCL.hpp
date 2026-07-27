@@ -27,48 +27,17 @@
 
 #include "RAJA/util/sycl_compat.hpp"
 
-#include <cassert>
 #include <cstddef>
-#include <cstdio>
-#include <mutex>
-#include <type_traits>
-#include <unordered_map>
-
 
 #include "RAJA/util/basic_mempool.hpp"
-#include "RAJA/util/types.hpp"
 
-#include "RAJA/policy/sycl/policy.hpp"
+#include "camp/resource/sycl.hpp"
 
 namespace RAJA
 {
 
 namespace sycl
 {
-
-namespace detail
-{
-
-//! struct containing data necessary to coordinate kernel launches with reducers
-struct syclInfo
-{
-  sycl_dim_t gridDim {0};
-  sycl_dim_t blockDim {0};
-  ::sycl::queue qu    = ::sycl::queue();
-  bool setup_reducers = false;
-};
-
-extern syclInfo g_status;
-
-thread_local extern syclInfo tl_status;
-
-extern std::unordered_map<::sycl::queue, bool> g_queue_info_map;
-
-}  // namespace detail
-
-//! get queue for current launch
-RAJA_INLINE
-::sycl::queue& currentResourceQueue() { return detail::tl_status.qu; }
 
 //! Allocator for pinned memory for use in basic_mempool
 struct PinnedAllocator
