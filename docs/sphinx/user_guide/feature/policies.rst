@@ -19,7 +19,7 @@ programming model back-end to use and other information about the execution
 pattern, such as number of CUDA threads per thread block, whether execution is
 synchronous or asynchronous, etc. This section describes RAJA policies for
 loop kernel execution, scans, sorts, reductions, atomics, etc. Please
-detailed examples in :ref:`tutorial-label` for a variety of use cases.
+see detailed examples in :ref:`tutorial-label` for a variety of use cases.
 
 As RAJA functionality evolves, new policies are added and some may
 be redefined and to work in new ways.
@@ -42,8 +42,8 @@ Sequential CPU Policies
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 For the sequential CPU back-end, RAJA provides policies that allow developers
-to have some control over the optimizations that compilers are allow to
-apply during code compilation.
+to have some control over the optimizations that compilers are allowed to
+apply.
 
  ====================================== ============= ==========================
  Sequential/SIMD Execution Policies     Works with    Brief description
@@ -53,12 +53,12 @@ apply during code compilation.
  seq_exec                               forall,       Sequential execution,
                                         kernel (For), where the compiler is
                                         scan,         allowed to apply any
-                                        sort          any optimizations
+                                        sort          optimizations
                                                       that its heuristics deem
                                                       beneficial; i.e., no loop
                                                       decorations (pragmas or 
-                                                      intrinsics) in the RAJA
-                                                      implementation.
+                                                      intrinsics) are used in
+                                                      the RAJA implementation.
  simd_exec                              forall,       Try to force generation of
                                         kernel (For), SIMD instructions via
                                         scan          compiler hints in RAJA's
@@ -69,11 +69,9 @@ apply during code compilation.
 OpenMP Parallel CPU Policies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For the OpenMP CPU multithreading back-end, RAJA has policies that can be used
-by themselves to execute kernels. In particular, they create an OpenMP parallel
-region and execute a kernel within it. To distinguish these in this discussion,
-we refer to these as **full policies**. These policies are provided
-to users for convenience in common use cases.
+For the OpenMP CPU multithreading back-end, RAJA has policies that create
+an OpenMP parallel region and execute a kernel within it. We refer to these
+as **full policies**. They are provided to support common OpenMP use cases.
 
 RAJA also provides other OpenMP policies, which we refer to as
 **partial policies**, since they need to be used in combination with other
@@ -82,11 +80,11 @@ policies. Typically, they work by providing an *outer policy* and an
 flexibility to create more complex execution patterns.
 
 
-.. note:: To control the number of threads used by OpenMP policies,
-          set the value of the environment variable 'OMP_NUM_THREADS' (which is
+.. note:: To control the number of threads used by OpenMP, users may set
+          the value of the environment variable 'OMP_NUM_THREADS' (which is
           fixed for duration of run), or call the OpenMP routine
-          'omp_set_num_threads(nthreads)' in your application, which allows
-          one to change the number of threads at run time.
+          'omp_set_num_threads(nthreads)' in their applications, which allows
+          changing the number of threads at run time.
 
 The full policies are described in the following table. Partial policies
 are described in other tables below.
@@ -118,16 +116,15 @@ are described in other tables below.
 
 .. note:: For the OpenMP scheduling policies above that take a ``ChunkSize``
           parameter, the chunk size is optional. If not provided, the
-          default chunk size that OpenMP applies will be used, which may
-          be specific to the OpenMP implementation in use. For this case,
-          the RAJA policy syntax is
+          default chunk size that the OpenMP implementation applies is used.
+          For this case, the RAJA policy syntax is
           ``omp_parallel_for_{static|dynamic|guided}_exec< >``, which will
           result in the OpenMP pragma
           ``omp parallel for schedule({static|dynamic|guided})`` being applied.
 
-RAJA provides an (outer) OpenMP CPU policy to create a parallel region in
-which to execute a kernel. It requires an inner policy that defines how a
-kernel will execute in parallel inside the region.
+RAJA provides *outer* OpenMP CPU policies to create a parallel region in
+which to execute a kernel. The outer policies require an inner policy that
+defines how a kernel will execute in parallel inside the region.
 
  ====================================== ============= ==========================
  OpenMP CPU Outer Policies              Works with    Brief description
@@ -142,7 +139,7 @@ kernel will execute in parallel inside the region.
                                                       pragma.
  ====================================== ============= ==========================
 
-Finally, we summarize the inner policies that RAJA provides for OpenMP.
+The table below summarizes the *inner* policies that RAJA provides for OpenMP.
 These policies are passed to the RAJA ``omp_parallel_exec`` outer policy as
 a template argument as described above.
 
@@ -181,17 +178,16 @@ a template argument as described above.
  ====================================== ============= ==========================
 
 .. important:: **RAJA only provides a nowait policy option for static
-               scheduling** since that is the only schedule case that can be
-               used with nowait and be correct in general when executing
-               multiple loops in a single parallel region. Paraphrasing the
-               OpenMP standard:
+               scheduling** since that is the only case in which nowait can be
+               used and be correct in general when executing multiple loops
+               in a single parallel region. Paraphrasing the OpenMP standard:
                *programs that depend on which thread executes a particular
                loop iteration under any circumstance other than static schedule
                are non-conforming.*
 
 .. note:: As in the RAJA full policies for OpenMP scheduling, the ``ChunkSize``
           is optional. If not provided, the default chunk size that the OpenMP
-          implementation applies will be used.
+          implementation applies is used.
 
 .. note:: As noted above, RAJA inner OpenMP policies must be used within an
           **existing** parallel region to work properly. Embedding an inner
@@ -225,9 +221,9 @@ a template argument as described above.
           kernel. Thus, threads can start working on the second kernel while
           others are still working on the first kernel. In general, this will
           be correct when the iteration segments used in the two kernels are
-          the same and each kernel is data parallel. Static scheduling is
-          applied to both kernels. The second kernel uses the 
-          ``RAJA::omp_for_static_exec`` policy (NO 'no wait' clause), which
+          the same and their are no loop carried dependences in either kernel.
+          Static scheduling is applied to both kernels. The second kernel uses the 
+          ``RAJA::omp_for_static_exec`` policy (without 'no wait' clause), which
           means that all threads will complete before the kernel exits. In
           this example, this is not really needed since there is no
           more code to execute in the parallel region and the 
@@ -239,12 +235,9 @@ GPU Policies for CUDA and HIP
 
 RAJA policies for GPU execution using CUDA or HIP are essentially identical.
 The only difference is that CUDA policies have the prefix ``cuda_`` and HIP
-policies have the prefix ``hip_``.
-
-Rows with angle brackets are templated. Examples include
-``cuda/hip_exec<BLOCK_SIZE>``, ``cuda/hip_exec_base<with_reduce, BLOCK_SIZE>``,
-``cuda/hip_thread_size_x_direct<nx_threads>``, and
-``cuda/hip_block_size_x_direct<nx_blocks>``.
+policies have the prefix ``hip_``. The policies in the following table that
+contain angle brackets indicate template parameters used to specialize
+execution behavior.
 
 +----------------------------------------------------+---------------+---------------------------------+
 | CUDA/HIP Execution Policies                        | Works with    | Brief description               |
@@ -262,7 +255,7 @@ Rows with angle brackets are templated. Examples include
 |                                                    |               | recommended for use with        |
 |                                                    |               | kernels containing reductions.  |
 |                                                    |               | In general, using the occupancy |
-|                                                    |               | calculator policies improves    |
+|                                                    |               | calculator internally improves  |
 |                                                    |               | performance of kernels with     |
 |                                                    |               | reductions. Exactly how much    |
 |                                                    |               | occupancy to use differs by     |
@@ -552,7 +545,7 @@ Rows with angle brackets are templated. Examples include
 |                                                    |               | map work to threads in a warp   |
 |                                                    |               | using a warp-stride loop.       |
 +----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_warp_masked_direct<BitMask<..>>           | kernel        | Mmap work directly to threads   |
+| cuda/hip_warp_masked_direct<BitMask<..>>           | kernel        | Map work directly to threads   |
 |                                                    | (For)         | in a warp using a bit mask.     |
 |                                                    |               | Cannot be used with             |
 |                                                    |               | cuda/hip_thread_x_* policies.   |
@@ -578,9 +571,9 @@ Rows with angle brackets are templated. Examples include
 +----------------------------------------------------+---------------+---------------------------------+
 
 When a CUDA or HIP policy leaves parameters like the block size and/or grid size
-unspecified a concretizer object is used to decide those parameters. The
-following concretizers are available to use in the ``cuda/hip_exec_occ_custom``
-policies:
+unspecified, such as the ``cuda/hip_exec_occ_custom`` in the table above, a
+concretizer object is used to decide those parameters. RAJA provides the following concretizers
+to use with the ``cuda/hip_exec_occ_custom`` policies:
 
 +----------------------------------------------------+-----------------------------------------+
 | Execution Policy                                   | Brief description                       |
@@ -603,14 +596,14 @@ policies:
 +----------------------------------------------------+-----------------------------------------+
 | Cuda/HipFractionOffsetOccupancyConcretizer<        | Uses a fraction and offset to choose an |
 | Fraction<size_t, numerator, denomenator>,          | occupancy based on the max occupancy    |
-| BLOCKS_PER_SM_OFFSET>                              | Using the following formula:            |
+| BLOCKS_PER_SM_OFFSET>                              | using the following formula:            |
 |                                                    | (Fraction * kernel_max_blocks_per_sm +  |
 |                                                    | BLOCKS_PER_SM_OFFSET) * sm_per_device   |
 +----------------------------------------------------+-----------------------------------------+
 
 Several notable constraints apply to RAJA CUDA/HIP *direct_unchecked* policies.
 
-.. note:: * DirectUnchecked policies do not mask out threads that are out-of-range.
+.. note:: * Direct unchecked policies do not mask out threads that are out-of-range.
             So they should only be used when the size of the range matches the
             size of the block or grid.
           * Repeating direct_unchecked policies with the same dimension in perfectly
@@ -621,11 +614,11 @@ Several notable constraints apply to RAJA CUDA/HIP *direct_unchecked* policies.
             spaces cannot be greater than the maximum allowable threads per
             block or blocks per grid. Typically, this is 1024 threads per
             block. Attempting to execute a kernel with more than the maximum
-            allowed causes the CUDA/HIP runtime to complain about
-            *illegal launch parameters.*
+            allowed threads per block or blocks per grid will cause the CUDA/HIP
+            runtime to complain about *illegal launch parameters.*
           * **Block-direct-unchecked policies are recommended for most tiled loop
             patterns. In these cases the CUDA/HIP kernel is launched with the
-            exact number of blocks needed so no checking is necessary.**
+            exact number of blocks needed so no iteration space size checking is needed.**
 
 Several notable constraints apply to RAJA CUDA/HIP *direct* policies.
 
@@ -646,13 +639,13 @@ Several notable constraints apply to RAJA CUDA/HIP *direct* policies.
             patterns, but may be inappropriate for kernels using block level
             synchronization.**
           * **Thread-direct policies are recommended only for certain loop
-            patterns, such as block tilings that produce small
+            patterns, such as block tiling, that produce small
             fixed size iteration spaces within each block.**
 
 Several notes regarding CUDA/HIP *loop* policies are also good to know.
 
-.. note:: * Loop policies perform a block or grid stride loop.
-            So they can be used when the size of the range exceeds the size of
+.. note:: * Loop policies perform a block or grid stride loop. Thus,
+            they can be used when the size of the loop iteration space exceeds the size of
             the block or grid.
           * There is no constraint on the product of sizes of the associated
             loop iteration space.
@@ -672,7 +665,7 @@ Finally
           be an issue as the block-direct-unchecked or block-direct policies may yield
           better performance.
 
-Several notes regarding the CUDA/HIP policy implementation that allow you to
+Several notes regarding the CUDA/HIP policy implementation allow you to
 write more explicit policies.
 
 .. note:: * Policies are a class template like cuda/hip_exec_explicit or
@@ -682,18 +675,18 @@ write more explicit policies.
             index set via a iteration_mapping enum template parameter. The
             possible values are DirectUnchecked, Direct, and StridedLoop.
           * Policies can be safely used with some synchronization constructs
-            via a kernel_sync_requirement enum template parameter. The
-            possible values are none and sync.
+            via a kernel_sync_requirement enum template parameter. **The
+            possible values are none and sync.**
           * Policies get their indices via an iteration getter class template
             like cuda/hip::IndexGlobal.
           * Iteration getters can be used with different dimensions via the
             named_dim enum. The possible values are x, y and z.
           * Iteration getters know the number of threads per block (block_size)
             and number of blocks per grid (grid_size) via integer template
-            parameters. These can be positive integers, in this case they must
+            parameters. These can be positive integers, in which case they must
             match the number used in the kernel launch. These can also be values
             of the named_usage enum. The possible values are unspecified and
-            ignored. For example in cuda_thread_x_direct block_size is
+            ignored. For example, in cuda_thread_x_direct block_size is
             unspecified so a runtime number of threads is used, but grid_size is
             ignored so blocks are ignored when getting indices.
 	    
@@ -738,12 +731,12 @@ GPU Policies for SYCL
 Device policy aliases
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To simplify transitions between GPU backends (CUDA/HIP/SYCL) and reduce
+To simplify transitions between GPU back-ends (CUDA/HIP/SYCL) and reduce
 downstream preprocessor conditionals, RAJA provides a small set of
-``device_*`` policy aliases that resolve to the *active* GPU backend.
+``device_*`` policy aliases that resolve to the *active* GPU back-end.
 
 In particular, the following aliases are available when building with a GPU
-device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
+device back-end (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
 ``RAJA_ENABLE_SYCL`` is enabled):
 
 .. list-table:: ``device_*`` alias coverage
@@ -766,13 +759,13 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - yes
-     - Backend atomic policy aliases are available on all three backends, for
+     - Back-end atomic policy aliases are available on all three back-ends, for
        example ``device_atomic_explicit<RAJA::seq_atomic>``.
    * - device_reduce
      - yes
      - yes
      - yes
-     - Backend default reduce policy alias.
+     - Back-end default reduce policy alias.
    * - device_reduce_atomic and device_reduce_base<with_atomic>
      - yes
      - yes
@@ -786,12 +779,12 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - no
      - CUDA/HIP expose multi_reduce aliases; SYCL does not currently
-       provide a backend-equivalent device_* mapping.
+       provide a back-end-equivalent device_* mapping.
    * - device_launch_t
      - yes
      - yes
      - yes
-     - Backend launch policy alias, for example ``device_launch_t<false>``.
+     - Back-end launch policy alias, for example ``device_launch_t<false>``.
    * - device_global_size_{x,y,z}_{direct,direct_unchecked,loop}<N>
      - yes
      - yes
@@ -844,7 +837,7 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - yes
-     - Flattened block/thread permutations are available across all backends.
+     - Flattened block/thread permutations are available across all back-ends.
    * - device_flatten_thread_size_*, device_flatten_block_size_*,
        device_flatten_global_size_*
      - yes
@@ -860,14 +853,13 @@ device backend (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
 .. important::
    For SYCL, these aliases use CUDA-like ``(x,y,z)`` naming with the standard
    RAJA mapping described above: ``x`` corresponds to SYCL dimension 2,
-   ``y`` to dimension 1, and ``z`` to dimension 0. These build options enable
+   ``y`` to SYCL dimension 1, and ``z`` to SYCL dimension 0. These build options enable
    the corresponding internal ``RAJA_*_ACTIVE`` compile-time macros used by
-   the implementation.
-   Device aliases that have no SYCL equivalent are intentionally not defined
-   under SYCL as usable policies; they are declared to fail at compile time
-   when instantiated so unsupported code paths are caught immediately.
+   the implementation. Device aliases that have no SYCL equivalent are intentionally not defined
+   under SYCL as usable policies. Attempting to use them will cause compile time failure
+   so unsupported code paths are caught immediately.
 
-See also the example ``examples/device-policy-aliases.cpp``.
+See also the example code ``examples/device-policy-aliases.cpp``.
 
 ======================================== ============= ==============================
 SYCL Execution Policies                  Works with    Brief description
@@ -876,7 +868,7 @@ sycl_exec<WORK_GROUP_SIZE>               forall,       Execute loop iterations
                                                        in a GPU kernel launched
                                                        with given work group
                                                        size.
-sycl_launch_t                            launch        Launches a sycl kernel,
+sycl_launch_t                            launch        Launches a SYCL kernel,
                                                        any code express within
                                                        the lambda is executed
                                                        on the device.
@@ -995,8 +987,8 @@ device, for example. They are summarized in the following table.
 RAJA IndexSet Execution Policies
 -----------------------------------------------------
 
-When an IndexSet iteration space is used in RAJA by passing an IndexSet
-to a ``RAJA::forall`` method, for example, an index set execution policy is
+When an IndexSet iteration space is used in RAJA by passing a ``RAJA::IndexSet``
+to a ``RAJA::forall`` method, an index set execution policy is
 required. An index set execution policy is a **two-level policy**: an 'outer'
 policy for iterating over segments in the index set, and an 'inner' policy
 used to execute the iterations defined by each segment. An index set execution
@@ -1005,7 +997,7 @@ policy type has the form::
   RAJA::ExecPolicy< segment_iteration_policy, segment_execution_policy >
 
 In general, any policy that can be used with a ``RAJA::forall`` method
-can be used as the segment execution policy. The following policies are
+can be used as an (inner) segment execution policy. The following policies are
 available to use for the outer segment iteration policy:
 
 ====================================== =========================================
@@ -1017,7 +1009,8 @@ seq_segit                              Iterate over index set segments
 
 **OpenMP CPU multithreading**
 omp_parallel_segit                     Create OpenMP parallel region and
-                                       iterate over segments in parallel inside                                        it; i.e., apply ``omp parallel for``
+                                       iterate over segments in parallel inside
+                                       it; i.e., apply ``omp parallel for``
                                        pragma on loop over segments.
 omp_parallel_for_segit                 Same as above.
 ====================================== =========================================
@@ -1029,7 +1022,9 @@ Parallel Region Policies
 Earlier, we discussed using the ``RAJA::region`` construct to
 execute multiple kernels in an OpenMP parallel region. To support source code
 portability, RAJA provides a sequential region concept that can be used to
-surround code that uses execution back-ends other than OpenMP. For example::
+surround code that uses execution back-ends other than OpenMP. This simplifies
+switching user code between sequential and parallel execution and does not
+require changing the code structure. For example::
 
   RAJA::region<RAJA::seq_region>([=]() {
 
@@ -1057,13 +1052,13 @@ Reduction Policies
 
 Each RAJA reduction object must be defined with a 'reduction policy'
 type. Reduction policy types are distinct from loop execution policy types.
-It is important to note the following constraints about RAJA reduction usage:
+It is important to note the following constraint about RAJA reduction usage:
 
-.. note:: To guarantee correctness, a **reduction policy must be consistent
-          with the loop execution policy** used. For example, a CUDA
-          reduction policy must be used when the execution policy is a
-          CUDA policy, an OpenMP reduction policy must be used when the
-          execution policy is an OpenMP policy, and so on.
+.. important:: To guarantee correctness, a **reduction policy must be consistent
+               with the loop execution policy** used. For example, a CUDA
+               reduction policy must be used when the execution policy is a
+               CUDA policy, an OpenMP reduction policy must be used when the
+               execution policy is an OpenMP policy, and so on.
 
 The following table summarizes RAJA reduction policy types:
 
@@ -1119,9 +1114,9 @@ sycl_reduce                                       any SYCL      Reduction in a S
                                                                 reduction value is finalized).
 ================================================= ============= ==========================================
 
-.. note:: RAJA reductions used with SIMD execution policies are not
-          guaranteed to generate correct results. So they should not be used
-          for kernels containing reductions.
+.. important:: RAJA reductions used with SIMD execution policies are not
+               guaranteed to generate correct results. So they should not be used
+               for kernels containing reductions.
 
 .. _multi-reducepolicy-label:
 
@@ -1133,11 +1128,11 @@ Each RAJA multi-reduction object must be defined with a 'multi-reduction policy'
 type. Multi-reduction policy types are distinct from loop execution policy types.
 It is important to note the following constraints about RAJA multi-reduction usage:
 
-.. note:: To guarantee correctness, a **multi-reduction policy must be compatible
-          with the loop execution policy** used. For example, a CUDA
-          multi-reduction policy must be used when the execution policy is a
-          CUDA policy, an OpenMP multi-reduction policy must be used when the
-          execution policy is an OpenMP policy, and so on.
+.. important:: To guarantee correctness, a **multi-reduction policy must be compatible
+               with the loop execution policy** used. For example, a CUDA
+               multi-reduction policy must be used when the execution policy is a
+               CUDA policy, an OpenMP multi-reduction policy must be used when the
+               execution policy is an OpenMP policy, and so on.
 
 The following table summarizes RAJA multi-reduction policy types:
 
@@ -1186,9 +1181,9 @@ cuda/hip_multi_reduce_atomic_global_no_replication_host_init  any CUDA/HIP  Same
 
 ============================================================= ============= ==========================================
 
-.. note:: RAJA multi-reductions used with SIMD execution policies are not
-          guaranteed to generate correct results. So they should not be used
-          for kernels containing multi-reductions.
+.. important:: RAJA multi-reductions used with SIMD execution policies are not
+               guaranteed to generate correct results. So they should not be used
+               for kernels containing multi-reductions.
 
 .. _atomicpolicy-label:
 
@@ -1199,9 +1194,10 @@ Atomic Policies
 Each RAJA atomic operation must be defined with an 'atomic policy'
 type. Atomic policy types are distinct from loop execution policy types.
 
-.. note :: An atomic policy type must be consistent with the loop execution
-           policy for the kernel in which the atomic operation is used. The
-           following table summarizes RAJA atomic policies and usage.
+.. important:: An atomic policy type must be consistent with the loop execution
+               policy for the kernel in which the atomic operation is used.
+
+The following table summarizes RAJA atomic policies and usage.
 
 ============================= ============= ========================================
 Atomic Policy                 Loop Policies Brief description
@@ -1236,9 +1232,10 @@ auto_atomic                   seq_exec,     Atomic operation *compatible* with
 .. note:: The ``cuda_atomic_explicit`` and ``hip_atomic_explicit`` policies
           take a host atomic policy template parameter. They are intended to
           be used with kernels that are host-device decorated to be used in
-          either a host or device execution context.
+          either a host or device execution context, possibly decided at run time.
 
-Here is an example illustrating use of the ``cuda_atomic_explicit`` policy::
+Here is an example illustrating use of the ``cuda_atomic_explicit`` policy with an
+OpenMP host policy::
 
   auto kernel = [=] RAJA_HOST_DEVICE (RAJA::Index_type i) {
     RAJA::atomicAdd< RAJA::cuda_atomic_explicit<omp_atomic> >(&sum, 1);
