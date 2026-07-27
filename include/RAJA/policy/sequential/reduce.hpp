@@ -53,14 +53,11 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  ReduceSeq(Policy p, T init_val, T identity_)
-      : Base(init_val, identity_)
+  ReduceSeq(Policy p, T init_val, T identity_) : Base(init_val, identity_)
   {
 #if !defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
-    policy_supported_or_throw("SeqReduce",
-                              reduction_supported_policies_t<
-                                  Policy::sequential> {},
-                              p);
+    policy_supported_or_throw(
+        "SeqReduce", reduction_supported_policies_t<Policy::sequential> {}, p);
 #endif
   }
 
@@ -70,10 +67,9 @@ public:
   void reset(Policy p, T init_val, T identity_)
   {
 #if !defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
-    policy_supported_or_throw("SeqReduce::reset",
-                              reduction_supported_policies_t<
-                                  Policy::sequential> {},
-                              p);
+    policy_supported_or_throw(
+        "SeqReduce::reset",
+        reduction_supported_policies_t<Policy::sequential> {}, p);
 #endif
     Base::reset(init_val, identity_);
   }

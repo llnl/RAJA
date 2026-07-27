@@ -835,17 +835,16 @@ public:
   template<typename Container>
   MultiReduceDataCuda(Policy p, Container const& container, T identity)
       : m_parent(this),
-        m_sync_list(
-            policy_supported(PolicyList<Policy::cuda> {}, p) ? new SyncList
-                                                              : nullptr),
+        m_sync_list(policy_supported(PolicyList<Policy::cuda> {}, p)
+                        ? new SyncList
+                        : nullptr),
         m_data(policy_supported(PolicyList<Policy::cuda> {}, p),
                policy_supported(PolicyList<Policy::openmp> {}, p),
                container,
                identity)
   {
-    policy_supported_or_throw("CudaMultiReduce",
-                              reduction_supported_policies_t<Policy::cuda> {},
-                              p);
+    policy_supported_or_throw(
+        "CudaMultiReduce", reduction_supported_policies_t<Policy::cuda> {}, p);
   }
 
   //! copy and on host attempt to setup for device
@@ -957,8 +956,7 @@ public:
     }
     m_data.reset_permanent(new_support_gpu,
                            policy_supported(PolicyList<Policy::openmp> {}, p),
-                           container,
-                           identity, old_support_gpu);
+                           container, identity, old_support_gpu);
     if (!old_support_gpu && new_support_gpu)
     {
       m_sync_list = new SyncList;

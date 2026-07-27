@@ -68,7 +68,8 @@ constexpr const char* get_policy_name(Policy p)
 }
 
 template<RAJA::Policy... policies>
-struct PolicyList {};
+struct PolicyList
+{};
 
 template<RAJA::Policy BackendPolicy>
 struct reduction_supported_policies

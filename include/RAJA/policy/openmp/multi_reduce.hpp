@@ -88,8 +88,8 @@ struct MultiReduceDataOMP<
         m_num_bins(container.size()),
         m_data(nullptr),
         m_identity(identity),
-        m_create_data_on_copy(policy_supported(PolicyList<Policy::openmp> {},
-                                               p))
+        m_create_data_on_copy(
+            policy_supported(PolicyList<Policy::openmp> {}, p))
   {
     m_data = create_data(container, m_num_bins);
   }

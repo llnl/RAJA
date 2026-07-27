@@ -379,9 +379,8 @@ struct TargetReduce
 private:
   static bool checked_uses_offload(Policy p)
   {
-    policy_supported_or_throw("SyclReduce",
-                              reduction_supported_policies_t<Policy::sycl> {},
-                              p);
+    policy_supported_or_throw(
+        "SyclReduce", reduction_supported_policies_t<Policy::sycl> {}, p);
     return sycl::uses_runtime_offload(p);
   }
 
@@ -570,9 +569,8 @@ struct TargetReduceLoc
 private:
   static bool checked_uses_offload(Policy p)
   {
-    policy_supported_or_throw("SyclReduceLoc",
-                              reduction_supported_policies_t<Policy::sycl> {},
-                              p);
+    policy_supported_or_throw(
+        "SyclReduceLoc", reduction_supported_policies_t<Policy::sycl> {}, p);
     return sycl::uses_runtime_offload(p);
   }
 

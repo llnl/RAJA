@@ -57,9 +57,8 @@ public:
 
   ReduceOMP(Policy p, T init_val, T identity_) : Base(init_val, identity_)
   {
-    policy_supported_or_throw("OpenMPReduce",
-                              reduction_supported_policies_t<Policy::openmp> {},
-                              p);
+    policy_supported_or_throw(
+        "OpenMPReduce", reduction_supported_policies_t<Policy::openmp> {}, p);
   }
 
   void reset(Policy p, T init_val, T identity_)

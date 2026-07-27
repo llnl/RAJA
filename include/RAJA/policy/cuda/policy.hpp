@@ -49,12 +49,10 @@ using cuda_dim_member_t = camp::decay<decltype(std::declval<cuda_dim_t>().x)>;
 template<>
 struct reduction_supported_policies<Policy::cuda>
 {
-  using type = std::conditional_t<policy_active<Policy::openmp>,
-                                  PolicyList<Policy::sequential,
-                                             Policy::openmp,
-                                             Policy::cuda>,
-                                  PolicyList<Policy::sequential,
-                                             Policy::cuda>>;
+  using type = std::conditional_t<
+      policy_active<Policy::openmp>,
+      PolicyList<Policy::sequential, Policy::openmp, Policy::cuda>,
+      PolicyList<Policy::sequential, Policy::cuda>>;
 };
 
 //

@@ -1057,9 +1057,8 @@ public:
         tally_or_val_ptr {},
         val(init_val, identity_)
   {
-    policy_supported_or_throw("CudaReduce",
-                              reduction_supported_policies_t<Policy::cuda> {},
-                              p);
+    policy_supported_or_throw(
+        "CudaReduce", reduction_supported_policies_t<Policy::cuda> {}, p);
     if (policy_supported(PolicyList<Policy::openmp, Policy::cuda> {}, p))
     {
       tally_or_val_ptr.list = new TallyType;

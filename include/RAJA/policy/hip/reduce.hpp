@@ -1050,9 +1050,8 @@ public:
         tally_or_val_ptr {},
         val(init_val, identity_)
   {
-    policy_supported_or_throw("HipReduce",
-                              reduction_supported_policies_t<Policy::hip> {},
-                              p);
+    policy_supported_or_throw(
+        "HipReduce", reduction_supported_policies_t<Policy::hip> {}, p);
     if (policy_supported(PolicyList<Policy::openmp, Policy::hip> {}, p))
     {
       tally_or_val_ptr.list = new TallyType;
@@ -1068,9 +1067,8 @@ public:
 
   void reset(RAJA::Policy p, T in_val, T identity_ = Combiner::identity())
   {
-    policy_supported_or_throw("HipReduce::reset",
-                              reduction_supported_policies_t<Policy::hip> {},
-                              p);
+    policy_supported_or_throw(
+        "HipReduce::reset", reduction_supported_policies_t<Policy::hip> {}, p);
     operator T();  // syncs device
     if (!policy_supported(PolicyList<Policy::openmp, Policy::hip> {}, p))
     {
