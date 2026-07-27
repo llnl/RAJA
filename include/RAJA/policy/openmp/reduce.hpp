@@ -53,6 +53,7 @@ class ReduceOMP  // This is a Combinable and is the first layer of that
 
 public:
   using Base::Base;
+  using Base::reset;
 
   ReduceOMP(Policy p, T init_val, T identity_) : Base(init_val, identity_)
   {

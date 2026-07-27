@@ -48,6 +48,7 @@ class ReduceSeq  // This is a Combinable and is the first layer of that
 
 public:
   using Base::Base;
+  using Base::reset;
 
   RAJA_SUPPRESS_HD_WARN
 
