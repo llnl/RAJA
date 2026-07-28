@@ -835,16 +835,15 @@ public:
   template<typename Container>
   MultiReduceDataHip(Policy p, Container const& container, T identity)
       : m_parent(this),
-        m_sync_list(policy_matches(PolicyList<Policy::hip> {}, p)
-                        ? new SyncList
-                        : nullptr),
+        m_sync_list(policy_matches(PolicyList<Policy::hip> {}, p) ? new SyncList
+                                                                  : nullptr),
         m_data(policy_matches(PolicyList<Policy::hip> {}, p),
                policy_matches(PolicyList<Policy::openmp> {}, p),
                container,
                identity)
   {
-    policy_matches_or_throw(
-        "HipMultiReduce", reduction_supported_policies_t<Policy::hip> {}, p);
+    policy_matches_or_throw("HipMultiReduce",
+                            reduction_supported_policies_t<Policy::hip> {}, p);
   }
 
   //! copy and on host attempt to setup for device
@@ -945,11 +944,9 @@ public:
   {
     // the original object
     policy_matches_or_throw("HipMultiReduce::reset",
-                              reduction_supported_policies_t<Policy::hip> {},
-                              p);
+                            reduction_supported_policies_t<Policy::hip> {}, p);
     const bool old_support_gpu = m_sync_list ? true : false;
-    const bool new_support_gpu =
-        policy_matches(PolicyList<Policy::hip> {}, p);
+    const bool new_support_gpu = policy_matches(PolicyList<Policy::hip> {}, p);
     if (old_support_gpu)
     {
       synchronize_resources_and_clear_list();

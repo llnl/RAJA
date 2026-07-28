@@ -843,8 +843,8 @@ public:
                container,
                identity)
   {
-    policy_matches_or_throw(
-        "CudaMultiReduce", reduction_supported_policies_t<Policy::cuda> {}, p);
+    policy_matches_or_throw("CudaMultiReduce",
+                            reduction_supported_policies_t<Policy::cuda> {}, p);
   }
 
   //! copy and on host attempt to setup for device
@@ -945,11 +945,9 @@ public:
   {
     // the original object
     policy_matches_or_throw("CudaMultiReduce::reset",
-                              reduction_supported_policies_t<Policy::cuda> {},
-                              p);
+                            reduction_supported_policies_t<Policy::cuda> {}, p);
     const bool old_support_gpu = m_sync_list ? true : false;
-    const bool new_support_gpu =
-        policy_matches(PolicyList<Policy::cuda> {}, p);
+    const bool new_support_gpu = policy_matches(PolicyList<Policy::cuda> {}, p);
     if (old_support_gpu)
     {
       synchronize_resources_and_clear_list();

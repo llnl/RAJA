@@ -234,7 +234,8 @@ public:
 
   RAJA_HOST_DEVICE
   BaseReduce()
-      : BaseReduce(Policy::all_supported, Reduce::identity(),
+      : BaseReduce(Policy::all_supported,
+                   Reduce::identity(),
                    Reduce::identity())
   {}
 

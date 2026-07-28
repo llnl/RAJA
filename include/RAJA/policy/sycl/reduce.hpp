@@ -287,7 +287,8 @@ struct TargetReduce
             identity_,
             info,
             policy_matches_or_throw(
-                "SyclReduce", reduction_supported_policies_t<Policy::sycl> {},
+                "SyclReduce",
+                reduction_supported_policies_t<Policy::sycl> {},
                 p) &&
                 policy_matches(PolicyList<Policy::sycl> {}, p)),
         hostData(new sycl::Shared_Host_Data<T> {init_val, identity_, this})
@@ -309,8 +310,7 @@ struct TargetReduce
   void reset(Policy p, T init_val_, T identity_ = Reducer::identity())
   {
     policy_matches_or_throw("SyclReduce::reset",
-                              reduction_supported_policies_t<Policy::sycl> {},
-                              p);
+                            reduction_supported_policies_t<Policy::sycl> {}, p);
     const bool use_offload = policy_matches(PolicyList<Policy::sycl> {}, p);
     if (val.uses_offload() && use_offload)
     {
@@ -495,8 +495,7 @@ public:
                  RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {
     policy_matches_or_throw("SyclReduceLoc::reset",
-                              reduction_supported_policies_t<Policy::sycl> {},
-                              p);
+                            reduction_supported_policies_t<Policy::sycl> {}, p);
     const bool use_offload = policy_matches(PolicyList<Policy::sycl> {}, p);
     if (val.uses_offload() && use_offload)
     {

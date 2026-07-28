@@ -88,12 +88,11 @@ struct MultiReduceDataOMP<
         m_num_bins(container.size()),
         m_data(nullptr),
         m_identity(identity),
-        m_create_data_on_copy(
-            policy_matches(PolicyList<Policy::openmp> {}, p))
+        m_create_data_on_copy(policy_matches(PolicyList<Policy::openmp> {}, p))
   {
     policy_matches_or_throw("OpenMPMultiReduce",
-                              reduction_supported_policies_t<Policy::openmp> {},
-                              p);
+                            reduction_supported_policies_t<Policy::openmp> {},
+                            p);
     m_data = create_data(container, m_num_bins);
   }
 
@@ -170,8 +169,8 @@ struct MultiReduceDataOMP<
   void reset(Policy p, Container const& container, T identity)
   {
     policy_matches_or_throw("OpenMPMultiReduce::reset",
-                              reduction_supported_policies_t<Policy::openmp> {},
-                              p);
+                            reduction_supported_policies_t<Policy::openmp> {},
+                            p);
     reset(container, identity);
     m_create_data_on_copy = policy_matches(PolicyList<Policy::openmp> {}, p);
   }
@@ -253,8 +252,8 @@ struct MultiReduceDataOMP<
         m_identity(identity)
   {
     policy_matches_or_throw("OpenMPMultiReduce",
-                              reduction_supported_policies_t<Policy::openmp> {},
-                              p);
+                            reduction_supported_policies_t<Policy::openmp> {},
+                            p);
     m_data = create_data(container, identity, m_data_helper);
   }
 
@@ -293,8 +292,8 @@ struct MultiReduceDataOMP<
   void reset(Policy p, Container const& container, T identity)
   {
     policy_matches_or_throw("OpenMPMultiReduce::reset",
-                              reduction_supported_policies_t<Policy::openmp> {},
-                              p);
+                            reduction_supported_policies_t<Policy::openmp> {},
+                            p);
 
     DataHelper new_data_helper(p, container.size());
 

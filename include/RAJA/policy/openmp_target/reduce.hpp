@@ -268,7 +268,8 @@ struct TargetReduce
             info,
             policy_matches_or_throw(
                 "OpenMPTargetReduce",
-                reduction_supported_policies_t<Policy::target_openmp> {}, p) &&
+                reduction_supported_policies_t<Policy::target_openmp> {},
+                p) &&
                 policy_matches(PolicyList<Policy::target_openmp> {}, p)),
         hostData(new omp::Shared_Host_Data<T> {init_val_, identity_, this})
   {}
@@ -431,17 +432,16 @@ struct TargetReduceLoc
       T identity_val_ = Reducer::identity(),
       IndexType identity_loc_ =
           RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : TargetReduceLoc(policy_matches_or_throw(
-                            "OpenMPTargetReduceLoc",
-                            reduction_supported_policies_t<
-                                Policy::target_openmp> {},
-                            p) &&
-                            policy_matches(
-                                PolicyList<Policy::target_openmp> {}, p),
-                        init_val_,
-                        init_loc,
-                        identity_val_,
-                        identity_loc_)
+      : TargetReduceLoc(
+            policy_matches_or_throw(
+                "OpenMPTargetReduceLoc",
+                reduction_supported_policies_t<Policy::target_openmp> {},
+                p) &&
+                policy_matches(PolicyList<Policy::target_openmp> {}, p),
+            init_val_,
+            init_loc,
+            identity_val_,
+            identity_loc_)
   {}
 
 private:

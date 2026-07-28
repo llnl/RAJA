@@ -1041,7 +1041,8 @@ class Reduce
 
 public:
   Reduce()
-      : Reduce(Policy::all_supported, Combiner::identity(),
+      : Reduce(Policy::all_supported,
+               Combiner::identity(),
                Combiner::identity())
   {}
 
@@ -1058,8 +1059,8 @@ public:
         tally_or_val_ptr {},
         val(init_val, identity_)
   {
-    policy_matches_or_throw(
-        "CudaReduce", reduction_supported_policies_t<Policy::cuda> {}, p);
+    policy_matches_or_throw("CudaReduce",
+                            reduction_supported_policies_t<Policy::cuda> {}, p);
     if (policy_matches(PolicyList<Policy::openmp, Policy::cuda> {}, p))
     {
       tally_or_val_ptr.list = new TallyType;
@@ -1076,8 +1077,7 @@ public:
   void reset(RAJA::Policy p, T in_val, T identity_ = Combiner::identity())
   {
     policy_matches_or_throw("CudaReduce::reset",
-                              reduction_supported_policies_t<Policy::cuda> {},
-                              p);
+                            reduction_supported_policies_t<Policy::cuda> {}, p);
     operator T();  // syncs device
     if (!policy_matches(PolicyList<Policy::openmp, Policy::cuda> {}, p))
     {
