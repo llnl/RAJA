@@ -42,11 +42,6 @@ namespace RAJA
 namespace sycl
 {
 
-constexpr bool uses_runtime_offload(Policy p)
-{
-  return policy_supported(PolicyList<Policy::sycl> {}, p);
-}
-
 template<typename T, typename I>
 struct minloc
 {
@@ -288,7 +283,13 @@ struct TargetReduce
 
   TargetReduce(Policy p, T init_val, T identity_ = Reducer::identity())
       : info(),
-        val(identity_, identity_, info, checked_uses_offload(p)),
+        val(identity_,
+            identity_,
+            info,
+            policy_supported_or_throw(
+                "SyclReduce", reduction_supported_policies_t<Policy::sycl> {},
+                p) &&
+                policy_supported(PolicyList<Policy::sycl> {}, p)),
         hostData(new sycl::Shared_Host_Data<T> {init_val, identity_, this})
   {}
 
@@ -310,7 +311,7 @@ struct TargetReduce
     policy_supported_or_throw("SyclReduce::reset",
                               reduction_supported_policies_t<Policy::sycl> {},
                               p);
-    const bool use_offload = sycl::uses_runtime_offload(p);
+    const bool use_offload = policy_supported(PolicyList<Policy::sycl> {}, p);
     if (val.uses_offload() && use_offload)
     {
       val.reset(identity_);
@@ -381,13 +382,6 @@ struct TargetReduce
   }
 
 private:
-  static bool checked_uses_offload(Policy p)
-  {
-    policy_supported_or_throw(
-        "SyclReduce", reduction_supported_policies_t<Policy::sycl> {}, p);
-    return sycl::uses_runtime_offload(p);
-  }
-
   RAJA_INLINE bool is_root() const
   {
     return hostData && hostData->rootToken == this;
@@ -447,7 +441,11 @@ struct TargetReduceLoc
       T identity_val_ = Reducer::identity(),
       IndexType identity_loc_ =
           RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : TargetReduceLoc(checked_uses_offload(p),
+      : TargetReduceLoc(policy_supported_or_throw(
+                            "SyclReduceLoc",
+                            reduction_supported_policies_t<Policy::sycl> {},
+                            p) &&
+                            policy_supported(PolicyList<Policy::sycl> {}, p),
                         init_val,
                         init_loc,
                         identity_val_,
@@ -499,7 +497,7 @@ public:
     policy_supported_or_throw("SyclReduceLoc::reset",
                               reduction_supported_policies_t<Policy::sycl> {},
                               p);
-    const bool use_offload = sycl::uses_runtime_offload(p);
+    const bool use_offload = policy_supported(PolicyList<Policy::sycl> {}, p);
     if (val.uses_offload() && use_offload)
     {
       val.reset(identity_val_);
@@ -585,13 +583,6 @@ public:
   }
 
 private:
-  static bool checked_uses_offload(Policy p)
-  {
-    policy_supported_or_throw(
-        "SyclReduceLoc", reduction_supported_policies_t<Policy::sycl> {}, p);
-    return sycl::uses_runtime_offload(p);
-  }
-
   RAJA_INLINE bool is_root() const
   {
     return hostData && hostData->rootToken == this;
