@@ -119,11 +119,15 @@ int main(int argc, char** argv)
 
 #if defined(RAJA_GPU_ACTIVE)
   auto device_res = RAJA::resources::get_default_resource<device_launch>();
-  int* out_device = device_res.allocate<int>(len);
-  device_res.memcpy(out_device, out_host, sizeof(int) * len);
-  device_res.wait();
+  int* out_device = nullptr;
 
-  int* out_ptr = (place == RAJA::ExecPlace::DEVICE) ? out_device : out_host;
+  if (place == RAJA::ExecPlace::DEVICE) {
+    out_device = device_res.allocate<int>(len);
+    device_res.memcpy(out_device, out_host, sizeof(int) * len);
+    device_res.wait();
+  }
+
+  int* out_ptr = (out_device != nullptr) ? out_device : out_host;
 #else
   int* out_ptr = out_host;
 #endif
@@ -170,7 +174,9 @@ int main(int argc, char** argv)
     device_res.wait();
   }
 
-  device_res.deallocate(out_device);
+  if (out_device != nullptr) {
+    device_res.deallocate(out_device);
+  }
 #endif
 
   bool ok = true;

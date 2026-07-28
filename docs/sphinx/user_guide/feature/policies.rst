@@ -732,7 +732,7 @@ Device policy aliases
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To simplify transitions between GPU back-ends (CUDA/HIP/SYCL) and reduce
-downstream preprocessor conditionals, RAJA provides a small set of
+downstream preprocessor conditionals, RAJA provides a set of
 ``device_*`` policy aliases that resolve to the *active* GPU back-end.
 
 In particular, the following aliases are available when building with a GPU
@@ -802,37 +802,23 @@ device back-end (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - Single-dimension thread mapping.
-   * - device_thread_{xy,xz,yx,yz,zx,zy,xyz,xzy,yxz,yzx,zxy,zyx}_{direct,loop}
-     - yes
-     - yes
-     - no
-     - Multi-dimension thread permutations are not defined for SYCL.
-   * - device_thread_size_* families
+   * - device_thread_size_{x,y,z}_{direct,direct_unchecked,loop}<N>
      - yes
      - yes
      - no
      - Size-templated aliases, for example ``device_thread_size_x_direct<128>``.
-       Includes direct, direct_unchecked, and loop variants for 1D and
-       permuted multi-dimension forms. These aliases are declared as
-       compile-time errors under SYCL.
+       These aliases are declared as compile-time errors under SYCL.
    * - device_block_{x,y,z}_{direct,loop}
      - yes
      - yes
      - yes
      - Single-dimension block mapping.
-   * - device_block_{xy,xz,yx,yz,zx,zy,xyz,xzy,yxz,yzx,zxy,zyx}_{direct,loop}
-     - yes
-     - yes
-     - no
-     - Multi-dimension block permutations are not defined for SYCL.
-   * - device_block_size_* families
+   * - device_block_size_{x,y,z}_{direct,direct_unchecked,loop}<N>
      - yes
      - yes
      - no
      - Size-templated aliases, for example ``device_block_size_x_direct<128>``.
-       Includes direct, direct_unchecked, and loop variants for 1D and
-       permuted multi-dimension forms. These aliases are declared as
-       compile-time errors under SYCL.
+       These aliases are declared as compile-time errors under SYCL.
    * - device_flatten_block_threads_{xy,...,zyx}_{direct,loop}
      - yes
      - yes
