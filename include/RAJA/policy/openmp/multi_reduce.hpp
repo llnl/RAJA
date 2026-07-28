@@ -91,6 +91,9 @@ struct MultiReduceDataOMP<
         m_create_data_on_copy(
             policy_supported(PolicyList<Policy::openmp> {}, p))
   {
+    policy_supported_or_throw("OpenMPMultiReduce",
+                              reduction_supported_policies_t<Policy::openmp> {},
+                              p);
     m_data = create_data(container, m_num_bins);
   }
 
@@ -166,6 +169,9 @@ struct MultiReduceDataOMP<
   template<typename Container>
   void reset(Policy p, Container const& container, T identity)
   {
+    policy_supported_or_throw("OpenMPMultiReduce::reset",
+                              reduction_supported_policies_t<Policy::openmp> {},
+                              p);
     reset(container, identity);
     m_create_data_on_copy = policy_supported(PolicyList<Policy::openmp> {}, p);
   }
