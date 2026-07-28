@@ -278,8 +278,8 @@ struct TargetReduce
       : TargetReduce(p, Reducer::identity(), Reducer::identity())
   {}
 
-  explicit TargetReduce(T init_val)
-      : TargetReduce(Policy::undefined, init_val, Reducer::identity())
+  explicit TargetReduce(T init_val, T identity_ = Reducer::identity())
+      : TargetReduce(Policy::undefined, init_val, identity_)
   {}
 
   TargetReduce(Policy p, T init_val, T identity_ = Reducer::identity())
