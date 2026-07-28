@@ -50,11 +50,17 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
+
+## Back off version of cmake with known issue
+      - name: Install CMake 3.29
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.29.0"
+
 ## ====================================
 ## Config and build action
       - uses: threeal/cmake-action@v1.3.0
         with:
-          cmake-version: '3.29.x'  # Back off version of cmake with known issue
           build-dir: build
           options:
             ENABLE_WARNINGS_AS_ERRORS=Off
