@@ -81,18 +81,18 @@ inline void forone(test_sycl, L&& run)
   using BODY = camp::decay<L>;
 
   auto sycl_res = RAJA::resources::Sycl::get_default();
-  ::sycl::queue* q = sycl_res.get_queue();
+  ::sycl::queue& q = sycl_res.get_queue();
   BODY input_body(std::forward<L>(run));
 
   BODY* device_body = nullptr;
   if constexpr (!std::is_trivially_copyable_v<BODY>) {
-    device_body = static_cast<BODY*>(::sycl::malloc_device(sizeof(BODY), *q));
-    q->memcpy(device_body, &input_body, sizeof(BODY)).wait();
+    device_body = static_cast<BODY*>(::sycl::malloc_device(sizeof(BODY), q));
+    q.memcpy(device_body, &input_body, sizeof(BODY)).wait();
   }
 
   ::sycl::range<1> grid(1);
   ::sycl::range<1> block(1);
-  q->submit([&](::sycl::handler& h) {
+  q.submit([&](::sycl::handler& h) {
     if constexpr (std::is_trivially_copyable_v<BODY>) {
       h.parallel_for(::sycl::nd_range<1>{grid, block}, [=](::sycl::nd_item<1> item) {
         auto body = input_body;
@@ -109,10 +109,10 @@ inline void forone(test_sycl, L&& run)
       });
     }
   });
-  q->wait();
+  q.wait();
 
   if constexpr (!std::is_trivially_copyable_v<BODY>) {
-    ::sycl::free(device_body, *q);
+    ::sycl::free(device_body, q);
   }
 }
 
