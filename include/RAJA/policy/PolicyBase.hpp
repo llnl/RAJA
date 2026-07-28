@@ -26,6 +26,7 @@
 
 #include <cstddef>
 #include <stdexcept>
+#include <string>
 
 namespace RAJA
 {
