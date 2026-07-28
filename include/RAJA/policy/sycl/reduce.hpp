@@ -140,7 +140,8 @@ struct Reduce_Data
       return;
     }
 
-    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
+    auto resource = ::camp::resources::Sycl::get_default();
+    ::sycl::queue& q = resource.get_queue();
 
     device = reinterpret_cast<T*>(
         ::sycl::malloc_device(sycl::MaxNumTeams * sizeof(T), q));
@@ -179,7 +180,8 @@ struct Reduce_Data
       return;
     }
 
-    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
+    auto resource = ::camp::resources::Sycl::get_default();
+    ::sycl::queue& q = resource.get_queue();
 
     // precondition: host and device are valid pointers
     auto e =
@@ -197,7 +199,8 @@ struct Reduce_Data
       return;
     }
 
-    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
+    auto resource = ::camp::resources::Sycl::get_default();
+    ::sycl::queue& q = resource.get_queue();
 
     // precondition: host and device are valid pointers
     auto e =
@@ -215,7 +218,8 @@ struct Reduce_Data
       return;
     }
 
-    ::sycl::queue& q = ::camp::resources::Sycl::get_default().get_queue();
+    auto resource = ::camp::resources::Sycl::get_default();
+    ::sycl::queue& q = resource.get_queue();
 
     if (device)
     {
