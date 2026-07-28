@@ -84,7 +84,7 @@ struct BaseMultiReduce
   explicit BaseMultiReduce(size_t num_bins,
                            value_type init_val = MultiReduceOp::identity(),
                            value_type identity = MultiReduceOp::identity())
-      : BaseMultiReduce {Policy::undefined,
+      : BaseMultiReduce {Policy::all_supported,
                          RepeatView<value_type>(init_val, num_bins), identity}
   {}
 
@@ -104,7 +104,7 @@ struct BaseMultiReduce
                nullptr>
   explicit BaseMultiReduce(Container const& container,
                            value_type identity = MultiReduceOp::identity())
-      : BaseMultiReduce {Policy::undefined, container, identity}
+      : BaseMultiReduce {Policy::all_supported, container, identity}
   {}
 
   template<typename Container,

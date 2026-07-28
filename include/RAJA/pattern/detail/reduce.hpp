@@ -234,7 +234,8 @@ public:
 
   RAJA_HOST_DEVICE
   BaseReduce()
-      : BaseReduce(Policy::undefined, Reduce::identity(), Reduce::identity())
+      : BaseReduce(Policy::all_supported, Reduce::identity(),
+                   Reduce::identity())
   {}
 
   RAJA_SUPPRESS_HD_WARN
@@ -248,7 +249,7 @@ public:
 
   RAJA_HOST_DEVICE
   explicit BaseReduce(T init_val, T identity_ = Reduce::identity())
-      : BaseReduce(Policy::undefined, init_val, identity_)
+      : BaseReduce(Policy::all_supported, init_val, identity_)
   {}
 
   RAJA_SUPPRESS_HD_WARN
@@ -437,7 +438,7 @@ public:
       IndexType init_idx,
       T identity_val_         = reduce_type::identity(),
       IndexType identity_loc_ = DefaultLoc<IndexType>().value())
-      : Base(Policy::undefined,
+      : Base(Policy::all_supported,
              value_type(init_val, init_idx),
              value_type(identity_val_, identity_loc_))
   {}
@@ -623,7 +624,7 @@ public:
       IndexType init_idx,
       T identity_val_         = reduce_type::identity(),
       IndexType identity_loc_ = DefaultLoc<IndexType>().value())
-      : Base(Policy::undefined,
+      : Base(Policy::all_supported,
              value_type(init_val, init_idx),
              value_type(identity_val_, identity_loc_))
   {}

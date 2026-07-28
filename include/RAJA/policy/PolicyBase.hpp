@@ -34,6 +34,7 @@ namespace RAJA
 enum class Policy
 {
   undefined,
+  all_supported,
   sequential,
   simd,
   openmp,
@@ -49,6 +50,8 @@ constexpr const char* get_policy_name(Policy p)
   {
     case Policy::undefined:
       return "undefined";
+    case Policy::all_supported:
+      return "all_supported";
     case Policy::sequential:
       return "sequential";
     case Policy::simd:
@@ -87,6 +90,9 @@ inline constexpr bool policy_active = false;
 
 template<>
 inline constexpr bool policy_active<Policy::undefined> = false;
+
+template<>
+inline constexpr bool policy_active<Policy::all_supported> = false;
 
 template<>
 inline constexpr bool policy_active<Policy::sequential> = true;
@@ -134,11 +140,11 @@ inline constexpr bool policy_active<Policy::sycl> =
     false;
 #endif
 
-// check that policy is supported, undefined or an active policy in the list
+// check that policy is all_supported or an active policy in the list
 template<Policy... supported_policies>
 constexpr bool policy_supported(PolicyList<supported_policies...>, Policy p)
 {
-  return ((p == Policy::undefined) || ... ||
+  return ((p == Policy::all_supported) || ... ||
           (p == supported_policies && policy_active<supported_policies>));
 }
 

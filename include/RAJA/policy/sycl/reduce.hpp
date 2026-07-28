@@ -273,7 +273,7 @@ template<typename Reducer, typename T>
 struct TargetReduce
 {
   TargetReduce()
-      : TargetReduce(Policy::undefined,
+      : TargetReduce(Policy::all_supported,
                      Reducer::identity(),
                      Reducer::identity())
   {}
@@ -283,7 +283,7 @@ struct TargetReduce
   {}
 
   explicit TargetReduce(T init_val, T identity_ = Reducer::identity())
-      : TargetReduce(Policy::undefined, init_val, identity_)
+      : TargetReduce(Policy::all_supported, init_val, identity_)
   {}
 
   TargetReduce(Policy p, T init_val, T identity_ = Reducer::identity())
@@ -412,7 +412,7 @@ template<typename Reducer, typename T, typename IndexType>
 struct TargetReduceLoc
 {
   TargetReduceLoc()
-      : TargetReduceLoc(Policy::undefined,
+      : TargetReduceLoc(Policy::all_supported,
                         Reducer::identity(),
                         RAJA::reduce::detail::DefaultLoc<IndexType>().value(),
                         Reducer::identity(),
@@ -433,7 +433,7 @@ struct TargetReduceLoc
       T identity_val_ = Reducer::identity(),
       IndexType identity_loc_ =
           RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : TargetReduceLoc(Policy::undefined,
+      : TargetReduceLoc(Policy::all_supported,
                         init_val,
                         init_loc,
                         identity_val_,

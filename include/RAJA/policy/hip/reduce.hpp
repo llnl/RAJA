@@ -1034,7 +1034,8 @@ class Reduce
 
 public:
   Reduce()
-      : Reduce(Policy::undefined, Combiner::identity(), Combiner::identity())
+      : Reduce(Policy::all_supported, Combiner::identity(),
+               Combiner::identity())
   {}
 
   explicit Reduce(RAJA::Policy p)
@@ -1042,7 +1043,7 @@ public:
   {}
 
   explicit Reduce(T init_val, T identity_ = Combiner::identity())
-      : Reduce(Policy::undefined, init_val, identity_)
+      : Reduce(Policy::all_supported, init_val, identity_)
   {}
 
   Reduce(RAJA::Policy p, T init_val, T identity_ = Combiner::identity())
@@ -1349,7 +1350,7 @@ public:
                T identity_val = NonLocCombiner::identity(),
                IndexType identity_idx =
                    RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : Base(Policy::undefined,
+      : Base(Policy::all_supported,
              value_type(init_val, init_idx),
              value_type(identity_val, identity_idx))
   {}
@@ -1432,7 +1433,7 @@ public:
                T identity_val = NonLocCombiner::identity(),
                IndexType identity_idx =
                    RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : Base(Policy::undefined,
+      : Base(Policy::all_supported,
              value_type(init_val, init_idx),
              value_type(identity_val, identity_idx))
   {}
