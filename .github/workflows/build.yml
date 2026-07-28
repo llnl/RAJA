@@ -45,7 +45,8 @@ jobs:
             CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=On
         - args: BUILD_SHARED_LIBS=Off
           
-    runs-on: windows-latest
+
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v2
         with:
