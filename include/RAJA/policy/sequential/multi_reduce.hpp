@@ -82,7 +82,7 @@ struct MultiReduceDataSeq<
         m_identity(identity),
         m_data(nullptr)
   {
-    policy_supported_or_throw(
+    policy_matches_or_throw(
         "SeqMultiReduce", reduction_supported_policies_t<Policy::sequential> {},
         p);
     m_data = create_data(container, m_num_bins);
@@ -135,7 +135,7 @@ struct MultiReduceDataSeq<
   template<typename Container>
   void reset(Policy p, Container const& container, T identity)
   {
-    policy_supported_or_throw(
+    policy_matches_or_throw(
         "SeqMultiReduce::reset",
         reduction_supported_policies_t<Policy::sequential> {}, p);
     reset(container, identity);

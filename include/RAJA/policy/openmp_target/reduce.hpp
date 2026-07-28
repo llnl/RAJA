@@ -266,10 +266,10 @@ struct TargetReduce
         val(identity_,
             identity_,
             info,
-            policy_supported_or_throw(
+            policy_matches_or_throw(
                 "OpenMPTargetReduce",
                 reduction_supported_policies_t<Policy::target_openmp> {}, p) &&
-                policy_supported(PolicyList<Policy::target_openmp> {}, p)),
+                policy_matches(PolicyList<Policy::target_openmp> {}, p)),
         hostData(new omp::Shared_Host_Data<T> {init_val_, identity_, this})
   {}
 
@@ -288,11 +288,11 @@ struct TargetReduce
 
   void reset(Policy p, T init_val_, T identity_ = Reducer::identity())
   {
-    policy_supported_or_throw(
+    policy_matches_or_throw(
         "OpenMPTargetReduce::reset",
         reduction_supported_policies_t<Policy::target_openmp> {}, p);
     const bool use_offload =
-        policy_supported(PolicyList<Policy::target_openmp> {}, p);
+        policy_matches(PolicyList<Policy::target_openmp> {}, p);
     if (val.uses_offload() && use_offload)
     {
       val.reset(identity_);
@@ -431,12 +431,12 @@ struct TargetReduceLoc
       T identity_val_ = Reducer::identity(),
       IndexType identity_loc_ =
           RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : TargetReduceLoc(policy_supported_or_throw(
+      : TargetReduceLoc(policy_matches_or_throw(
                             "OpenMPTargetReduceLoc",
                             reduction_supported_policies_t<
                                 Policy::target_openmp> {},
                             p) &&
-                            policy_supported(
+                            policy_matches(
                                 PolicyList<Policy::target_openmp> {}, p),
                         init_val_,
                         init_loc,
@@ -486,11 +486,11 @@ public:
              IndexType identity_loc_ =
                  RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {
-    policy_supported_or_throw(
+    policy_matches_or_throw(
         "OpenMPTargetReduceLoc::reset",
         reduction_supported_policies_t<Policy::target_openmp> {}, p);
     const bool use_offload =
-        policy_supported(PolicyList<Policy::target_openmp> {}, p);
+        policy_matches(PolicyList<Policy::target_openmp> {}, p);
     if (val.uses_offload() && use_offload)
     {
       val.reset(identity_val_);

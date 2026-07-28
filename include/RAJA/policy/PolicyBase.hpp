@@ -140,21 +140,22 @@ inline constexpr bool policy_active<Policy::sycl> =
     false;
 #endif
 
-// check that policy is all_supported or an active policy in the list
-template<Policy... supported_policies>
-constexpr bool policy_supported(PolicyList<supported_policies...>, Policy p)
+// Check whether a runtime policy matches a list of active policies.
+// Policy::all_supported matches any list.
+template<Policy... matching_policies>
+constexpr bool policy_matches(PolicyList<matching_policies...>, Policy p)
 {
   return ((p == Policy::all_supported) || ... ||
-          (p == supported_policies && policy_active<supported_policies>));
+          (p == matching_policies && policy_active<matching_policies>));
 }
 
-// check that policy is supported, otherwise throw an exception
-template<Policy... supported_policies>
-inline bool policy_supported_or_throw(const char* context_name,
-                                      PolicyList<supported_policies...> list,
-                                      Policy p)
+// Check whether a runtime policy matches, otherwise throw an exception.
+template<Policy... matching_policies>
+inline bool policy_matches_or_throw(const char* context_name,
+                                    PolicyList<matching_policies...> list,
+                                    Policy p)
 {
-  if (policy_supported(list, p))
+  if (policy_matches(list, p))
   {
     return true;
   }

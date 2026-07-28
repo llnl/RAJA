@@ -57,13 +57,13 @@ public:
 
   ReduceOMP(Policy p, T init_val, T identity_) : Base(init_val, identity_)
   {
-    policy_supported_or_throw(
+    policy_matches_or_throw(
         "OpenMPReduce", reduction_supported_policies_t<Policy::openmp> {}, p);
   }
 
   void reset(Policy p, T init_val, T identity_)
   {
-    policy_supported_or_throw("OpenMPReduce::reset",
+    policy_matches_or_throw("OpenMPReduce::reset",
                               reduction_supported_policies_t<Policy::openmp> {},
                               p);
     Base::reset(init_val, identity_);
@@ -105,7 +105,7 @@ public:
   ReduceOMPOrdered(Policy p, T init_val, T identity_)
       : ReduceOMPOrdered(init_val, identity_)
   {
-    policy_supported_or_throw("OpenMPReduceOrdered",
+    policy_matches_or_throw("OpenMPReduceOrdered",
                               reduction_supported_policies_t<Policy::openmp> {},
                               p);
   }
@@ -126,7 +126,7 @@ public:
 
   void reset(Policy p, T init_val, T identity_)
   {
-    policy_supported_or_throw("OpenMPReduceOrdered::reset",
+    policy_matches_or_throw("OpenMPReduceOrdered::reset",
                               reduction_supported_policies_t<Policy::openmp> {},
                               p);
     reset(init_val, identity_);

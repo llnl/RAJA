@@ -286,10 +286,10 @@ struct TargetReduce
         val(identity_,
             identity_,
             info,
-            policy_supported_or_throw(
+            policy_matches_or_throw(
                 "SyclReduce", reduction_supported_policies_t<Policy::sycl> {},
                 p) &&
-                policy_supported(PolicyList<Policy::sycl> {}, p)),
+                policy_matches(PolicyList<Policy::sycl> {}, p)),
         hostData(new sycl::Shared_Host_Data<T> {init_val, identity_, this})
   {}
 
@@ -308,10 +308,10 @@ struct TargetReduce
 
   void reset(Policy p, T init_val_, T identity_ = Reducer::identity())
   {
-    policy_supported_or_throw("SyclReduce::reset",
+    policy_matches_or_throw("SyclReduce::reset",
                               reduction_supported_policies_t<Policy::sycl> {},
                               p);
-    const bool use_offload = policy_supported(PolicyList<Policy::sycl> {}, p);
+    const bool use_offload = policy_matches(PolicyList<Policy::sycl> {}, p);
     if (val.uses_offload() && use_offload)
     {
       val.reset(identity_);
@@ -441,11 +441,11 @@ struct TargetReduceLoc
       T identity_val_ = Reducer::identity(),
       IndexType identity_loc_ =
           RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : TargetReduceLoc(policy_supported_or_throw(
+      : TargetReduceLoc(policy_matches_or_throw(
                             "SyclReduceLoc",
                             reduction_supported_policies_t<Policy::sycl> {},
                             p) &&
-                            policy_supported(PolicyList<Policy::sycl> {}, p),
+                            policy_matches(PolicyList<Policy::sycl> {}, p),
                         init_val,
                         init_loc,
                         identity_val_,
@@ -494,10 +494,10 @@ public:
              IndexType identity_loc_ =
                  RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {
-    policy_supported_or_throw("SyclReduceLoc::reset",
+    policy_matches_or_throw("SyclReduceLoc::reset",
                               reduction_supported_policies_t<Policy::sycl> {},
                               p);
-    const bool use_offload = policy_supported(PolicyList<Policy::sycl> {}, p);
+    const bool use_offload = policy_matches(PolicyList<Policy::sycl> {}, p);
     if (val.uses_offload() && use_offload)
     {
       val.reset(identity_val_);

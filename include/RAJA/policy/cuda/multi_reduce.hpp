@@ -835,15 +835,15 @@ public:
   template<typename Container>
   MultiReduceDataCuda(Policy p, Container const& container, T identity)
       : m_parent(this),
-        m_sync_list(policy_supported(PolicyList<Policy::cuda> {}, p)
+        m_sync_list(policy_matches(PolicyList<Policy::cuda> {}, p)
                         ? new SyncList
                         : nullptr),
-        m_data(policy_supported(PolicyList<Policy::cuda> {}, p),
-               policy_supported(PolicyList<Policy::openmp> {}, p),
+        m_data(policy_matches(PolicyList<Policy::cuda> {}, p),
+               policy_matches(PolicyList<Policy::openmp> {}, p),
                container,
                identity)
   {
-    policy_supported_or_throw(
+    policy_matches_or_throw(
         "CudaMultiReduce", reduction_supported_policies_t<Policy::cuda> {}, p);
   }
 
@@ -944,18 +944,18 @@ public:
   void reset(Policy p, Container const& container, T identity)
   {
     // the original object
-    policy_supported_or_throw("CudaMultiReduce::reset",
+    policy_matches_or_throw("CudaMultiReduce::reset",
                               reduction_supported_policies_t<Policy::cuda> {},
                               p);
     const bool old_support_gpu = m_sync_list ? true : false;
     const bool new_support_gpu =
-        policy_supported(PolicyList<Policy::cuda> {}, p);
+        policy_matches(PolicyList<Policy::cuda> {}, p);
     if (old_support_gpu)
     {
       synchronize_resources_and_clear_list();
     }
     m_data.reset_permanent(new_support_gpu,
-                           policy_supported(PolicyList<Policy::openmp> {}, p),
+                           policy_matches(PolicyList<Policy::openmp> {}, p),
                            container, identity, old_support_gpu);
     if (!old_support_gpu && new_support_gpu)
     {
