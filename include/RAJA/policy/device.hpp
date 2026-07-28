@@ -191,14 +191,6 @@ template<int nz_threads>
 using device_global_size_z_loop =
     RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_size_z_loop)<nz_threads>;
 
-// launch (loop) index mapping
-using device_global_thread_x =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_thread_x);
-using device_global_thread_y =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_thread_y);
-using device_global_thread_z =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_thread_z);
-
 // kernel (loop) index mapping
 using device_thread_x_direct =
     RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(thread_x_direct);
@@ -281,56 +273,6 @@ using device_block_size_y_loop =
 template<int Z_SIZE>
 using device_block_size_z_loop =
     RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(block_size_z_loop)<Z_SIZE>;
-
-using device_flatten_block_threads_xy_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_xy_direct);
-using device_flatten_block_threads_xz_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_xz_direct);
-using device_flatten_block_threads_yx_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_yx_direct);
-using device_flatten_block_threads_yz_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_yz_direct);
-using device_flatten_block_threads_zx_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_zx_direct);
-using device_flatten_block_threads_zy_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_zy_direct);
-using device_flatten_block_threads_xyz_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_xyz_direct);
-using device_flatten_block_threads_xzy_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_xzy_direct);
-using device_flatten_block_threads_yxz_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_yxz_direct);
-using device_flatten_block_threads_yzx_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_yzx_direct);
-using device_flatten_block_threads_zxy_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_zxy_direct);
-using device_flatten_block_threads_zyx_direct =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_zyx_direct);
-
-using device_flatten_block_threads_xy_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_xy_loop);
-using device_flatten_block_threads_xz_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_xz_loop);
-using device_flatten_block_threads_yx_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_yx_loop);
-using device_flatten_block_threads_yz_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_yz_loop);
-using device_flatten_block_threads_zx_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_zx_loop);
-using device_flatten_block_threads_zy_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_zy_loop);
-using device_flatten_block_threads_xyz_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_xyz_loop);
-using device_flatten_block_threads_xzy_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_xzy_loop);
-using device_flatten_block_threads_yxz_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_yxz_loop);
-using device_flatten_block_threads_yzx_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_yzx_loop);
-using device_flatten_block_threads_zxy_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_zxy_loop);
-using device_flatten_block_threads_zyx_loop =
-    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(flatten_block_threads_zyx_loop);
 
 template<int nx_threads>
 using device_flatten_thread_size_x_direct = RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(
@@ -975,11 +917,6 @@ using device_global_size_y_loop = detail::sycl_device_alias_unavailable<>;
 template<int nz_threads>
 using device_global_size_z_loop = detail::sycl_device_alias_unavailable<>;
 
-// launch (loop) index mapping (x/y/z -> dim2/dim1/dim0)
-using device_global_thread_x = RAJA::sycl_global_item_2;
-using device_global_thread_y = RAJA::sycl_global_item_1;
-using device_global_thread_z = RAJA::sycl_global_item_0;
-
 // kernel (loop) index mapping (x/y/z -> dim2/dim1/dim0)
 using device_thread_x_direct = RAJA::sycl_local_2_direct;
 using device_thread_y_direct = RAJA::sycl_local_1_direct;
@@ -1044,56 +981,6 @@ template<int Y_SIZE>
 using device_block_size_y_loop = detail::sycl_device_alias_unavailable<>;
 template<int Z_SIZE>
 using device_block_size_z_loop = detail::sycl_device_alias_unavailable<>;
-
-using device_flatten_block_threads_xy_direct =
-    RAJA::sycl_flatten_group_local_21_direct;
-using device_flatten_block_threads_xz_direct =
-    RAJA::sycl_flatten_group_local_20_direct;
-using device_flatten_block_threads_yx_direct =
-    RAJA::sycl_flatten_group_local_12_direct;
-using device_flatten_block_threads_yz_direct =
-    RAJA::sycl_flatten_group_local_10_direct;
-using device_flatten_block_threads_zx_direct =
-    RAJA::sycl_flatten_group_local_02_direct;
-using device_flatten_block_threads_zy_direct =
-    RAJA::sycl_flatten_group_local_01_direct;
-using device_flatten_block_threads_xyz_direct =
-    RAJA::sycl_flatten_group_local_210_direct;
-using device_flatten_block_threads_xzy_direct =
-    RAJA::sycl_flatten_group_local_201_direct;
-using device_flatten_block_threads_yxz_direct =
-    RAJA::sycl_flatten_group_local_120_direct;
-using device_flatten_block_threads_yzx_direct =
-    RAJA::sycl_flatten_group_local_102_direct;
-using device_flatten_block_threads_zxy_direct =
-    RAJA::sycl_flatten_group_local_021_direct;
-using device_flatten_block_threads_zyx_direct =
-    RAJA::sycl_flatten_group_local_012_direct;
-
-using device_flatten_block_threads_xy_loop =
-    RAJA::sycl_flatten_group_local_21_loop;
-using device_flatten_block_threads_xz_loop =
-    RAJA::sycl_flatten_group_local_20_loop;
-using device_flatten_block_threads_yx_loop =
-    RAJA::sycl_flatten_group_local_12_loop;
-using device_flatten_block_threads_yz_loop =
-    RAJA::sycl_flatten_group_local_10_loop;
-using device_flatten_block_threads_zx_loop =
-    RAJA::sycl_flatten_group_local_02_loop;
-using device_flatten_block_threads_zy_loop =
-    RAJA::sycl_flatten_group_local_01_loop;
-using device_flatten_block_threads_xyz_loop =
-    RAJA::sycl_flatten_group_local_210_loop;
-using device_flatten_block_threads_xzy_loop =
-    RAJA::sycl_flatten_group_local_201_loop;
-using device_flatten_block_threads_yxz_loop =
-    RAJA::sycl_flatten_group_local_120_loop;
-using device_flatten_block_threads_yzx_loop =
-    RAJA::sycl_flatten_group_local_102_loop;
-using device_flatten_block_threads_zxy_loop =
-    RAJA::sycl_flatten_group_local_021_loop;
-using device_flatten_block_threads_zyx_loop =
-    RAJA::sycl_flatten_group_local_012_loop;
 
 template<int nx_threads>
 using device_flatten_thread_size_x_direct =

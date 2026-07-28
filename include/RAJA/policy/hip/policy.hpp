@@ -3924,79 +3924,148 @@ using hip_flatten_global_size_zyx_loop =
 /*
  * Deprecated policies
  */
+#define RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG                                   \
+  "Deprecated HIP policy alias; use the corresponding '*_direct' or '*_loop' " \
+  "policy."
+
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_x = hip_global_x_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_y = hip_global_y_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_z = hip_global_z_direct;
 
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_xy = hip_global_xy_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_xz = hip_global_xz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_yx = hip_global_yx_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_yz = hip_global_yz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_zx = hip_global_zx_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_zy = hip_global_zy_direct;
 
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_xyz = hip_global_xyz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_xzy = hip_global_xzy_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_yxz = hip_global_yxz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_yzx = hip_global_yzx_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_zxy = hip_global_zxy_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_global_thread_zyx = hip_global_zyx_direct;
 
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_xy_direct = hip_flatten_thread_xy_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_xz_direct = hip_flatten_thread_xz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_yx_direct = hip_flatten_thread_yx_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_yz_direct = hip_flatten_thread_yz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_zx_direct = hip_flatten_thread_zx_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_zy_direct = hip_flatten_thread_zy_direct;
 
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_xyz_direct = hip_flatten_thread_xyz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_xzy_direct = hip_flatten_thread_xzy_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_yxz_direct = hip_flatten_thread_yxz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_yzx_direct = hip_flatten_thread_yzx_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_zxy_direct = hip_flatten_thread_zxy_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_zyx_direct = hip_flatten_thread_zyx_direct;
 
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_xy_loop = hip_flatten_thread_xy_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_xz_loop = hip_flatten_thread_xz_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_yx_loop = hip_flatten_thread_yx_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_yz_loop = hip_flatten_thread_yz_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_zx_loop = hip_flatten_thread_zx_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_zy_loop = hip_flatten_thread_zy_loop;
 
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_xyz_loop = hip_flatten_thread_xyz_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_xzy_loop = hip_flatten_thread_xzy_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_yxz_loop = hip_flatten_thread_yxz_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_yzx_loop = hip_flatten_thread_yzx_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_zxy_loop = hip_flatten_thread_zxy_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_flatten_block_threads_zyx_loop = hip_flatten_thread_zyx_loop;
 
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_xy_nested_direct = hip_block_xy_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_xz_nested_direct = hip_block_xz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_yx_nested_direct = hip_block_yx_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_yz_nested_direct = hip_block_yz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_zx_nested_direct = hip_block_zx_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_zy_nested_direct = hip_block_zy_direct;
 
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_xyz_nested_direct = hip_block_xyz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_xzy_nested_direct = hip_block_xzy_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_yxz_nested_direct = hip_block_yxz_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_yzx_nested_direct = hip_block_yzx_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_zxy_nested_direct = hip_block_zxy_direct;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_zyx_nested_direct = hip_block_zyx_direct;
 
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_xy_nested_loop = hip_block_xy_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_xz_nested_loop = hip_block_xz_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_yx_nested_loop = hip_block_yx_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_yz_nested_loop = hip_block_yz_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_zx_nested_loop = hip_block_zx_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_zy_nested_loop = hip_block_zy_loop;
 
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_xyz_nested_loop = hip_block_xyz_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_xzy_nested_loop = hip_block_xzy_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_yxz_nested_loop = hip_block_yxz_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_yzx_nested_loop = hip_block_yzx_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_zxy_nested_loop = hip_block_zxy_loop;
+RAJA_DEPRECATE_ALIAS(RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG)
 using hip_block_zyx_nested_loop = hip_block_zyx_loop;
+
+#undef RAJA_HIP_DEPRECATED_POLICY_ALIAS_MSG
 
 }  // namespace RAJA
 

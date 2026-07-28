@@ -792,11 +792,6 @@ device back-end (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - Size-templated aliases, for example ``device_global_size_x_direct<64>``.
        SYCL currently exposes only the direct x/y/z aliases; the unchecked and
        loop variants are CUDA/HIP only.
-   * - device_global_thread_{x,y,z}
-     - yes
-     - yes
-     - yes
-     - Launch-space global thread mapping.
    * - device_thread_{x,y,z}_{direct,loop}
      - yes
      - yes
@@ -819,11 +814,6 @@ device back-end (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - no
      - Size-templated aliases, for example ``device_block_size_x_direct<128>``.
        These aliases are declared as compile-time errors under SYCL.
-   * - device_flatten_block_threads_{xy,...,zyx}_{direct,loop}
-     - yes
-     - yes
-     - yes
-     - Flattened block/thread permutations are available across all back-ends.
    * - device_flatten_thread_size_*, device_flatten_block_size_*,
        device_flatten_global_size_*
      - yes
