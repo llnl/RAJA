@@ -140,7 +140,7 @@ struct Reduce_Data
       return;
     }
 
-    auto resource = ::camp::resources::Sycl::get_default();
+    auto resource    = ::camp::resources::Sycl::get_default();
     ::sycl::queue& q = resource.get_queue();
 
     device = reinterpret_cast<T*>(
@@ -180,7 +180,7 @@ struct Reduce_Data
       return;
     }
 
-    auto resource = ::camp::resources::Sycl::get_default();
+    auto resource    = ::camp::resources::Sycl::get_default();
     ::sycl::queue& q = resource.get_queue();
 
     // precondition: host and device are valid pointers
@@ -199,7 +199,7 @@ struct Reduce_Data
       return;
     }
 
-    auto resource = ::camp::resources::Sycl::get_default();
+    auto resource    = ::camp::resources::Sycl::get_default();
     ::sycl::queue& q = resource.get_queue();
 
     // precondition: host and device are valid pointers
@@ -218,7 +218,7 @@ struct Reduce_Data
       return;
     }
 
-    auto resource = ::camp::resources::Sycl::get_default();
+    auto resource    = ::camp::resources::Sycl::get_default();
     ::sycl::queue& q = resource.get_queue();
 
     if (device)
