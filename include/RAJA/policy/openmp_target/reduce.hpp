@@ -436,13 +436,27 @@ struct TargetReduceLoc
       T identity_val_ = Reducer::identity(),
       IndexType identity_loc_ =
           RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+      : TargetReduceLoc(checked_uses_offload(p),
+                        init_val_,
+                        init_loc,
+                        identity_val_,
+                        identity_loc_)
+  {}
+
+private:
+  explicit TargetReduceLoc(bool use_offload,
+                           T init_val_,
+                           IndexType init_loc,
+                           T identity_val_,
+                           IndexType identity_loc_)
       : info(),
-        val(identity_val_, identity_val_, info, checked_uses_offload(p)),
-        loc(identity_loc_, identity_loc_, info, checked_uses_offload(p)),
+        val(identity_val_, identity_val_, info, use_offload),
+        loc(identity_loc_, identity_loc_, info, use_offload),
         hostData(new omp::Shared_Host_Loc_Data<T, IndexType> {
             init_val_, init_loc, identity_val_, identity_loc_, this})
   {}
 
+public:
   TargetReduceLoc(const TargetReduceLoc&) = default;
 
   void reset(T init_val_,
