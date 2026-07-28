@@ -62,6 +62,7 @@ jobs:
       - uses: threeal/cmake-action@v1.3.0
         with:
           build-dir: build
+          generator: 'Visual Studio 17 2022'     # force VS generator so MSVC is used instead of NMake
           options:
             ENABLE_WARNINGS_AS_ERRORS=Off
             BLT_CXX_STD="c++20"
@@ -78,4 +79,4 @@ jobs:
 ## Run tests action
       - uses: threeal/ctest-action@v1.1.0
         with:
-          build-config: Debug
+          build-config: Release
