@@ -20,6 +20,9 @@
 namespace
 {
 
+#if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE) || \
+    defined(RAJA_SYCL_ACTIVE)
+
 template<typename Exec,
          typename Launch,
          typename Atomic,
@@ -108,8 +111,6 @@ using ActiveDeviceAliasChecks = DeviceAliasChecks<RAJA::sycl_exec<128, false>,
                                                   RAJA::sycl_flatten_group_local_21_loop>;
 #endif
 
-#if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE) || \
-    defined(RAJA_SYCL_ACTIVE)
 static_assert(sizeof(ActiveDeviceAliasChecks) > 0,
               "instantiate active device alias checks");
 #endif
