@@ -4128,79 +4128,148 @@ using cuda_flatten_global_size_zyx_loop =
 /*
  * Deprecated policies
  */
-using cuda_global_thread_x = cuda_global_x_direct;
-using cuda_global_thread_y = cuda_global_y_direct;
-using cuda_global_thread_z = cuda_global_z_direct;
+#define RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG                                  \
+  "Deprecated CUDA policy alias; use the corresponding '*_direct' or "         \
+  "'*_loop' policy."
 
-using cuda_global_thread_xy = cuda_global_xy_direct;
-using cuda_global_thread_xz = cuda_global_xz_direct;
-using cuda_global_thread_yx = cuda_global_yx_direct;
-using cuda_global_thread_yz = cuda_global_yz_direct;
-using cuda_global_thread_zx = cuda_global_zx_direct;
-using cuda_global_thread_zy = cuda_global_zy_direct;
+using cuda_global_thread_x RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_x_direct;
+using cuda_global_thread_y RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_y_direct;
+using cuda_global_thread_z RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_z_direct;
 
-using cuda_global_thread_xyz = cuda_global_xyz_direct;
-using cuda_global_thread_xzy = cuda_global_xzy_direct;
-using cuda_global_thread_yxz = cuda_global_yxz_direct;
-using cuda_global_thread_yzx = cuda_global_yzx_direct;
-using cuda_global_thread_zxy = cuda_global_zxy_direct;
-using cuda_global_thread_zyx = cuda_global_zyx_direct;
+using cuda_global_thread_xy RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_xy_direct;
+using cuda_global_thread_xz RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_xz_direct;
+using cuda_global_thread_yx RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_yx_direct;
+using cuda_global_thread_yz RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_yz_direct;
+using cuda_global_thread_zx RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_zx_direct;
+using cuda_global_thread_zy RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_zy_direct;
 
-using cuda_flatten_block_threads_xy_direct = cuda_flatten_thread_xy_direct;
-using cuda_flatten_block_threads_xz_direct = cuda_flatten_thread_xz_direct;
-using cuda_flatten_block_threads_yx_direct = cuda_flatten_thread_yx_direct;
-using cuda_flatten_block_threads_yz_direct = cuda_flatten_thread_yz_direct;
-using cuda_flatten_block_threads_zx_direct = cuda_flatten_thread_zx_direct;
-using cuda_flatten_block_threads_zy_direct = cuda_flatten_thread_zy_direct;
+using cuda_global_thread_xyz RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_xyz_direct;
+using cuda_global_thread_xzy RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_xzy_direct;
+using cuda_global_thread_yxz RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_yxz_direct;
+using cuda_global_thread_yzx RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_yzx_direct;
+using cuda_global_thread_zxy RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_zxy_direct;
+using cuda_global_thread_zyx RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_zyx_direct;
 
-using cuda_flatten_block_threads_xyz_direct = cuda_flatten_thread_xyz_direct;
-using cuda_flatten_block_threads_xzy_direct = cuda_flatten_thread_xzy_direct;
-using cuda_flatten_block_threads_yxz_direct = cuda_flatten_thread_yxz_direct;
-using cuda_flatten_block_threads_yzx_direct = cuda_flatten_thread_yzx_direct;
-using cuda_flatten_block_threads_zxy_direct = cuda_flatten_thread_zxy_direct;
-using cuda_flatten_block_threads_zyx_direct = cuda_flatten_thread_zyx_direct;
+using cuda_flatten_block_threads_xy_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xy_direct;
+using cuda_flatten_block_threads_xz_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xz_direct;
+using cuda_flatten_block_threads_yx_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yx_direct;
+using cuda_flatten_block_threads_yz_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yz_direct;
+using cuda_flatten_block_threads_zx_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zx_direct;
+using cuda_flatten_block_threads_zy_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zy_direct;
 
-using cuda_flatten_block_threads_xy_loop = cuda_flatten_thread_xy_loop;
-using cuda_flatten_block_threads_xz_loop = cuda_flatten_thread_xz_loop;
-using cuda_flatten_block_threads_yx_loop = cuda_flatten_thread_yx_loop;
-using cuda_flatten_block_threads_yz_loop = cuda_flatten_thread_yz_loop;
-using cuda_flatten_block_threads_zx_loop = cuda_flatten_thread_zx_loop;
-using cuda_flatten_block_threads_zy_loop = cuda_flatten_thread_zy_loop;
+using cuda_flatten_block_threads_xyz_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xyz_direct;
+using cuda_flatten_block_threads_xzy_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xzy_direct;
+using cuda_flatten_block_threads_yxz_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yxz_direct;
+using cuda_flatten_block_threads_yzx_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yzx_direct;
+using cuda_flatten_block_threads_zxy_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zxy_direct;
+using cuda_flatten_block_threads_zyx_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zyx_direct;
 
-using cuda_flatten_block_threads_xyz_loop = cuda_flatten_thread_xyz_loop;
-using cuda_flatten_block_threads_xzy_loop = cuda_flatten_thread_xzy_loop;
-using cuda_flatten_block_threads_yxz_loop = cuda_flatten_thread_yxz_loop;
-using cuda_flatten_block_threads_yzx_loop = cuda_flatten_thread_yzx_loop;
-using cuda_flatten_block_threads_zxy_loop = cuda_flatten_thread_zxy_loop;
-using cuda_flatten_block_threads_zyx_loop = cuda_flatten_thread_zyx_loop;
+using cuda_flatten_block_threads_xy_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xy_loop;
+using cuda_flatten_block_threads_xz_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xz_loop;
+using cuda_flatten_block_threads_yx_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yx_loop;
+using cuda_flatten_block_threads_yz_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yz_loop;
+using cuda_flatten_block_threads_zx_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zx_loop;
+using cuda_flatten_block_threads_zy_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zy_loop;
 
-using cuda_block_xy_nested_direct = cuda_block_xy_direct;
-using cuda_block_xz_nested_direct = cuda_block_xz_direct;
-using cuda_block_yx_nested_direct = cuda_block_yx_direct;
-using cuda_block_yz_nested_direct = cuda_block_yz_direct;
-using cuda_block_zx_nested_direct = cuda_block_zx_direct;
-using cuda_block_zy_nested_direct = cuda_block_zy_direct;
+using cuda_flatten_block_threads_xyz_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xyz_loop;
+using cuda_flatten_block_threads_xzy_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xzy_loop;
+using cuda_flatten_block_threads_yxz_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yxz_loop;
+using cuda_flatten_block_threads_yzx_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yzx_loop;
+using cuda_flatten_block_threads_zxy_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zxy_loop;
+using cuda_flatten_block_threads_zyx_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zyx_loop;
 
-using cuda_block_xyz_nested_direct = cuda_block_xyz_direct;
-using cuda_block_xzy_nested_direct = cuda_block_xzy_direct;
-using cuda_block_yxz_nested_direct = cuda_block_yxz_direct;
-using cuda_block_yzx_nested_direct = cuda_block_yzx_direct;
-using cuda_block_zxy_nested_direct = cuda_block_zxy_direct;
-using cuda_block_zyx_nested_direct = cuda_block_zyx_direct;
+using cuda_block_xy_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xy_direct;
+using cuda_block_xz_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xz_direct;
+using cuda_block_yx_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yx_direct;
+using cuda_block_yz_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yz_direct;
+using cuda_block_zx_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zx_direct;
+using cuda_block_zy_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zy_direct;
 
-using cuda_block_xy_nested_loop = cuda_block_xy_loop;
-using cuda_block_xz_nested_loop = cuda_block_xz_loop;
-using cuda_block_yx_nested_loop = cuda_block_yx_loop;
-using cuda_block_yz_nested_loop = cuda_block_yz_loop;
-using cuda_block_zx_nested_loop = cuda_block_zx_loop;
-using cuda_block_zy_nested_loop = cuda_block_zy_loop;
+using cuda_block_xyz_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xyz_direct;
+using cuda_block_xzy_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xzy_direct;
+using cuda_block_yxz_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yxz_direct;
+using cuda_block_yzx_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yzx_direct;
+using cuda_block_zxy_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zxy_direct;
+using cuda_block_zyx_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zyx_direct;
 
-using cuda_block_xyz_nested_loop = cuda_block_xyz_loop;
-using cuda_block_xzy_nested_loop = cuda_block_xzy_loop;
-using cuda_block_yxz_nested_loop = cuda_block_yxz_loop;
-using cuda_block_yzx_nested_loop = cuda_block_yzx_loop;
-using cuda_block_zxy_nested_loop = cuda_block_zxy_loop;
-using cuda_block_zyx_nested_loop = cuda_block_zyx_loop;
+using cuda_block_xy_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xy_loop;
+using cuda_block_xz_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xz_loop;
+using cuda_block_yx_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yx_loop;
+using cuda_block_yz_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yz_loop;
+using cuda_block_zx_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zx_loop;
+using cuda_block_zy_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zy_loop;
+
+using cuda_block_xyz_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xyz_loop;
+using cuda_block_xzy_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xzy_loop;
+using cuda_block_yxz_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yxz_loop;
+using cuda_block_yzx_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yzx_loop;
+using cuda_block_zxy_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zxy_loop;
+using cuda_block_zyx_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zyx_loop;
+
+#undef RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG
 
 }  // namespace RAJA
 

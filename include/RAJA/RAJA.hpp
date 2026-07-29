@@ -97,6 +97,8 @@
 #include "RAJA/policy/desul.hpp"
 #endif
 
+#include "RAJA/policy/device.hpp"
+
 #include "RAJA/index/IndexSet.hpp"
 
 //
