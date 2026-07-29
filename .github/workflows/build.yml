@@ -70,7 +70,7 @@ jobs:
       - uses: threeal/cmake-action@v1.3.0
         with:
           build-dir: build
-          generator: 'Visual Studio 18 2026'     # force VS generator so MSVC is used instead of NMake
+          generator: 'Visual Studio 17 2022'     # force VS generator so MSVC is used instead of NMake
           options:
             ENABLE_WARNINGS_AS_ERRORS=Off
             BLT_CXX_STD="c++20"
