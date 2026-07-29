@@ -39,7 +39,7 @@ variables:
 
   # Corona (flux) allocation settings
   CORONA_SHARED_ALLOC: "OFF"
-  CORONA_JOB_ALLOC: "--nodes=1 --time-limit=30m --begin-time=+5s"
+  CORONA_JOB_ALLOC: "--nodes=1 --time-limit=45m --begin-time=+5s"
   # Project specific variants for corona
   PROJECT_CORONA_VARIANTS: "~shared ~openmp +vectorization +tests"
   # Project specific deps for corona
