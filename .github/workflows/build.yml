@@ -51,9 +51,14 @@ jobs:
             BUILD_SHARED_LIBS=On 
             CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=On
         - args: BUILD_SHARED_LIBS=Off
-          
 
-    runs-on: windows-2025
+
+# Notes on Windows CI
+# The windows-2025 runner has converted to Visual Studio (VS) 2026.
+# cmake added VS 2026 support in cmake v4.2, we had issues with cmake 4.4 related to JSON parsing.
+# Testing is currently done on the windows-2022 runner with VS 2022 until the issue can
+# be resolved.
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v2
         with:
