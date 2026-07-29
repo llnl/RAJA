@@ -414,10 +414,20 @@ public:
       for (const auto& msg : messages)
       {
         msg_id id = std::make_pair(msg->type, msg->hash);
-        for (auto& callback : m_callback_map[id])
+        auto it   = m_callback_map.find(id);
+
+        if (it != m_callback_map.end() && !it->second.empty())
         {
-          (*callback)(msg->args);
+          auto& callbacks = it->second;
+
+          for (auto& callback : callbacks)
+          {
+            (*callback)(msg->args);
+          }
+
+          callbacks.front()->destroy_args(msg->args);
         }
+
         msg->~MsgHeader();
       }
       messages.clear();

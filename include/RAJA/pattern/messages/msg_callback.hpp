@@ -35,7 +35,8 @@ public:
 
   virtual std::type_index get_type() const { return typeid(void); }
 
-  virtual void operator()(char*) const = 0;
+  virtual void operator()(char*) const   = 0;
+  virtual void destroy_args(char*) const = 0;
 };
 
 template<typename Callable, typename Signature>
@@ -59,6 +60,12 @@ public:
     auto& msg = *std::launder(
         reinterpret_cast<MsgArgs<std::decay_t<Args>...>*>(args_buf));
     camp::apply(m_callable, msg.args);
+  }
+
+  void destroy_args(char* args_buf) const final override
+  {
+    auto& msg = *std::launder(
+        reinterpret_cast<MsgArgs<std::decay_t<Args>...>*>(args_buf));
     msg.~MsgArgs<std::decay_t<Args>...>();
   }
 
