@@ -39,13 +39,13 @@
 using device_launch = RAJA::LaunchPolicy<RAJA::cuda_launch_t<false>>;
 using device_inner_pol0 =  RAJA::LoopPolicy<RAJA::cuda_thread_x_direct>;
 using device_inner_pol1 =  RAJA::LoopPolicy<RAJA::cuda_thread_y_direct>;
-using device_flatten_pol =  RAJA::LoopPolicy<RAJA::cuda_flatten_block_threads_xy_direct>;
+using device_flatten_pol =  RAJA::LoopPolicy<RAJA::cuda_flatten_thread_xy_direct>;
 using reduce_policy = RAJA::cuda_reduce;
 #elif defined(RAJA_ENABLE_HIP)
 using device_launch = RAJA::LaunchPolicy<RAJA::hip_launch_t<false>>;
 using device_inner_pol0 =  RAJA::LoopPolicy<RAJA::hip_thread_x_direct>;
 using device_inner_pol1 =  RAJA::LoopPolicy<RAJA::hip_thread_y_direct>;
-using device_flatten_pol =  RAJA::LoopPolicy<RAJA::hip_flatten_block_threads_xy_direct>;
+using device_flatten_pol =  RAJA::LoopPolicy<RAJA::hip_flatten_thread_xy_direct>;
 using reduce_policy = RAJA::hip_reduce;
 #endif
 
