@@ -80,4 +80,4 @@ jobs:
 ## Run tests action
       - uses: threeal/ctest-action@v1.1.0
         with:
-          build-config: Release
+          build-config: Debug
