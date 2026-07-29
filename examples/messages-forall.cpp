@@ -277,7 +277,8 @@ const int GPU_BLOCK_SIZE = 256;
   int* h_array  = res_host.allocate<int>(N);
 
   // _raja_msg_gpu2_start
-  auto allocator1     = RAJA::ResourceAllocator<char, decltype(res_gpu1)>{res_gpu1};
+  auto allocator1     = RAJA::ResourceAllocator<char, decltype(res_gpu1)>{res_gpu1,
+    RAJA::resources::MemoryAccess::Pinned};
   auto gpu_logger1    = RAJA::make_message_manager(buf_sz, res_gpu1, allocator1); 
   auto gpu_msg_queue1 = gpu_logger1.subscribe<RAJA::mpsc_queue>(
     [](int* ptr, int idx, int value) {
@@ -285,7 +286,8 @@ const int GPU_BLOCK_SIZE = 256;
     }
   );
 
-  auto allocator2     = RAJA::ResourceAllocator<char, decltype(res_gpu2)>{res_gpu2};
+  auto allocator2     = RAJA::ResourceAllocator<char, decltype(res_gpu2)>{res_gpu2,
+    RAJA::resources::MemoryAccess::Pinned};
   auto gpu_logger2    = RAJA::make_message_manager(buf_sz, res_gpu2, allocator2);
   auto gpu_msg_queue2 = gpu_logger2.subscribe<RAJA::mpsc_queue>(
     [](int* ptr, int idx, int value) {
