@@ -31,4 +31,8 @@ raja_add_test(
   NAME test-math
   SOURCES test-math.cpp)
 
+raja_add_test(
+  NAME test-device-policy-aliases
+  SOURCES test-device-policy-aliases.cpp)
+
 add_subdirectory(operator)

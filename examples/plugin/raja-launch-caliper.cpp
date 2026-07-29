@@ -118,7 +118,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   std::cout << "\n Running RAJA CUDA daxpy...\n";
   const bool async = false;
   using cuda_launch_policy = RAJA::LaunchPolicy<RAJA::cuda_launch_t<async>>;
-  using cuda_loop_policy   = RAJA::LoopPolicy<RAJA::cuda_global_thread_x>;
+  using cuda_loop_policy   = RAJA::LoopPolicy<RAJA::cuda_global_x_direct>;
 
   a = 0; b = 0;
   CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMalloc, (void**)&a, N * sizeof(double));
@@ -158,7 +158,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   std::cout << "\n Running RAJA HIP daxpy...\n";
   const bool async = false;
   using hip_launch_policy = RAJA::LaunchPolicy<RAJA::hip_launch_t<async>>;
-  using hip_loop_policy   = RAJA::LoopPolicy<RAJA::hip_global_thread_x>;
+  using hip_loop_policy   = RAJA::LoopPolicy<RAJA::hip_global_x_direct>;
 
   a = 0; b = 0;
   CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, (void**)&a, N * sizeof(double));

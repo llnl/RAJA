@@ -27,6 +27,14 @@ raja_add_executable(
   NAME dynamic-forall
   SOURCES dynamic-forall.cpp)
 
+raja_add_executable(
+  NAME device-policy-aliases
+  SOURCES device-policy-aliases.cpp)
+
+raja_add_executable(
+  NAME launch-device-policy-aliases
+  SOURCES launch-device-policy-aliases.cpp)
+
 if (RAJA_ENABLE_JIT)
   raja_add_executable(
     NAME forall-jit
