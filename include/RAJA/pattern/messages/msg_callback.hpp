@@ -35,6 +35,8 @@ public:
 
   virtual std::type_index get_type() const { return typeid(void); }
 
+  virtual std::type_index get_msg_type() const = 0;
+
   virtual void operator()(char*) const   = 0;
   virtual void destroy_args(char*) const = 0;
 };
@@ -54,6 +56,11 @@ public:
   {}
 
   std::type_index get_type() const final { return typeid(Callable); }
+
+  std::type_index get_msg_type() const final
+  {
+    return typeid(MsgArgs<std::decay_t<Args>...>);
+  }
 
   void operator()(char* args_buf) const final override
   {

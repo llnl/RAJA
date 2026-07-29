@@ -351,10 +351,20 @@ public:
   {
     RAJA::MsgCallback callback {std::forward<Callable>(c)};
     auto& fn_list = m_callback_map.at(id);
-    auto it       = std::ranges::find_if(fn_list, [](const auto& fn) {
+
+    // Ensure all callbacks accept the same argument types
+    if (!fn_list.empty() &&
+        fn_list.front()->get_msg_type() != callback.get_msg_type())
+    {
+      throw std::invalid_argument(
+          "Callback signature does not match message queue");
+    }
+
+    auto it = std::ranges::find_if(fn_list, [](const auto& fn) {
       return std::type_index {typeid(Callable)} == fn->get_type();
     });
 
+    // Replace old callback if already exists or append new callback to list
     using msg_callback_t = decltype(callback);
     if (it != fn_list.end())
     {
