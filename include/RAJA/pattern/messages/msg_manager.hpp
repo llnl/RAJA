@@ -323,7 +323,9 @@ public:
 public:
   template<concepts::Resource Resource>
   MessageManager(const std::size_t bus_sz, Resource res, Allocator alloc)
-      : m_bus {bus_sz, res, alloc}
+      : m_bus {bus_sz, res, alloc},
+        m_next_queue_id {0},
+        m_callback_map {}
   {}
 
   ~MessageManager() = default;
@@ -339,8 +341,7 @@ public:
   template<typename Policy, typename Callable>
   auto subscribe(Callable&& c)
   {
-    msg_id id =
-        std::make_pair(m_callback_map.size(), typeid(Callable).hash_code());
+    msg_id id = std::make_pair(m_next_queue_id++, typeid(Callable).hash_code());
 
     return get_queue_impl<Policy>(
         id, RAJA::MsgCallback {std::forward<Callable>(c)});
@@ -476,6 +477,7 @@ private:
   }
 
   msg_bus m_bus;
+  std::size_t m_next_queue_id;
   std::unordered_map<msg_id, msg_fn_list_t, RAJA::detail::PairHash>
       m_callback_map;
 };
