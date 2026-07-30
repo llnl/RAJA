@@ -30,6 +30,138 @@ be redefined and to work in new ways.
             for CUDA, etc.
 
 -----------------------------------------------------
+Policy Basics
+-----------------------------------------------------
+
+An execution policy is a C++ type that tells RAJA how to run a loop, kernel,
+or related operation. In most cases, choosing a policy answers two questions:
+
+  * Which back-end should run the work, such as sequential CPU, OpenMP, CUDA,
+    HIP, SYCL, or OpenMP target?
+  * Which execution pattern should RAJA use, such as a simple loop, a nested
+    loop mapping, a reduction, or an atomic update?
+
+Different RAJA features use different policy categories. The policy categories
+are related, but they are not interchangeable.
+
+====================================== ========================================
+Policy category                        Used for
+====================================== ========================================
+Loop execution policies                ``RAJA::forall`` loops, simple scans,
+                                       sorts, and individual loop levels in
+                                       ``RAJA::kernel`` and ``RAJA::launch``.
+Launch policies                        Creating an execution environment for
+                                       ``RAJA::launch``.
+Index set execution policies           Running a ``RAJA::IndexSet`` by choosing
+                                       one policy for iterating over segments
+                                       and another policy for each segment.
+Reduction and multi-reduction policies ``RAJA::Reduce*`` and
+                                       ``RAJA::MultiReduce*`` objects.
+Atomic policies                        ``RAJA::atomic*`` operations.
+Local array memory policies            Choosing where ``RAJA::LocalArray``
+                                       storage lives.
+====================================== ========================================
+
+For a first implementation, users usually start with one of the policies below
+and move to more specialized policies only when they need a specific scheduling,
+mapping, synchronization, or performance behavior.
+
+============================================== =================================
+Common need                                    Typical starting policy
+============================================== =================================
+Sequential CPU loop                            ``seq_exec``
+CPU loop with SIMD compiler hints              ``simd_exec``
+OpenMP parallel CPU loop                       ``omp_parallel_for_exec``
+OpenMP launch region                           ``omp_launch_t`` with
+                                               ``omp_for_exec`` loops
+CUDA ``forall`` loop                           ``cuda_exec<BLOCK_SIZE>``
+HIP ``forall`` loop                            ``hip_exec<BLOCK_SIZE>``
+Portable GPU ``forall`` loop                   ``device_exec<BLOCK_SIZE>``
+SYCL ``forall`` loop                           ``sycl_exec<WORK_GROUP_SIZE>``
+Sequential reduction                           ``seq_reduce``
+OpenMP reduction                               ``omp_reduce``
+CUDA/HIP/SYCL reduction                        ``cuda_reduce``, ``hip_reduce``,
+                                               or ``sycl_reduce``
+Atomic update                                  Match the atomic policy to the
+                                               loop back-end, such as
+                                               ``omp_atomic`` or
+                                               ``cuda_atomic``
+============================================== =================================
+
+The tutorial sections provide worked examples that are easier to follow than
+the full reference tables on this page. See :ref:`tut-kernelexecpols-label`
+for ``RAJA::kernel`` examples and :ref:`tut-launchexecpols-label` for
+``RAJA::launch`` examples.
+
+-----------------------------------------------------
+How to Read Policy Names
+-----------------------------------------------------
+
+RAJA policy names are intentionally descriptive. Most names combine a back-end
+prefix with words that describe where work runs and how iterations are mapped.
+Understanding these pieces makes the reference tables easier to scan.
+
+Back-end prefixes identify the implementation used by the policy:
+
+================= =============================================================
+Prefix            Meaning
+================= =============================================================
+``seq_``          Sequential CPU execution.
+``simd_``         Sequential CPU execution with compiler vectorization hints.
+``omp_``          OpenMP CPU threading.
+``omp_target_``   OpenMP target offload.
+``cuda_``         CUDA device execution.
+``hip_``          HIP device execution.
+``sycl_``         SYCL device execution.
+``device_``       Alias for the active GPU device back-end when RAJA is built
+                  with CUDA, HIP, or SYCL support.
+================= =============================================================
+
+Common words in policy names describe the execution structure:
+
+================= =============================================================
+Name part         Meaning
+================= =============================================================
+``exec``          A loop execution policy, often usable with ``RAJA::forall``.
+``launch``        A policy that creates an execution environment for
+                  ``RAJA::launch``.
+``parallel_for``  An OpenMP policy that creates a parallel loop.
+``for``           An OpenMP loop inside an existing parallel region.
+``thread``        Map loop iterations to GPU threads or work-items.
+``block``         Map loop iterations to GPU thread blocks or work-groups.
+``global``        Map loop iterations to a unique global GPU thread or
+                  work-item index.
+``warp``          Map work to CUDA/HIP warp-level execution.
+``reduce``        A policy for RAJA reduction objects or reduction statements.
+``atomic``        A policy for RAJA atomic operations.
+================= =============================================================
+
+Several GPU mapping suffixes appear often:
+
+======================= =======================================================
+Suffix                  Meaning
+======================= =======================================================
+``_loop``               Use a strided loop. This is usually the most forgiving
+                        choice when the iteration space may be larger than the
+                        available threads, blocks, or work-items.
+``_direct``             Map iterations directly and mask out-of-range
+                        iterations. This is useful when the iteration space is
+                        known to fit within the chosen execution shape.
+``_direct_unchecked``   Map iterations directly without bounds checks. Use this
+                        only when the iteration space exactly matches the
+                        execution shape.
+``_size_*``             Use a compile-time size supplied as a template
+                        parameter, such as
+                        ``cuda_thread_size_x_direct<128>``.
+======================= =======================================================
+
+Template parameters customize a policy at compile time. For example,
+``cuda_exec<256>`` launches CUDA kernels with 256 threads per thread block, and
+``omp_parallel_for_static_exec<4>`` requests OpenMP static scheduling with a
+chunk size of 4. Some template parameters are optional; the policy descriptions
+below call out those cases explicitly.
+
+-----------------------------------------------------
 RAJA Loop/Kernel Execution Policies
 -----------------------------------------------------
 
