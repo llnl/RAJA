@@ -17,6 +17,8 @@
 // #include <cassert>  // Leaving out until XL is fixed 2/25/2019.
 
 #include <algorithm>
+#include <stdexcept>
+#include <string>
 
 #include <omp.h>
 
@@ -24,13 +26,14 @@
 
 #include "RAJA/pattern/reduce.hpp"
 
-#include "RAJA/policy/openmp/policy.hpp"
+#include "RAJA/policy/openmp_target/policy.hpp"
 
 namespace RAJA
 {
 
 namespace omp
 {
+
 #pragma omp declare target
 
 template<typename T, typename I>
@@ -103,6 +106,7 @@ template<typename T>
 struct Reduce_Data
 {
   mutable T value;
+  T identity;
   T* device;
   T* host;
 
@@ -113,12 +117,24 @@ struct Reduce_Data
    *
    *  allocates data on the host and device and initializes values to default
    */
-  Reduce_Data(T initValue, T identityValue, Offload_Info& info)
+  Reduce_Data(T initValue,
+              T identityValue,
+              Offload_Info& info,
+              bool use_offload = true)
       : value(initValue),
-        device {reinterpret_cast<T*>(
-            omp_target_alloc(omp::MaxNumTeams * sizeof(T), info.deviceID))},
-        host {new T[omp::MaxNumTeams]}
+        identity(identityValue),
+        device {nullptr},
+        host {nullptr}
   {
+    if (!use_offload)
+    {
+      return;
+    }
+
+    device = reinterpret_cast<T*>(
+        omp_target_alloc(omp::MaxNumTeams * sizeof(T), info.deviceID));
+    host = new T[omp::MaxNumTeams];
+
     if (!host)
     {
       printf("Unable to allocate space on host\n");
@@ -135,12 +151,19 @@ struct Reduce_Data
 
   void reset(T initValue) { value = initValue; }
 
+  bool uses_offload() const { return device != nullptr; }
+
   //! default copy constructor for POD
   Reduce_Data(const Reduce_Data&) = default;
 
   //! transfers from the host to the device -- exit() is called upon failure
   RAJA_INLINE void hostToDevice(Offload_Info& info)
   {
+    if (!device || !host)
+    {
+      return;
+    }
+
     // precondition: host and device are valid pointers
     if (omp_target_memcpy(reinterpret_cast<void*>(device),
                           reinterpret_cast<void*>(host),
@@ -155,6 +178,11 @@ struct Reduce_Data
   //! transfers from the device to the host -- exit() is called upon failure
   RAJA_INLINE void deviceToHost(Offload_Info& info)
   {
+    if (!device || !host)
+    {
+      return;
+    }
+
     // precondition: host and device are valid pointers
     if (omp_target_memcpy(reinterpret_cast<void*>(host),
                           reinterpret_cast<void*>(device),
@@ -180,31 +208,112 @@ struct Reduce_Data
       host = nullptr;
     }
   }
+
+  RAJA_INLINE void reset_device(T identityValue, Offload_Info& info)
+  {
+    if (!uses_offload())
+    {
+      return;
+    }
+
+    std::fill_n(host, omp::MaxNumTeams, identityValue);
+    hostToDevice(info);
+  }
+};
+
+template<typename T>
+struct Shared_Host_Data
+{
+  T hostVal;
+  T identity;
+  const void* rootToken;
+};
+
+template<typename T, typename IndexType>
+struct Shared_Host_Loc_Data
+{
+  T hostVal;
+  IndexType hostLoc;
+  T identity;
+  IndexType identityLoc;
+  const void* rootToken;
 };
 
 }  // end namespace omp
 
 //! OpenMP Target Reduction entity -- generalize on # of teams, reduction, and
 //! type
+// This is the last layer of the user facing Reduction API
 template<typename Reducer, typename T>
 struct TargetReduce
 {
-  TargetReduce()                    = delete;
-  TargetReduce(const TargetReduce&) = default;
+  TargetReduce()
+      : TargetReduce(Policy::all_supported,
+                     Reducer::identity(),
+                     Reducer::identity())
+  {}
+
+  explicit TargetReduce(Policy p)
+      : TargetReduce(p, Reducer::identity(), Reducer::identity())
+  {}
 
   explicit TargetReduce(T init_val_, T identity_ = Reducer::identity())
-      : info(),
-        val(identity_, identity_, info),
-        initVal(init_val_),
-        finalVal(identity_)
+      : TargetReduce(Policy::all_supported, init_val_, identity_)
   {}
+
+  TargetReduce(Policy p, T init_val_, T identity_ = Reducer::identity())
+      : info(),
+        val(identity_,
+            identity_,
+            info,
+            policy_matches_or_throw(
+                "OpenMPTargetReduce",
+                reduction_supported_policies_t<Policy::target_openmp> {},
+                p) &&
+                policy_matches(PolicyList<Policy::target_openmp> {}, p)),
+        hostData(new omp::Shared_Host_Data<T> {init_val_, identity_, this})
+  {}
+
+  TargetReduce(const TargetReduce&) = default;
 
   void reset(T init_val_, T identity_ = Reducer::identity())
   {
-    operator T();
+    hostData->hostVal  = init_val_;
+    hostData->identity = identity_;
     val.reset(identity_);
-    initVal  = init_val_;
-    finalVal = identity_;
+    if (val.uses_offload())
+    {
+      val.reset_device(identity_, info);
+    }
+  }
+
+  void reset(Policy p, T init_val_, T identity_ = Reducer::identity())
+  {
+    policy_matches_or_throw(
+        "OpenMPTargetReduce::reset",
+        reduction_supported_policies_t<Policy::target_openmp> {}, p);
+    const bool use_offload =
+        policy_matches(PolicyList<Policy::target_openmp> {}, p);
+    if (val.uses_offload() && use_offload)
+    {
+      val.reset(identity_);
+      val.reset_device(identity_, info);
+    }
+    else if (val.uses_offload() && !use_offload)
+    {
+      val.cleanup(info);
+      val = omp::Reduce_Data<T>(identity_, identity_, info, false);
+    }
+    else if (!val.uses_offload() && use_offload)
+    {
+      val = omp::Reduce_Data<T>(identity_, identity_, info, true);
+    }
+    else
+    {
+      val.reset(identity_);
+    }
+    hostData->hostVal  = init_val_;
+    hostData->identity = identity_;
   }
 
 #ifdef __ibmxl__  // TODO: implicit declare target doesn't pick this up
@@ -223,6 +332,12 @@ struct TargetReduce
         Reducer {}(val.device[tid], val.value);
       }
     }
+    else if (is_root())
+    {
+      val.cleanup(info);
+      delete hostData;
+      hostData = nullptr;
+    }
   }
 #ifdef __ibmxl__  // TODO: implicit declare target doesn't pick this up
 #pragma omp end declare target
@@ -231,56 +346,71 @@ struct TargetReduce
   //! map result value back to host if not done already; return aggregate value
   operator T()
   {
-    if (!info.isMapped)
+    T result = hostData->hostVal;
+    if (val.uses_offload())
     {
       val.deviceToHost(info);
 
       for (int i = 0; i < omp::MaxNumTeams; ++i)
       {
-        Reducer {}(val.value, val.host[i]);
+        Reducer {}(result, val.host[i]);
       }
-      val.cleanup(info);
-      info.isMapped = true;
     }
-    finalVal = Reducer::identity();
-    Reducer {}(finalVal, initVal);
-    Reducer {}(finalVal, val.value);
-    return finalVal;
+    return result;
   }
 
   //! alias for operator T()
   T get() { return operator T(); }
 
   //! apply reduction
-  TargetReduce& reduce(T rhsVal)
-  {
-    Reducer {}(val.value, rhsVal);
-    return *this;
-  }
-
-  //! apply reduction (const version) -- still reduces internal values
   const TargetReduce& reduce(T rhsVal) const
   {
-    Reducer {}(val.value, rhsVal);
+    if (!omp_is_initial_device())
+    {
+      Reducer {}(val.value, rhsVal);
+    }
+    else
+    {
+      Reducer {}(hostData->hostVal, rhsVal);
+    }
     return *this;
   }
 
 private:
+  RAJA_INLINE bool is_root() const
+  {
+    return hostData && hostData->rootToken == this;
+  }
+
   //! storage for offload information (host ID, device ID)
   omp::Offload_Info info;
   //! storage for reduction data (host ptr, device ptr, value)
   omp::Reduce_Data<T> val;
-  T initVal;
-  T finalVal;
+  //! shared host semantic state owned by the original reducer
+  omp::Shared_Host_Data<T>* hostData;
 };
 
 //! OpenMP Target Reduction Location entity -- generalize on # of teams,
 //! reduction, and type
+// This is the last layer of the user facing Reduction API
 template<typename Reducer, typename T, typename IndexType>
 struct TargetReduceLoc
 {
-  TargetReduceLoc()                       = delete;
-  TargetReduceLoc(const TargetReduceLoc&) = default;
+  TargetReduceLoc()
+      : TargetReduceLoc(Policy::all_supported,
+                        Reducer::identity(),
+                        RAJA::reduce::detail::DefaultLoc<IndexType>().value(),
+                        Reducer::identity(),
+                        RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+  {}
+
+  explicit TargetReduceLoc(Policy p)
+      : TargetReduceLoc(p,
+                        Reducer::identity(),
+                        RAJA::reduce::detail::DefaultLoc<IndexType>().value(),
+                        Reducer::identity(),
+                        RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+  {}
 
   explicit TargetReduceLoc(
       T init_val_,
@@ -288,14 +418,47 @@ struct TargetReduceLoc
       T identity_val_ = Reducer::identity(),
       IndexType identity_loc_ =
           RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : info(),
-        val(identity_val_, identity_val_, info),
-        loc(identity_loc_, identity_loc_, info),
-        initVal(init_val_),
-        finalVal(identity_val_),
-        initLoc(init_loc),
-        finalLoc(identity_loc_)
+      : TargetReduceLoc(Policy::all_supported,
+                        init_val_,
+                        init_loc,
+                        identity_val_,
+                        identity_loc_)
   {}
+
+  explicit TargetReduceLoc(
+      Policy p,
+      T init_val_,
+      IndexType init_loc,
+      T identity_val_ = Reducer::identity(),
+      IndexType identity_loc_ =
+          RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+      : TargetReduceLoc(
+            policy_matches_or_throw(
+                "OpenMPTargetReduceLoc",
+                reduction_supported_policies_t<Policy::target_openmp> {},
+                p) &&
+                policy_matches(PolicyList<Policy::target_openmp> {}, p),
+            init_val_,
+            init_loc,
+            identity_val_,
+            identity_loc_)
+  {}
+
+private:
+  explicit TargetReduceLoc(bool use_offload,
+                           T init_val_,
+                           IndexType init_loc,
+                           T identity_val_,
+                           IndexType identity_loc_)
+      : info(),
+        val(identity_val_, identity_val_, info, use_offload),
+        loc(identity_loc_, identity_loc_, info, use_offload),
+        hostData(new omp::Shared_Host_Loc_Data<T, IndexType> {
+            init_val_, init_loc, identity_val_, identity_loc_, this})
+  {}
+
+public:
+  TargetReduceLoc(const TargetReduceLoc&) = default;
 
   void reset(T init_val_,
              IndexType init_loc_,
@@ -303,13 +466,61 @@ struct TargetReduceLoc
              IndexType identity_loc_ =
                  RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {
-    operator T();
+    hostData->hostVal     = init_val_;
+    hostData->hostLoc     = init_loc_;
+    hostData->identity    = identity_val_;
+    hostData->identityLoc = identity_loc_;
     val.reset(identity_val_);
     loc.reset(identity_loc_);
-    initVal  = init_val_;
-    finalVal = identity_val_;
-    initLoc  = init_loc_;
-    finalLoc = identity_loc_;
+    if (val.uses_offload())
+    {
+      val.reset_device(identity_val_, info);
+      loc.reset_device(identity_loc_, info);
+    }
+  }
+
+  void reset(Policy p,
+             T init_val_,
+             IndexType init_loc_,
+             T identity_val_ = Reducer::identity(),
+             IndexType identity_loc_ =
+                 RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+  {
+    policy_matches_or_throw(
+        "OpenMPTargetReduceLoc::reset",
+        reduction_supported_policies_t<Policy::target_openmp> {}, p);
+    const bool use_offload =
+        policy_matches(PolicyList<Policy::target_openmp> {}, p);
+    if (val.uses_offload() && use_offload)
+    {
+      val.reset(identity_val_);
+      loc.reset(identity_loc_);
+      val.reset_device(identity_val_, info);
+      loc.reset_device(identity_loc_, info);
+    }
+    else if (val.uses_offload() && !use_offload)
+    {
+      val.cleanup(info);
+      loc.cleanup(info);
+      val = omp::Reduce_Data<T>(identity_val_, identity_val_, info, false);
+      loc = omp::Reduce_Data<IndexType>(identity_loc_, identity_loc_, info,
+                                        false);
+    }
+    else if (!val.uses_offload() && use_offload)
+    {
+      val = omp::Reduce_Data<T>(identity_val_, identity_val_, info, true);
+      loc =
+          omp::Reduce_Data<IndexType>(identity_loc_, identity_loc_, info, true);
+    }
+    else
+    {
+      val.reset(identity_val_);
+      loc.reset(identity_loc_);
+    }
+    hostData->hostVal     = init_val_;
+    hostData->hostLoc     = init_loc_;
+    hostData->identity    = identity_val_;
+    hostData->identityLoc = identity_loc_;
   }
 
   //! apply reduction on device upon destruction
@@ -325,28 +536,22 @@ struct TargetReduceLoc
         Reducer {}(val.device[tid], loc.device[tid], val.value, loc.value);
       }
     }
+    else if (is_root())
+    {
+      val.cleanup(info);
+      loc.cleanup(info);
+      delete hostData;
+      hostData = nullptr;
+    }
   }
 
   //! map result value back to host if not done already; return aggregate value
   operator T()
   {
-    if (!info.isMapped)
-    {
-      val.deviceToHost(info);
-      loc.deviceToHost(info);
-      for (int i = 0; i < omp::MaxNumTeams; ++i)
-      {
-        Reducer {}(val.value, loc.value, val.host[i], loc.host[i]);
-      }
-      val.cleanup(info);
-      loc.cleanup(info);
-      info.isMapped = true;
-    }
-    finalVal = Reducer::identity();
-    finalLoc = IndexType(RAJA::reduce::detail::DefaultLoc<IndexType>().value());
-    Reducer {}(finalVal, finalLoc, initVal, initLoc);
-    Reducer {}(finalVal, finalLoc, val.value, loc.value);
-    return finalVal;
+    T result;
+    IndexType resultLoc;
+    compute_result(result, resultLoc);
+    return result;
   }
 
   //! alias for operator T()
@@ -356,39 +561,59 @@ struct TargetReduceLoc
   //! location
   IndexType getLoc()
   {
-    if (!info.isMapped) get();
-    // return loc.value;
-    return (finalLoc);
+    T result;
+    IndexType resultLoc;
+    compute_result(result, resultLoc);
+    return resultLoc;
   }
 
   //! apply reduction
-  TargetReduceLoc& reduce(T rhsVal, IndexType rhsLoc)
-  {
-    Reducer {}(val.value, loc.value, rhsVal, rhsLoc);
-    return *this;
-  }
-
-  //! apply reduction (const version) -- still reduces internal values
   const TargetReduceLoc& reduce(T rhsVal, IndexType rhsLoc) const
   {
-    Reducer {}(val.value, loc.value, rhsVal, rhsLoc);
+    if (!omp_is_initial_device())
+    {
+      Reducer {}(val.value, loc.value, rhsVal, rhsLoc);
+    }
+    else
+    {
+      Reducer {}(hostData->hostVal, hostData->hostLoc, rhsVal, rhsLoc);
+    }
     return *this;
   }
 
 private:
+  RAJA_INLINE bool is_root() const
+  {
+    return hostData && hostData->rootToken == this;
+  }
+
+  void compute_result(T& result, IndexType& resultLoc)
+  {
+    result    = hostData->hostVal;
+    resultLoc = hostData->hostLoc;
+    if (val.uses_offload())
+    {
+      val.deviceToHost(info);
+      loc.deviceToHost(info);
+      for (int i = 0; i < omp::MaxNumTeams; ++i)
+      {
+        Reducer {}(result, resultLoc, val.host[i], loc.host[i]);
+      }
+    }
+  }
+
   //! storage for offload information
   omp::Offload_Info info;
   //! storage for reduction data for value
   omp::Reduce_Data<T> val;
   //! storage for redcution data for location
   omp::Reduce_Data<IndexType> loc;
-  T initVal;
-  T finalVal;
-  IndexType initLoc;
-  IndexType finalLoc;
+  //! shared host semantic state owned by the original reducer
+  omp::Shared_Host_Loc_Data<T, IndexType>* hostData;
 };
 
 //! specialization of ReduceSum for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceSum<omp_target_reduce, T>
     : public TargetReduce<RAJA::reduce::sum<T>, T>
@@ -399,13 +624,6 @@ public:
   using parent::parent;
 
   //! enable operator+= for ReduceSum -- alias for reduce()
-  self& operator+=(T rhsVal)
-  {
-    parent::reduce(rhsVal);
-    return *this;
-  }
-
-  //! enable operator+= for ReduceSum -- alias for reduce()
   const self& operator+=(T rhsVal) const
   {
     parent::reduce(rhsVal);
@@ -414,6 +632,7 @@ public:
 };
 
 //! specialization of ReduceBitOr for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceBitOr<omp_target_reduce, T>
     : public TargetReduce<RAJA::reduce::or_bit<T>, T>
@@ -424,13 +643,6 @@ public:
   using parent::parent;
 
   //! enable operator|= for ReduceBitOr -- alias for reduce()
-  self& operator|=(T rhsVal)
-  {
-    parent::reduce(rhsVal);
-    return *this;
-  }
-
-  //! enable operator|= for ReduceBitOr -- alias for reduce()
   const self& operator|=(T rhsVal) const
   {
     parent::reduce(rhsVal);
@@ -439,6 +651,7 @@ public:
 };
 
 //! specialization of ReduceBitAnd for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceBitAnd<omp_target_reduce, T>
     : public TargetReduce<RAJA::reduce::and_bit<T>, T>
@@ -449,13 +662,6 @@ public:
   using parent::parent;
 
   //! enable operator&= for ReduceBitAnd -- alias for reduce()
-  self& operator&=(T rhsVal)
-  {
-    parent::reduce(rhsVal);
-    return *this;
-  }
-
-  //! enable operator&= for ReduceBitAnd -- alias for reduce()
   const self& operator&=(T rhsVal) const
   {
     parent::reduce(rhsVal);
@@ -464,6 +670,7 @@ public:
 };
 
 //! specialization of ReduceMin for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceMin<omp_target_reduce, T>
     : public TargetReduce<RAJA::reduce::min<T>, T>
@@ -474,13 +681,6 @@ public:
   using parent::parent;
 
   //! enable min() for ReduceMin -- alias for reduce()
-  self& min(T rhsVal)
-  {
-    parent::reduce(rhsVal);
-    return *this;
-  }
-
-  //! enable min() for ReduceMin -- alias for reduce()
   const self& min(T rhsVal) const
   {
     parent::reduce(rhsVal);
@@ -489,6 +689,7 @@ public:
 };
 
 //! specialization of ReduceMax for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T>
 class ReduceMax<omp_target_reduce, T>
     : public TargetReduce<RAJA::reduce::max<T>, T>
@@ -499,13 +700,6 @@ public:
   using parent::parent;
 
   //! enable max() for ReduceMax -- alias for reduce()
-  self& max(T rhsVal)
-  {
-    parent::reduce(rhsVal);
-    return *this;
-  }
-
-  //! enable max() for ReduceMax -- alias for reduce()
   const self& max(T rhsVal) const
   {
     parent::reduce(rhsVal);
@@ -514,6 +708,7 @@ public:
 };
 
 //! specialization of ReduceMinLoc for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T, typename IndexType>
 class ReduceMinLoc<omp_target_reduce, T, IndexType>
     : public TargetReduceLoc<omp::minloc<T, IndexType>, T, IndexType>
@@ -524,13 +719,6 @@ public:
   using parent::parent;
 
   //! enable minloc() for ReduceMinLoc -- alias for reduce()
-  self& minloc(T rhsVal, IndexType rhsLoc)
-  {
-    parent::reduce(rhsVal, rhsLoc);
-    return *this;
-  }
-
-  //! enable minloc() for ReduceMinLoc -- alias for reduce()
   const self& minloc(T rhsVal, IndexType rhsLoc) const
   {
     parent::reduce(rhsVal, rhsLoc);
@@ -539,6 +727,7 @@ public:
 };
 
 //! specialization of ReduceMaxLoc for omp_target_reduce
+// This is the first layer of the user facing Reduction API
 template<typename T, typename IndexType>
 class ReduceMaxLoc<omp_target_reduce, T, IndexType>
     : public TargetReduceLoc<omp::maxloc<T, IndexType>, T, IndexType>
@@ -547,13 +736,6 @@ public:
   using self   = ReduceMaxLoc<omp_target_reduce, T, IndexType>;
   using parent = TargetReduceLoc<omp::maxloc<T, IndexType>, T, IndexType>;
   using parent::parent;
-
-  //! enable maxloc() for ReduceMaxLoc -- alias for reduce()
-  self& maxloc(T rhsVal, IndexType rhsLoc)
-  {
-    parent::reduce(rhsVal, rhsLoc);
-    return *this;
-  }
 
   //! enable maxloc() for ReduceMaxLoc -- alias for reduce()
   const self& maxloc(T rhsVal, IndexType rhsLoc) const

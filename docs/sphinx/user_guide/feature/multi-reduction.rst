@@ -31,6 +31,11 @@ Also
             a CUDA kernel, a CUDA multi-reduction policy must be used.
           * Each RAJA multi-reduction type accepts an **initial reduction value or
             values** at construction (see below).
+          * Each RAJA multi-reduction type optionally accepts a
+            **``RAJA::Policy`` enum value** argument at construction and reset
+            (see below). A specific policy argument must match the
+            execution-policy family used by the kernel in which the
+            multi-reducer is used.
           * Each RAJA multi-reduction type has a 'get' method to access reduced
             values after kernel execution completes.
 
@@ -62,6 +67,33 @@ and two less common bitwise multi-reduction types:
 * ``MultiReduceBitOr< multi_reduce_policy, data_type >`` - Bitwise 'or' of values (i.e., ``a | b``).
 
 .. note:: ``RAJA::MultiReduceBitAnd`` and ``RAJA::MultiReduceBitOr`` reduction types are designed to work on integral data types because **in C++, at the language level, there is no such thing as a bitwise operator on floating-point numbers.**
+
+------------------------
+Runtime Policy Selection
+------------------------
+
+The optional ``RAJA::Policy`` argument on a multi-reducer constructor or
+``reset`` call selects the family of loop execution policies that the
+multi-reducer object will support at runtime.
+
+* Constructing a multi-reducer with no ``RAJA::Policy`` argument, or with
+  ``RAJA::Policy::undefined``, supports any loop execution policy supported
+  by the multi-reducer's multi-reduction policy.
+* Constructing a multi-reducer with a specific policy, such as
+  ``RAJA::Policy::sequential``, restricts that object to that execution-policy
+  family.
+* Calling ``reset(...)`` with no policy argument preserves the object's
+  current runtime policy support.
+* Calling ``reset(RAJA::Policy::undefined, ...)`` broadens the object back to
+  any loop execution policy supported by the multi-reduction policy.
+* Calling ``reset(specific_policy, ...)`` narrows the object to that
+  execution-policy family.
+
+Using a multi-reducer in a loop whose execution policy does not match the most
+recent constructor or ``reset`` policy setup is undefined behavior. When the
+execution policy is known by type, ``RAJA::policy_of<exec_policy>::value`` is
+the preferred way to pass the matching ``RAJA::Policy`` value. Use an explicit
+``RAJA::Policy::*`` value when selecting the policy at runtime.
 
 -----------------------
 MultiReduction Examples
