@@ -237,7 +237,7 @@ TEST(message_handler, unsubscribe_all_id) {
   ASSERT_EQ(test2, 2);
 
   // Re-subscribe to same queue id
-  msg_manager.subscribe<RAJA::spsc_queue>(q1.get_id(), [&]() {
+  msg_manager.subscribe(q1.get_id(), [&]() {
     test1 = 3;
   });
   ASSERT_EQ(q1.try_post_message(), true);
