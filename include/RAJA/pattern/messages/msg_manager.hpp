@@ -396,9 +396,11 @@ public:
     }
   }
 
-  void unsubscribe_all(msg_id id) { m_callback_map.erase(id); }
+  void unsubscribe_all(msg_id id) { m_callback_map.at(id).clear(); }
 
   void unsubscribe_all() { m_callback_map.clear(); }
+
+  void erase_all(msg_id id) { m_callback_map.erase(id); }
 
   void clear() { m_bus.clear_messages(); }
 

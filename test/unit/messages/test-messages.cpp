@@ -235,6 +235,15 @@ TEST(message_handler, unsubscribe_all_id) {
 
   ASSERT_EQ(test1, 0);
   ASSERT_EQ(test2, 2);
+
+  // Re-subscribe to same queue id
+  msg_manager.subscribe<RAJA::spsc_queue>(q1.get_id(), [&]() {
+    test1 = 3;
+  });
+  ASSERT_EQ(q1.try_post_message(), true);
+  msg_manager.wait_all();
+
+  ASSERT_EQ(test1, 3);
 } 
 
 TEST(message_handler, unsubscribe_all) {
@@ -261,6 +270,25 @@ TEST(message_handler, unsubscribe_all) {
   ASSERT_EQ(test1, 0);
   ASSERT_EQ(test2, 0);
 } 
+
+TEST(message_handler, erase_all_id) {
+  constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
+                                 RAJA::align_sz(sizeof(RAJA::MsgArgs<int>));
+
+  auto msg_manager = RAJA::make_message_manager<RAJA::seq_exec>(2*msg_sz);
+
+  int test1 = 0;
+  auto q1 = msg_manager.subscribe<RAJA::spsc_queue>([&]() {
+    test1 = 1;
+  });
+
+  ASSERT_EQ(q1.try_post_message(), true);
+
+  msg_manager.erase_all(q1.get_id());
+  msg_manager.wait_all();
+
+  ASSERT_EQ(test1, 0);
+}
 
 TEST(message_handler, get_messages) {
   constexpr std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +

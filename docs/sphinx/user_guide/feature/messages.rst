@@ -67,7 +67,8 @@ unsubcribed. This can be achieved in three ways:
 * ``unsubscribe(msg_queue_id, Callable)``: Looks for a specific callback that is subscribed to a particular message. If 
   the callback is subscribed, remove from callback list. Otherwise, throws an exception.  
 * ``unsubscribe_all(msg_queue_id)``: Removes all callbacks subscribed to a particular message
-* ``unsubscribe_all()``: Removes all callbacks and messages.
+* ``unsubscribe_all()``: Removes all callbacks from map.
+* ``erase_all(msg_queue_id)``: Erases all callbacks and the map entry.
 
 An example for unsubscribing a callback:
 
