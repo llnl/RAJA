@@ -129,6 +129,22 @@ struct Teams
 
   RAJA_HOST_DEVICE
   constexpr Teams(int i, int j, int k) : value {i, j, k} {}
+
+  /*!
+   * Construct team dimensions using SYCL dim ordering (dim0, dim1, dim2).
+   *
+   * RAJA launch conventions treat Teams(i,j,k) as (x,y,z). SYCL uses a
+   * (dim0, dim1, dim2) ordering. This helper maps:
+   *   dim0 -> z, dim1 -> y, dim2 -> x
+   * i.e. Teams::sycl_order(d0,d1,d2) is equivalent to Teams(d2,d1,d0).
+   */
+  RAJA_INLINE
+
+  RAJA_HOST_DEVICE
+  static constexpr Teams sycl_order(int dim0, int dim1 = 1, int dim2 = 1)
+  {
+    return Teams(dim2, dim1, dim0);
+  }
 };
 
 struct Threads
@@ -154,6 +170,22 @@ struct Threads
 
   RAJA_HOST_DEVICE
   constexpr Threads(int i, int j, int k) : value {i, j, k} {}
+
+  /*!
+   * Construct thread dimensions using SYCL dim ordering (dim0, dim1, dim2).
+   *
+   * RAJA launch conventions treat Threads(i,j,k) as (x,y,z). SYCL uses a
+   * (dim0, dim1, dim2) ordering. This helper maps:
+   *   dim0 -> z, dim1 -> y, dim2 -> x
+   * i.e. Threads::sycl_order(d0,d1,d2) is equivalent to Threads(d2,d1,d0).
+   */
+  RAJA_INLINE
+
+  RAJA_HOST_DEVICE
+  static constexpr Threads sycl_order(int dim0, int dim1 = 1, int dim2 = 1)
+  {
+    return Threads(dim2, dim1, dim0);
+  }
 };
 
 struct Lanes

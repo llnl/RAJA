@@ -80,6 +80,23 @@ struct test_policy_info<test_seq>
   static const char* name() { return "test_seq"; }
 };
 
+#if defined(RAJA_ENABLE_OPENMP)
+
+// openmp test policy
+struct test_openmp : public RunOnHost { };
+
+// test_openmp policy information
+template < >
+struct test_policy_info<test_openmp>
+{
+  using resource = camp::resources::Host;
+  using type = RAJA::omp_parallel_for_exec;
+  using platform = RunOnHost;
+  static const char* name() { return "test_openmp"; }
+};
+
+#endif
+
 #if defined(RAJA_ENABLE_TARGET_OPENMP)
 
 // cuda test policy
@@ -131,6 +148,23 @@ struct test_policy_info<test_hip>
 
 #endif
 
+#if defined(RAJA_ENABLE_SYCL)
+
+// sycl test policy
+struct test_sycl : public RunOnDevice { };
+
+// test_sycl policy information
+template < >
+struct test_policy_info<test_sycl>
+{
+  using resource = camp::resources::Sycl;
+  using type = RAJA::sycl_exec<1>;
+  using platform = RunOnDevice;
+  static const char* name() { return "test_sycl"; }
+};
+
+#endif
+
 
 //
 // unit test policies
@@ -138,7 +172,7 @@ struct test_policy_info<test_hip>
 using SequentialUnitTestPolicyList = camp::list<test_seq>;
 
 #if defined(RAJA_ENABLE_OPENMP)
-using OpenMPUnitTestPolicyList = SequentialUnitTestPolicyList;
+using OpenMPUnitTestPolicyList = camp::list<test_openmp>;
 #endif
 
 #if defined(RAJA_ENABLE_CUDA)
@@ -151,6 +185,10 @@ using OpenMPTargetUnitTestPolicyList = camp::list<test_openmp_target>;
 
 #if defined(RAJA_ENABLE_HIP)
 using HipUnitTestPolicyList = camp::list<test_hip>;
+#endif
+
+#if defined(RAJA_ENABLE_SYCL)
+using SyclUnitTestPolicyList = camp::list<test_sycl>;
 #endif
 
 #endif // RAJA_test_policy_HPP__

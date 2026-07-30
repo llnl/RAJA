@@ -76,12 +76,15 @@ struct MultiReduceDataSeq<
   template<typename Container,
            std::enable_if_t<
                !std::is_same<Container, MultiReduceDataSeq>::value>* = nullptr>
-  MultiReduceDataSeq(Container const& container, T identity)
+  MultiReduceDataSeq(Policy p, Container const& container, T identity)
       : m_parent(nullptr),
         m_num_bins(container.size()),
         m_identity(identity),
         m_data(nullptr)
   {
+    policy_matches_or_throw(
+        "SeqMultiReduce", reduction_supported_policies_t<Policy::sequential> {},
+        p);
     m_data = create_data(container, m_num_bins);
   }
 
@@ -127,6 +130,15 @@ struct MultiReduceDataSeq<
         ++bin;
       }
     }
+  }
+
+  template<typename Container>
+  void reset(Policy p, Container const& container, T identity)
+  {
+    policy_matches_or_throw(
+        "SeqMultiReduce::reset",
+        reduction_supported_policies_t<Policy::sequential> {}, p);
+    reset(container, identity);
   }
 
   size_t num_bins() const { return m_num_bins; }
