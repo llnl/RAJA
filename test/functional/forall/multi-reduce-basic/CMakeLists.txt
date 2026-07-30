@@ -7,24 +7,38 @@
 # SPDX-License-Identifier: (BSD-3-Clause)
 ###############################################################################
 
+function(raja_add_multi_reduce_tests TESTTYPE)
+  foreach(REDUCE_BACKEND ${FORALL_BACKENDS})
+    #
+    # Do not create tests for OpenMP Target, support not currently implemented
+    #
+    if(REDUCE_BACKEND STREQUAL OpenMPTarget)
+      continue()
+    endif()
+
+    #
+    # Do not create tests for SYCL, support not currently implemented
+    #
+    if(REDUCE_BACKEND STREQUAL Sycl)
+      continue()
+    endif()
+
+    foreach(REDUCETYPE ${REDUCETYPES})
+      configure_file(test-forall-basic-multi-reduce.cpp.in
+                     test-forall-basic-${TESTTYPE}-MultiReduce${REDUCETYPE}-${REDUCE_BACKEND}.cpp)
+      raja_add_test(NAME test-forall-basic-${TESTTYPE}-MultiReduce${REDUCETYPE}-${REDUCE_BACKEND}
+                    SOURCES ${CMAKE_CURRENT_BINARY_DIR}/test-forall-basic-${TESTTYPE}-MultiReduce${REDUCETYPE}-${REDUCE_BACKEND}.cpp)
+
+      target_include_directories(test-forall-basic-${TESTTYPE}-MultiReduce${REDUCETYPE}-${REDUCE_BACKEND}.exe
+                                 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+    endforeach()
+  endforeach()
+endfunction()
+
 #
 # List of core reduction types for generating test files.
 #
 set(REDUCETYPES Sum Min Max BitAnd BitOr)
-
-#
-# Do not create tests for OpenMP Target, support not currently implemented
-#
-if(RAJA_ENABLE_TARGET_OPENMP)
-  list(REMOVE_ITEM FORALL_BACKENDS OpenMPTarget)
-endif()
-
-#
-# Do not create tests for SYCL, support not currently implemented
-#
-if(RAJA_ENABLE_SYCL)
-  list(REMOVE_ITEM FORALL_BACKENDS Sycl)
-endif()
 
 #
 # Generate core reduction tests for each enabled RAJA back-end
@@ -32,16 +46,7 @@ endif()
 # Note: FORALL_BACKENDS is defined in ../CMakeLists.txt
 #
 
-foreach( BACKEND ${FORALL_BACKENDS} )
-  foreach( REDUCETYPE ${REDUCETYPES} )
-    configure_file( test-forall-basic-multi-reduce.cpp.in
-                    test-forall-basic-MultiReduce${REDUCETYPE}-${BACKEND}.cpp )
-    raja_add_test( NAME test-forall-basic-MultiReduce${REDUCETYPE}-${BACKEND}
-                   SOURCES ${CMAKE_CURRENT_BINARY_DIR}/test-forall-basic-MultiReduce${REDUCETYPE}-${BACKEND}.cpp )
-
-    target_include_directories(test-forall-basic-MultiReduce${REDUCETYPE}-${BACKEND}.exe
-                               PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  endforeach()
-endforeach()
+raja_add_multi_reduce_tests(Legacy)
+raja_add_multi_reduce_tests(Runtime)
 
 unset( REDUCETYPES )
