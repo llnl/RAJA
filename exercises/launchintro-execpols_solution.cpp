@@ -229,8 +229,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
 // _raja_tensorinit_cuda_start
   using cuda_teams_z_3 = RAJA::LoopPolicy<RAJA::cuda_block_z_direct>;
-  using cuda_global_thread_y_3 = RAJA::LoopPolicy<RAJA::cuda_global_thread_y>;
-  using cuda_global_thread_x_3 = RAJA::LoopPolicy<RAJA::cuda_global_thread_x>;
+  using cuda_global_thread_y_3 = RAJA::LoopPolicy<RAJA::cuda_global_y_direct>;
+  using cuda_global_thread_x_3 = RAJA::LoopPolicy<RAJA::cuda_global_x_direct>;
 
   const bool async_3 = false;
   using launch_policy_3 = RAJA::LaunchPolicy<RAJA::cuda_launch_t<async_3>>;
@@ -362,8 +362,8 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 
 // _raja_tensorinit_hip_start
   using hip_teams_z_5 = RAJA::LoopPolicy<RAJA::hip_block_z_direct>;
-  using hip_global_thread_y_5 = RAJA::LoopPolicy<RAJA::hip_global_thread_y>;
-  using hip_global_thread_x_5 = RAJA::LoopPolicy<RAJA::hip_global_thread_x>;
+  using hip_global_thread_y_5 = RAJA::LoopPolicy<RAJA::hip_global_y_direct>;
+  using hip_global_thread_x_5 = RAJA::LoopPolicy<RAJA::hip_global_x_direct>;
 
   const bool async_5 = false;
   using launch_policy_5 = RAJA::LaunchPolicy<RAJA::hip_launch_t<async_5>>;

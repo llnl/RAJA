@@ -26,6 +26,13 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
+
+## Back off version of cmake with known issue
+      - name: Install CMake 3.29
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3  # v4.4.0
+        with:
+          cmakeVersion: "~3.29.0"
+
       - uses: threeal/cmake-action@v1.3.0
         with:
           build-dir: build
@@ -44,18 +51,31 @@ jobs:
             BUILD_SHARED_LIBS=On 
             CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=On
         - args: BUILD_SHARED_LIBS=Off
-          
-    runs-on: windows-latest
+
+
+# Notes on Windows CI
+# The windows-2025 runner has converted to Visual Studio (VS) 2026.
+# cmake added VS 2026 support in cmake v4.2, we had issues with cmake 4.4 related to JSON parsing.
+# Testing is currently done on the windows-2022 runner with VS 2022 until the issue can
+# be resolved.
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
+
+## Back off version of cmake with known issue
+      - name: Install CMake 3.29
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3  # v4.4.0
+        with:
+          cmakeVersion: "~3.29.0"
+
 ## ====================================
 ## Config and build action
       - uses: threeal/cmake-action@v1.3.0
         with:
-          cmake-version: '3.29.x'  # Back off version of cmake with known issue
           build-dir: build
+          generator: 'Visual Studio 17 2022'     # force VS generator so MSVC is used instead of NMake
           options:
             ENABLE_WARNINGS_AS_ERRORS=Off
             BLT_CXX_STD="c++20"
