@@ -163,6 +163,97 @@ chunk size of 4. Some template parameters are optional; the policy descriptions
 below call out those cases explicitly.
 
 -----------------------------------------------------
+Choosing a Policy
+-----------------------------------------------------
+
+The tables below are reference material. When choosing a policy for new code,
+start from the RAJA interface you are using, then choose the execution back-end,
+then add specialized policies only when the kernel needs them.
+
+Choose the RAJA interface first:
+
+.. list-table::
+   :widths: 28 72
+   :header-rows: 1
+
+   * - If your code uses
+     - Start with
+   * - ``RAJA::forall``
+     - A single loop execution policy such as ``seq_exec``,
+       ``omp_parallel_for_exec``, ``cuda_exec<BLOCK_SIZE>``,
+       ``hip_exec<BLOCK_SIZE>``, or ``sycl_exec<WORK_GROUP_SIZE>``.
+   * - ``RAJA::kernel``
+     - A ``RAJA::KernelPolicy`` made from statements. Each
+       ``RAJA::statement::For`` chooses a loop execution policy for one loop
+       level.
+   * - ``RAJA::launch``
+     - A launch policy such as ``seq_launch_t``, ``omp_launch_t``, or
+       ``cuda_launch_t``, plus loop policies inside the launch body.
+   * - ``RAJA::IndexSet`` with ``RAJA::forall``
+     - An ``RAJA::ExecPolicy`` with one policy for iterating over index-set
+       segments and one policy for executing each segment.
+   * - Reductions, multi-reductions, or atomics
+     - A helper policy that is compatible with the loop execution policy used
+       by the kernel.
+
+Next, choose the back-end:
+
+.. list-table::
+   :widths: 28 72
+   :header-rows: 1
+
+   * - Back-end
+     - Typical starting point
+   * - Sequential CPU
+     - Use ``seq_exec`` for loops and ``seq_reduce`` for reductions.
+   * - CPU with SIMD hints
+     - Use ``simd_exec`` only for loops that do not require RAJA reductions or
+       multi-reductions.
+   * - OpenMP CPU threading
+     - Use ``omp_parallel_for_exec`` for a single ``RAJA::forall`` loop. Use
+       ``omp_launch_t`` with ``omp_for_exec`` for ``RAJA::launch``.
+   * - CUDA or HIP
+     - Use ``cuda_exec<BLOCK_SIZE>`` or ``hip_exec<BLOCK_SIZE>`` for simple
+       ``RAJA::forall`` loops. Use mapping policies such as
+       ``cuda_thread_x_loop`` or ``hip_block_x_direct`` only when expressing a
+       nested loop or launch mapping.
+   * - Active GPU device back-end
+     - Use ``device_*`` aliases when code should follow the enabled CUDA, HIP,
+       or SYCL back-end without downstream preprocessor conditionals.
+   * - SYCL
+     - Use ``sycl_exec<WORK_GROUP_SIZE>`` for simple ``RAJA::forall`` loops.
+       Pay attention to the SYCL dimension-ordering note below when using
+       lower-level mapping policies.
+   * - OpenMP target
+     - Use ``omp_target_parallel_for_exec<#>`` for OpenMP target offload.
+
+Then choose specialized behavior only when needed:
+
+.. list-table::
+   :widths: 32 68
+   :header-rows: 1
+
+   * - Need
+     - Policy choice
+   * - OpenMP schedule control
+     - Use the static, dynamic, guided, or runtime OpenMP policy variants.
+   * - Multiple loops in one OpenMP parallel region
+     - Use ``RAJA::region`` with OpenMP inner policies such as
+       ``omp_for_exec`` or ``omp_for_static_exec``.
+   * - Nested loop reordering or collapse
+     - Use ``RAJA::kernel`` statements such as ``RAJA::statement::For`` and
+       ``RAJA::statement::Collapse``.
+   * - GPU tiled loop mapping
+     - Use GPU thread, block, or global mapping policies. Prefer ``*_loop``
+       until the direct mapping constraints are understood.
+   * - GPU reduction inside ``RAJA::forall``
+     - Use the reduction-aware CUDA/HIP execution policy variants where
+       appropriate, and match the reducer policy to the loop back-end.
+   * - Atomic update
+     - Match the atomic policy to the loop back-end, or use ``auto_atomic``
+       where supported.
+
+-----------------------------------------------------
 RAJA Loop/Kernel Execution Policies
 -----------------------------------------------------
 
@@ -368,9 +459,72 @@ GPU Policies for CUDA and HIP
 
 RAJA policies for GPU execution using CUDA or HIP are essentially identical.
 The only difference is that CUDA policies have the prefix ``cuda_`` and HIP
-policies have the prefix ``hip_``. The policies in the following table that
-contain angle brackets indicate template parameters used to specialize
-execution behavior.
+policies have the prefix ``hip_``.
+
+Several notable constraints apply to RAJA CUDA/HIP *direct_unchecked* policies.
+
+.. note:: * Direct unchecked policies do not mask out threads that are out-of-range.
+            So they should only be used when the size of the range matches the
+            size of the block or grid.
+          * Repeating direct_unchecked policies with the same dimension in perfectly
+            nested loops is not recommended. Your code may do something, but
+            likely will not do what you expect and/or be correct.
+          * If multiple direct_unchecked policies are used in a kernel (using different
+            dimensions), the product of sizes of the corresponding iteration
+            spaces cannot be greater than the maximum allowable threads per
+            block or blocks per grid. Typically, this is 1024 threads per
+            block. Attempting to execute a kernel with more than the maximum
+            allowed threads per block or blocks per grid will cause the CUDA/HIP
+            runtime to complain about *illegal launch parameters.*
+          * **Block-direct-unchecked policies are recommended for most tiled loop
+            patterns. In these cases the CUDA/HIP kernel is launched with the
+            exact number of blocks needed so no iteration space size checking is needed.**
+
+Several notable constraints apply to RAJA CUDA/HIP *direct* policies.
+
+.. note:: * Direct policies mask out threads that are out-of-range.
+            So they should only be used when the size of the range is less than
+            or equal to the size of the block or grid.
+          * Repeating direct policies with the same dimension in perfectly
+            nested loops is not recommended. Your code may do something, but
+            likely will not do what you expect and/or be correct.
+          * If multiple direct policies are used in a kernel (using different
+            dimensions), the product of sizes of the corresponding iteration
+            spaces cannot be greater than the maximum allowable threads per
+            block or blocks per grid. Typically, this is 1024 threads per
+            block. Attempting to execute a kernel with more than the maximum
+            allowed causes the CUDA/HIP runtime to complain about
+            *illegal launch parameters.*
+          * **Global-direct-sized policies are recommended for most loop
+            patterns, but may be inappropriate for kernels using block level
+            synchronization.**
+          * **Thread-direct policies are recommended only for certain loop
+            patterns, such as block tiling, that produce small
+            fixed size iteration spaces within each block.**
+
+Several notes regarding CUDA/HIP *loop* policies are also good to know.
+
+.. note:: * Loop policies perform a block or grid stride loop. Thus,
+            they can be used when the size of the loop iteration space exceeds the size of
+            the block or grid.
+          * There is no constraint on the product of sizes of the associated
+            loop iteration space.
+          * These polices allow having a larger number of iterates than
+            threads/blocks in the x, y, or z dimension.
+          * The cuda/hip_thread_loop policies are not safe to use with Cuda/HipSyncThreads,
+            use the cuda/hip_thread_syncable_loop<dims...> policies instead. For example
+            cuda_thread_x_loop -> cuda_thread_syncable_loop<named_dim::x>.
+          * **CUDA/HIP loop policies are recommended for some loop patterns
+            where a large or unknown sized iteration space is mapped to a small
+            or fixed number of threads.**
+
+.. note:: CUDA/HIP block-direct-unchecked or block-direct policies may be preferable
+          to block-loop policies in situations where block load balancing may
+          be an issue as the block-direct-unchecked or block-direct policies may yield
+          better performance.
+
+The policies in the following table that contain angle brackets indicate
+template parameters used to specialize execution behavior.
 
 +----------------------------------------------------+---------------+---------------------------------+
 | CUDA/HIP Execution Policies                        | Works with    | Brief description               |
@@ -733,70 +887,6 @@ to use with the ``cuda/hip_exec_occ_custom`` policies:
 |                                                    | (Fraction * kernel_max_blocks_per_sm +  |
 |                                                    | BLOCKS_PER_SM_OFFSET) * sm_per_device   |
 +----------------------------------------------------+-----------------------------------------+
-
-Several notable constraints apply to RAJA CUDA/HIP *direct_unchecked* policies.
-
-.. note:: * Direct unchecked policies do not mask out threads that are out-of-range.
-            So they should only be used when the size of the range matches the
-            size of the block or grid.
-          * Repeating direct_unchecked policies with the same dimension in perfectly
-            nested loops is not recommended. Your code may do something, but
-            likely will not do what you expect and/or be correct.
-          * If multiple direct_unchecked policies are used in a kernel (using different
-            dimensions), the product of sizes of the corresponding iteration
-            spaces cannot be greater than the maximum allowable threads per
-            block or blocks per grid. Typically, this is 1024 threads per
-            block. Attempting to execute a kernel with more than the maximum
-            allowed threads per block or blocks per grid will cause the CUDA/HIP
-            runtime to complain about *illegal launch parameters.*
-          * **Block-direct-unchecked policies are recommended for most tiled loop
-            patterns. In these cases the CUDA/HIP kernel is launched with the
-            exact number of blocks needed so no iteration space size checking is needed.**
-
-Several notable constraints apply to RAJA CUDA/HIP *direct* policies.
-
-.. note:: * Direct policies mask out threads that are out-of-range.
-            So they should only be used when the size of the range is less than
-            or equal to the size of the block or grid.
-          * Repeating direct policies with the same dimension in perfectly
-            nested loops is not recommended. Your code may do something, but
-            likely will not do what you expect and/or be correct.
-          * If multiple direct policies are used in a kernel (using different
-            dimensions), the product of sizes of the corresponding iteration
-            spaces cannot be greater than the maximum allowable threads per
-            block or blocks per grid. Typically, this is 1024 threads per
-            block. Attempting to execute a kernel with more than the maximum
-            allowed causes the CUDA/HIP runtime to complain about
-            *illegal launch parameters.*
-          * **Global-direct-sized policies are recommended for most loop
-            patterns, but may be inappropriate for kernels using block level
-            synchronization.**
-          * **Thread-direct policies are recommended only for certain loop
-            patterns, such as block tiling, that produce small
-            fixed size iteration spaces within each block.**
-
-Several notes regarding CUDA/HIP *loop* policies are also good to know.
-
-.. note:: * Loop policies perform a block or grid stride loop. Thus,
-            they can be used when the size of the loop iteration space exceeds the size of
-            the block or grid.
-          * There is no constraint on the product of sizes of the associated
-            loop iteration space.
-          * These polices allow having a larger number of iterates than
-            threads/blocks in the x, y, or z dimension.
-          * The cuda/hip_thread_loop policies are not safe to use with Cuda/HipSyncThreads,
-            use the cuda/hip_thread_syncable_loop<dims...> policies instead. For example
-            cuda_thread_x_loop -> cuda_thread_syncable_loop<named_dim::x>.
-          * **CUDA/HIP loop policies are recommended for some loop patterns
-            where a large or unknown sized iteration space is mapped to a small
-            or fixed number of threads.**
-
-Finally
-
-.. note:: CUDA/HIP block-direct-unchecked or block-direct policies may be preferable
-          to block-loop policies in situations where block load balancing may
-          be an issue as the block-direct-unchecked or block-direct policies may yield
-          better performance.
 
 Several notes regarding the CUDA/HIP policy implementation allow you to
 write more explicit policies.
@@ -1180,6 +1270,10 @@ It is important to note the following constraint about RAJA reduction usage:
           ``RAJA::Policy::undefined`` or ``RAJA::Policy::sequential`` is
           correct.
 
+.. important:: RAJA reductions used with SIMD execution policies are not
+          guaranteed to generate correct results. So they should not be used
+          for kernels containing reductions.
+
 The following table summarizes RAJA reduction policy types:
 
 ================================================= ===================== ==========================================
@@ -1238,10 +1332,6 @@ sycl_reduce                                       any SYCL policy,      Reductio
                                                                         reduction value is finalized).
 ================================================= ===================== ==========================================
 
-.. important:: RAJA reductions used with SIMD execution policies are not
-          guaranteed to generate correct results. So they should not be used
-          for kernels containing reductions.
-
 .. _multi-reducepolicy-label:
 
 -------------------------
@@ -1268,6 +1358,10 @@ It is important to note the following constraints about RAJA multi-reduction usa
           ``RAJA::Policy::cuda``, but used in a sequential loop, then that is
           undefined behavior. Using either ``RAJA::Policy::undefined`` or
           ``RAJA::Policy::sequential`` is correct.
+
+.. important:: RAJA multi-reductions used with SIMD execution policies are not
+          guaranteed to generate correct results. So they should not be used
+          for kernels containing multi-reductions.
 
 The following table summarizes RAJA multi-reduction policy types:
 
@@ -1333,10 +1427,6 @@ cuda/hip_multi_reduce_atomic_global_no_replication_host_init  any CUDA/HIP  Same
                                                                             by not replicating global atomics.
 
 ============================================================= ============= ==========================================
-
-.. important:: RAJA multi-reductions used with SIMD execution policies are not
-          guaranteed to generate correct results. So they should not be used
-          for kernels containing multi-reductions.
 
 .. _atomicpolicy-label:
 
