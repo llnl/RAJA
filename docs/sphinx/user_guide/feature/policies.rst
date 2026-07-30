@@ -47,14 +47,15 @@ are related, but they are not interchangeable.
 ====================================== ========================================
 Policy category                        Used for
 ====================================== ========================================
-Loop execution policies                ``RAJA::forall`` loops, simple scans,
-                                       sorts, and individual loop levels in
+Loop execution policies                ``RAJA::forall`` loops, scans, sorts,
+                                       and individual loop levels in
                                        ``RAJA::kernel`` and ``RAJA::launch``.
 Launch policies                        Creating an execution environment for
                                        ``RAJA::launch``.
 Index set execution policies           Running a ``RAJA::IndexSet`` by choosing
                                        one policy for iterating over segments
-                                       and another policy for each segment.
+                                       and another policy for executing the 
+                                       loop iterations within each segment.
 Reduction and multi-reduction policies ``RAJA::Reduce*`` and
                                        ``RAJA::MultiReduce*`` objects.
 Atomic policies                        ``RAJA::atomic*`` operations.
