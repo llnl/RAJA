@@ -187,6 +187,10 @@ html_logo = '../share/raja/logo/RAJA_LOGO_CMYK_White_Background_large.png'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = [os.path.join(conf_directory, 'sphinx/_static')]
 
+html_css_files = [
+    'raja.css',
+]
+
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
 # directly to the root of the documentation.

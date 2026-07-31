@@ -277,7 +277,7 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv[]))
 
   // _reductions_raja_cudapolicy_start
   using LAUNCH_POL3   = RAJA::LaunchPolicy<RAJA::cuda_launch_t<false /*async*/>>;
-  using LOOP_POL3     = RAJA::LoopPolicy<RAJA::cuda_global_thread_x>;
+  using LOOP_POL3     = RAJA::LoopPolicy<RAJA::cuda_global_x_direct>;
   // _reductions_raja_cudapolicy_end
 
   const int NUMBER_OF_TEAMS = (N-1)/CUDA_BLOCK_SIZE + 1;
@@ -354,7 +354,7 @@ int main(int RAJA_UNUSED_ARG(argc), char** RAJA_UNUSED_ARG(argv[]))
 
   // _reductions_raja_hippolicy_start
   using LAUNCH_POL3   = RAJA::LaunchPolicy<RAJA::hip_launch_t<false /*async*/>>;
-  using LOOP_POL3     = RAJA::LoopPolicy<RAJA::hip_global_thread_x>;
+  using LOOP_POL3     = RAJA::LoopPolicy<RAJA::hip_global_x_direct>;
   // _reductions_raja_hippolicy_end
 
   const int NUMBER_OF_TEAMS = (N-1)/HIP_BLOCK_SIZE + 1;

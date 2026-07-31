@@ -19,14 +19,6 @@ using @BACKEND@MultiReducerResetTypes =
                                  @BACKEND@UnitTestPolicyList > >::Types;
 
 INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@ResetTest,
-                               MultiReducerBasicResetUnitTest,
-                               @BACKEND@MultiReducerResetTypes);
-
-INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@ResetTest,
-                               MultiReducerSingleResetUnitTest,
-                               @BACKEND@MultiReducerResetTypes);
-
-INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@ResetTest,
-                               MultiReducerContainerResetUnitTest,
+                               MultiReducerResetUnitTest,
                                @BACKEND@MultiReducerResetTypes);
 
