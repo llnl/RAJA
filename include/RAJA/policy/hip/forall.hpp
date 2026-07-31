@@ -363,6 +363,13 @@ struct ForallDimensionCalculator<
 //////////////////////////////////////////////////////////////////////
 //
 
+/*
+ * __launch_bounds__ block size constraint does not change the
+ * intended behavior because the requires > 0 constraint prevents the
+ * overload from being selected for zero. It only ensures that NVCC or
+ * Clang CUDA cannot encounter an invalid attribute argument of zero while
+ * substituting or processing a discarded candidate.
+ */
 
 template<typename EXEC_POL,
          typename Iterator,
