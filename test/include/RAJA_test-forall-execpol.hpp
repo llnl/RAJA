@@ -30,6 +30,8 @@ using SequentialForallReduceExecPols = camp::list< RAJA::seq_exec >;
 
 using SequentialForallAtomicExecPols = camp::list< RAJA::seq_exec >;
 
+using SequentialForallMsgExecPols    = camp::list< RAJA::seq_exec >;
+
 #if defined(RAJA_ENABLE_OPENMP)
 using OpenMPForallExecPols = 
   camp::list< RAJA::omp_parallel_for_exec
@@ -93,6 +95,8 @@ using OpenMPForallAtomicExecPols =
 #endif
             >; 
 
+using OpenMPForallMsgExecPols = OpenMPForallExecPols;
+
 #endif  // RAJA_ENABLE_OPENMP
 
 #if defined(RAJA_ENABLE_TARGET_OPENMP)
@@ -103,6 +107,8 @@ using OpenMPTargetForallExecPols =
 using OpenMPTargetForallReduceExecPols = OpenMPTargetForallExecPols;
 
 using OpenMPTargetForallAtomicExecPols = OpenMPTargetForallExecPols;
+
+using OpenMPTargetForallMsgExecPols    = OpenMPTargetForallExecPols;
 
 #endif
 
@@ -118,6 +124,8 @@ using CudaForallReduceExecPols = CudaForallExecPols;
 
 using CudaForallAtomicExecPols = CudaForallExecPols;
 
+using CudaForallMsgExecPols    = CudaForallExecPols;
+
 #endif
 
 #if defined(RAJA_ENABLE_HIP)
@@ -131,6 +139,8 @@ using HipForallReduceExecPols = HipForallExecPols;
 
 using HipForallAtomicExecPols = HipForallExecPols;
 
+using HipForallMsgExecPols    = HipForallExecPols;
+
 #endif
 
 #if defined(RAJA_ENABLE_SYCL)
@@ -140,6 +150,8 @@ using SyclForallExecPols = camp::list< RAJA::sycl_exec<128, false>,
 using SyclForallReduceExecPols = SyclForallExecPols;
 
 using SyclForallAtomicExecPols = SyclForallExecPols;
+
+using SyclForallMsgExecPols    = SyclForallExecPols;
 
 #endif
 
