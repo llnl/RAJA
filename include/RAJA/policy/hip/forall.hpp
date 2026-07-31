@@ -372,7 +372,9 @@ template<typename EXEC_POL,
          typename IterationGetter = typename EXEC_POL::IterationGetter>
   requires concepts::DirectBasePolicy<EXEC_POL> &&
            (IterationGetter::block_size > 0)
-__launch_bounds__(IterationGetter::block_size > 0 ? IterationGetter::block_size : 1, 1) __global__
+__launch_bounds__(IterationGetter::block_size > 0 ? IterationGetter::block_size
+                                                  : 1,
+                  1) __global__
     RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(const LOOP_BODY loop_body,
                                                      const Iterator idx,
                                                      const IndexType length,
@@ -426,7 +428,9 @@ template<typename EXEC_POL,
   requires concepts::StridedLoopPolicy<EXEC_POL> &&
            concepts::UnsizedLoopPolicy<EXEC_POL> &&
            (IterationGetter::block_size > 0)
-__launch_bounds__(IterationGetter::block_size > 0 ? IterationGetter::block_size : 1, 1) __global__
+__launch_bounds__(IterationGetter::block_size > 0 ? IterationGetter::block_size
+                                                  : 1,
+                  1) __global__
     RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(const LOOP_BODY loop_body,
                                                      const Iterator idx,
                                                      const IndexType length,
