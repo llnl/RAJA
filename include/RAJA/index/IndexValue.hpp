@@ -303,7 +303,9 @@ convertIndex_helper(typename FROM::IndexValueType const val)
 namespace type_traits
 {
 template<typename T>
-struct is_instance_of_index_value : std::is_base_of<RAJA::IndexValue<T>, T>
+struct is_instance_of_index_value
+    : std::is_base_of<RAJA::IndexValue<std::remove_cvref_t<T>>,
+                      std::remove_cvref_t<T>>
 {};
 
 template<typename T>

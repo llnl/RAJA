@@ -678,9 +678,9 @@ struct ReduceLastBlock_Data
   T identity;
   unsigned int* device_count;
   RAJA::detail::SoAPtr<T, data_mempool_type> device;
-  bool own_device_ptr;
+  bool owns_device_pointer;
 
-  ReduceLastBlock_Data() : ReduceLastBlock_Data(T(), T()) {};
+  ReduceLastBlock_Data() = delete;
 
   /*! \brief create from a default value and offload information
    *
@@ -692,7 +692,7 @@ struct ReduceLastBlock_Data
         identity {identity_},
         device_count {nullptr},
         device {},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   RAJA_HOST_DEVICE
@@ -701,7 +701,7 @@ struct ReduceLastBlock_Data
         identity {other.identity},
         device_count {other.device_count},
         device {other.device},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   ReduceLastBlock_Data& operator=(const ReduceLastBlock_Data&) = default;
@@ -746,7 +746,7 @@ struct ReduceLastBlock_Data
       device_count =
           count_mempool_type::getInstance().template malloc<unsigned int>(
               replication * atomic_stride);
-      own_device_ptr = true;
+      owns_device_pointer = true;
     }
     return act;
   }
@@ -755,13 +755,13 @@ struct ReduceLastBlock_Data
   //  free device pointers
   bool teardownForDevice()
   {
-    bool act = own_device_ptr;
+    bool act = owns_device_pointer;
     if (act)
     {
       device.deallocate();
       count_mempool_type::getInstance().free(device_count);
-      device_count   = nullptr;
-      own_device_ptr = false;
+      device_count        = nullptr;
+      owns_device_pointer = false;
     }
     return act;
   }
@@ -781,15 +781,15 @@ struct ReduceAtomicHostInit_Data
   mutable T value;
   T identity;
   bool is_setup;
-  bool own_device_ptr;
+  bool owns_device_pointer;
 
-  ReduceAtomicHostInit_Data() : ReduceAtomicHostInit_Data(T(), T()) {}
+  ReduceAtomicHostInit_Data() = delete;
 
   ReduceAtomicHostInit_Data(T initValue, T identity_)
       : value {initValue},
         identity {identity_},
         is_setup {false},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   RAJA_HOST_DEVICE
@@ -797,7 +797,7 @@ struct ReduceAtomicHostInit_Data
       : value {other.identity},
         identity {other.identity},
         is_setup {other.is_setup},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   ReduceAtomicHostInit_Data& operator=(const ReduceAtomicHostInit_Data&) =
@@ -831,8 +831,8 @@ struct ReduceAtomicHostInit_Data
     bool act = !is_setup && setupReducers();
     if (act)
     {
-      is_setup       = true;
-      own_device_ptr = true;
+      is_setup            = true;
+      owns_device_pointer = true;
     }
     return act;
   }
@@ -841,11 +841,11 @@ struct ReduceAtomicHostInit_Data
   //  free device pointers
   bool teardownForDevice()
   {
-    bool act = own_device_ptr;
+    bool act = owns_device_pointer;
     if (act)
     {
-      is_setup       = false;
-      own_device_ptr = false;
+      is_setup            = false;
+      owns_device_pointer = false;
     }
     return act;
   }
@@ -869,16 +869,16 @@ struct ReduceAtomicDeviceInit_Data
   T identity;
   unsigned int* device_count;
   T* device;
-  bool own_device_ptr;
+  bool owns_device_pointer;
 
-  ReduceAtomicDeviceInit_Data() : ReduceAtomicDeviceInit_Data(T(), T()) {}
+  ReduceAtomicDeviceInit_Data() = delete;
 
   ReduceAtomicDeviceInit_Data(T initValue, T identity_)
       : value {initValue},
         identity {identity_},
         device_count {nullptr},
         device {nullptr},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   RAJA_HOST_DEVICE
@@ -887,7 +887,7 @@ struct ReduceAtomicDeviceInit_Data
         identity {other.identity},
         device_count {other.device_count},
         device {other.device},
-        own_device_ptr {false}
+        owns_device_pointer {false}
   {}
 
   ReduceAtomicDeviceInit_Data& operator=(const ReduceAtomicDeviceInit_Data&) =
@@ -932,7 +932,7 @@ struct ReduceAtomicDeviceInit_Data
       device_count =
           count_mempool_type::getInstance().template malloc<unsigned int>(
               replication * atomic_stride);
-      own_device_ptr = true;
+      owns_device_pointer = true;
     }
     return act;
   }
@@ -941,20 +941,21 @@ struct ReduceAtomicDeviceInit_Data
   //  free device pointers
   bool teardownForDevice()
   {
-    bool act = own_device_ptr;
+    bool act = owns_device_pointer;
     if (act)
     {
       data_mempool_type::getInstance().free(device);
       device = nullptr;
       count_mempool_type::getInstance().free(device_count);
-      device_count   = nullptr;
-      own_device_ptr = false;
+      device_count        = nullptr;
+      owns_device_pointer = false;
     }
     return act;
   }
 };
 
 //! Hip Reduction entity -- generalize on reduction, and type
+// This is the last layer of the user facing Reduction API
 template<typename Combiner, typename T, typename tuning>
 class Reduce
 {
@@ -1022,29 +1023,70 @@ class Reduce
                                 typename reduce_data_type::tally_mempool_type>;
 
   //! union to hold either pointer to PinnedTally or pointer to value
-  //  only use list before setup for device and only use val_ptr after
   union tally_u
   {
     TallyType* list;
     T* val_ptr;
+    constexpr tally_u() : list(nullptr) {};
     constexpr tally_u(TallyType* l) : list(l) {};
     constexpr tally_u(T* v_ptr) : val_ptr(v_ptr) {};
   };
 
 public:
-  Reduce() : Reduce(T(), Combiner::identity()) {}
-
-  //! create a reduce object
-  //  the original object's parent is itself
-  explicit Reduce(T init_val, T identity_ = Combiner::identity())
-      : parent {this},
-        tally_or_val_ptr {new TallyType},
-        val(init_val, identity_)
+  Reduce()
+      : Reduce(Policy::all_supported,
+               Combiner::identity(),
+               Combiner::identity())
   {}
+
+  explicit Reduce(RAJA::Policy p)
+      : Reduce(p, Combiner::identity(), Combiner::identity())
+  {}
+
+  explicit Reduce(T init_val, T identity_ = Combiner::identity())
+      : Reduce(Policy::all_supported, init_val, identity_)
+  {}
+
+  Reduce(RAJA::Policy p, T init_val, T identity_ = Combiner::identity())
+      : parent {this},  // the original object's parent is itself
+        tally_or_val_ptr {},
+        val(init_val, identity_)
+  {
+    policy_matches_or_throw("HipReduce",
+                            reduction_supported_policies_t<Policy::hip> {}, p);
+    if (policy_matches(PolicyList<Policy::openmp, Policy::hip> {}, p))
+    {
+      tally_or_val_ptr.list = new TallyType;
+    }
+  }
 
   void reset(T in_val, T identity_ = Combiner::identity())
   {
     operator T();  // syncs device
+    // Policy was not changed, do not change tally
+    val = reduce_data_type(in_val, identity_);
+  }
+
+  void reset(RAJA::Policy p, T in_val, T identity_ = Combiner::identity())
+  {
+    policy_matches_or_throw("HipReduce::reset",
+                            reduction_supported_policies_t<Policy::hip> {}, p);
+    operator T();  // syncs device
+    if (!policy_matches(PolicyList<Policy::openmp, Policy::hip> {}, p))
+    {
+      if (tally_or_val_ptr.list)
+      {
+        delete tally_or_val_ptr.list;
+        tally_or_val_ptr.list = nullptr;
+      }
+    }
+    else
+    {
+      if (!tally_or_val_ptr.list)
+      {
+        tally_or_val_ptr.list = new TallyType;
+      }
+    }
     val = reduce_data_type(in_val, identity_);
   }
 
@@ -1062,7 +1104,7 @@ public:
         val(other.val)
   {
 #if !defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
-    if (parent)
+    if (parent && tally_or_val_ptr.list)
     {
       if (val.setupForDevice())
       {
@@ -1082,15 +1124,25 @@ public:
 #if !defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
     if (parent == this)
     {
-      delete tally_or_val_ptr.list;
-      tally_or_val_ptr.list = nullptr;
+      if (tally_or_val_ptr.list)
+      {
+        delete tally_or_val_ptr.list;
+        tally_or_val_ptr.list = nullptr;
+      }
     }
     else if (parent)
     {
       if (val.value != val.identity)
       {
-        std::lock_guard<std::mutex> lock(tally_or_val_ptr.list->m_mutex);
-        parent->combine(val.value);
+        if (tally_or_val_ptr.list)
+        {
+          std::lock_guard<std::mutex> lock(tally_or_val_ptr.list->m_mutex);
+          parent->combine(val.value);
+        }
+        else
+        {
+          parent->combine(val.value);
+        }
       }
     }
     else
@@ -1115,23 +1167,26 @@ public:
   //! map result value back to host if not done already; return aggregate value
   operator T()
   {
-    auto n   = tally_or_val_ptr.list->begin();
-    auto end = tally_or_val_ptr.list->end();
-    if (n != end)
+    if (tally_or_val_ptr.list)
     {
-      tally_or_val_ptr.list->synchronize_resources();
-      ::RAJA::HighAccuracyReduce<T, typename Combiner::operator_type> reducer(
-          std::move(val.value));
-      for (; n != end; ++n)
+      auto n   = tally_or_val_ptr.list->begin();
+      auto end = tally_or_val_ptr.list->end();
+      if (n != end)
       {
-        T(&values)[tally_slots] = *n;
-        for (size_t r = 0; r < tally_slots; ++r)
+        tally_or_val_ptr.list->synchronize_resources();
+        ::RAJA::HighAccuracyReduce<T, typename Combiner::operator_type> reducer(
+            std::move(val.value));
+        for (; n != end; ++n)
         {
-          reducer.combine(std::move(values[r]));
+          T(&values)[tally_slots] = *n;
+          for (size_t r = 0; r < tally_slots; ++r)
+          {
+            reducer.combine(std::move(values[r]));
+          }
         }
+        val.value = reducer.get_and_reset();
+        tally_or_val_ptr.list->free_list();
       }
-      val.value = reducer.get_and_reset();
-      tally_or_val_ptr.list->free_list();
     }
     return val.value;
   }
@@ -1151,14 +1206,30 @@ public:
   T get_combined() const { return val.value; }
 
 private:
+  // on host:
+  //   points to original object in objects not setup for device
+  //   nullptr in objects setup for device
+  // on device:
+  //   nullptr in original object
+  //   parent of current object in others (forms linked list)
   const Reduce* parent;
+
+  // .list is set in objects not setup for device
+  //   is a owning pointer to tally object
+  //     Policy::sequential does not need a tally
+  //     Policy::openmp needs a tally for the mutex
+  //     Policy::cuda needs the full tally
+  // .val_ptr is set in objects setup for device
+  //   is a view to memory owned by tally object
   tally_u tally_or_val_ptr;
+
   reduce_data_type val;
 };
 
 }  // end namespace hip
 
 //! specialization of ReduceSum for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T>
 class ReduceSum<RAJA::policy::hip::hip_reduce_policy<tuning>, T>
     : public hip::Reduce<RAJA::reduce::sum<T>, T, tuning>
@@ -1178,6 +1249,7 @@ public:
 };
 
 //! specialization of ReduceBitOr for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T>
 class ReduceBitOr<RAJA::policy::hip::hip_reduce_policy<tuning>, T>
     : public hip::Reduce<RAJA::reduce::or_bit<T>, T, tuning>
@@ -1197,6 +1269,7 @@ public:
 };
 
 //! specialization of ReduceBitAnd for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T>
 class ReduceBitAnd<RAJA::policy::hip::hip_reduce_policy<tuning>, T>
     : public hip::Reduce<RAJA::reduce::and_bit<T>, T, tuning>
@@ -1216,6 +1289,7 @@ public:
 };
 
 //! specialization of ReduceMin for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T>
 class ReduceMin<RAJA::policy::hip::hip_reduce_policy<tuning>, T>
     : public hip::Reduce<RAJA::reduce::min<T>, T, tuning>
@@ -1235,6 +1309,7 @@ public:
 };
 
 //! specialization of ReduceMax for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T>
 class ReduceMax<RAJA::policy::hip::hip_reduce_policy<tuning>, T>
     : public hip::Reduce<RAJA::reduce::max<T>, T, tuning>
@@ -1254,6 +1329,7 @@ public:
 };
 
 //! specialization of ReduceMinLoc for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T, typename IndexType>
 class ReduceMinLoc<RAJA::policy::hip::hip_reduce_policy<tuning>, T, IndexType>
     : public hip::Reduce<
@@ -1275,7 +1351,20 @@ public:
                T identity_val = NonLocCombiner::identity(),
                IndexType identity_idx =
                    RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : Base(value_type(init_val, init_idx),
+      : Base(Policy::all_supported,
+             value_type(init_val, init_idx),
+             value_type(identity_val, identity_idx))
+  {}
+
+  //! constructor requires a default value for the reducer
+  ReduceMinLoc(Policy p,
+               T init_val,
+               IndexType init_idx,
+               T identity_val = NonLocCombiner::identity(),
+               IndexType identity_idx =
+                   RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+      : Base(p,
+             value_type(init_val, init_idx),
              value_type(identity_val, identity_idx))
   {}
 
@@ -1288,6 +1377,19 @@ public:
                  RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {
     Base::reset(value_type(init_val, init_idx),
+                value_type(identity_val, identity_idx));
+  }
+
+  //! reset requires a default value for the reducer
+  // this must be here to hide Base::reset
+  void reset(Policy p,
+             T init_val,
+             IndexType init_idx,
+             T identity_val = NonLocCombiner::identity(),
+             IndexType identity_idx =
+                 RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+  {
+    Base::reset(p, value_type(init_val, init_idx),
                 value_type(identity_val, identity_idx));
   }
 
@@ -1310,6 +1412,7 @@ public:
 };
 
 //! specialization of ReduceMaxLoc for hip_reduce
+// This is the first layer of the user facing Reduction API
 template<typename tuning, typename T, typename IndexType>
 class ReduceMaxLoc<RAJA::policy::hip::hip_reduce_policy<tuning>, T, IndexType>
     : public hip::Reduce<
@@ -1331,7 +1434,20 @@ public:
                T identity_val = NonLocCombiner::identity(),
                IndexType identity_idx =
                    RAJA::reduce::detail::DefaultLoc<IndexType>().value())
-      : Base(value_type(init_val, init_idx),
+      : Base(Policy::all_supported,
+             value_type(init_val, init_idx),
+             value_type(identity_val, identity_idx))
+  {}
+
+  //! constructor requires a default value for the reducer
+  ReduceMaxLoc(Policy p,
+               T init_val,
+               IndexType init_idx,
+               T identity_val = NonLocCombiner::identity(),
+               IndexType identity_idx =
+                   RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+      : Base(p,
+             value_type(init_val, init_idx),
              value_type(identity_val, identity_idx))
   {}
 
@@ -1344,6 +1460,19 @@ public:
                  RAJA::reduce::detail::DefaultLoc<IndexType>().value())
   {
     Base::reset(value_type(init_val, init_idx),
+                value_type(identity_val, identity_idx));
+  }
+
+  //! reset requires a default value for the reducer
+  // this must be here to hide Base::reset
+  void reset(Policy p,
+             T init_val,
+             IndexType init_idx,
+             T identity_val = NonLocCombiner::identity(),
+             IndexType identity_idx =
+                 RAJA::reduce::detail::DefaultLoc<IndexType>().value())
+  {
+    Base::reset(p, value_type(init_val, init_idx),
                 value_type(identity_val, identity_idx));
   }
 

@@ -11,17 +11,15 @@
 /// Source file containing tests for RAJA reducer reset.
 ///
 
-#include "tests/test-reducer-reset.hpp"
+#include "test-reducer-reset.hpp"
 
-#if defined(RAJA_ENABLE_HIP)
-using HipReducerResetTypes = 
-  Test< camp::cartesian_product< HipReducerPolicyList,
+using @BACKEND@ReducerResetTypes =
+  Test< camp::cartesian_product< @BACKEND@ReducerPolicyList,
                                  DataTypeList,
-                                 HipResourceList,
-                                 HipUnitTestPolicyList > >::Types;
+                                 @BACKEND@UnitTestPolicyList > >::Types;
 
 
-INSTANTIATE_TYPED_TEST_SUITE_P(HipResetTest,
+INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@ResetTest,
                                ReducerResetUnitTest,
-                               HipReducerResetTypes);
-#endif
+                               @BACKEND@ReducerResetTypes);
+
