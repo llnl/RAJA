@@ -1030,69 +1030,84 @@ Each RAJA reduction object must be defined with a 'reduction policy'
 type. Reduction policy types are distinct from loop execution policy types.
 It is important to note the following constraint about RAJA reduction usage:
 
-.. important:: To guarantee correctness, a **reduction policy must be consistent
-               with the loop execution policy** used. For example, a CUDA
-               reduction policy must be used when the execution policy is a
-               CUDA policy, an OpenMP reduction policy must be used when the
-               execution policy is an OpenMP policy, and so on.
+.. important:: To guarantee correctness, a **reduction policy must support
+          the loop execution policy** used. For example, a CUDA
+          reduction policy must be used when the execution policy is a
+          CUDA policy. However an OpenMP reduction policy or a CUDA reduction
+          policy may be used when the execution policy is an OpenMP policy,
+          and so on.
+
+.. note:: It is undefined behavior to use a reducer object with a loop execution
+          policy that does not match the ``RAJA::Policy`` enum argument used to
+          most recently setup the reducer object. ``RAJA::Policy::undefined``
+          may be used with any of the loop policies supported by the reduction
+          policy. For example, if a reducer object with a CUDA reduction policy
+          is setup with ``RAJA::Policy::cuda``, but used in a sequential loop,
+          then that is undefined behavior. Using either
+          ``RAJA::Policy::undefined`` or ``RAJA::Policy::sequential`` is
+          correct.
 
 The following table summarizes RAJA reduction policy types:
 
-================================================= ============= ==========================================
-Reduction Policy                                  Loop Policies Brief description
-                                                  to Use With
-================================================= ============= ==========================================
-seq_reduce                                        seq_exec,     Non-parallel (sequential) reduction.
-omp_reduce                                        any OpenMP    OpenMP parallel reduction.
-                                                  policy
-omp_reduce_ordered                                any OpenMP    OpenMP parallel reduction with result
-                                                  policy        guaranteed to be reproducible.
-omp_target_reduce                                 any OpenMP    OpenMP parallel target offload reduction.
-                                                  target policy
-cuda/hip_reduce                                   any CUDA/HIP  Parallel reduction in a CUDA/HIP kernel
-                                                  policy        (device synchronization will occur when
-                                                                reduction value is finalized).
-cuda/hip_reduce_atomic                            any CUDA/HIP  Same as above, but reduction may use
-                                                  policy        atomic operations leading to run to run
-                                                                variability in the results.
-cuda/hip_reduce_base<with_atomic>                 any CUDA/HIP  Choose between cuda/hip_reduce and
-                                                  policy        cuda/hip_reduce_atomic policies based on
-                                                                the with_atomic boolean.
-cuda/hip_reduce_device_fence                      any CUDA/HIP  Same as above, and reduction uses normal
-                                                  policy        memory accesses that are not visible across
-                                                                the whole device and device scope fences
-                                                                to ensure visibility and ordering.
-                                                                This works on all architectures but
-                                                                incurs higher overheads on some architectures.
-cuda/hip_reduce_block_fence                       any CUDA/HIP  Same as above, and reduction uses special
-                                                  policy        memory accesses to a level of cache
-                                                                visible to the whole device and block scope
-                                                                fences to ensure ordering. This improves
-                                                                performance on some architectures.
-cuda/hip_reduce_atomic_host_init_device_fence     any CUDA/HIP  Same as above with device fence, but
-                                                  policy        initializes the memory used for atomics
-                                                                on the host. This works well on recent
-                                                                architectures and incurs lower overheads.
-cuda/hip_reduce_atomic_host_init_block_fence      any CUDA/HIP  Same as above with block fence, but
-                                                  policy        initializes the memory used for atomics
-                                                                on the host. This works well on recent
-                                                                architectures and incurs lower overheads.
-cuda/hip_reduce_atomic_device_init_device_fence   any CUDA/HIP  Same as above with device fence, but
-                                                  policy        initializes the memory used for atomics
-                                                                on the device. This works on all architectures
-                                                                but incurs higher overheads.
-cuda/hip_reduce_atomic_device_init_block_fence    any CUDA/HIP  Same as above with block fence, but
-                                                  policy        initializes the memory used for atomics
-                                                                on the device. This works on all architectures
-                                                                but incurs higher overheads.
-sycl_reduce                                       any SYCL      Reduction in a SYCL kernel (device
-                                                  policy        synchronization will occur when the
-                                                                reduction value is finalized).
-================================================= ============= ==========================================
+================================================= ===================== ==========================================
+Reduction Policy                                  Loop Policies         Brief description
+                                                  Supported
+================================================= ===================== ==========================================
+seq_reduce                                        seq_exec              Non-parallel (sequential) reduction.
+omp_reduce                                        any OpenMP policy,    OpenMP parallel reduction.
+                                                  seq_exec
+omp_reduce_ordered                                any OpenMP policy,    OpenMP parallel reduction with result
+                                                  seq_exec              guaranteed to be reproducible.
+omp_target_reduce                                 any OpenMP Target     OpenMP parallel target offload reduction.
+                                                  policy,
+                                                  seq_exec
+cuda/hip_reduce                                   any CUDA/HIP policy,  Parallel reduction in a CUDA/HIP kernel
+                                                  any OpenMP policy,    (device synchronization will occur when
+                                                  seq_exec              reduction value is finalized).
+cuda/hip_reduce_atomic                            any CUDA/HIP policy,  Same as above, but reduction may use
+                                                  any OpenMP policy,    atomic operations leading to run to run
+                                                  seq_exec              variability in the results.
+cuda/hip_reduce_base<with_atomic>                 any CUDA/HIP policy,  Choose between cuda/hip_reduce and
+                                                  any OpenMP policy,    cuda/hip_reduce_atomic policies based on
+                                                  seq_exec              the with_atomic boolean.
+cuda/hip_reduce_device_fence                      any CUDA/HIP policy,  Same as above, and reduction uses normal
+                                                  any OpenMP policy,    memory accesses that are not visible
+                                                  seq_exec              across the whole device and device scope
+                                                                        fences to ensure visibility and ordering.
+                                                                        This works on all architectures but
+                                                                        incurs higher overheads on some
+                                                                        architectures.
+cuda/hip_reduce_block_fence                       any CUDA/HIP policy,  Same as above, and reduction uses special
+                                                  any OpenMP policy,    memory accesses to a level of cache
+                                                  seq_exec              visible to the whole device and block
+                                                                        scope fences to ensure ordering. This
+                                                                        improves performance on some architectures.
+cuda/hip_reduce_atomic_host_init_device_fence     any CUDA/HIP policy,  Same as above with device fence, but
+                                                  any OpenMP policy,    initializes the memory used for atomics
+                                                  seq_exec              on the host. This works well on recent
+                                                                        architectures and incurs lower overheads.
+cuda/hip_reduce_atomic_host_init_block_fence      any CUDA/HIP policy,  Same as above with block fence, but
+                                                  any OpenMP policy,    initializes the memory used for atomics
+                                                  seq_exec              on the host. This works well on recent
+                                                                        architectures and incurs lower overheads.
+cuda/hip_reduce_atomic_device_init_device_fence   any CUDA/HIP policy,  Same as above with device fence, but
+                                                  any OpenMP policy,    initializes the memory used for atomics
+                                                  seq_exec              on the device. This works on all
+                                                                        architectures
+                                                                        but incurs higher overheads.
+cuda/hip_reduce_atomic_device_init_block_fence    any CUDA/HIP policy,  Same as above with block fence, but
+                                                  any OpenMP policy,    initializes the memory used for atomics
+                                                  seq_exec              on the device. This works on all
+                                                                        architectures
+                                                                        but incurs higher overheads.
+sycl_reduce                                       any SYCL policy,      Reduction in a SYCL kernel (device
+                                                  seq_exec              synchronization will occur when the
+                                                                        reduction value is finalized).
+================================================= ===================== ==========================================
 
 .. important:: RAJA reductions used with SIMD execution policies are not
-               guaranteed to generate correct results. So they should not be used
-               for kernels containing reductions.
+          guaranteed to generate correct results. So they should not be used
+          for kernels containing reductions.
 
 .. _multi-reducepolicy-label:
 
@@ -1104,38 +1119,60 @@ Each RAJA multi-reduction object must be defined with a 'multi-reduction policy'
 type. Multi-reduction policy types are distinct from loop execution policy types.
 It is important to note the following constraints about RAJA multi-reduction usage:
 
-.. important:: To guarantee correctness, a **multi-reduction policy must be compatible
-               with the loop execution policy** used. For example, a CUDA
+.. important:: To guarantee correctness, a **multi-reduction policy must support
+               the loop execution policy** used. For example, a CUDA
                multi-reduction policy must be used when the execution policy is a
-               CUDA policy, an OpenMP multi-reduction policy must be used when the
-               execution policy is an OpenMP policy, and so on.
+               CUDA policy. However an OpenMP multi-reduction policy or a CUDA
+               multi-reduction policy may be used when the execution policy is an
+               OpenMP policy, and so on.
+
+.. note:: It is undefined behavior to use a multi-reducer object with a loop
+          execution policy that does not match the ``RAJA::Policy`` enum
+          argument used to most recently setup the multi-reducer object.
+          ``RAJA::Policy::undefined`` may be used with any of the loop policies
+          supported by the multi-reduction policy. For example, if a
+          multi-reducer object with a CUDA multi-reduction policy is setup with
+          ``RAJA::Policy::cuda``, but used in a sequential loop, then that is
+          undefined behavior. Using either ``RAJA::Policy::undefined`` or
+          ``RAJA::Policy::sequential`` is correct.
 
 The following table summarizes RAJA multi-reduction policy types:
 
 ============================================================= ============= ==========================================
 MultiReduction Policy                                         Loop Policies Brief description
-                                                              to Use With
+                                                              Supported
 ============================================================= ============= ==========================================
-seq_multi_reduce                                              seq_exec,     Non-parallel (sequential) multi-reduction.
+seq_multi_reduce                                              seq_exec      Non-parallel (sequential) multi-reduction.
 omp_multi_reduce                                              any OpenMP    OpenMP parallel multi-reduction.
-                                                              policy
+                                                              policy,
+                                                              seq_exec
 omp_multi_reduce_ordered                                      any OpenMP    OpenMP parallel multi-reduction with result
-                                                              policy        guaranteed to be reproducible.
+                                                              policy,       guaranteed to be reproducible.
+                                                              seq_exec
 cuda/hip_multi_reduce_atomic                                  any CUDA/HIP  Parallel multi-reduction in a CUDA/HIP kernel.
-                                                              policy        Multi-reduction may use atomic operations
+                                                              policy,       Multi-reduction may use atomic operations
+                                                              any OpenMP
+                                                              policy,
+                                                              seq_exec
                                                                             leading to run to run variability in the
                                                                             results.
                                                                             (device synchronization will occur when
                                                                             reduction value is finalized)
 cuda/hip_multi_reduce_atomic_low_performance_low_overhead     any CUDA/HIP  Same as above, but multi-reduction uses
-                                                              policy        a low overhead algorithm with a minimal
+                                                              policy,       a low overhead algorithm with a minimal
+                                                              any OpenMP
+                                                              policy,
+                                                              seq_exec
                                                                             set of resources. This minimally effects
                                                                             the performance of loops containing the
                                                                             multi-reducer though it may cause the
                                                                             multi-reducer itself to perform poorly if
                                                                             it is used.
 cuda/hip_multi_reduce_atomic_block_then_atomic_grid_host_init any CUDA/HIP  The multi-reduction uses atomics into shared
-                                                              policy        memory and global memory. Atomics into
+                                                              policy,       memory and global memory. Atomics into
+                                                              any OpenMP
+                                                              policy,
+                                                              seq_exec
                                                                             shared memory are used each time a value
                                                                             is combined into the multi-reducer and at
                                                                             the end of the life of the block the shared
@@ -1147,19 +1184,26 @@ cuda/hip_multi_reduce_atomic_block_then_atomic_grid_host_init any CUDA/HIP  The 
                                                                             The memory for global atomics is
                                                                             initialized on the host.
 cuda/hip_multi_reduce_atomic_global_host_init                 any CUDA/HIP  The multi-reduction uses atomics into global
-                                                              policy        global memory only. Atomics into
+                                                              policy,       global memory only. Atomics into
+                                                              any OpenMP
+                                                              policy,
+                                                              seq_exec
                                                                             global memory are used each time a value
                                                                             is combined into the multi-reducer.
                                                                             The memory for global atomics is
                                                                             initialized on the host.
 cuda/hip_multi_reduce_atomic_global_no_replication_host_init  any CUDA/HIP  Same as above, but uses minimal memory
+                                                              policy,
+                                                              any OpenMP
+                                                              policy,
+                                                              seq_exec
                                                                             by not replicating global atomics.
 
 ============================================================= ============= ==========================================
 
 .. important:: RAJA multi-reductions used with SIMD execution policies are not
-               guaranteed to generate correct results. So they should not be used
-               for kernels containing multi-reductions.
+          guaranteed to generate correct results. So they should not be used
+          for kernels containing multi-reductions.
 
 .. _atomicpolicy-label:
 

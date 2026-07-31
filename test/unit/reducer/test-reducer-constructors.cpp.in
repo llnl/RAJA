@@ -8,17 +8,17 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 ///
-/// Source file containing tests for RAJA multi-reducer constructors and initialization.
+/// Source file containing tests for RAJA reducer constructors and initialization.
 ///
 
-#include "test-multi-reducer-constructors.hpp"
+#include "test-reducer-constructors.hpp"
 
-using @BACKEND@MultiReducerConstructorTypes =
-  Test< camp::cartesian_product< @BACKEND@MultiReducerPolicyList,
+using @BACKEND@ReducerConstructorTypes =
+  Test< camp::cartesian_product< @BACKEND@ReducerPolicyList,
                                  DataTypeList > >::Types;
 
 INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@Test,
-                               MultiReducerConstructorUnitTest,
-                               @BACKEND@MultiReducerConstructorTypes);
+                               ReducerConstructorUnitTest,
+                               @BACKEND@ReducerConstructorTypes);
 
 
