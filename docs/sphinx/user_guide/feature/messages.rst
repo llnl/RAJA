@@ -193,7 +193,7 @@ allocator needs to be provided. This allocator should follow the C++ standard
 requirements for an allocator and will be used to allocate/deallocate
 the message bus. The message bus will always read messages on the host
 to forward the message to the respect callback(s). However, depending on the build
-and where messages are store, messages may be written on either the host
+and where messages are stored, messages may be written on either the host
 or the device. Therefore, in cases where messages are stored on the device, the allocator
 needs to allocate memory that is accessible on both the host and device. 
 
