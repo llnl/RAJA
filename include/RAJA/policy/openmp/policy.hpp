@@ -46,6 +46,13 @@ typedef enum omp_sched_t
 
 namespace RAJA
 {
+
+template<>
+struct reduction_supported_policies<Policy::openmp>
+{
+  using type = PolicyList<Policy::sequential, Policy::openmp>;
+};
+
 namespace omp
 {
 
@@ -346,7 +353,7 @@ struct omp_atomic
 
 #endif
 
-struct omp_thread
+struct omp_thread : make_policy_pattern_t<Policy::openmp, Pattern::undefined>
 {};
 
 template<RAJA::omp::multi_reduce_algorithm algorithm>
