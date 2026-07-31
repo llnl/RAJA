@@ -186,13 +186,12 @@ There are several things to consider when using ``RAJA::messages`` in an applica
   will return a ``boolean``. This will be ``true`` if the message is successfully added to the queue; otherwise, this
   is ``false``. 
 
-Custom Allocators
-^^^^^^^^^^^^^^^^^
-Allocation of the message bus is done through the ``RAJA::ResourceAllocator``
-by default. This allocator uses the resource provided to allocate/deallocate,
-which can be slow. During the creation of the ``MessageManager``, a custom
-allocator can be provided. This allocator should follow the C++ standard
-requirements for an allocator.
+Allocators
+^^^^^^^^^^
+During the creation of the ``MessageManager``, a custom
+allocator needs to be provided. This allocator should follow the C++ standard
+requirements for an allocator. Additionally, the message data expects
+to be accessed on both the host and the device.
 
 .. note:: When using the move assignment operator, the ``MessageManager``
           assumes that there are no currently pending messages.
