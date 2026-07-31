@@ -22,6 +22,8 @@ void ForallMsgBasicTestImpl(const SEG_TYPE& seg,
                             const std::vector<IDX_TYPE>& seg_idx,
                             WORKING_RES working_res)
 {
+  using Allocator = RAJA::ResourceAllocator<char, WORKING_RES>;
+
   IDX_TYPE data_len = seg_idx[seg_idx.size() - 1] + 1;
   IDX_TYPE idx_len = static_cast<IDX_TYPE>( seg_idx.size() );
 
@@ -51,7 +53,9 @@ void ForallMsgBasicTestImpl(const SEG_TYPE& seg,
   const std::size_t msg_sz = RAJA::align_sz(sizeof(RAJA::MsgHeader)) +
     RAJA::align_sz(sizeof(RAJA::MsgArgs<DATA_TYPE>));
 
-  auto msg_manager  = RAJA::make_message_manager(msg_sz*idx_len, working_res);
+  Allocator alloc {working_res, RAJA::resources::MemoryAccess::Pinned};
+
+  auto msg_manager = RAJA::make_message_manager(msg_sz*idx_len, working_res, alloc);
 
   DATA_TYPE msg_max = 0;
   auto msg_queue    = msg_manager.template subscribe<RAJA::mpsc_queue>([&] (DATA_TYPE data) {

@@ -1,6 +1,8 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
 //
 // SPDX-License-Identifier: (BSD-3-Clause)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -80,7 +82,9 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
 // Allocate and initialize message handler and queue
 //
 // _raja_msg_manager_start
-  auto msg_manager = RAJA::make_message_manager(buf_sz, res_host);
+  auto host_allocator = RAJA::ResourceAllocator<char, decltype(res_host)>{res_host,
+    RAJA::resources::MemoryAccess::Pinned};
+  auto msg_manager    = RAJA::make_message_manager(buf_sz, res_host, host_allocator);
 // _raja_msg_manager_end
 
 // _raja_msg_subscribe_start
@@ -209,7 +213,9 @@ const int GPU_BLOCK_SIZE = 256;
   res.memcpy(d_b1, b, sizeof(int)* N);
 
   // _raja_msg_gpu1_start
-  auto msg_manager = RAJA::make_message_manager<gpu_policy>(message_sz*10);
+  auto gpu_allocator = RAJA::ResourceAllocator<char, decltype(res)>{res,
+    RAJA::resources::MemoryAccess::Pinned};
+  auto msg_manager   = RAJA::make_message_manager<gpu_policy>(message_sz*10, gpu_allocator);
 
   auto log = [](const my_string<32>& str, int idx, int value) {
     std::cout << "[INFO]: " << str.c_str() << "[" << idx << "] = " << value << "\n";

@@ -490,30 +490,11 @@ auto make_message_manager(std::size_t bus_sz, Resource r, Allocator alloc)
   return RAJA::MessageManager<Allocator>(bus_sz, r, alloc);
 }
 
-template<concepts::Resource Resource>
-auto make_message_manager(std::size_t bus_sz, Resource r)
-{
-  using Allocator = RAJA::ResourceAllocator<char, Resource>;
-  return RAJA::MessageManager<Allocator>(
-      bus_sz, r, Allocator {r, RAJA::resources::MemoryAccess::Pinned});
-}
-
 template<concepts::ExecutionPolicy ExecPol, typename Allocator>
 auto make_message_manager(std::size_t bus_sz, Allocator alloc)
 {
   auto r = RAJA::resources::get_default_resource<ExecPol>();
   return RAJA::MessageManager<Allocator>(bus_sz, r, alloc);
-}
-
-template<concepts::ExecutionPolicy ExecPol>
-auto make_message_manager(std::size_t bus_sz)
-{
-  using Allocator = RAJA::ResourceAllocator<
-      char, decltype(RAJA::resources::get_default_resource<ExecPol>())>;
-
-  auto r = RAJA::resources::get_default_resource<ExecPol>();
-  return RAJA::MessageManager<Allocator>(
-      bus_sz, r, Allocator {r, RAJA::resources::MemoryAccess::Pinned});
 }
 
 }  // namespace RAJA
