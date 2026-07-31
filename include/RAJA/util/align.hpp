@@ -20,10 +20,25 @@
 #ifndef RAJA_ALIGN_HPP
 #define RAJA_ALIGN_HPP
 
+#include <cstddef>
+
 #include "RAJA/config.hpp"
+#include "RAJA/util/macros.hpp"
 
 namespace RAJA
 {
+RAJA_HOST_DEVICE
+constexpr std::size_t align_sz(std::size_t size,
+                               std::size_t alignment = RAJA_MAX_ALIGN)
+/** Returns the aligned size. This would use `alignof(std::max_align_t)`;
+ *  however, the device side can get a different value compared to the
+ *  host.
+ *
+ * @return The size with proper alignment
+ */
+{
+  return ((size + alignment - 1) / alignment) * alignment;
+}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 // Taken from libc++
