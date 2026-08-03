@@ -92,7 +92,7 @@ void deallocate(T *&ptr)
 #elif defined(RAJA_ENABLE_HIP)
       CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, ptr);
 #elif defined(RAJA_ENABLE_SYCL)
-    sycl_res->deallocate(ptr);
+      sycl_res->deallocate(ptr);
 #endif
       ptr = nullptr;
     }
