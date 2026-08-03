@@ -36,4 +36,5 @@ materials that provide detailed examples of usage.
    feature/workgroup
    feature/vectorization
    feature/jit
+   feature/messages
    feature/plugins

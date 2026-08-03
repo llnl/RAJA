@@ -23,6 +23,8 @@
 
 #include <type_traits>
 
+#include "RAJA/util/FunctionTypeTraits.hpp"
+
 namespace RAJA
 {
 
@@ -34,47 +36,6 @@ class LaunchContextHostPolicy;
 namespace detail
 {
 
-template<typename T>
-struct first_argument;
-
-template<typename R, typename Arg0, typename... Args>
-struct first_argument<R(Arg0, Args...)>
-{
-  using type = Arg0;
-};
-
-template<typename C, typename R, typename Arg0, typename... Args>
-struct first_argument<R (C::*)(Arg0, Args...)>
-    : first_argument<R(Arg0, Args...)>
-{};
-
-template<typename C, typename R, typename Arg0, typename... Args>
-struct first_argument<R (C::*)(Arg0, Args...) const>
-    : first_argument<R(Arg0, Args...)>
-{};
-
-template<typename C, typename R, typename Arg0, typename... Args>
-struct first_argument<R (C::*)(Arg0, Args...) noexcept>
-    : first_argument<R(Arg0, Args...)>
-{};
-
-template<typename C, typename R, typename Arg0, typename... Args>
-struct first_argument<R (C::*)(Arg0, Args...) const noexcept>
-    : first_argument<R(Arg0, Args...)>
-{};
-
-template<typename T, typename = void>
-struct callable_signature
-{
-  using type = camp::decay<T>;
-};
-
-template<typename T>
-struct callable_signature<T, std::void_t<decltype(&camp::decay<T>::operator())>>
-{
-  using type = decltype(&camp::decay<T>::operator());
-};
-
 template<typename T, typename = void>
 struct launch_context_type
 {
@@ -82,12 +43,12 @@ struct launch_context_type
 };
 
 template<typename T>
-struct launch_context_type<T,
-                           std::void_t<typename first_argument<camp::decay<
-                               typename callable_signature<T>::type>>::type>>
+struct launch_context_type<
+    T,
+    std::void_t<internal::func_arg_t<0, decltype(&camp::decay<T>::operator())>>>
 {
   using type = camp::decay<
-      typename first_argument<typename callable_signature<T>::type>::type>;
+      internal::func_arg_t<0, decltype(&camp::decay<T>::operator())>>;
 };
 
 
