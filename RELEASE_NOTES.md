@@ -21,7 +21,7 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
-Version 2026.07.0 -- Release date 2026-08-dd
+Version 2026.07.0 -- Release date 2026-08-04
 ============================================
 
 This release contains new code features, bug fixes, and user documentation improvements. It also contains a lot of internal code restructuring that was enabled by moving to C++20, such as replacing SFINAE with Concepts. 
@@ -31,6 +31,7 @@ This release contains new code features, bug fixes, and user documentation impro
 Notable changes include:
 
   * New features / API changes:
+    * Added support for improved error handling in device code. Specifically, it allows for host callback methods to process message information generated in device code. Please see the "Messages" feature section of the RAJA User Guide for more information.
     * Added policy enum argument to RAJA reducer and multi-reducer constructors and reset methods to allow them to optimize resource usage based on the back-end that they are actually used with when invoked. The usage syntax is described in the RAJA User Guide.
     * Reduction types have been changed, as needed, to use the reduction identity value (zero for sum, max value for min, etc.) when default initialized (i.e., without a user-supplied initial value). **This may be a breaking behavio change** for users that relied on (incorrect/inconsistent) default initialization. **Default initialization of RAJA reductions is considered deprecated.** In the next release, users will be required to provide an initialization value for all RAJA reductions.
     * Added generic device execution policies. These are actually aliases to pre-existing RAJA policies. They resolve automatically to the active RAJA GPU back-end without specify the back-end explicitly. They also handle convention mismatches between CUDA/HIP thread/block dimension ordering and SYCL work-group/item dimension ordering. Please see the policy section of the RAHA User Guide for more information.
@@ -55,6 +56,7 @@ Notable changes include:
     * Replaced std::memcpy with memcpy in RAJA internal implementation that was causing user code compilation issue.
     * Fixed potential vectorization bug caused by internal binary operator traits implementation.
     * Fixed issues related to accumulation variable type consistency in RAJA scan support. Prior to the fix, different back-end implementations used different variable types to accumulate intermediate values. Now everything is consistent across RAJA back-ends.
+    * Fixed issue where invalid launch bounds (e.g., blocksize zero) could be passed to compiler. This causes issues in some versions of compilers for GPU code.
 
 
 Version 2025.12.2 -- Release date 2026-03-04
