@@ -531,9 +531,11 @@ at the end of it.
 GPU Policies for CUDA and HIP
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-RAJA policies for GPU execution using CUDA or HIP are essentially identical.
-The only difference is that CUDA policies have the prefix ``cuda_`` and HIP
-policies have the prefix ``hip_``.
+RAJA policies for GPU execution using CUDA or HIP are similar. The only
+syntactic difference is that CUDA policies have the prefix ``cuda_`` and HIP
+policies have the prefix ``hip_``. In the tables below, policy names use
+``cuda/hip_`` as shorthand for the corresponding CUDA or HIP policy.
+Names containing angle brackets take template parameters to specialize execution behavior.
 
 Several notable constraints apply to RAJA CUDA/HIP *direct_unchecked* policies.
 
@@ -597,16 +599,12 @@ Several notes regarding CUDA/HIP *loop* policies are also good to know.
           be an issue as the block-direct-unchecked or block-direct policies may yield
           better performance.
 
-The policy names below use ``cuda/hip_`` as shorthand for the corresponding
-CUDA or HIP policy. Names containing angle brackets take template parameters
-used to specialize execution behavior.
+**Basic ``forall`` and ``launch`` policies**
 
-Simple ``forall`` and launch policies:
-
-These policies are the usual starting point for CUDA/HIP execution. Use the
-``exec`` policies for single-loop ``RAJA::forall`` kernels, scans, and sorts.
+These policies are the typical starting point for CUDA/HIP execution.
+Use the ``exec`` policies for single-loop ``RAJA::forall`` kernels, scans, and sorts.
 Use ``cuda/hip_launch_t`` when using ``RAJA::launch`` to create a device
-execution environment that contains one or more RAJA loops. The occupancy
+execution environment that contains one or more RAJA loop kernels. The occupancy
 variants are tuning policies for kernels where the default grid-size choice is
 not the desired mapping.
 
@@ -618,54 +616,55 @@ not the desired mapping.
      - Works with
      - Brief description
    * - ``cuda/hip_exec<BLOCK_SIZE>``
-     - ``forall``, scan, sort
+     - forall, scan, sort
      - Execute loop iterations directly mapped to global threads in a GPU
        kernel launched with the given thread-block size and unbounded grid
        size. ``BLOCK_SIZE`` is required; there is no default.
    * - ``cuda/hip_exec_with_reduce<BLOCK_SIZE>``
-     - ``forall``
+     - forall
      - Recommended for kernels containing reductions. It uses RAJA's internal
        occupancy calculation to choose a grid size that generally performs well
        for reduction kernels.
    * - ``cuda/hip_exec_base<with_reduce, BLOCK_SIZE>``
-     - ``forall``
+     - forall
      - Chooses between ``cuda/hip_exec`` and ``cuda/hip_exec_with_reduce``
        based on the boolean ``with_reduce`` template parameter.
    * - ``cuda/hip_exec_grid<BLOCK_SIZE, GRID_SIZE>``
-     - ``forall``
+     - forall
      - Execute loop iterations mapped to global threads via grid-stride loops
        in a GPU kernel launched with the given thread-block size and grid size.
        Both template parameters are required.
    * - ``cuda/hip_exec_occ_max<BLOCK_SIZE>``
-     - ``forall``
+     - forall
      - Similar to ``cuda/hip_exec_grid``, but the grid size is bounded by the
        maximum occupancy of the kernel.
    * - ``cuda/hip_exec_occ_calc<BLOCK_SIZE>``
-     - ``forall``
+     - forall
      - Similar to ``cuda/hip_exec_occ_max``, but may use less than maximum
        occupancy for performance reasons.
    * - ``cuda/hip_exec_occ_fraction<BLOCK_SIZE, Fraction<size_t, numerator, denominator>>``
-     - ``forall``
+     - forall
      - Similar to ``cuda/hip_exec_occ_max``, but uses a fraction of the maximum
        occupancy of the kernel.
    * - ``cuda/hip_exec_occ_custom<BLOCK_SIZE, Concretizer>``
-     - ``forall``
+     - forall
      - Similar to ``cuda/hip_exec_occ_max``, but the grid size is determined by
        the given concretizer.
    * - ``cuda/hip_launch_t``
-     - ``launch``
+     - launch
      - Launches a device kernel. Code inside the lambda expression is executed
        on the device.
 
-Thread mapping policies:
+**Thread mapping policies**
 
 These policies map one loop level to GPU threads within a thread block. They
 are most useful inside ``RAJA::kernel`` or ``RAJA::launch`` when expressing a
 nested loop mapping, especially for tiled loop bodies where a tile is processed
 by the threads in a block. Prefer ``*_loop`` variants when the loop extent may
-be larger than the available threads in the selected dimension. Use
-``*_direct`` or ``*_direct_unchecked`` only when the constraints above are
-satisfied.
+be larger than the available threads in the selected dimension. The
+``*_direct`` or ``*_direct_unchecked`` policies mask out threads that are outside the
+range of the iteration space. They should only be used when the size of the
+range is less than or equal to the size of the block or grid.
 
 .. list-table::
    :widths: 38 18 44
@@ -675,35 +674,35 @@ satisfied.
      - Works with
      - Brief description
    * - ``cuda/hip_thread_{x,y,z}_direct_unchecked``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Map loop iterates directly to GPU threads in the selected dimension,
        without checking loop bounds. Each thread handles one iterate.
    * - ``cuda/hip_thread_{x,y,z}_direct``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Map loop iterates directly to GPU threads in the selected dimension,
        with bounds masking.
    * - ``cuda/hip_thread_{x,y,z}_loop``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Map loop iterates to GPU threads in the selected dimension using a
        block-stride loop.
    * - ``cuda/hip_thread_syncable_loop<dims...>``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Similar to ``cuda/hip_thread_{x,y,z}_loop``, but safe to use with
        ``Cuda/HipSyncThreads``.
    * - ``cuda/hip_thread_size_{x,y,z}_direct_unchecked<n_threads>``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Compile-time-size version of
        ``cuda/hip_thread_{x,y,z}_direct_unchecked``.
    * - ``cuda/hip_thread_size_{x,y,z}_direct<n_threads>``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Compile-time-size version of ``cuda/hip_thread_{x,y,z}_direct``.
 
-Flattened thread mapping policies:
+**Flattened thread mapping policies**
 
-These policies are for ``RAJA::launch`` loops that need to treat a
+These policies are used for ``RAJA::launch`` loops that need to treat a
 multi-dimensional thread team as a one-dimensional set of workers. They are
 useful when an algorithm naturally has a linear indexing operation but the
-launch configuration was specified with multiple thread dimensions.
+launch configuration is specified with multiple thread dimensions.
 
 .. list-table::
    :widths: 38 18 44
@@ -713,18 +712,18 @@ launch configuration was specified with multiple thread dimensions.
      - Works with
      - Brief description
    * - ``cuda/hip_flatten_threads_{xyz}_direct_unchecked``
-     - launch loop
+     - launch ``loop``
      - Reshape threads in a multi-dimensional thread team into one dimension
        without checking loop bounds. Accepts any permutation of one, two, or
        three dimensions.
    * - ``cuda/hip_flatten_threads_{xyz}_direct``
-     - launch loop
+     - launch ``loop``
      - Same as above, but with direct mapping and bounds masking.
    * - ``cuda/hip_flatten_threads_{xyz}_loop``
-     - launch loop
+     - launch ``loop``
      - Same as above, but with strided-loop mapping.
 
-Block mapping policies:
+**Block mapping policies**
 
 These policies map one loop level to GPU thread blocks. They are useful for
 outer loop levels, tiles, or other coarse-grained work where each block handles
@@ -740,29 +739,29 @@ policies for tiled patterns when each block owns a known tile, and use
      - Works with
      - Brief description
    * - ``cuda/hip_block_{x,y,z}_direct_unchecked``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Map loop iterates directly to GPU thread blocks in the selected
        dimension, without checking loop bounds. Each block handles one iterate.
    * - ``cuda/hip_block_{x,y,z}_direct``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Map loop iterates directly to GPU thread blocks in the selected
        dimension, with bounds masking.
    * - ``cuda/hip_block_{x,y,z}_loop``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Map loop iterates to GPU thread blocks in the selected dimension using a
        grid-stride loop.
    * - ``cuda/hip_block_size_{x,y,z}_direct_unchecked<n_blocks>``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Compile-time-size version of
        ``cuda/hip_block_{x,y,z}_direct_unchecked``.
    * - ``cuda/hip_block_size_{x,y,z}_direct<n_blocks>``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Compile-time-size version of ``cuda/hip_block_{x,y,z}_direct``.
    * - ``cuda/hip_block_size_{x,y,z}_loop<n_blocks>``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Compile-time-size version of ``cuda/hip_block_{x,y,z}_loop``.
 
-Global thread mapping policies:
+**Global thread mapping policies**
 
 These policies map loop iterations to the unique global thread id formed from
 the block and thread indices. They are often the most direct fit for simple
@@ -802,13 +801,13 @@ mapping gives more explicit control.
      - kernel ``For``, launch loop
      - Compile-time-size version of ``cuda/hip_global_{x,y,z}_loop``.
 
-Warp and block reduction mapping policies:
+**Warp and block reduction mapping policies**
 
 These policies are specialized building blocks for warp-level and block-level
 execution patterns inside ``RAJA::kernel``. Use them when the algorithm needs
 explicit warp mapping or a reduction across a single warp or block. For ordinary
 ``RAJA::forall`` reductions, start with a RAJA reduction object and a compatible
-CUDA/HIP reduction policy instead.
+CUDA/HIP reduction policy as described in earlier examples instead.
 
 .. list-table::
    :widths: 38 18 44
@@ -848,7 +847,7 @@ CUDA/HIP reduction policy instead.
      - Perform a reduction across a single GPU thread warp.
 
 When a CUDA or HIP policy leaves parameters like the block size and/or grid size
-unspecified, such as the ``cuda/hip_exec_occ_custom`` in the table above, a
+unspecified, such as ``cuda/hip_exec_occ_custom`` in the table above, a
 concretizer object is used to decide those parameters. RAJA provides the following concretizers
 to use with the ``cuda/hip_exec_occ_custom`` policies:
 
