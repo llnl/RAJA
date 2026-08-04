@@ -254,6 +254,80 @@ Then choose specialized behavior only when needed:
        where supported.
 
 -----------------------------------------------------
+Basic Policy Examples
+-----------------------------------------------------
+
+The examples below use the same simple ``RAJA::forall`` loop body with several
+execution policies. In each case, the lambda body describes the work and the
+policy selects where and how the loop runs. These snippets omit allocation,
+data movement, and backend-specific build guards.
+
+Sequential CPU execution:
+
+.. code-block:: C++
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::RangeSegment(0, N),
+    [=] (RAJA::Index_type i) {
+      y[i] = a * x[i] + y[i];
+    });
+
+OpenMP CPU execution:
+
+.. code-block:: C++
+
+  RAJA::forall<RAJA::omp_parallel_for_exec>(RAJA::RangeSegment(0, N),
+    [=] (RAJA::Index_type i) {
+      y[i] = a * x[i] + y[i];
+    });
+
+CUDA and HIP execution use a block-size template parameter. Device lambdas must
+be marked with the appropriate RAJA device annotation:
+
+.. code-block:: C++
+
+  RAJA::forall<RAJA::cuda_exec<256>>(RAJA::RangeSegment(0, N),
+    [=] RAJA_DEVICE (RAJA::Index_type i) {
+      y[i] = a * x[i] + y[i];
+    });
+
+  RAJA::forall<RAJA::hip_exec<256>>(RAJA::RangeSegment(0, N),
+    [=] RAJA_DEVICE (RAJA::Index_type i) {
+      y[i] = a * x[i] + y[i];
+    });
+
+.. note:: Use ``RAJA_HOST_DEVICE`` instead of ``RAJA_DEVICE`` when the same
+          lambda may be used with either GPU or CPU execution policies. This
+          makes the code more portable because one can swap execution policies
+          to run on the device or host without changing additional lambda
+          annotations.
+
+When code should use whichever GPU back-end is active in the RAJA build, use
+the ``device_*`` aliases:
+
+.. code-block:: C++
+
+  RAJA::forall<RAJA::device_exec<256>>(RAJA::RangeSegment(0, N),
+    [=] RAJA_DEVICE (RAJA::Index_type i) {
+      y[i] = a * x[i] + y[i];
+    });
+
+Reduction policies are separate from loop execution policies. The reducer
+policy must support the loop policy used by the kernel:
+
+.. code-block:: C++
+
+  RAJA::ReduceSum<RAJA::omp_reduce, double> sum(0.0);
+
+  RAJA::forall<RAJA::omp_parallel_for_exec>(RAJA::RangeSegment(0, N),
+    [=] (RAJA::Index_type i) {
+      sum += x[i];
+    });
+
+For complete examples with setup, memory management, and backend-specific build
+guards, see :ref:`tut-kernelexecpols-label`, :ref:`tut-launchexecpols-label`,
+and :ref:`feat-reductions-label`.
+
+-----------------------------------------------------
 RAJA Loop/Kernel Execution Policies
 -----------------------------------------------------
 
