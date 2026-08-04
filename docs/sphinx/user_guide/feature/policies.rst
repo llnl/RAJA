@@ -52,9 +52,11 @@ Loop execution policies                ``RAJA::forall`` loops, scans, sorts,
                                        ``RAJA::kernel`` and ``RAJA::launch``.
 Launch policies                        Creating an execution environment for
                                        ``RAJA::launch``.
-Index set execution policies           Running a ``RAJA::IndexSet`` by choosing
-                                       one policy for iterating over segments
-                                       and another policy for executing the 
+Index set execution policies           Running a ``RAJA::IndexSet`` iteration
+                                       pattern composed of multiple index
+                                       segments by choosing one policy for
+                                       iterating over segments and another
+                                       policy for executing the 
                                        loop iterations within each segment.
 Reduction and multi-reduction policies ``RAJA::Reduce*`` and
                                        ``RAJA::MultiReduce*`` objects.
@@ -168,7 +170,7 @@ Choosing a Policy
 
 The tables below are reference material. When choosing a policy for new code,
 start from the RAJA interface you are using, then choose the execution back-end,
-then add specialized policies only when the kernel needs them.
+then add specialized policies only when a kernel needs them.
 
 Choose the RAJA interface first:
 
@@ -183,18 +185,19 @@ Choose the RAJA interface first:
        ``omp_parallel_for_exec``, ``cuda_exec<BLOCK_SIZE>``,
        ``hip_exec<BLOCK_SIZE>``, or ``sycl_exec<WORK_GROUP_SIZE>``.
    * - ``RAJA::kernel``
-     - A ``RAJA::KernelPolicy`` made from statements. Each
+     - A ``RAJA::KernelPolicy`` constructed as a sequence of statements. Each
        ``RAJA::statement::For`` chooses a loop execution policy for one loop
        level.
    * - ``RAJA::launch``
      - A launch policy such as ``seq_launch_t``, ``omp_launch_t``, or
-       ``cuda_launch_t``, plus loop policies inside the launch body.
+       ``cuda_launch_t``, to create an execution regions, plus loop policies
+       inside the launch body.
    * - ``RAJA::IndexSet`` with ``RAJA::forall``
-     - An ``RAJA::ExecPolicy`` with one policy for iterating over index-set
-       segments and one policy for executing each segment.
+     - A ``RAJA::ExecPolicy`` with one policy for iterating over index-set
+       segments and one policy for executing iterations within each segment.
    * - Reductions, multi-reductions, or atomics
      - A helper policy that is compatible with the loop execution policy used
-       by the kernel.
+       by the loop kernel.
 
 Next, choose the back-end:
 
@@ -207,15 +210,15 @@ Next, choose the back-end:
    * - Sequential CPU
      - Use ``seq_exec`` for loops and ``seq_reduce`` for reductions.
    * - CPU with SIMD hints
-     - Use ``simd_exec`` only for loops that do not require RAJA reductions or
-       multi-reductions.
+     - Use ``simd_exec`` only for loops that that are data parallel; e.g.,
+       they do not use RAJA reductions or multi-reductions.
    * - OpenMP CPU threading
      - Use ``omp_parallel_for_exec`` for a single ``RAJA::forall`` loop. Use
        ``omp_launch_t`` with ``omp_for_exec`` for ``RAJA::launch``.
    * - CUDA or HIP
      - Use ``cuda_exec<BLOCK_SIZE>`` or ``hip_exec<BLOCK_SIZE>`` for simple
        ``RAJA::forall`` loops. Use mapping policies such as
-       ``cuda_thread_x_loop`` or ``hip_block_x_direct`` only when expressing a
+       ``cuda_thread_x_loop`` or ``hip_block_x_direct`` when expressing a
        nested loop or launch mapping.
    * - Active GPU device back-end
      - Use ``device_*`` aliases when code should follow the enabled CUDA, HIP,
@@ -227,7 +230,7 @@ Next, choose the back-end:
    * - OpenMP target
      - Use ``omp_target_parallel_for_exec<#>`` for OpenMP target offload.
 
-Then choose specialized behavior only when needed:
+Then choose specialized behavior when needed:
 
 .. list-table::
    :widths: 32 68
@@ -236,7 +239,7 @@ Then choose specialized behavior only when needed:
    * - Need
      - Policy choice
    * - OpenMP schedule control
-     - Use the static, dynamic, guided, or runtime OpenMP policy variants.
+     - Use static, dynamic, guided, or runtime OpenMP policy variants.
    * - Multiple loops in one OpenMP parallel region
      - Use ``RAJA::region`` with OpenMP inner policies such as
        ``omp_for_exec`` or ``omp_for_static_exec``.
@@ -245,7 +248,9 @@ Then choose specialized behavior only when needed:
        ``RAJA::statement::Collapse``.
    * - GPU tiled loop mapping
      - Use GPU thread, block, or global mapping policies. Prefer ``*_loop``
-       until the direct mapping constraints are understood.
+       until the direct mapping constraints are understood. The ``*_loop``,
+       while potentially less optimal, are most forgiving and do not need
+       the mapping constraints of other policies.
    * - GPU reduction inside ``RAJA::forall``
      - Use the reduction-aware CUDA/HIP execution policy variants where
        appropriate, and match the reducer policy to the loop back-end.
@@ -257,9 +262,10 @@ Then choose specialized behavior only when needed:
 Basic Policy Examples
 -----------------------------------------------------
 
-The examples below use the same simple ``RAJA::forall`` loop body with several
-execution policies. In each case, the lambda body describes the work and the
-policy selects where and how the loop runs. These snippets omit allocation,
+The examples below show how to usethe basic ``RAJA::forall`` construct to execute
+a simple loop kernel with various execution policies. In each case, the lambda
+expression body describes the work done for each kernel iterate and the
+policy selects where and how the loop runs. For brevity, these snippets omit allocation,
 data movement, and backend-specific build guards.
 
 Sequential CPU execution:
@@ -271,7 +277,7 @@ Sequential CPU execution:
       y[i] = a * x[i] + y[i];
     });
 
-OpenMP CPU execution:
+OpenMP parallel CPU execution:
 
 .. code-block:: C++
 
@@ -280,8 +286,9 @@ OpenMP CPU execution:
       y[i] = a * x[i] + y[i];
     });
 
-CUDA and HIP execution use a block-size template parameter. Device lambdas must
-be marked with the appropriate RAJA device annotation:
+CUDA and HIP execution policies take a block-size template parameter. Device lambdas must
+be marked with the appropriate device annotation. Here, the ``RAJA_DEVICE``
+macro constant is shown:
 
 .. code-block:: C++
 
@@ -298,8 +305,7 @@ be marked with the appropriate RAJA device annotation:
 .. note:: Use ``RAJA_HOST_DEVICE`` instead of ``RAJA_DEVICE`` when the same
           lambda may be used with either GPU or CPU execution policies. This
           makes the code more portable because one can swap execution policies
-          to run on the device or host without changing additional lambda
-          annotations.
+          to run on the device or host without changing the lambda annotation.
 
 When code should use whichever GPU back-end is active in the RAJA build, use
 the ``device_*`` aliases:
