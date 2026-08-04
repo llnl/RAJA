@@ -1071,9 +1071,9 @@ sycl_group_2_loop                        kernel (For)  Same as above, but use
 
 .. _indexsetpolicy-label:
 
------------------------
+-----------------------------------------------------
 Device policy aliases
------------------------
+-----------------------------------------------------
 
 To simplify transitions between GPU back-ends (CUDA/HIP/SYCL) and reduce
 downstream preprocessor conditionals, RAJA provides a set of
