@@ -1071,6 +1071,7 @@ sycl_group_2_loop                        kernel (For)  Same as above, but use
 
 .. _indexsetpolicy-label:
 
+-----------------------
 Device policy aliases
 -----------------------
 
