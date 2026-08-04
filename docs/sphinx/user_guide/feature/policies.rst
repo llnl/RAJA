@@ -603,6 +603,13 @@ used to specialize execution behavior.
 
 Simple ``forall`` and launch policies:
 
+These policies are the usual starting point for CUDA/HIP execution. Use the
+``exec`` policies for single-loop ``RAJA::forall`` kernels, scans, and sorts.
+Use ``cuda/hip_launch_t`` when using ``RAJA::launch`` to create a device
+execution environment that contains one or more RAJA loops. The occupancy
+variants are tuning policies for kernels where the default grid-size choice is
+not the desired mapping.
+
 .. list-table::
    :widths: 38 18 44
    :header-rows: 1
@@ -652,6 +659,14 @@ Simple ``forall`` and launch policies:
 
 Thread mapping policies:
 
+These policies map one loop level to GPU threads within a thread block. They
+are most useful inside ``RAJA::kernel`` or ``RAJA::launch`` when expressing a
+nested loop mapping, especially for tiled loop bodies where a tile is processed
+by the threads in a block. Prefer ``*_loop`` variants when the loop extent may
+be larger than the available threads in the selected dimension. Use
+``*_direct`` or ``*_direct_unchecked`` only when the constraints above are
+satisfied.
+
 .. list-table::
    :widths: 38 18 44
    :header-rows: 1
@@ -685,6 +700,11 @@ Thread mapping policies:
 
 Flattened thread mapping policies:
 
+These policies are for ``RAJA::launch`` loops that need to treat a
+multi-dimensional thread team as a one-dimensional set of workers. They are
+useful when an algorithm naturally has a linear indexing operation but the
+launch configuration was specified with multiple thread dimensions.
+
 .. list-table::
    :widths: 38 18 44
    :header-rows: 1
@@ -705,6 +725,12 @@ Flattened thread mapping policies:
      - Same as above, but with strided-loop mapping.
 
 Block mapping policies:
+
+These policies map one loop level to GPU thread blocks. They are useful for
+outer loop levels, tiles, or other coarse-grained work where each block handles
+one or more iterations. Prefer block ``*_direct`` or ``*_direct_unchecked``
+policies for tiled patterns when each block owns a known tile, and use
+``*_loop`` variants when the loop extent may exceed the grid shape.
 
 .. list-table::
    :widths: 38 18 44
@@ -738,6 +764,13 @@ Block mapping policies:
 
 Global thread mapping policies:
 
+These policies map loop iterations to the unique global thread id formed from
+the block and thread indices. They are often the most direct fit for simple
+data-parallel loops in ``RAJA::kernel`` or ``RAJA::launch`` because each
+iteration can be assigned to one global GPU thread. They may be inappropriate
+for kernels that require block-local synchronization, where thread or block
+mapping gives more explicit control.
+
 .. list-table::
    :widths: 38 18 44
    :header-rows: 1
@@ -770,6 +803,12 @@ Global thread mapping policies:
      - Compile-time-size version of ``cuda/hip_global_{x,y,z}_loop``.
 
 Warp and block reduction mapping policies:
+
+These policies are specialized building blocks for warp-level and block-level
+execution patterns inside ``RAJA::kernel``. Use them when the algorithm needs
+explicit warp mapping or a reduction across a single warp or block. For ordinary
+``RAJA::forall`` reductions, start with a RAJA reduction object and a compatible
+CUDA/HIP reduction policy instead.
 
 .. list-table::
    :widths: 38 18 44
