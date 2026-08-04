@@ -603,339 +603,216 @@ Several notes regarding CUDA/HIP *loop* policies are also good to know.
           be an issue as the block-direct-unchecked or block-direct policies may yield
           better performance.
 
-The policies in the following table that contain angle brackets indicate
-template parameters used to specialize execution behavior.
+The policy names below use ``cuda/hip_`` as shorthand for the corresponding
+CUDA or HIP policy. Names containing angle brackets take template parameters
+used to specialize execution behavior.
 
-+----------------------------------------------------+---------------+---------------------------------+
-| CUDA/HIP Execution Policies                        | Works with    | Brief description               |
-+====================================================+===============+=================================+
-| cuda/hip_exec<BLOCK_SIZE>                          | forall,       | Execute loop iterations         |
-|                                                    | scan,         | directly mapped to global       |
-|                                                    | sort          | threads in a GPU kernel         |
-|                                                    |               | launched with given threadblock |
-|                                                    |               | size and unbounded grid size.   |
-|                                                    |               | Note that the threadblock       |
-|                                                    |               | size must be provided.          |
-|                                                    |               | There is no default.            |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_exec_with_reduce<BLOCK_SIZE>              | forall        | The cuda/hip exec policy        |
-|                                                    |               | recommended for use with        |
-|                                                    |               | kernels containing reductions.  |
-|                                                    |               | In general, using the occupancy |
-|                                                    |               | calculator internally improves  |
-|                                                    |               | performance of kernels with     |
-|                                                    |               | reductions. Exactly how much    |
-|                                                    |               | occupancy to use differs by     |
-|                                                    |               | platform. This policy provides  |
-|                                                    |               | a simple way to get what works  |
-|                                                    |               | well for a platform without     |
-|                                                    |               | having to know the details.     |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_exec_base<with_reduce, BLOCK_SIZE>        | forall        | Choose between cuda/hip_exec    |
-|                                                    |               | and cuda/hip_exec_with_reduce   |
-|                                                    |               | policies based on the boolean   |
-|                                                    |               | template parameter 'with_reduce'|
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_exec_grid<BLOCK_SIZE, GRID_SIZE>          | forall        | Execute loop iterations         |
-|                                                    |               | mapped to global threads via    |
-|                                                    |               | grid striding with multiple     |
-|                                                    |               | iterations per global thread    |
-|                                                    |               | in a GPU kernel launched        |
-|                                                    |               | with given thread-block         |
-|                                                    |               | size and grid size.             |
-|                                                    |               | Note that the thread-block      |
-|                                                    |               | size and grid size must be      |
-|                                                    |               | provided, there is no default.  |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_exec_occ_max<BLOCK_SIZE>                  | forall        | Execute loop iterations         |
-|                                                    |               | mapped to global threads via    |
-|                                                    |               | grid striding with multiple     |
-|                                                    |               | iterations per global thread    |
-|                                                    |               | in a GPU kernel launched        |
-|                                                    |               | with given thread-block         |
-|                                                    |               | size and grid size bounded      |
-|                                                    |               | by the maximum occupancy of     |
-|                                                    |               | the kernel.                     |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_exec_occ_calc<BLOCK_SIZE>                 | forall        | Similar to the occ_max          |
-|                                                    |               | policy but may use less         |
-|                                                    |               | than the maximum occupancy      |
-|                                                    |               | determined by the occupancy     |
-|                                                    |               | calculator of the kernel for    |
-|                                                    |               | performance reasons.            |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_exec_occ_fraction<BLOCK_SIZE,             | forall        | Similar to the occ_max policy   |
-| Fraction<size_t, numerator, denominator>>          |               | but use a fraction of the       |
-|                                                    |               | maximum occupancy of the kernel.|
-|                                                    |               |                                 |
-|                                                    |               |                                 |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_exec_occ_custom<BLOCK_SIZE, Concretizer>  | forall        | Similar to the occ_max policy   |
-|                                                    |               | policy but the grid size is     |
-|                                                    |               | is determined by concretizer.   |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_launch_t                                  | launch        | Launches a device kernel, any   |
-|                                                    |               | code inside the lambda          |
-|                                                    |               | expression is executed          |
-|                                                    |               | on the device.                  |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_x_direct_unchecked                 | kernel (For)  | Map loop iterates directly      |
-|                                                    | launch (loop) | without checking loop bounds to |
-|                                                    |               | GPU threads in x-dimension, one |
-|                                                    |               | iterate per thread. See note    |
-|                                                    |               | below about limitations.        |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_y_direct_unchecked                 | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to threads in y-dimension.      |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_z_direct_unchecked                 | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to threads in z-dimension.      |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_x_direct                           | kernel (For)  | Map loop iterates directly to   |
-|                                                    | launch (loop) | GPU threads in x-dimension, one |
-|                                                    |               | or no iterates per thread. See  |
-|                                                    |               | note below about limitations.   |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_y_direct                           | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to threads in y-dimension.      |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_z_direct                           | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to threads in z-dimension.      |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_x_loop                             | kernel (For)  | Similar to thread-x-direct      |
-|                                                    | launch (loop) | policy, but use a block-stride  |
-|                                                    |               | loop which doesn't limit total  |
-|                                                    |               | number of loop iterates.        |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_y_loop                             | kernel (For)  | Same as above, but for          |
-|                                                    | launch (loop) | threads in y-dimension.         |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_z_loop                             | kernel (For)  | Same as above, but for          |
-|                                                    | launch (loop) | threads in z-dimension.         |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_syncable_loop<dims...>             | kernel (For)  | Similar to thread-loop          |
-|                                                    | launch (loop) | policy, but safe to use         |
-|                                                    |               | with Cuda/HipSyncThreads.       |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_size_x_direct_unchecked<nx_threads>| kernel (For)  | Same as                         |
-|                                                    | launch (loop) | thread_x_direct_unchecked       |
-|                                                    |               | policy above but with           |
-|                                                    |               | a compile time number of        |
-|                                                    |               | threads.                        |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_size_y_direct_unchecked<ny_threads>| kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to threads in y-dimension       |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_size_z_direct_unchecked<nz_threads>| kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to threads in z-dimension.      |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_size_x_direct<nx_threads>          | kernel (For)  | Same as thread_x_direct         |
-|                                                    | launch (loop) | policy above but with           |
-|                                                    |               | a compile time number of        |
-|                                                    |               | threads.                        |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_size_y_direct<ny_threads>          | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to threads in y-dimension       |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_thread_size_z_direct<nz_threads>          | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to threads in z-dimension.      |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_flatten_threads_{xyz}_direct_unchecked    | launch (loop) | Reshapes threads in a           |
-|                                                    |               | multi-dimensional thread        |
-|                                                    |               | team into one-dimension.        |
-|                                                    |               | Accepts any permutation         |
-|                                                    |               | of one, two, or three           |
-|                                                    |               | dimensions.                     |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_flatten_threads_{xyz}_direct              | launch (loop) | Same as above, but with direct  |
-|                                                    |               | mapping.                        |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_flatten_threads_{xyz}_loop                | launch (loop) | Same as above, but with loop    |
-|                                                    |               | mapping.                        |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_x_direct_unchecked                  | kernel (For)  | Map loop iterates directly      |
-|                                                    | launch (loop) | without checking loop bounds    |
-|                                                    |               | to GPU thread blocks in the     |
-|                                                    |               | x-dimension, one iterate per    |
-|                                                    |               | block.                          |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_y_direct_unchecked                  | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to blocks in y-dimension        |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_z_direct_unchecked                  | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to blocks in z-dimension        |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_x_direct                            | kernel (For)  | Map loop iterates directly to   |
-|                                                    | launch (loop) | GPU thread blocks in the        |
-|                                                    |               | x-dimension, one or no iterates |
-|                                                    |               | per block.                      |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_y_direct                            | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to blocks in y-dimension        |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_z_direct                            | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to blocks in z-dimension        |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_x_loop                              | kernel (For)  | Similar to block-x-direct       |
-|                                                    | launch (loop) | policy, but use a grid-stride   |
-|                                                    |               | loop.                           |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_y_loop                              | kernel (For)  | Same as above, but use          |
-|                                                    | launch (loop) | blocks in y-dimension           |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_z_loop                              | kernel (For)  | Same as above, but use          |
-|                                                    | launch (loop) | blocks in z-dimension           |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_size_x_direct_unchecked<nx_blocks>  | kernel (For)  | Same as                         |
-|                                                    |               | block_x_direct_unchecked        |
-|                                                    | launch (loop) | policy above but with a         |
-|                                                    |               | compile time number of blocks   |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_size_y_direct_unchecked<ny_blocks>  | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to blocks in y-dim              |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_size_z_direct_unchecked<nz_blocks>  | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to blocks in z-dim              |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_size_x_direct<nx_blocks>            | kernel (For)  | Same as block_x_direct          |
-|                                                    | launch (loop) | policy above but with a         |
-|                                                    |               | compile time number of blocks   |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_size_y_direct<ny_blocks>            | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to blocks in y-dim              |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_size_z_direct<nz_blocks>            | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to blocks in z-dim              |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_size_x_loop<nx_blocks>              | kernel (For)  | Same as block_x_loop            |
-|                                                    | launch (loop) | policy above but with a         |
-|                                                    |               | compile time number of blocks   |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_size_y_loop<ny_blocks>              | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to blocks in y-dim              |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_size_z_loop<nz_blocks>              | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to blocks in z-dim              |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_x_direct_unchecked                 | kernel (For)  | Map loop iterates directly      |
-|                                                    | launch (loop) | without checking loop bounds    |
-|                                                    |               | to GPU threads in the grid in   |
-|                                                    |               | the x-dimension, one iterate    |
-|                                                    |               | per thread. Creates a unique    |
-|                                                    |               | thread id for each thread on    |
-|                                                    |               | the x-dimension of the grid.    |
-|                                                    |               | Same as computing               |
-|                                                    |               | threadIdx.x +                   |
-|                                                    |               | threadDim.x * blockIdx.x.       |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_y_direct_unchecked                 | kernel (For)  | Same as above, but uses         |
-|                                                    | launch (loop) | globals in y-dimension.         |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_z_direct_unchecked                 | kernel (For)  | Same as above, but uses         |
-|                                                    | launch (loop) | globals in z-dimension.         |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_x_direct                           | kernel (For)  | Same as                         |
-|                                                    |               | global_x_direct_unchecked       |
-|                                                    | launch (loop) | above, but maps loop iterates   |
-|                                                    | launch (loop) | directly to GPU threads in the  |
-|                                                    |               | grid, one or no iterates per    |
-|                                                    |               | thread.                         |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_y_direct                           | kernel (For)  | Same as above, but uses         |
-|                                                    | launch (loop) | globals in y-dimension.         |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_z_direct                           | kernel (For)  | Same as above, but uses         |
-|                                                    | launch (loop) | globals in z-dimension.         |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_x_loop                             | kernel (For)  | Similar to                      |
-|                                                    | launch (loop) | global-x-direct policy,         |
-|                                                    |               | but use a grid-stride           |
-|                                                    |               | loop.                           |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_y_loop                             | kernel (For)  | Same as above, but use          |
-|                                                    | launch (loop) | globals in y-dimension          |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_z_loop                             | kernel (For)  | Same as above, but use          |
-|                                                    | launch (loop) | globals in z-dimension          |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_size_x_direct_unchecked<nx_threads>| kernel (For)  | Same as                         |
-|                                                    |               | global_x_direct_unchecked       |
-|                                                    | launch (loop) | policy above but with           |
-|                                                    |               | a compile time block            |
-|                                                    |               | size.                           |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_size_y_direct_unchecked<ny_threads>| kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to globals in y-dim             |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_size_z_direct_unchecked<nz_threads>| kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to globals in z-dim             |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_size_x_direct<nx_threads>          | kernel (For)  | Same as global_x_direct         |
-|                                                    | launch (loop) | policy above but with           |
-|                                                    |               | a compile time block            |
-|                                                    |               | size                            |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_size_y_direct<ny_threads>          | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to globals in y-dim             |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_size_z_direct<nz_threads>          | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to globals in z-dim             |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_size_x_loop<nx_threads>            | kernel (For)  | Same as global_x_loop           |
-|                                                    | launch (loop) | policy above but with           |
-|                                                    |               | a compile time block            |
-|                                                    |               | size.                           |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_size_y_loop<ny_threads>            | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to globals in y-dim             |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_global_size_z_loop<nz_threads>            | kernel (For)  | Same as above, but map          |
-|                                                    | launch (loop) | to globals in z-dim             |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_warp_direct_unchecked                     | kernel (For)  | Map work to threads in a        |
-|                                                    |               | warp directly without checking  |
-|                                                    |               | loop bounds.                    |
-|                                                    |               | Cannot be used in conjunction   |
-|                                                    |               | with cuda/hip_thread_x_*        |
-|                                                    |               | policies.                       |
-|                                                    |               | Multiple warps can be           |
-|                                                    |               | created by using                |
-|                                                    |               | cuda/hip_thread_y/z_*           |
-|                                                    |               | policies.                       |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_warp_direct                               | kernel (For)  | Similar to                      |
-|                                                    |               | warp_direct_unchecked, but      |
-|                                                    |               | map work to threads             |
-|                                                    |               | in a warp directly.             |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_warp_loop                                 | kernel (For)  | Similar to warp_direct, but     |
-|                                                    |               | map work to threads in a warp   |
-|                                                    |               | using a warp-stride loop.       |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_warp_masked_direct<BitMask<..>>           | kernel        | Map work directly to threads   |
-|                                                    | (For)         | in a warp using a bit mask.     |
-|                                                    |               | Cannot be used with             |
-|                                                    |               | cuda/hip_thread_x_* policies.   |
-|                                                    |               | Multiple warps can be created   |
-|                                                    |               | by using cuda/hip_thread_y/z_*  |
-|                                                    |               | policies.                       |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_warp_masked_loop<BitMask<..>>             | kernel        | Map work to threads in a warp   |
-|                                                    | (For)         | using a bit mask and a warp-    |
-|                                                    |               | stride loop.                    |
-|                                                    |               | Cannot be used with             |
-|                                                    |               | cuda/hip_thread_x_* policies.   |
-|                                                    |               | Multiple warps can be created   |
-|                                                    |               | by using cuda/hip_thread_y/z_*  |
-|                                                    |               | policies.                       |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_block_reduce                              | kernel        | Perform a reduction across a    |
-|                                                    | (Reduce)      | single GPU thread block.        |
-+----------------------------------------------------+---------------+---------------------------------+
-| cuda/hip_warp_reduce                               | kernel        | Perform a reduction across a    |
-|                                                    | (Reduce)      | single GPU thread warp.         |
-|                                                    |               | thread warp.                    |
-+----------------------------------------------------+---------------+---------------------------------+
+Simple ``forall`` and launch policies:
+
+.. list-table::
+   :widths: 38 18 44
+   :header-rows: 1
+
+   * - Policy
+     - Works with
+     - Brief description
+   * - ``cuda/hip_exec<BLOCK_SIZE>``
+     - ``forall``, scan, sort
+     - Execute loop iterations directly mapped to global threads in a GPU
+       kernel launched with the given thread-block size and unbounded grid
+       size. ``BLOCK_SIZE`` is required; there is no default.
+   * - ``cuda/hip_exec_with_reduce<BLOCK_SIZE>``
+     - ``forall``
+     - Recommended for kernels containing reductions. It uses RAJA's internal
+       occupancy calculation to choose a grid size that generally performs well
+       for reduction kernels.
+   * - ``cuda/hip_exec_base<with_reduce, BLOCK_SIZE>``
+     - ``forall``
+     - Chooses between ``cuda/hip_exec`` and ``cuda/hip_exec_with_reduce``
+       based on the boolean ``with_reduce`` template parameter.
+   * - ``cuda/hip_exec_grid<BLOCK_SIZE, GRID_SIZE>``
+     - ``forall``
+     - Execute loop iterations mapped to global threads via grid-stride loops
+       in a GPU kernel launched with the given thread-block size and grid size.
+       Both template parameters are required.
+   * - ``cuda/hip_exec_occ_max<BLOCK_SIZE>``
+     - ``forall``
+     - Similar to ``cuda/hip_exec_grid``, but the grid size is bounded by the
+       maximum occupancy of the kernel.
+   * - ``cuda/hip_exec_occ_calc<BLOCK_SIZE>``
+     - ``forall``
+     - Similar to ``cuda/hip_exec_occ_max``, but may use less than maximum
+       occupancy for performance reasons.
+   * - ``cuda/hip_exec_occ_fraction<BLOCK_SIZE, Fraction<size_t, numerator, denominator>>``
+     - ``forall``
+     - Similar to ``cuda/hip_exec_occ_max``, but uses a fraction of the maximum
+       occupancy of the kernel.
+   * - ``cuda/hip_exec_occ_custom<BLOCK_SIZE, Concretizer>``
+     - ``forall``
+     - Similar to ``cuda/hip_exec_occ_max``, but the grid size is determined by
+       the given concretizer.
+   * - ``cuda/hip_launch_t``
+     - ``launch``
+     - Launches a device kernel. Code inside the lambda expression is executed
+       on the device.
+
+Thread mapping policies:
+
+.. list-table::
+   :widths: 38 18 44
+   :header-rows: 1
+
+   * - Policy family
+     - Works with
+     - Brief description
+   * - ``cuda/hip_thread_{x,y,z}_direct_unchecked``
+     - kernel ``For``, launch loop
+     - Map loop iterates directly to GPU threads in the selected dimension,
+       without checking loop bounds. Each thread handles one iterate.
+   * - ``cuda/hip_thread_{x,y,z}_direct``
+     - kernel ``For``, launch loop
+     - Map loop iterates directly to GPU threads in the selected dimension,
+       with bounds masking.
+   * - ``cuda/hip_thread_{x,y,z}_loop``
+     - kernel ``For``, launch loop
+     - Map loop iterates to GPU threads in the selected dimension using a
+       block-stride loop.
+   * - ``cuda/hip_thread_syncable_loop<dims...>``
+     - kernel ``For``, launch loop
+     - Similar to ``cuda/hip_thread_{x,y,z}_loop``, but safe to use with
+       ``Cuda/HipSyncThreads``.
+   * - ``cuda/hip_thread_size_{x,y,z}_direct_unchecked<n_threads>``
+     - kernel ``For``, launch loop
+     - Compile-time-size version of
+       ``cuda/hip_thread_{x,y,z}_direct_unchecked``.
+   * - ``cuda/hip_thread_size_{x,y,z}_direct<n_threads>``
+     - kernel ``For``, launch loop
+     - Compile-time-size version of ``cuda/hip_thread_{x,y,z}_direct``.
+
+Flattened thread mapping policies:
+
+.. list-table::
+   :widths: 38 18 44
+   :header-rows: 1
+
+   * - Policy family
+     - Works with
+     - Brief description
+   * - ``cuda/hip_flatten_threads_{xyz}_direct_unchecked``
+     - launch loop
+     - Reshape threads in a multi-dimensional thread team into one dimension
+       without checking loop bounds. Accepts any permutation of one, two, or
+       three dimensions.
+   * - ``cuda/hip_flatten_threads_{xyz}_direct``
+     - launch loop
+     - Same as above, but with direct mapping and bounds masking.
+   * - ``cuda/hip_flatten_threads_{xyz}_loop``
+     - launch loop
+     - Same as above, but with strided-loop mapping.
+
+Block mapping policies:
+
+.. list-table::
+   :widths: 38 18 44
+   :header-rows: 1
+
+   * - Policy family
+     - Works with
+     - Brief description
+   * - ``cuda/hip_block_{x,y,z}_direct_unchecked``
+     - kernel ``For``, launch loop
+     - Map loop iterates directly to GPU thread blocks in the selected
+       dimension, without checking loop bounds. Each block handles one iterate.
+   * - ``cuda/hip_block_{x,y,z}_direct``
+     - kernel ``For``, launch loop
+     - Map loop iterates directly to GPU thread blocks in the selected
+       dimension, with bounds masking.
+   * - ``cuda/hip_block_{x,y,z}_loop``
+     - kernel ``For``, launch loop
+     - Map loop iterates to GPU thread blocks in the selected dimension using a
+       grid-stride loop.
+   * - ``cuda/hip_block_size_{x,y,z}_direct_unchecked<n_blocks>``
+     - kernel ``For``, launch loop
+     - Compile-time-size version of
+       ``cuda/hip_block_{x,y,z}_direct_unchecked``.
+   * - ``cuda/hip_block_size_{x,y,z}_direct<n_blocks>``
+     - kernel ``For``, launch loop
+     - Compile-time-size version of ``cuda/hip_block_{x,y,z}_direct``.
+   * - ``cuda/hip_block_size_{x,y,z}_loop<n_blocks>``
+     - kernel ``For``, launch loop
+     - Compile-time-size version of ``cuda/hip_block_{x,y,z}_loop``.
+
+Global thread mapping policies:
+
+.. list-table::
+   :widths: 38 18 44
+   :header-rows: 1
+
+   * - Policy family
+     - Works with
+     - Brief description
+   * - ``cuda/hip_global_{x,y,z}_direct_unchecked``
+     - kernel ``For``, launch loop
+     - Map loop iterates directly to global GPU thread ids in the selected
+       dimension, without checking loop bounds. In the x dimension, this is
+       equivalent to ``threadIdx.x + blockDim.x * blockIdx.x``.
+   * - ``cuda/hip_global_{x,y,z}_direct``
+     - kernel ``For``, launch loop
+     - Map loop iterates directly to global GPU thread ids in the selected
+       dimension, with bounds masking.
+   * - ``cuda/hip_global_{x,y,z}_loop``
+     - kernel ``For``, launch loop
+     - Map loop iterates to global GPU thread ids in the selected dimension
+       using a grid-stride loop.
+   * - ``cuda/hip_global_size_{x,y,z}_direct_unchecked<n_threads>``
+     - kernel ``For``, launch loop
+     - Compile-time-size version of
+       ``cuda/hip_global_{x,y,z}_direct_unchecked``.
+   * - ``cuda/hip_global_size_{x,y,z}_direct<n_threads>``
+     - kernel ``For``, launch loop
+     - Compile-time-size version of ``cuda/hip_global_{x,y,z}_direct``.
+   * - ``cuda/hip_global_size_{x,y,z}_loop<n_threads>``
+     - kernel ``For``, launch loop
+     - Compile-time-size version of ``cuda/hip_global_{x,y,z}_loop``.
+
+Warp and block reduction mapping policies:
+
+.. list-table::
+   :widths: 38 18 44
+   :header-rows: 1
+
+   * - Policy
+     - Works with
+     - Brief description
+   * - ``cuda/hip_warp_direct_unchecked``
+     - kernel ``For``
+     - Map work directly to threads in a warp without checking loop bounds.
+       Cannot be used with ``cuda/hip_thread_x_*`` policies. Multiple warps can
+       be created by using ``cuda/hip_thread_y/z_*`` policies.
+   * - ``cuda/hip_warp_direct``
+     - kernel ``For``
+     - Similar to ``cuda/hip_warp_direct_unchecked``, but with direct mapping
+       semantics.
+   * - ``cuda/hip_warp_loop``
+     - kernel ``For``
+     - Similar to ``cuda/hip_warp_direct``, but maps work to threads in a warp
+       using a warp-stride loop.
+   * - ``cuda/hip_warp_masked_direct<BitMask<..>>``
+     - kernel ``For``
+     - Map work directly to threads in a warp using a bit mask. Cannot be used
+       with ``cuda/hip_thread_x_*`` policies. Multiple warps can be created by
+       using ``cuda/hip_thread_y/z_*`` policies.
+   * - ``cuda/hip_warp_masked_loop<BitMask<..>>``
+     - kernel ``For``
+     - Map work to threads in a warp using a bit mask and a warp-stride loop.
+       Cannot be used with ``cuda/hip_thread_x_*`` policies. Multiple warps can
+       be created by using ``cuda/hip_thread_y/z_*`` policies.
+   * - ``cuda/hip_block_reduce``
+     - kernel ``Reduce``
+     - Perform a reduction across a single GPU thread block.
+   * - ``cuda/hip_warp_reduce``
+     - kernel ``Reduce``
+     - Perform a reduction across a single GPU thread warp.
 
 When a CUDA or HIP policy leaves parameters like the block size and/or grid size
 unspecified, such as the ``cuda/hip_exec_occ_custom`` in the table above, a
