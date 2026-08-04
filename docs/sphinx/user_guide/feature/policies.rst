@@ -343,7 +343,7 @@ caveats.
 
 
 Sequential CPU Policies
-^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 For the sequential CPU back-end, RAJA provides policies that allow developers
 to have some control over the optimizations that compilers are allowed to
@@ -371,7 +371,7 @@ apply.
 
 
 OpenMP Parallel CPU Policies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For the OpenMP CPU multithreading back-end, RAJA has policies that create
 an OpenMP parallel region and execute a kernel within it. We refer to these
@@ -528,8 +528,39 @@ more code to execute in the parallel region and the
 ``RAJA::omp_parallel_region`` construct applies a barrier
 at the end of it.
 
+OpenMP Target Offload Policies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+RAJA provides policies to use OpenMP to offload kernel execution to a GPU
+device, for example. They are summarized in the following table.
+
+ ====================================== ============= ==========================
+ OpenMP Target Execution Policies       Works with    Brief description
+ ====================================== ============= ==========================
+ omp_target_parallel_for_exec<#>        forall,       Create parallel target
+                                        kernel(For)   region and execute with
+                                                      given number of threads
+                                                      per team inside it. Number
+                                                      of teams is calculated
+                                                      internally; i.e.,
+                                                      apply ``omp teams
+                                                      distribute parallel for
+                                                      num_teams(iteration space
+                                                      size/#)
+                                                      thread_limit(#)`` pragma
+ omp_target_parallel_collapse_exec      kernel        Similar to above, but
+                                        (Collapse)    collapse
+                                                      *perfectly-nested*
+                                                      loops, indicated in
+                                                      arguments to RAJA
+                                                      Collapse statement. Note:
+                                                      compiler determines number
+                                                      of thread teams and
+                                                      threads per team
+ ====================================== ============= ==========================
+
 GPU Policies for CUDA and HIP
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 RAJA policies for GPU execution using CUDA or HIP are similar. The only
 syntactic difference is that CUDA policies have the prefix ``cuda_`` and HIP
@@ -912,7 +943,7 @@ write more explicit policies.
             ignored so blocks are ignored when getting indices.
 	    
 GPU Policies for SYCL
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. note:: SYCL uses C++-style ordering for its work group and global thread
           dimension/indexing types. This is due, in part, to SYCL's closer
@@ -949,8 +980,99 @@ GPU Policies for SYCL
           configuration. SYCL dimension 2 always exists and should be used as
           one would use the x dimension in CUDA and HIP.  
 
+======================================== ============= ==============================
+SYCL Execution Policies                  Works with    Brief description
+======================================== ============= ==============================
+sycl_exec<WORK_GROUP_SIZE>               forall        Execute loop iterations
+                                                       in a GPU kernel launched
+                                                       with given work group
+                                                       size.
+sycl_launch_t                            launch        Launches a SYCL kernel,
+                                                       any code express within
+                                                       the lambda is executed
+                                                       on the device.
+sycl_global_0<WORK_GROUP_SIZE>           kernel (For)  Map loop iterates
+                                                       directly to GPU global
+                                                       ids in first
+                                                       dimension, one iterate
+                                                       per work item. Group
+                                                       execution into work
+                                                       groups of given size.
+sycl_global_1<WORK_GROUP_SIZE>           kernel (For)  Same as above, but map
+                                                       to global ids in second
+                                                       dim
+sycl_global_2<WORK_GROUP_SIZE>           kernel (For)  Same as above, but map
+                                                       to global ids in third
+                                                       dim
+sycl_global_item_0                       launch (loop) Creates a unique thread
+                                                       id for each thread for
+                                                       dimension 0 of the grid.
+                                                       Same as computing
+                                                       itm.get_group(0) *
+                                                       itm.get_local_range(0) +
+                                                       itm.get_local_id(0).
+sycl_global_item_1                       launch (loop) Same as above, but uses
+                                                       threads in dimension 1
+                                                       Same as computing
+                                                       itm.get_group(1) +
+                                                       itm.get_local_range(1) *
+                                                       itm.get_local_id(1).
+sycl_global_item_2                       launch (loop) Same as above, but uses
+                                                       threads in dimension 2
+                                                       Same as computing
+                                                       itm.get_group(2) +
+                                                       itm.get_local_range(2) *
+                                                       itm.get_local_id(2).
+sycl_local_0_direct                      kernel (For)  Map loop iterates
+                                         launch (loop) directly to GPU work
+                                                       items in first
+                                                       dimension, one iterate
+                                                       per work item (see note
+                                                       below about limitations)
+sycl_local_1_direct                      kernel (For)  Same as above, but map
+                                         launch (loop) to work items in second
+                                                       dim
+sycl_local_2_direct                      kernel (For)  Same as above, but map
+                                         launch (loop) to work items in third
+                                                       dim
+sycl_local_0_loop                        kernel (For)  Similar to
+                                         launch (loop) local-1-direct policy,
+                                                       but use a work
+                                                       group-stride loop which
+                                                       doesn't limit number of
+                                                       loop iterates
+sycl_local_1_loop                        kernel (For)  Same as above, but for
+                                         launch (loop) work items in second
+                                                       dimension
+sycl_local_2_loop                        kernel (For)  Same as above, but for
+                                         launch (loop) work items in third
+                                                       dimension
+sycl_group_0_direct                      kernel (For)  Map loop iterates
+                                         launch (loop) directly to GPU group
+                                                       ids in first dimension,
+                                                       one iterate per group
+sycl_group_1_direct                      kernel (For)  Same as above, but map
+                                         launch (loop) to groups in second
+                                                       dimension
+sycl_group_2_direct                      kernel (For)  Same as above, but map
+                                         launch (loop) to groups in third
+                                                       dimension
+sycl_group_0_loop                        kernel (For)  Similar to
+                                         launch (loop) group-1-direct policy,
+                                                       but use a group-stride
+                                                       loop.
+sycl_group_1_loop                        kernel (For)  Same as above, but use
+                                         launch (loop) groups in second
+                                                       dimension
+sycl_group_2_loop                        kernel (For)  Same as above, but use
+                                         launch (loop) groups in third
+                                                       dimension
+======================================== ============= ==============================
+
+.. _indexsetpolicy-label:
+
 Device policy aliases
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 To simplify transitions between GPU back-ends (CUDA/HIP/SYCL) and reduce
 downstream preprocessor conditionals, RAJA provides a set of
@@ -1057,128 +1179,6 @@ device back-end (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
    so unsupported code paths are caught immediately.
 
 See also the example code ``examples/device-policy-aliases.cpp``.
-
-======================================== ============= ==============================
-SYCL Execution Policies                  Works with    Brief description
-======================================== ============= ==============================
-sycl_exec<WORK_GROUP_SIZE>               forall,       Execute loop iterations
-                                                       in a GPU kernel launched
-                                                       with given work group
-                                                       size.
-sycl_launch_t                            launch        Launches a SYCL kernel,
-                                                       any code express within
-                                                       the lambda is executed
-                                                       on the device.
-sycl_global_0<WORK_GROUP_SIZE>           kernel (For)  Map loop iterates
-                                                       directly to GPU global
-                                                       ids in first
-                                                       dimension, one iterate
-                                                       per work item. Group
-                                                       execution into work
-                                                       groups of given size.
-sycl_global_1<WORK_GROUP_SIZE>           kernel (For)  Same as above, but map
-                                                       to global ids in second
-                                                       dim
-sycl_global_2<WORK_GROUP_SIZE>           kernel (For)  Same as above, but map
-                                                       to global ids in third
-                                                       dim
-sycl_global_item_0                       launch (loop) Creates a unique thread
-                                                       id for each thread for
-                                                       dimension 0 of the grid.
-                                                       Same as computing
-                                                       itm.get_group(0) *
-                                                       itm.get_local_range(0) +
-                                                       itm.get_local_id(0).
-sycl_global_item_1                       launch (loop) Same as above, but uses
-                                                       threads in dimension 1
-                                                       Same as computing
-                                                       itm.get_group(1) +
-                                                       itm.get_local_range(1) *
-                                                       itm.get_local_id(1).
-sycl_global_item_2                       launch (loop) Same as above, but uses
-                                                       threads in dimension 2
-                                                       Same as computing
-                                                       itm.get_group(2) +
-                                                       itm.get_local_range(2) *
-                                                       itm.get_local_id(2).
-sycl_local_0_direct                      kernel (For)  Map loop iterates
-                                         launch (loop) directly to GPU work
-                                                       items in first
-                                                       dimension, one iterate
-                                                       per work item (see note
-                                                       below about limitations)
-sycl_local_1_direct                      kernel (For)  Same as above, but map
-                                         launch (loop) to work items in second
-                                                       dim
-sycl_local_2_direct                      kernel (For)  Same as above, but map
-                                         launch (loop) to work items in third
-                                                       dim
-sycl_local_0_loop                        kernel (For)  Similar to
-                                         launch (loop) local-1-direct policy,
-                                                       but use a work
-                                                       group-stride loop which
-                                                       doesn't limit number of
-                                                       loop iterates
-sycl_local_1_loop                        kernel (For)  Same as above, but for
-                                         launch (loop) work items in second
-                                                       dimension
-sycl_local_2_loop                        kernel (For)  Same as above, but for
-                                         launch (loop) work items in third
-                                                       dimension
-sycl_group_0_direct                      kernel (For)  Map loop iterates
-                                         launch (loop) directly to GPU group
-                                                       ids in first dimension,
-                                                       one iterate per group
-sycl_group_1_direct                      kernel (For)  Same as above, but map
-                                         launch (loop) to groups in second
-                                                       dimension
-sycl_group_2_direct                      kernel (For)  Same as above, but map
-                                         launch (loop) to groups in third
-                                                       dimension
-sycl_group_0_loop                        kernel (For)  Similar to
-                                         launch (loop) group-1-direct policy,
-                                                       but use a group-stride
-                                                       loop.
-sycl_group_1_loop                        kernel (For)  Same as above, but use
-                                         launch (loop) groups in second
-                                                       dimension
-sycl_group_2_loop                        kernel (For)  Same as above, but use
-                                         launch (loop) groups in third
-                                                       dimension
-======================================== ============= ==============================
-
-OpenMP Target Offload Policies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-RAJA provides policies to use OpenMP to offload kernel execution to a GPU
-device, for example. They are summarized in the following table.
-
- ====================================== ============= ==========================
- OpenMP Target Execution Policies       Works with    Brief description
- ====================================== ============= ==========================
- omp_target_parallel_for_exec<#>        forall,       Create parallel target
-                                        kernel(For)   region and execute with
-                                                      given number of threads
-                                                      per team inside it. Number
-                                                      of teams is calculated
-                                                      internally; i.e.,
-                                                      apply ``omp teams
-                                                      distribute parallel for
-                                                      num_teams(iteration space
-                                                      size/#)
-                                                      thread_limit(#)`` pragma
- omp_target_parallel_collapse_exec      kernel        Similar to above, but
-                                        (Collapse)    collapse
-                                                      *perfectly-nested*
-                                                      loops, indicated in
-                                                      arguments to RAJA
-                                                      Collapse statement. Note:
-                                                      compiler determines number
-                                                      of thread teams and
-                                                      threads per team
- ====================================== ============= ==========================
-
-.. _indexsetpolicy-label:
 
 -----------------------------------------------------
 RAJA IndexSet Execution Policies
