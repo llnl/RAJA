@@ -377,13 +377,6 @@ For the OpenMP CPU multithreading back-end, RAJA has policies that create
 an OpenMP parallel region and execute a kernel within it. We refer to these
 as **full policies**. They are provided to support common OpenMP use cases.
 
-RAJA also provides other OpenMP policies, which we refer to as
-**partial policies**, since they need to be used in combination with other
-policies. Typically, they work by providing an *outer policy* and an
-*inner policy* as a template parameter to the outer policy. These give users
-flexibility to create more complex execution patterns.
-
-
 .. note:: To control the number of threads used by OpenMP, users may set
           the value of the environment variable 'OMP_NUM_THREADS' (which is
           fixed for duration of run), or call the OpenMP routine
@@ -418,13 +411,11 @@ are described in other tables below.
                                                           schedule(runtime)'
  ========================================= ============== ======================
 
-.. note:: For the OpenMP scheduling policies above that take a ``ChunkSize``
-          parameter, the chunk size is optional. If not provided, the
-          default chunk size that the OpenMP implementation applies is used.
-          For this case, the RAJA policy syntax is
-          ``omp_parallel_for_{static|dynamic|guided}_exec< >``, which will
-          result in the OpenMP pragma
-          ``omp parallel for schedule({static|dynamic|guided})`` being applied.
+RAJA also provides other OpenMP policies, which we refer to as
+**partial policies**, since they must be used in combination with other
+policies. Partial policies work by providing an *outer policy* and an
+*inner policy* as a template parameter to the outer policy. These give users
+flexibility to create more complex execution patterns.
 
 RAJA provides *outer* OpenMP CPU policies to create a parallel region in
 which to execute a kernel. The outer policies require an inner policy that
@@ -481,6 +472,14 @@ a template argument as described above.
                                                       indicated using ArgList
  ====================================== ============= ==========================
 
+.. note:: For the OpenMP scheduling policies above that take a ``ChunkSize``
+          parameter, the chunk size is optional. If not provided, the
+          default chunk size that the OpenMP implementation applies is used.
+          For this case, the RAJA policy syntax is
+          ``omp_parallel_for_{static|dynamic|guided}_exec< >``, which will
+          result in the OpenMP pragma
+          ``omp parallel for schedule({static|dynamic|guided})`` being applied.
+
 .. important:: **RAJA only provides a nowait policy option for static
                scheduling** since that is the only case in which nowait can be
                used and be correct in general when executing multiple loops
@@ -489,50 +488,45 @@ a template argument as described above.
                loop iteration under any circumstance other than static schedule
                are non-conforming.*
 
-.. note:: As in the RAJA full policies for OpenMP scheduling, the ``ChunkSize``
-          is optional. If not provided, the default chunk size that the OpenMP
-          implementation applies is used.
+As noted above, RAJA inner OpenMP policies must be used within an
+**existing** parallel region to work properly. Embedding an inner
+policy inside the RAJA outer ``omp_parallel_exec`` will allow you to
+apply the OpenMP execution prescription specified by the policies to
+a single kernel. To support use cases with multiple kernels inside an
+OpenMP parallel region, RAJA provides a **region** construct that
+takes a template argument to specify the execution back-end. For example::
 
-.. note:: As noted above, RAJA inner OpenMP policies must be used within an
-          **existing** parallel region to work properly. Embedding an inner
-          policy inside the RAJA outer ``omp_parallel_exec`` will allow you to
-          apply the OpenMP execution prescription specified by the policies to
-          a single kernel. To support use cases with multiple kernels inside an
-          OpenMP parallel region, RAJA provides a **region** construct that
-          takes a template argument to specify the execution back-end. For
-          example::
+  RAJA::region<RAJA::omp_parallel_region>([=]() {
 
-            RAJA::region<RAJA::omp_parallel_region>([=]() {
+    RAJA::forall<RAJA::omp_for_nowait_static_exec< > >(segment,
+      [=] (int idx) {
+        // do something at iterate 'idx'
+      }
+    );
 
-              RAJA::forall<RAJA::omp_for_nowait_static_exec< > >(segment,
-                [=] (int idx) {
-                  // do something at iterate 'idx'
+    RAJA::forall<RAJA::omp_for_static_exec< > >(segment,
+      [=] (int idx) {
+        // do something else at iterate 'idx'
                 }
-              );
+    );
 
-              RAJA::forall<RAJA::omp_for_static_exec< > >(segment,
-                [=] (int idx) {
-                  // do something else at iterate 'idx'
-                }
-              );
+  });
 
-            });
-
-          Here, the ``RAJA::region<RAJA::omp_parallel_region>`` method call
-          creates an OpenMP parallel region, which contains two ``RAJA::forall``
-          kernels. The first uses the ``RAJA::omp_for_nowait_static_exec< >``
-          policy, meaning that no thread synchronization is needed after the
-          kernel. Thus, threads can start working on the second kernel while
-          others are still working on the first kernel. In general, this will
-          be correct when the iteration segments used in the two kernels are
-          the same and their are no loop carried dependences in either kernel.
-          Static scheduling is applied to both kernels. The second kernel uses the 
-          ``RAJA::omp_for_static_exec`` policy (without 'no wait' clause), which
-          means that all threads will complete before the kernel exits. In
-          this example, this is not really needed since there is no
-          more code to execute in the parallel region and the 
-          ``RAJA::omp_parallel_region`` construct applies a barrier
-          at the end of it.
+Here, the ``RAJA::region<RAJA::omp_parallel_region>`` method call
+creates an OpenMP parallel region, which contains two ``RAJA::forall``
+kernels. The first uses the ``RAJA::omp_for_nowait_static_exec< >``
+policy, meaning that no thread synchronization is needed after the
+kernel. Thus, threads can start working on the second kernel while
+others are still working on the first kernel. In general, this will
+be correct when the iteration segments used in the two kernels are
+the same and their are no loop carried dependences in either kernel.
+Static scheduling is applied to both kernels. The second kernel uses the 
+``RAJA::omp_for_static_exec`` policy (without 'no wait' clause), which
+means that all threads will complete before the kernel exits. In
+this example, this is not really needed since there is no
+more code to execute in the parallel region and the 
+``RAJA::omp_parallel_region`` construct applies a barrier
+at the end of it.
 
 GPU Policies for CUDA and HIP
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
