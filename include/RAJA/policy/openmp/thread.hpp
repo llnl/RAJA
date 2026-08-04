@@ -32,18 +32,18 @@ namespace RAJA
 {
 
 template<>
-RAJA_HOST_DEVICE RAJA_INLINE int get_max_threads(omp_thread)
+RAJA_INLINE int get_max_threads(omp_thread)
 {
   return omp_get_max_threads();
 }
 
 template<>
-RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(omp_thread)
+RAJA_INLINE int get_thread_num(omp_thread)
 {
   return omp_get_thread_num();
 }
 
 }  // namespace RAJA
 
-#endif  // RAJA_ENABLE_OPENMP
-#endif  // guard
+#endif  // RAJA_OPENMP_ACTIVE
+#endif  // header file include guard

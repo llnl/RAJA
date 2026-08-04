@@ -25,6 +25,7 @@
 #define RAJA_forall_hip_HPP
 
 #include "RAJA/config.hpp"
+#include "RAJA/pattern/concepts.hpp"
 
 #if defined(RAJA_ENABLE_HIP)
 
@@ -37,6 +38,7 @@
 
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
+#include "RAJA/util/Jit.hpp"
 
 #include "RAJA/policy/hip/MemUtils_HIP.hpp"
 #include "RAJA/policy/hip/policy.hpp"
@@ -361,23 +363,29 @@ struct ForallDimensionCalculator<
 //////////////////////////////////////////////////////////////////////
 //
 
+/*
+ * __launch_bounds__ block size constraint does not change the
+ * intended behavior because the requires > 0 constraint prevents the
+ * overload from being selected for zero. It only ensures that NVCC or
+ * Clang CUDA cannot encounter an invalid attribute argument of zero while
+ * substituting or processing a discarded candidate.
+ */
 
 template<typename EXEC_POL,
          typename Iterator,
          typename LOOP_BODY,
          typename IndexType,
          typename ForallParam,
-         typename IterationMapping = typename EXEC_POL::IterationMapping,
-         typename IterationGetter  = typename EXEC_POL::IterationGetter,
-         std::enable_if_t<std::is_base_of<iteration_mapping::DirectBase,
-                                          IterationMapping>::value &&
-                              (IterationGetter::block_size > 0),
-                          size_t> BlockSize = IterationGetter::block_size>
-__launch_bounds__(BlockSize, 1) __global__
-    void forallp_hip_kernel(const LOOP_BODY loop_body,
-                            const Iterator idx,
-                            const IndexType length,
-                            ForallParam f_params)
+         typename IterationGetter = typename EXEC_POL::IterationGetter>
+  requires concepts::DirectBasePolicy<EXEC_POL> &&
+           (IterationGetter::block_size > 0)
+__launch_bounds__(IterationGetter::block_size > 0 ? IterationGetter::block_size
+                                                  : 1,
+                  1) __global__
+    RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(const LOOP_BODY loop_body,
+                                                     const Iterator idx,
+                                                     const IndexType length,
+                                                     ForallParam f_params)
 {
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
@@ -397,16 +405,14 @@ template<typename EXEC_POL,
          typename LOOP_BODY,
          typename IndexType,
          typename ForallParam,
-         typename IterationMapping = typename EXEC_POL::IterationMapping,
-         typename IterationGetter  = typename EXEC_POL::IterationGetter,
-         std::enable_if_t<std::is_base_of<iteration_mapping::DirectBase,
-                                          IterationMapping>::value &&
-                              (IterationGetter::block_size <= 0),
-                          size_t> RAJA_UNUSED_ARG(BlockSize) = 0>
-__global__ void forallp_hip_kernel(const LOOP_BODY loop_body,
-                                   const Iterator idx,
-                                   const IndexType length,
-                                   ForallParam f_params)
+         typename IterationGetter = typename EXEC_POL::IterationGetter>
+  requires concepts::DirectBasePolicy<EXEC_POL> &&
+           (IterationGetter::block_size <= 0)
+__global__
+    RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(const LOOP_BODY loop_body,
+                                                     const Iterator idx,
+                                                     const IndexType length,
+                                                     ForallParam f_params)
 {
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
@@ -420,25 +426,22 @@ __global__ void forallp_hip_kernel(const LOOP_BODY loop_body,
   RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
 }
 
-template<
-    typename EXEC_POL,
-    typename Iterator,
-    typename LOOP_BODY,
-    typename IndexType,
-    typename ForallParam,
-    typename IterationMapping          = typename EXEC_POL::IterationMapping,
-    typename IterationGetter           = typename EXEC_POL::IterationGetter,
-    std::enable_if_t<std::is_base_of<iteration_mapping::StridedLoopBase,
-                                     IterationMapping>::value &&
-                         std::is_base_of<iteration_mapping::UnsizedLoopBase,
-                                         IterationMapping>::value &&
-                         (IterationGetter::block_size > 0),
-                     size_t> BlockSize = IterationGetter::block_size>
-__launch_bounds__(BlockSize, 1) __global__
-    void forallp_hip_kernel(const LOOP_BODY loop_body,
-                            const Iterator idx,
-                            const IndexType length,
-                            ForallParam f_params)
+template<typename EXEC_POL,
+         typename Iterator,
+         typename LOOP_BODY,
+         typename IndexType,
+         typename ForallParam,
+         typename IterationGetter = typename EXEC_POL::IterationGetter>
+  requires concepts::StridedLoopPolicy<EXEC_POL> &&
+           concepts::UnsizedLoopPolicy<EXEC_POL> &&
+           (IterationGetter::block_size > 0)
+__launch_bounds__(IterationGetter::block_size > 0 ? IterationGetter::block_size
+                                                  : 1,
+                  1) __global__
+    RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(const LOOP_BODY loop_body,
+                                                     const Iterator idx,
+                                                     const IndexType length,
+                                                     ForallParam f_params)
 {
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
@@ -452,24 +455,20 @@ __launch_bounds__(BlockSize, 1) __global__
   RAJA::expt::ParamMultiplexer::parampack_combine(EXEC_POL {}, f_params);
 }
 
-template<
-    typename EXEC_POL,
-    typename Iterator,
-    typename LOOP_BODY,
-    typename IndexType,
-    typename ForallParam,
-    typename IterationMapping = typename EXEC_POL::IterationMapping,
-    typename IterationGetter  = typename EXEC_POL::IterationGetter,
-    std::enable_if_t<std::is_base_of<iteration_mapping::StridedLoopBase,
-                                     IterationMapping>::value &&
-                         std::is_base_of<iteration_mapping::UnsizedLoopBase,
-                                         IterationMapping>::value &&
-                         (IterationGetter::block_size <= 0),
-                     size_t> RAJA_UNUSED_ARG(BlockSize) = 0>
-__global__ void forallp_hip_kernel(const LOOP_BODY loop_body,
-                                   const Iterator idx,
-                                   const IndexType length,
-                                   ForallParam f_params)
+template<typename EXEC_POL,
+         typename Iterator,
+         typename LOOP_BODY,
+         typename IndexType,
+         typename ForallParam,
+         typename IterationGetter = typename EXEC_POL::IterationGetter>
+  requires concepts::StridedLoopPolicy<EXEC_POL> &&
+           concepts::UnsizedLoopPolicy<EXEC_POL> &&
+           (IterationGetter::block_size <= 0)
+__global__
+    RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(const LOOP_BODY loop_body,
+                                                     const Iterator idx,
+                                                     const IndexType length,
+                                                     ForallParam f_params)
 {
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(loop_body);
@@ -502,18 +501,15 @@ template<typename Iterable,
          typename IterationGetter,
          typename Concretizer,
          bool Async,
-         typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Hip>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>>
-forall_impl(resources::Hip hip_res,
-            ::RAJA::policy::hip::hip_exec<IterationMapping,
-                                          IterationGetter,
-                                          Concretizer,
-                                          Async> const& pol,
-            Iterable&& iter,
-            LoopBody&& loop_body,
-            ForallParam f_params)
+         concepts::ForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
+    resources::Hip hip_res,
+    ::RAJA::policy::hip::
+        hip_exec<IterationMapping, IterationGetter, Concretizer, Async> const&
+            pol,
+    Iterable&& iter,
+    LoopBody&& loop_body,
+    ForallParam f_params)
 {
   using Iterator  = camp::decay<decltype(std::begin(iter))>;
   using LOOP_BODY = camp::decay<LoopBody>;
@@ -536,7 +532,7 @@ forall_impl(resources::Hip hip_res,
   // Only launch kernel if we have something to iterate over
   if (len > 0)
   {
-
+    RAJA::internal::jit::register_lambda(loop_body);
     auto func = reinterpret_cast<const void*>(
         &impl::forallp_hip_kernel<EXEC_POL, Iterator, LOOP_BODY, IndexType,
                                   camp::decay<ForallParam>>);
@@ -617,6 +613,7 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
     const TypedIndexSet<SegmentTypes...>& iset,
     LoopBody&& loop_body)
 {
+  RAJA::internal::jit::register_lambda(loop_body);
   int num_seg = iset.getNumSegments();
   for (int isi = 0; isi < num_seg; ++isi)
   {

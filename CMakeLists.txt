@@ -17,9 +17,9 @@ endif()
 include(CMakeDependentOption)
 
 # Set version number
-set(RAJA_VERSION_MAJOR 2025)
-set(RAJA_VERSION_MINOR 12)
-set(RAJA_VERSION_PATCHLEVEL 2)
+set(RAJA_VERSION_MAJOR 2026)
+set(RAJA_VERSION_MINOR 07)
+set(RAJA_VERSION_PATCHLEVEL 0)
 
 if (RAJA_LOADED AND (NOT RAJA_LOADED STREQUAL "${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}"))
   message(FATAL_ERROR "You are mixing RAJA versions. Loaded is ${RAJA_LOADED}, expected ${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}")
@@ -57,14 +57,11 @@ if(NOT DEFINED BLT_CXX_STD)
   if("cxx_std_20" IN_LIST CMAKE_CXX_KNOWN_FEATURES)
     set(BLT_CXX_STD c++20 CACHE STRING "Version of C++ standard")
     message("Using C++ standard: ${BLT_CXX_STD}")
-  elseif("cxx_std_17" IN_LIST CMAKE_CXX_KNOWN_FEATURES)
-    set(BLT_CXX_STD c++17 CACHE STRING "Version of C++ standard")
-    message("Using C++ standard: ${BLT_CXX_STD}")
   elseif("${CMAKE_CXX_COMPILER_ID}" IN_LIST COMPILERS_KNOWN_TO_CMAKE33)
-    set(BLT_CXX_STD c++17 CACHE STRING "Version of C++ standard")
+    set(BLT_CXX_STD c++20 CACHE STRING "Version of C++ standard")
     message("Using C++ standard: ${BLT_CXX_STD}")
   else() #cmake has no idea what to do, do it ourselves...
-    set(flag_var "c++17")
+    set(flag_var "c++20")
     CHECK_CXX_COMPILER_FLAG("-std=${flag_var}" COMPILER_SUPPORTS_${flag_var})
     if(COMPILER_SUPPORTS_${flag_var})
       set(BLT_CXX_STD ${flag_var} CACHE STRING "Version of C++ standard")
@@ -75,10 +72,19 @@ if(NOT DEFINED BLT_CXX_STD)
 else() #check BLT_CXX_STD is high enough by disallowing the only invalid option
   if(("${BLT_CXX_STD}" STREQUAL "c++98") OR
      ("${BLT_CXX_STD}" STREQUAL "c++11") OR
-     ("${BLT_CXX_STD}" STREQUAL "c++14"))
-    message(FATAL_ERROR "RAJA requires minimum C++ standard of c++17")
+     ("${BLT_CXX_STD}" STREQUAL "c++14") OR 
+     ("${BLT_CXX_STD}" STREQUAL "c++17"))
+    message(FATAL_ERROR "RAJA requires minimum C++ standard of c++20")
   endif()
 endif(NOT DEFINED BLT_CXX_STD)
+
+set(RAJA_MIN_CXX_STANDARD 20)
+
+if(DEFINED CMAKE_CXX_STANDARD
+   AND NOT CMAKE_CXX_STANDARD STREQUAL ""
+   AND ((CMAKE_CXX_STANDARD LESS RAJA_MIN_CXX_STANDARD) OR (CMAKE_CXX_STANDARD EQUAL 98)) )
+  message(FATAL_ERROR "RAJA requires minimum C++ standard of C++${RAJA_MIN_CXX_STANDARD}")
+endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -132,7 +138,6 @@ set (raja_sources
   src/LockFreeIndexSetBuilders.cpp
   src/MemUtils_CUDA.cpp
   src/MemUtils_HIP.cpp
-  src/MemUtils_SYCL.cpp
   src/PluginStrategy.cpp)
 
 if (RAJA_ENABLE_RUNTIME_PLUGINS)
@@ -331,8 +336,18 @@ install(FILES
 # Setup internal RAJA configuration options
 include(cmake/SetupRajaConfig.cmake)
 
+if (RAJA_ENABLE_JIT)
+  include(cmake/SetupProteus.cmake)
+endif()
+
 if(RAJA_ENABLE_TESTS)
   add_subdirectory(test)
+else()
+  # For Spack stand-alone tests need host config information for building simple
+  # examples even if full tests are not done.
+  configure_file(
+    test/install/using-with-cmake/host-config.cmake.in
+    ${PROJECT_BINARY_DIR}/examples/using-with-cmake/host-config.cmake)
 endif()
 
 if(RAJA_ENABLE_REPRODUCERS)

@@ -33,7 +33,6 @@
 #include <limits>
 #endif
 
-#include "RAJA/util/concepts.hpp"
 #include "RAJA/util/macros.hpp"
 
 namespace RAJA
@@ -764,40 +763,6 @@ struct safe_plus
 };
 
 }  // namespace operators
-
-namespace concepts
-{
-
-template<typename Function,
-         typename Return,
-         typename Arg1 = Return,
-         typename Arg2 = Arg1>
-struct BinaryFunction
-    : DefineConcept(::RAJA::concepts::convertible_to<Return>(
-          camp::val<Function>()(camp::val<Arg1>(), camp::val<Arg2>()))) {};
-
-template<typename Function, typename Return, typename Arg = Return>
-struct UnaryFunction : DefineConcept(::RAJA::concepts::convertible_to<Return>(
-                           camp::val<Function>()(camp::val<Arg>()))) {};
-
-namespace detail
-{
-
-template<typename Fun, typename Ret, typename T, typename U>
-using is_binary_function =
-    ::RAJA::concepts::requires_<BinaryFunction, Ret, T, U>;
-
-template<typename Fun, typename Ret, typename T>
-using is_unary_function = ::RAJA::concepts::requires_<UnaryFunction, Ret, T>;
-}  // namespace detail
-
-}  // namespace concepts
-
-namespace type_traits
-{
-DefineTypeTraitFromConcept(is_binary_function, RAJA::concepts::BinaryFunction);
-DefineTypeTraitFromConcept(is_unary_function, RAJA::concepts::UnaryFunction);
-}  // namespace type_traits
 
 
 }  // namespace RAJA

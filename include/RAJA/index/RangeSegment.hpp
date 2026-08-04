@@ -23,6 +23,7 @@
 #include "RAJA/config.hpp"
 
 #include <iostream>
+#include <type_traits>
 
 #include "RAJA/internal/Iterators.hpp"
 
@@ -103,9 +104,9 @@ struct TypedRangeSegment
   // Static asserts to provide some useful error messages during compilation
   // for incorrect usage.
   //
-  static_assert(std::is_signed<DiffT>::value,
+  static_assert(std::is_signed_v<DiffT>,
                 "TypedRangeSegment DiffT requires signed type.");
-  static_assert(!std::is_floating_point<StorageT>::value,
+  static_assert(!std::is_floating_point_v<StorageT>,
                 "TypedRangeSegment Type must be non floating point.");
 
   //@{
@@ -336,9 +337,9 @@ struct TypedRangeStrideSegment
   // Static asserts to provide some useful error messages during compilation
   // for incorrect usage.
   //
-  static_assert(std::is_signed<DiffT>::value,
+  static_assert(std::is_signed_v<DiffT>,
                 "TypedRangeStrideSegment DiffT requires signed type.");
-  static_assert(!std::is_floating_point<StorageT>::value,
+  static_assert(!std::is_floating_point_v<StorageT>,
                 "TypedRangeStrideSegment Type must be non floating point.");
 
   //@{
@@ -533,37 +534,389 @@ using RangeStrideSegment = TypedRangeStrideSegment<Index_type>;
 namespace detail
 {
 
-template<typename T, typename... Rest>
-struct common_type
-    : std::common_type<T, typename std::common_type<Rest...>::type>
+template<typename... Ts>
+using common_type_t = std::common_type_t<Ts...>;
+
+struct no_strong_index
 {};
 
 template<typename T>
-struct common_type<T>
+using strong_index_candidate_t =
+    std::conditional_t<RAJA::concepts::IndexValued<T>,
+                       std::remove_cvref_t<T>,
+                       no_strong_index>;
+
+template<typename... Ts>
+struct strong_index_type
 {
-  using type = T;
+  using type = no_strong_index;
+};
+
+template<typename T, typename... Ts>
+struct strong_index_type<T, Ts...>
+{
+  using current = strong_index_candidate_t<T>;
+  using rest    = typename strong_index_type<Ts...>::type;
+
+  static_assert(
+      std::is_same_v<current, no_strong_index> ||
+          std::is_same_v<rest, no_strong_index> ||
+          std::is_same_v<current, rest>,
+      "range requires matching strong index types for begin and end.");
+
+  using type = std::
+      conditional_t<!std::is_same_v<current, no_strong_index>, current, rest>;
 };
 
 template<typename... Ts>
-using common_type_t = typename common_type<Ts...>::type;
+using strong_index_type_t = typename strong_index_type<Ts...>::type;
+
+template<typename T>
+inline constexpr bool is_strong_index_v = RAJA::concepts::IndexValued<T>;
+
+template<typename T>
+inline constexpr bool is_signed_integral_index_v =
+    std::is_integral_v<strip_index_type_t<std::remove_cvref_t<T>>> &&
+    std::is_signed_v<strip_index_type_t<std::remove_cvref_t<T>>>;
+
+template<typename T>
+inline constexpr bool is_non_strong_signed_integral_index_v =
+    !is_strong_index_v<T> && is_signed_integral_index_v<T>;
+
+template<typename T>
+using range_stride_type_t =
+    make_signed_t<strip_index_type_t<std::remove_cvref_t<T>>>;
+
+template<typename StorageT, typename DeducedT>
+struct selected_range_storage
+{
+  using type = StorageT;
+};
+
+template<typename DeducedT>
+struct selected_range_storage<void, DeducedT>
+{
+  using type = DeducedT;
+};
+
+template<typename StorageT, typename DeducedT>
+using selected_range_storage_t =
+    typename selected_range_storage<StorageT, DeducedT>::type;
+
+template<typename StrongT, typename... Ts>
+struct range_storage_from_strong
+{
+  using type = StrongT;
+};
+
+template<typename... Ts>
+struct range_storage_from_strong<no_strong_index, Ts...>
+{
+  using type = common_type_t<Ts...>;
+};
+
+template<typename StrongT, typename T>
+struct strong_range_arg_compatible
+    : std::bool_constant<
+          RAJA::concepts::IndexValued<T> &&
+          std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<StrongT>>>
+{};
+
+template<typename StrongT, typename T>
+inline constexpr bool strong_range_arg_compatible_v =
+    strong_range_arg_compatible<StrongT, T>::value;
+
+template<typename StrongT, typename... Ts>
+struct range_storage_from_strong_compatible
+    : std::bool_constant<std::is_same_v<StrongT, no_strong_index> ||
+                         (strong_range_arg_compatible_v<StrongT, Ts> && ...)>
+{};
+
+template<typename StrongT, typename... Ts>
+  requires(std::is_same_v<StrongT, no_strong_index> ||
+           (strong_range_arg_compatible_v<StrongT, Ts> && ...))
+struct range_storage_from_strong<StrongT, Ts...>
+{
+  using type = StrongT;
+};
+
+template<typename StrongT, typename BeginT, typename EndT, typename StrideT>
+struct range_stride_storage_from_strong
+{
+  using type = StrongT;
+};
+
+template<typename BeginT, typename EndT, typename StrideT>
+struct range_stride_storage_from_strong<no_strong_index, BeginT, EndT, StrideT>
+{
+  using type = common_type_t<BeginT, EndT, range_stride_type_t<StrideT>>;
+};
+
+template<typename StrongT, typename BeginT, typename EndT, typename StrideT>
+struct range_stride_storage_from_strong_compatible
+    : std::bool_constant<
+          std::is_same_v<StrongT, no_strong_index>
+              ? is_non_strong_signed_integral_index_v<StrideT>
+              : (strong_range_arg_compatible_v<StrongT, BeginT>&&
+                     strong_range_arg_compatible_v<StrongT, EndT>&&
+                         strong_range_arg_compatible_v<StrongT, StrideT>&&
+                             is_signed_integral_index_v<StrideT>)>
+{};
+
+template<typename StrongT, typename BeginT, typename EndT, typename StrideT>
+struct range_stride_storage_from_strong_compatible_for_range
+    : std::bool_constant<
+          std::is_same_v<StrongT, no_strong_index>
+              ? is_non_strong_signed_integral_index_v<StrideT>
+              : (strong_range_arg_compatible_v<StrongT, BeginT>&&
+                     strong_range_arg_compatible_v<StrongT, EndT> &&
+                 (strong_range_arg_compatible_v<StrongT, StrideT> ||
+                  is_non_strong_signed_integral_index_v<StrideT>) &&
+                 is_signed_integral_index_v<StrideT>)>
+{};
+
+template<typename StrongT, typename BeginT, typename EndT, typename StrideT>
+  requires(std::is_same_v<StrongT, no_strong_index> ||
+           (strong_range_arg_compatible_v<StrongT, BeginT> &&
+            strong_range_arg_compatible_v<StrongT, EndT> &&
+            (strong_range_arg_compatible_v<StrongT, StrideT> ||
+             is_non_strong_signed_integral_index_v<StrideT>) &&
+            is_signed_integral_index_v<StrideT>))
+struct range_stride_storage_from_strong<StrongT, BeginT, EndT, StrideT>
+{
+  using type = StrongT;
+};
+
+template<typename BeginT, typename EndT>
+using deduced_range_storage_type_t =
+    typename range_storage_from_strong<strong_index_type_t<BeginT, EndT>,
+                                       BeginT,
+                                       EndT>::type;
+
+template<typename BeginT, typename EndT, typename StrideT>
+using deduced_range_stride_storage_type_t =
+    typename range_stride_storage_from_strong<strong_index_type_t<BeginT, EndT>,
+                                              BeginT,
+                                              EndT,
+                                              StrideT>::type;
+
+template<typename Common, typename StrideT>
+using deduced_range_stride_diff_type_t =
+    common_type_t<make_signed_t<strip_index_type_t<Common>>,
+                  range_stride_type_t<StrideT>>;
+
+template<typename StorageT,
+         typename T,
+         bool StorageIsStrong = RAJA::concepts::IndexValued<StorageT>,
+         bool ArgIsStrong     = RAJA::concepts::IndexValued<T>>
+struct explicit_range_arg_compatible_impl : std::false_type
+{};
+
+template<typename StorageT, typename T>
+struct explicit_range_arg_compatible_impl<StorageT, T, false, false>
+    : std::true_type
+{};
+
+template<typename StorageT, typename T>
+struct explicit_range_arg_compatible_impl<StorageT, T, true, true>
+    : std::bool_constant<
+          std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<StorageT>>>
+{};
+
+template<typename StorageT, typename T>
+using explicit_range_arg_compatible =
+    explicit_range_arg_compatible_impl<StorageT, T>;
+
+template<typename StorageT, typename T>
+inline constexpr bool explicit_range_arg_compatible_v =
+    explicit_range_arg_compatible<StorageT, T>::value;
+
+template<typename StorageT,
+         typename T,
+         bool StorageIsStrong = RAJA::concepts::IndexValued<StorageT>,
+         bool ArgIsStrong     = RAJA::concepts::IndexValued<T>>
+struct explicit_range_stride_arg_compatible_impl
+    : explicit_range_arg_compatible_impl<StorageT, T>
+{};
+
+template<typename StorageT, typename T>
+struct explicit_range_stride_arg_compatible_impl<StorageT, T, true, false>
+    : std::bool_constant<
+          std::is_integral_v<strip_index_type_t<std::remove_cvref_t<T>>>>
+{};
+
+template<typename StorageT, typename T>
+using explicit_range_stride_arg_compatible =
+    explicit_range_stride_arg_compatible_impl<StorageT, T>;
+
+template<typename StorageT, typename T>
+inline constexpr bool explicit_range_stride_arg_compatible_v =
+    explicit_range_stride_arg_compatible<StorageT, T>::value;
+
+template<typename StorageT, typename... Ts>
+struct explicit_range_storage_compatible
+    : std::bool_constant<(explicit_range_arg_compatible_v<StorageT, Ts> && ...)>
+{};
+
+template<typename StorageT, typename... Ts>
+struct explicit_range_stride_storage_compatible : std::false_type
+{};
+
+template<typename StorageT, typename BeginT, typename EndT, typename StrideT>
+struct explicit_range_stride_storage_compatible<StorageT, BeginT, EndT, StrideT>
+    : std::bool_constant<
+          explicit_range_stride_arg_compatible_v<StorageT, BeginT> &&
+          explicit_range_stride_arg_compatible_v<StorageT, EndT> &&
+          explicit_range_stride_arg_compatible_v<StorageT, StrideT> &&
+          is_signed_integral_index_v<StrideT>>
+{};
+
+template<typename StorageT, typename... Ts>
+inline constexpr bool explicit_range_storage_compatible_v =
+    explicit_range_storage_compatible<StorageT, Ts...>::value;
+
+template<typename StorageT, typename... Ts>
+inline constexpr bool explicit_range_stride_storage_compatible_v =
+    explicit_range_stride_storage_compatible<StorageT, Ts...>::value;
+
+template<typename BeginT, typename EndT>
+inline constexpr bool deduced_range_storage_compatible_v =
+    range_storage_from_strong_compatible<strong_index_type_t<BeginT, EndT>,
+                                         BeginT,
+                                         EndT>::value;
+
+template<typename BeginT, typename EndT, typename StrideT>
+inline constexpr bool deduced_range_stride_storage_compatible_v =
+    range_stride_storage_from_strong_compatible<
+        strong_index_type_t<BeginT, EndT>,
+        BeginT,
+        EndT,
+        StrideT>::value;
+
+template<typename BeginT, typename EndT, typename StrideT>
+inline constexpr bool deduced_range_stride_storage_compatible_for_range_v =
+    range_stride_storage_from_strong_compatible_for_range<
+        strong_index_type_t<BeginT, EndT>,
+        BeginT,
+        EndT,
+        StrideT>::value;
+
+template<typename StorageT, typename BeginT, typename EndT>
+inline constexpr bool range_storage_compatible_v =
+    std::is_same_v<StorageT, void>
+        ? deduced_range_storage_compatible_v<BeginT, EndT>
+        : explicit_range_storage_compatible_v<StorageT, BeginT, EndT>;
+
+template<typename StorageT, typename BeginT, typename EndT, typename StrideT>
+inline constexpr bool range_stride_storage_compatible_v =
+    std::is_same_v<StorageT, void>
+        ? deduced_range_stride_storage_compatible_for_range_v<BeginT,
+                                                              EndT,
+                                                              StrideT>
+        : explicit_range_stride_storage_compatible_v<StorageT,
+                                                     BeginT,
+                                                     EndT,
+                                                     StrideT>;
 
 }  // namespace detail
+
+/*!
+ * \brief Function to make a TypedRangeSegment for the interval [0, end)
+ *
+ *  \return a newly constructed TypedRangeSegment over the half-open interval
+ *          starting at zero and ending at @end. An explicit template argument
+ *          may be used to select the segment storage type.
+ */
+template<typename StorageT = void, typename EndT>
+  requires detail::range_storage_compatible_v<StorageT, EndT, EndT>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(EndT&& end) noexcept
+{
+  using Common =
+      detail::selected_range_storage_t<StorageT, detail::common_type_t<EndT>>;
+  using StripCommon = strip_index_type_t<Common>;
+  static_assert(!std::is_floating_point_v<StripCommon>,
+                "range requires a non-floating point index type.");
+  return TypedRangeSegment<Common> {
+      StripCommon {0}, static_cast<StripCommon>(stripIndexType(end))};
+}
 
 /*!
  * \brief Function to make a TypedRangeSegment for the interval [begin, end)
  *
  *  \return a newly constructed TypedRangeSegment where the
  *          value_type is equivilent to the common type of
+ *          @begin and @end unless an explicit template argument
+ *          is provided for the segment storage type.
+ */
+template<typename StorageT = void, typename BeginT, typename EndT>
+  requires detail::range_storage_compatible_v<StorageT, BeginT, EndT>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(BeginT&& begin,
+                                                  EndT&& end) noexcept
+{
+  using Common = detail::selected_range_storage_t<
+      StorageT, detail::deduced_range_storage_type_t<BeginT, EndT>>;
+  using StripCommon = strip_index_type_t<Common>;
+  return TypedRangeSegment<Common> {
+      static_cast<StripCommon>(stripIndexType(begin)),
+      static_cast<StripCommon>(stripIndexType(end))};
+}
+
+/*!
+ * \brief Function to make a TypedRangeStrideSegment for the interval
+ *        [begin, end) with given stride
+ *
+ *  \return a newly constructed TypedRangeStrideSegment where the
+ *          value_type is equivilent to the common type of
+ *          @begin and @end unless an explicit template argument
+ *          is provided for the segment storage type. If stride is zero,
+ *          execution aborts or throws.
+ */
+template<typename StorageT = void,
+         typename BeginT,
+         typename EndT,
+         typename StrideT>
+  requires detail::
+      range_stride_storage_compatible_v<StorageT, BeginT, EndT, StrideT>
+    RAJA_HOST_DEVICE RAJA_INLINE auto range(BeginT&& begin,
+                                            EndT&& end,
+                                            StrideT&& stride)
+{
+  using Common = detail::selected_range_storage_t<
+      StorageT,
+      detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>>;
+  using DiffT = detail::deduced_range_stride_diff_type_t<Common, StrideT>;
+  static_assert(std::is_integral_v<strip_index_type_t<StrideT>>,
+                "range requires an integral stride type.");
+
+  DiffT const typed_stride = static_cast<DiffT>(stripIndexType(stride));
+  if (typed_stride == DiffT {0})
+  {
+    RAJA_ABORT_OR_THROW("RAJA::range requires a non-zero stride.");
+  }
+
+  return TypedRangeStrideSegment<Common, DiffT> {
+      static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
+      static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
+      typed_stride};
+}
+
+/*!
+ * \brief Function to make a TypedRangeSegment for the interval [begin, end)
+ *
+ *  \return a newly constructed TypedRangeSegment where the
+ *          value_type is equivalent to the common type of
  *          @begin and @end. If there is no common type, then
  *          a compiler error will be produced.
  */
-template<typename BeginT,
-         typename EndT,
-         typename Common = detail::common_type_t<BeginT, EndT>>
-RAJA_HOST_DEVICE TypedRangeSegment<Common> make_range(BeginT&& begin,
-                                                      EndT&& end)
+template<typename BeginT, typename EndT>
+  requires detail::deduced_range_storage_compatible_v<BeginT, EndT>
+RAJA_HOST_DEVICE auto make_range(BeginT&& begin, EndT&& end)
 {
-  return {begin, end};
+  using Common      = detail::deduced_range_storage_type_t<BeginT, EndT>;
+  using StripCommon = strip_index_type_t<Common>;
+  return TypedRangeSegment<Common> {
+      static_cast<StripCommon>(stripIndexType(begin)),
+      static_cast<StripCommon>(stripIndexType(end))};
 }
 
 /*!
@@ -575,44 +928,45 @@ RAJA_HOST_DEVICE TypedRangeSegment<Common> make_range(BeginT&& begin,
  *          @begin, @end, and @stride. If there is no common
  *          type, then a compiler error will be produced.
  */
-template<typename BeginT,
-         typename EndT,
-         typename StrideT,
-         typename Common = detail::common_type_t<BeginT, EndT>>
-RAJA_HOST_DEVICE TypedRangeStrideSegment<Common> make_strided_range(
-    BeginT&& begin,
-    EndT&& end,
-    StrideT&& stride)
+template<typename BeginT, typename EndT, typename StrideT>
+  requires detail::
+      deduced_range_stride_storage_compatible_v<BeginT, EndT, StrideT>
+    RAJA_HOST_DEVICE auto make_strided_range(BeginT&& begin,
+                                             EndT&& end,
+                                             StrideT&& stride)
 {
-  static_assert(std::is_signed<StrideT>::value,
-                "make_strided_segment : stride must be signed.");
-  static_assert(
-      std::is_same<make_signed_t<EndT>, StrideT>::value,
-      "make_stride_segment : stride and end must be of similar types.");
-  return {begin, end, stride};
+  using Common =
+      detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>;
+  using DiffT = detail::deduced_range_stride_diff_type_t<Common, StrideT>;
+  static_assert(std::is_integral_v<strip_index_type_t<StrideT>>,
+                "make_strided_segment : stride must be integral.");
+
+  return TypedRangeStrideSegment<Common, DiffT> {
+      static_cast<strip_index_type_t<Common>>(stripIndexType(begin)),
+      static_cast<strip_index_type_t<Common>>(stripIndexType(end)),
+      static_cast<DiffT>(stripIndexType(stride))};
 }
-
-namespace concepts
-{
-
-template<typename T, typename U>
-struct RangeConstructible
-    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U>>()) {};
-
-template<typename T, typename U, typename V>
-struct RangeStrideConstructible
-    : DefineConcept(camp::val<RAJA::detail::common_type_t<T, U, V>>()) {};
-
-}  // namespace concepts
 
 namespace type_traits
 {
 
-DefineTypeTraitFromConcept(is_range_constructible,
-                           RAJA::concepts::RangeConstructible);
+template<typename T, typename U>
+struct is_range_constructible
+    : std::bool_constant<RAJA::concepts::RangeConstructible<T, U>>
+{};
 
-DefineTypeTraitFromConcept(is_range_stride_constructible,
-                           RAJA::concepts::RangeStrideConstructible);
+template<typename T, typename U>
+inline constexpr bool is_range_constructible_v =
+    is_range_constructible<T, U>::value;
+
+template<typename T, typename U, typename V>
+struct is_range_stride_constructible
+    : std::bool_constant<RAJA::concepts::RangeStrideConstructible<T, U, V>>
+{};
+
+template<typename T, typename U, typename V>
+inline constexpr bool is_range_stride_constructible_v =
+    is_range_stride_constructible<T, U, V>::value;
 
 }  // namespace type_traits
 

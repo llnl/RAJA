@@ -54,7 +54,7 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
     EXEC_POL pol {};
 
     /*Get the queue from concrete resource */
-    ::sycl::queue* q = res.get<camp::resources::Sycl>().get_queue();
+    ::sycl::queue& q = res.get<camp::resources::Sycl>().get_queue();
 
     if constexpr (!is_parampack_empty)
     {
@@ -94,8 +94,8 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
     //
     if constexpr (!is_lbody_trivially_copyable)
     {
-      lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LOOP_BODY), *q);
-      q->memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
+      lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LOOP_BODY), q);
+      q.memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
     }
     // Both the parallel_for call, combinations, and resolution are all
     // unique to the parameter case, so we make a constexpr branch here
@@ -106,11 +106,11 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
         return x;
       };
 
-      ReduceParams* res = ::sycl::malloc_shared<ReduceParams>(1, *q);
+      ReduceParams* res = ::sycl::malloc_shared<ReduceParams>(1, q);
       RAJA::expt::ParamMultiplexer::parampack_init(pol, *res);
       auto reduction = ::sycl::reduction(res, launch_reducers, combiner);
 
-      q->submit([&](::sycl::handler& h) {
+      q.submit([&](::sycl::handler& h) {
          auto s_vec =
              ::sycl::local_accessor<char, 1>(launch_params.shared_mem_size, h);
 
@@ -141,13 +141,13 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
 
       RAJA::expt::ParamMultiplexer::parampack_combine(pol, launch_reducers,
                                                       *res);
-      ::sycl::free(res, *q);
-      ::sycl::free(lbody, *q);
+      ::sycl::free(res, q);
+      ::sycl::free(lbody, q);
       RAJA::expt::ParamMultiplexer::parampack_resolve(pol, launch_reducers);
     }
     else
     {
-      q->submit([&](::sycl::handler& h) {
+      q.submit([&](::sycl::handler& h) {
         auto s_vec =
             ::sycl::local_accessor<char, 1>(launch_params.shared_mem_size, h);
 
@@ -173,7 +173,7 @@ struct LaunchExecute<RAJA::sycl_launch_t<async, 0>>
 
       if (!async)
       {
-        q->wait();
+        q.wait();
       }
     }
 
@@ -339,6 +339,34 @@ using sycl_flatten_group_local_201_loop =
 using sycl_flatten_group_local_210_loop =
     sycl_flatten_group_local_loop<2, 1, 0>;
 
+template<int... DIMS>
+struct MaskExecute<sycl_flatten_group_local_direct<DIMS...>>
+{
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           BODY const& body)
+  {
+    if (((ctx.itm->get_local_id(DIMS) == 0) && ...))
+    {
+      body();
+    }
+  }
+};
+
+template<int... DIMS>
+struct MaskExecute<sycl_flatten_group_local_loop<DIMS...>>
+{
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           BODY const& body)
+  {
+    if (((ctx.itm->get_local_id(DIMS) == 0) && ...))
+    {
+      body();
+    }
+  }
+};
+
 template<typename SEGMENT, int DIM0, int DIM1>
 struct LoopExecute<sycl_flatten_group_local_direct<DIM0, DIM1>, SEGMENT>
 {
@@ -453,6 +481,20 @@ struct LoopExecute<sycl_local_012_loop<DIM>, SEGMENT>
   }
 };
 
+template<int DIM>
+struct MaskExecute<sycl_local_012_loop<DIM>>
+{
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           BODY const& body)
+  {
+    if (ctx.itm->get_local_id(DIM) == 0)
+    {
+      body();
+    }
+  }
+};
+
 /*
   SYCL thread direct mappings
 */
@@ -470,6 +512,20 @@ struct LoopExecute<sycl_local_012_direct<DIM>, SEGMENT>
     {
       const int tx = ctx.itm->get_local_id(DIM);
       if (tx < len) body(*(segment.begin() + tx));
+    }
+  }
+};
+
+template<int DIM>
+struct MaskExecute<sycl_local_012_direct<DIM>>
+{
+  template<typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(LaunchContext const& ctx,
+                                           BODY const& body)
+  {
+    if (ctx.itm->get_local_id(DIM) == 0)
+    {
+      body();
     }
   }
 };

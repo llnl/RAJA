@@ -95,8 +95,8 @@ cmake \
   -DCMAKE_C_FLAGS="-fsanitize=address -shared-libsan" \
   -DCMAKE_CXX_FLAGS="-fsanitize=address -shared-libsan" \
   -DENABLE_CLANGFORMAT=On \
-  -DCLANGFORMAT_EXECUTABLE=/opt/rocm-5.2.3/llvm/bin/clang-format \
-  -DBLT_CXX_STD=c++17 \
+  -DCLANGFORMAT_EXECUTABLE=/opt/rocm-6.4.3/llvm/bin/clang-format \
+  -DBLT_CXX_STD=c++20 \
   -C "../host-configs/lc-builds/toss4/${HOSTCONFIG}.cmake" \
   -DENABLE_HIP=ON \
   -DENABLE_OPENMP=ON \

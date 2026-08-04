@@ -300,6 +300,25 @@ convertIndex_helper(typename FROM::IndexValueType const val)
 
 }  // namespace internal
 
+namespace type_traits
+{
+template<typename T>
+struct is_instance_of_index_value
+    : std::is_base_of<RAJA::IndexValue<std::remove_cvref_t<T>>,
+                      std::remove_cvref_t<T>>
+{};
+
+template<typename T>
+constexpr bool is_instance_of_index_value_v =
+    is_instance_of_index_value<T>::value;
+}  // namespace type_traits
+
+namespace concepts
+{
+template<typename T>
+concept IndexValued = type_traits::is_instance_of_index_value_v<T>;
+}
+
 /*!
  * \brief Function provides a way to take either an int or any Index<> type, and
  * convert it to another type, possibly another Index or an int.

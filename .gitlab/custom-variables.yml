@@ -20,42 +20,42 @@ variables:
   ALLOC_NAME: ${CI_PROJECT_NAME}_ci_${CI_PIPELINE_ID}
 
   # Dane (SLURM) allocation settings
-  DANE_SHARED_ALLOC: "--exclusive --reservation=ci --time=120 --nodes=1"
+  DANE_SHARED_ALLOC: "OFF"
   # Note: we repeat the reservation, helpful when jobs are manually re-triggered.
-  DANE_JOB_ALLOC: "--reservation=ci --nodes=1"
+  DANE_JOB_ALLOC: "--reservation=ci --exclusive=user --time=10 --nodes=1"
   # Project specific variants for dane
   PROJECT_DANE_VARIANTS: "~shared +openmp +vectorization +tests"
   # Project specific deps for dane
   PROJECT_DANE_DEPS: ""
 
   # Matrix (SLURM) allocation settings
-  MATRIX_SHARED_ALLOC: "--exclusive --partition=pci --time=60 --nodes=1"
+  MATRIX_SHARED_ALLOC: "OFF"
   # Note: we repeat the reservation, helpful when jobs are manually re-triggered.
-  MATRIX_JOB_ALLOC: "--partition=pci --nodes=1"
+  MATRIX_JOB_ALLOC: "--partition=pci --time=30 --gpus=1"
   # Project specific variants for matrix
   PROJECT_MATRIX_VARIANTS: "~shared +cuda cuda_arch=90 +tests"
   # Project specific deps for matrix
   PROJECT_MATRIX_DEPS: ""
 
   # Corona (flux) allocation settings
-  CORONA_SHARED_ALLOC: "--exclusive --time-limit=60m --nodes=1 -o per-resource.count=2"
-  CORONA_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
+  CORONA_SHARED_ALLOC: "OFF"
+  CORONA_JOB_ALLOC: "--nodes=1 --time-limit=45m --begin-time=+5s"
   # Project specific variants for corona
   PROJECT_CORONA_VARIANTS: "~shared ~openmp +vectorization +tests"
   # Project specific deps for corona
   PROJECT_CORONA_DEPS: ""
 
   # Tioga (flux) allocation settings
-  TIOGA_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=60m --nodes=1 -o per-resource.count=2"
-  TIOGA_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
+  TIOGA_SHARED_ALLOC: "OFF"
+  TIOGA_JOB_ALLOC: "--queue=pci --nodes=1 --time-limit=30m --begin-time=+5s"
   # Project specific variants for tioga
   PROJECT_TIOGA_VARIANTS: "~shared +openmp +vectorization +tests"
   # Project specific deps for tioga
   PROJECT_TIOGA_DEPS: ""
 
   # Tuolumne (flux) allocation settings
-  TUOLUMNE_SHARED_ALLOC: "--exclusive --queue=pci --time-limit=90m --nodes=1 -o per-resource.count=2"
-  TUOLUMNE_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
+  TUOLUMNE_SHARED_ALLOC: "OFF"
+  TUOLUMNE_JOB_ALLOC: "--queue=pci --nodes=1 --time-limit=45m --begin-time=+5s"
   # Project specific variants for tuolumne
   PROJECT_TUOLUMNE_VARIANTS: "~shared +openmp +vectorization +tests"
   # Project specific deps for tuolumne

@@ -22,6 +22,9 @@
 
 #include "RAJA/config.hpp"
 
+#include <concepts>
+#include <utility>
+
 #include "RAJA/util/macros.hpp"
 
 #if !defined(RAJA_ENABLE_DESUL_ATOMICS)
@@ -156,6 +159,23 @@ atomicCAS(auto_atomic, T* acc, T compare, T value)
   return atomicCAS(RAJA_AUTO_ATOMIC, acc, compare, value);
 }
 
+template<typename T, typename Operation>
+RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(auto_atomic,
+                                             T* acc,
+                                             Operation&& operation)
+{
+  return atomicGeneric(RAJA_AUTO_ATOMIC, acc,
+                       std::forward<Operation>(operation));
+}
+
+template<typename T, typename Operation, std::predicate<T> StopPredicate>
+RAJA_INLINE RAJA_HOST_DEVICE T
+atomicGeneric(auto_atomic, T* acc, Operation&& operation, StopPredicate&& stop)
+{
+  return atomicGeneric(RAJA_AUTO_ATOMIC, acc,
+                       std::forward<Operation>(operation),
+                       std::forward<StopPredicate>(stop));
+}
 
 }  // namespace RAJA
 

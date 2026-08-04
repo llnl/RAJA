@@ -175,9 +175,37 @@ Some RAJA features are enabled by RAJA-specific CMake variables.
       RAJA_ENABLE_DESUL_ATOMICS     Replace RAJA atomic implementations
                                     with Desul variants at compile-time.
                                     Default is off.
+      RAJA_ENABLE_JIT               Enable Proteus-based JIT compilation
+                                    support for RAJA kernels. Default is off.
       RAJA_ENABLE_VECTORIZATION     Enable SIMD/SIMT intrinsics support.
                                     Default is on.
       ===========================   =======================================
+
+JIT compilation (Proteus)
+--------------------------
+
+When ``RAJA_ENABLE_JIT=On``, RAJA requires a Clang-family compiler
+(``CMAKE_CXX_COMPILER_ID`` must match ``Clang``). RAJA will also attempt to
+locate Proteus:
+
+      ===========================   =======================================
+      Variable                      Meaning
+      ===========================   =======================================
+      LLVM_INSTALL_DIR              LLVM installation prefix used by Proteus.
+                                    Unless you provide a Proteus installation
+                                    that is statically linked with LLVM,
+                                    Proteus support requires LLVM 18, 19, or 20
+                                    and this variable must be set to that LLVM
+                                    installation.
+      PROTEUS_INSTALL_DIR           Optional Proteus install prefix. If set,
+                                    RAJA configures Proteus via
+                                    ``find_package(proteus ...)`` using this
+                                    prefix. If not set, RAJA will fetch Proteus
+                                    via CMake ``FetchContent`` at configure time.
+      ===========================   =======================================
+
+See :ref:`feat-jit-label` for usage of ``RAJA_JIT_COMPILE`` and
+``proteus::jit_variable``.
  
 Programming model back-end support
 -------------------------------------

@@ -22,7 +22,7 @@ if [[ $# -lt 2 ]]; then
   echo "For example: "
   echo "    toss4_cce_omptarget.sh 20.0.0-magic gfx942 [3.27.4]"
   echo "If no CMake version is provided, version ${DEFAULT_CMAKE_VER} will be used."
-  exit 1"
+  exit 1
 fi
 
 COMP_VER=$1
@@ -60,7 +60,7 @@ cmake \
   -DHIP_ARCH=${HIP_ARCH} \
   -DCMAKE_C_COMPILER="/usr/tce/packages/cce/cce-${COMP_VER}/bin/craycc" \
   -DCMAKE_CXX_COMPILER="/usr/tce/packages/cce/cce-${COMP_VER}/bin/crayCC" \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -DENABLE_CLANGFORMAT=Off \
   -C "../host-configs/lc-builds/toss4/${HOSTCONFIG}.cmake" \
   -DENABLE_HIP=OFF \

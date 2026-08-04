@@ -32,10 +32,12 @@ clang_18_1_8_gcc_13_cuda_12_6_0:
 # ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
 # describe the spec here.
 
-# clang_18_1_8_cuda_12_6_0
 clang_18_1_8_cuda_12_6_0:
   variables:
-    SPEC: " ~shared +cuda cuda_arch=90 %llvm@=18.1.8 ^cuda@12.6.0+allow-unsupported-compilers"
+    SPEC: " ~shared +cuda cuda_arch=90 +tests %llvm@=18.1.8 ^cuda@12.6.0+allow-unsupported-compilers"
   extends: .job_on_matrix
-  allow_failure: true
 
+clang_18_1_8_cuda_13_1_1:
+  variables:
+    SPEC: " ~shared +cuda cuda_arch=90 +tests %llvm@=18.1.8 ^cuda@13.1.1+allow-unsupported-compilers"
+  extends: .job_on_matrix

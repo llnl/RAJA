@@ -20,10 +20,13 @@
 #ifndef RAJA_POLICYBASE_HPP
 #define RAJA_POLICYBASE_HPP
 
+#include "RAJA/pattern/detail/TypeTraits.hpp"
 #include "RAJA/util/camp_aliases.hpp"
 #include "RAJA/util/concepts.hpp"
 
 #include <cstddef>
+#include <stdexcept>
+#include <string>
 
 namespace RAJA
 {
@@ -31,6 +34,7 @@ namespace RAJA
 enum class Policy
 {
   undefined,
+  all_supported,
   sequential,
   simd,
   openmp,
@@ -39,6 +43,129 @@ enum class Policy
   hip,
   sycl
 };
+
+constexpr const char* get_policy_name(Policy p)
+{
+  switch (p)
+  {
+    case Policy::undefined:
+      return "undefined";
+    case Policy::all_supported:
+      return "all_supported";
+    case Policy::sequential:
+      return "sequential";
+    case Policy::simd:
+      return "simd";
+    case Policy::openmp:
+      return "openmp";
+    case Policy::target_openmp:
+      return "target_openmp";
+    case Policy::cuda:
+      return "cuda";
+    case Policy::hip:
+      return "hip";
+    case Policy::sycl:
+      return "sycl";
+    default:
+      return "unknown";
+  }
+}
+
+template<RAJA::Policy... policies>
+struct PolicyList
+{};
+
+template<RAJA::Policy BackendPolicy>
+struct reduction_supported_policies
+{
+  using type = RAJA::PolicyList<>;
+};
+
+template<RAJA::Policy BackendPolicy>
+using reduction_supported_policies_t =
+    typename reduction_supported_policies<BackendPolicy>::type;
+
+template<Policy p>
+inline constexpr bool policy_active = false;
+
+template<>
+inline constexpr bool policy_active<Policy::undefined> = false;
+
+template<>
+inline constexpr bool policy_active<Policy::all_supported> = false;
+
+template<>
+inline constexpr bool policy_active<Policy::sequential> = true;
+
+template<>
+inline constexpr bool policy_active<Policy::simd> = true;
+
+template<>
+inline constexpr bool policy_active<Policy::openmp> =
+#ifdef RAJA_OPENMP_ACTIVE
+    true;
+#else
+    false;
+#endif
+
+template<>
+inline constexpr bool policy_active<Policy::target_openmp> =
+#if defined(RAJA_OPENMP_ACTIVE) && defined(RAJA_ENABLE_TARGET_OPENMP)
+    true;
+#else
+    false;
+#endif
+
+template<>
+inline constexpr bool policy_active<Policy::cuda> =
+#ifdef RAJA_CUDA_ACTIVE
+    true;
+#else
+    false;
+#endif
+
+template<>
+inline constexpr bool policy_active<Policy::hip> =
+#ifdef RAJA_HIP_ACTIVE
+    true;
+#else
+    false;
+#endif
+
+template<>
+inline constexpr bool policy_active<Policy::sycl> =
+#ifdef RAJA_SYCL_ACTIVE
+    true;
+#else
+    false;
+#endif
+
+// Check whether a runtime policy matches a list of active policies.
+// Policy::all_supported matches any list.
+template<Policy... matching_policies>
+constexpr bool policy_matches(PolicyList<matching_policies...>, Policy p)
+{
+  return ((p == Policy::all_supported) || ... ||
+          (p == matching_policies && policy_active<matching_policies>));
+}
+
+// Check whether a runtime policy matches, otherwise throw an exception.
+template<Policy... matching_policies>
+inline bool policy_matches_or_throw(const char* context_name,
+                                    PolicyList<matching_policies...> list,
+                                    Policy p)
+{
+  if (policy_matches(list, p))
+  {
+    return true;
+  }
+  std::string msg;
+  msg += context_name;
+  msg += ": unsupported policy ";
+  msg += get_policy_name(p);
+  throw std::runtime_error(msg);
+  return false;
+}
 
 enum class Pattern
 {
@@ -56,12 +183,60 @@ enum class Pattern
   workgroup_dispatch
 };
 
+constexpr const char* get_pattern_name(Pattern p)
+{
+  switch (p)
+  {
+    case Pattern::undefined:
+      return "undefined";
+    case Pattern::forall:
+      return "forall";
+    case Pattern::region:
+      return "region";
+    case Pattern::reduce:
+      return "reduce";
+    case Pattern::multi_reduce:
+      return "multi_reduce";
+    case Pattern::taskgraph:
+      return "taskgraph";
+    case Pattern::synchronize:
+      return "synchronize";
+    case Pattern::workgroup:
+      return "workgroup";
+    case Pattern::workgroup_exec:
+      return "workgroup_exec";
+    case Pattern::workgroup_order:
+      return "workgroup_order";
+    case Pattern::workgroup_storage:
+      return "workgroup_storage";
+    case Pattern::workgroup_dispatch:
+      return "workgroup_dispatch";
+    default:
+      return "unknown";
+  }
+}
+
 enum class Launch
 {
   undefined,
   sync,
   async
 };
+
+constexpr const char* get_launch_name(Launch l)
+{
+  switch (l)
+  {
+    case Launch::undefined:
+      return "undefined";
+    case Launch::sync:
+      return "sync";
+    case Launch::async:
+      return "async";
+    default:
+      return "unknown";
+  }
+}
 
 struct PolicyBase
 {};
@@ -183,22 +358,6 @@ template<Policy Policy_, Pattern Pattern_, Platform Platform_, typename... Args>
 using make_policy_pattern_platform_t =
     PolicyBaseT<Policy_, Pattern_, Launch::undefined, Platform_, Args...>;
 
-namespace concepts
-{
-
-template<typename Pol>
-struct ExecutionPolicy
-    : DefineConcept(::RAJA::concepts::has_type<::RAJA::Policy>(
-                        camp::decay<decltype(Pol::policy)>()),
-                    ::RAJA::concepts::has_type<::RAJA::Pattern>(
-                        camp::decay<decltype(Pol::pattern)>()),
-                    ::RAJA::concepts::has_type<::RAJA::Launch>(
-                        camp::decay<decltype(Pol::launch)>()),
-                    ::RAJA::concepts::has_type<::RAJA::Platform>(
-                        camp::decay<decltype(Pol::platform)>())) {};
-
-}  // end namespace concepts
-
 namespace type_traits
 {
 
@@ -235,9 +394,6 @@ template<typename Pol>
 struct is_device_exec_policy
     : RAJA::policy_any_of<Pol, RAJA::Policy::cuda, RAJA::Policy::hip>
 {};
-
-DefineTypeTraitFromConcept(is_execution_policy,
-                           RAJA::concepts::ExecutionPolicy);
 
 template<typename Pol>
 struct is_reduce_policy : RAJA::pattern_is<Pol, RAJA::Pattern::reduce>

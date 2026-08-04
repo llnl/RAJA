@@ -56,6 +56,11 @@ execute as a unit for a kernel. RAJA provides the following Segment types:
    * ``RAJA::TypedRangeStrideSegment`` represents a (non-unit) stride range
    * ``RAJA::TypedListSegment`` represents an arbitrary set of indices
 
+RAJA also provides a convenience helper ``RAJA::mask<Policy>(ctx, body)`` for
+RAJA::launch kernels when one logical thread should execute setup work. It is mainly
+useful for per-team initialization before ``ctx.teamSync()``, and it keeps the
+intent explicit without pretending the work is a one-element segment.
+
 A ``RAJA::TypedIndexSet`` is a container that can hold an arbitrary collection
 of segments to compose iteration patterns in a single kernel invocation.
 
@@ -94,3 +99,92 @@ and two types:
 
 Thus, any iterable type that defines these methods and types appropriately
 can be used as a segment with RAJA kernel execution templates.
+
+Python-like Range Helpers
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+RAJA also provides ``RAJA::range(...)`` helpers that construct the segment
+type for common half-open iteration patterns. These helpers are intended to
+mirror the shape of Python's ``range`` while returning RAJA segment objects
+that can be passed directly to ``RAJA::forall`` and other execution
+interfaces.
+
+The supported forms are::
+
+  RAJA::range(end)                 // [0, end)
+  RAJA::range(begin, end)          // [begin, end)
+  RAJA::range(begin, end, stride)  // [begin, end) with stride
+
+The storage type can be explicitly specified if desired, and the arguments
+are converted to that storage type. If an argument cannot be converted to the
+chosen storage type, compilation fails. The explicit-type forms are::
+
+  RAJA::range<IndexT>(end)                 // [0, end)
+  RAJA::range<IndexT>(begin, end)          // [begin, end)
+  RAJA::range<IndexT>(begin, end, stride)  // [begin, end) with stride
+
+The return type depends on the arguments:
+
+* ``RAJA::range(end)`` and ``RAJA::range(begin, end)`` return a
+  ``RAJA::TypedRangeSegment<IndexT>``.
+* ``RAJA::range(begin, end, stride)`` returns a
+  ``RAJA::TypedRangeStrideSegment<IndexT>``.
+* When one of the bounds is a RAJA strong index type, such as a type created
+  with ``RAJA_INDEX_VALUE``, all bounds must use that same strong type. Mixed
+  strong and plain integral bounds are rejected rather than narrowed. A
+  strided range may still use a plain signed integral stride, such as
+  ``RAJA::range(CellIndex {1}, CellIndex {N}, 2)``.
+* Providing an explicit template argument, such as
+  ``RAJA::range<MyIndex>(end)``, overrides the deduced storage type, but
+  explicit storage must still be compatible with the argument types. For example,
+  ``RAJA::range<int>(RangeStrongIndex(3), 17)`` and
+  ``RAJA::range<RangeStrongIndex>(AnotherRangeStrongIndex(3), 17)`` are
+  rejected, while ``RAJA::range<RangeStrongIndex>(RangeStrongIndex(3),
+  RangeStrongIndex(17))`` is valid. For strided ranges, explicit strong
+  storage can be used to convert plain integral values intentionally, such as
+  ``RAJA::range<RangeStrongIndex>(3, 17, 1)``.
+
+Index types created with ``RAJA_INDEX_VALUE`` wrap an integral value. The
+examples below use ``*i`` to retrieve that wrapped value before indexing
+ordinary C/C++ arrays; ``RAJA::stripIndexType(i)`` provides the same conversion
+with a named helper.
+
+For example::
+
+  RAJA_INDEX_VALUE(CellIndex, "CellIndex");
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(N), [=](RAJA::Index_type i) {
+    values[i] = i * i;
+  });
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::range<CellIndex>(CellIndex {N}),
+                               [=](CellIndex i) {
+    typed_values[*i] = *i + 10;
+  });
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(2, 6), [=](int i) {
+    subrange_values[i] = i;
+  });
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::range(CellIndex {1}, CellIndex {N},
+                                            CellIndex {2}),
+                               [=](CellIndex i) {
+                                 strided_values[*i] = *i;
+                               });
+
+Strided ranges follow the same half-open interval convention as
+``RAJA::TypedRangeStrideSegment<IndexT>``. The stride argument must have a signed
+integral type. Positive strides move forward, and negative strides move
+backward. For example, ``RAJA::range(N - 1, -1, -2)`` visits ``N - 1,
+N - 3, ...`` down to the last value in the sequence that is greater than ``-1``. A zero
+stride is invalid and causes RAJA to abort or throw, depending on the build
+configuration.
+
+The older ``RAJA::make_range`` and ``RAJA::make_strided_range`` helpers remain
+available. Use ``RAJA::range(...)`` when the Python-like spelling improves
+readability or when you want the one-argument ``[0, end)`` shorthand.
+
+The complete example added in this branch is shown below:
+
+.. literalinclude:: ../../../../examples/raja-ranges.cpp
+   :language: c++

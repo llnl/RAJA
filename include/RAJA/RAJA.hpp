@@ -77,6 +77,10 @@
 #include "RAJA/policy/hip.hpp"
 #endif
 
+#if defined(RAJA_ENABLE_JIT)
+#include "proteus/JitInterface.h"
+#endif
+
 #if defined(RAJA_ENABLE_SYCL)
 #include "RAJA/policy/sycl.hpp"
 #endif
@@ -92,6 +96,8 @@
 #if defined(RAJA_ENABLE_DESUL_ATOMICS)
 #include "RAJA/policy/desul.hpp"
 #endif
+
+#include "RAJA/policy/device.hpp"
 
 #include "RAJA/index/IndexSet.hpp"
 
@@ -178,6 +184,11 @@
 // Synchronization
 //
 #include "RAJA/pattern/synchronize.hpp"
+
+//
+// Message handler to pass messages between host and device
+//
+#include "RAJA/pattern/messages.hpp"
 
 //
 //////////////////////////////////////////////////////////////////////

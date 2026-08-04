@@ -24,6 +24,9 @@
 
 #if defined(RAJA_ENABLE_OPENMP)
 
+#include <concepts>
+#include <utility>
+
 #include "RAJA/policy/openmp/policy.hpp"
 
 #include "RAJA/util/macros.hpp"
@@ -228,6 +231,28 @@ RAJA_HOST_DEVICE RAJA_INLINE T atomicCAS(omp_atomic, T* acc, T compare, T value)
 {
   // OpenMP doesn't define atomic ternary operators so use builtin atomics
   return RAJA::atomicCAS(builtin_atomic {}, acc, compare, value);
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename T, typename Operation>
+RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(omp_atomic,
+                                             T* acc,
+                                             Operation&& operation)
+{
+  // OpenMP doesn't define a generic atomic operation, so use builtin atomics
+  return RAJA::atomicGeneric(builtin_atomic {}, acc,
+                             std::forward<Operation>(operation));
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename T, typename Operation, std::predicate<T> StopPredicate>
+RAJA_HOST_DEVICE RAJA_INLINE T
+atomicGeneric(omp_atomic, T* acc, Operation&& operation, StopPredicate&& stop)
+{
+  // OpenMP doesn't define a generic atomic operation, so use builtin atomics
+  return RAJA::atomicGeneric(builtin_atomic {}, acc,
+                             std::forward<Operation>(operation),
+                             std::forward<StopPredicate>(stop));
 }
 
 #endif  // not defined RAJA_COMPILER_MSVC
