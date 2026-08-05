@@ -83,34 +83,34 @@ struct RunResult
 #if defined(RAJA_ENABLE_CUDA)
 using launch_policy = RAJA::LaunchPolicy<RAJA::cuda_launch_t<false>>;
 using flat_exec     = RAJA::cuda_exec<block_size_1d>;
-using global_cell_loop = RAJA::LoopPolicy<RAJA::cuda_global_x_direct>;
-using global_comp_loop = RAJA::LoopPolicy<RAJA::cuda_global_y_direct>;
-using block_cell_loop  = RAJA::LoopPolicy<RAJA::cuda_block_x_direct>;
-using block_comp_loop  = RAJA::LoopPolicy<RAJA::cuda_block_y_direct>;
-using thread_cell_loop = RAJA::LoopPolicy<RAJA::cuda_thread_x_loop>;
-using thread_comp_loop = RAJA::LoopPolicy<RAJA::cuda_thread_y_loop>;
+using global_cell_grid_mapping = RAJA::LoopPolicy<RAJA::cuda_global_x_direct>;
+using global_comp_grid_mapping = RAJA::LoopPolicy<RAJA::cuda_global_y_direct>;
+using block_cell_grid_mapping  = RAJA::LoopPolicy<RAJA::cuda_block_x_direct>;
+using block_comp_grid_mapping  = RAJA::LoopPolicy<RAJA::cuda_block_y_direct>;
+using thread_cell_in_kernel_loops = RAJA::LoopPolicy<RAJA::cuda_thread_x_loop>;
+using thread_comp_in_kernel_loops = RAJA::LoopPolicy<RAJA::cuda_thread_y_loop>;
 using resource_type = RAJA::resources::Cuda;
 
 #elif defined(RAJA_ENABLE_HIP)
 using launch_policy = RAJA::LaunchPolicy<RAJA::hip_launch_t<false>>;
 using flat_exec     = RAJA::hip_exec<block_size_1d>;
-using global_cell_loop = RAJA::LoopPolicy<RAJA::hip_global_x_direct>;
-using global_comp_loop = RAJA::LoopPolicy<RAJA::hip_global_y_direct>;
-using block_cell_loop  = RAJA::LoopPolicy<RAJA::hip_block_x_direct>;
-using block_comp_loop  = RAJA::LoopPolicy<RAJA::hip_block_y_direct>;
-using thread_cell_loop = RAJA::LoopPolicy<RAJA::hip_thread_x_loop>;
-using thread_comp_loop = RAJA::LoopPolicy<RAJA::hip_thread_y_loop>;
+using global_cell_grid_mapping = RAJA::LoopPolicy<RAJA::hip_global_x_direct>;
+using global_comp_grid_mapping = RAJA::LoopPolicy<RAJA::hip_global_y_direct>;
+using block_cell_grid_mapping  = RAJA::LoopPolicy<RAJA::hip_block_x_direct>;
+using block_comp_grid_mapping  = RAJA::LoopPolicy<RAJA::hip_block_y_direct>;
+using thread_cell_in_kernel_loops = RAJA::LoopPolicy<RAJA::hip_thread_x_loop>;
+using thread_comp_in_kernel_loops = RAJA::LoopPolicy<RAJA::hip_thread_y_loop>;
 using resource_type = RAJA::resources::Hip;
 
 #else
 using launch_policy = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
 using flat_exec     = RAJA::seq_exec;
-using global_cell_loop = RAJA::LoopPolicy<RAJA::seq_exec>;
-using global_comp_loop = RAJA::LoopPolicy<RAJA::seq_exec>;
-using block_cell_loop  = RAJA::LoopPolicy<RAJA::seq_exec>;
-using block_comp_loop  = RAJA::LoopPolicy<RAJA::seq_exec>;
-using thread_cell_loop = RAJA::LoopPolicy<RAJA::seq_exec>;
-using thread_comp_loop = RAJA::LoopPolicy<RAJA::seq_exec>;
+using global_cell_grid_mapping = RAJA::LoopPolicy<RAJA::seq_exec>;
+using global_comp_grid_mapping = RAJA::LoopPolicy<RAJA::seq_exec>;
+using block_cell_grid_mapping  = RAJA::LoopPolicy<RAJA::seq_exec>;
+using block_comp_grid_mapping  = RAJA::LoopPolicy<RAJA::seq_exec>;
+using thread_cell_in_kernel_loops = RAJA::LoopPolicy<RAJA::seq_exec>;
+using thread_comp_in_kernel_loops = RAJA::LoopPolicy<RAJA::seq_exec>;
 using resource_type = RAJA::resources::Host;
 #endif
 
@@ -572,8 +572,8 @@ int main(int argc, char** argv)
                                               host_loop_policy,
                                               host_loop_policy>(RAJA::LaunchParams {}),
                   RAJA::launch_nd_grid_policy<launch_policy,
-                                              global_cell_loop,
-                                              global_comp_loop>(make_global_launch_params(size)),
+                                              global_cell_grid_mapping,
+                                              global_comp_grid_mapping>(make_global_launch_params(size)),
                   options,
                   mapping,
                   size);
@@ -591,8 +591,8 @@ int main(int argc, char** argv)
                                               host_loop_policy,
                                               host_loop_policy>(RAJA::LaunchParams {}),
                   RAJA::launch_nd_grid_policy<launch_policy,
-                                              block_cell_loop,
-                                              block_comp_loop>(make_block_launch_params(size)),
+                                              block_cell_grid_mapping,
+                                              block_comp_grid_mapping>(make_block_launch_params(size)),
                   options,
                   mapping,
                   size);
@@ -610,8 +610,8 @@ int main(int argc, char** argv)
                                               host_loop_policy,
                                               host_loop_policy>(RAJA::LaunchParams {}),
                   RAJA::launch_nd_grid_policy<launch_policy,
-                                              thread_cell_loop,
-                                              thread_comp_loop>(make_thread_launch_params(size)),
+                                              thread_cell_in_kernel_loops,
+                                              thread_comp_in_kernel_loops>(make_thread_launch_params(size)),
                   options,
                   mapping,
                   size);
