@@ -370,7 +370,7 @@ apply.
  ====================================== ============= ==========================
 
 
-OpenMP Parallel CPU Policies
+OpenMP CPU Policies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For the OpenMP CPU multithreading back-end, RAJA has policies that create
@@ -558,6 +558,67 @@ device, for example. They are summarized in the following table.
                                                       of thread teams and
                                                       threads per team
  ====================================== ============= ==========================
+
+-------------------------
+Parallel Region Policies
+-------------------------
+
+Earlier, we discussed using the ``RAJA::region`` construct to
+execute multiple kernels in an OpenMP parallel region. To support source code
+portability, RAJA provides a sequential region concept that can be used to
+surround code that uses execution back-ends other than OpenMP. This simplifies
+switching user code between sequential and parallel execution and does not
+require changing the code structure. For example::
+
+  RAJA::region<RAJA::seq_region>([=]() {
+
+     RAJA::forall<RAJA::seq_exec>(segment, [=] (int idx) {
+         // do something at iterate 'idx'
+     } );
+
+     RAJA::forall<RAJA::seq_exec>(segment, [=] (int idx) {
+         // do something else at iterate 'idx'
+     } );
+
+   });
+
+.. note:: The sequential region specialization is essentially a *pass through*
+          operation. It is provided so that if you want to turn off OpenMP in
+          your code, for example, you can simply replace the region policy
+          type and you do not have to change your algorithm source code.
+
+-----------------------------------------------------
+RAJA IndexSet Execution Policies
+-----------------------------------------------------
+
+When an IndexSet iteration space is used in RAJA by passing a ``RAJA::IndexSet``
+to a ``RAJA::forall`` method, an index set execution policy is
+required. An index set execution policy is a **two-level policy**: an 'outer'
+policy for iterating over segments in the index set, and an 'inner' policy
+used to execute the iterations defined by each segment. An index set execution
+policy type has the form::
+
+  RAJA::ExecPolicy< segment_iteration_policy, segment_execution_policy >
+
+In general, any policy that can be used with a ``RAJA::forall`` method
+can be used as an (inner) segment execution policy. The following policies are
+available to use for the outer segment iteration policy:
+
+====================================== =========================================
+Execution Policy                       Brief description
+====================================== =========================================
+**Serial**
+seq_segit                              Iterate over index set segments
+                                       sequentially.
+
+**OpenMP CPU multithreading**
+omp_parallel_segit                     Create OpenMP parallel region and
+                                       iterate over segments in parallel inside
+                                       it; i.e., apply ``omp parallel for``
+                                       pragma on loop over segments.
+omp_parallel_for_segit                 Same as above.
+====================================== =========================================
+
 
 GPU Policies for CUDA and HIP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1079,9 +1140,11 @@ To simplify transitions between GPU back-ends (CUDA/HIP/SYCL) and reduce
 downstream preprocessor conditionals, RAJA provides a set of
 ``device_*`` policy aliases that resolve to the *active* GPU back-end.
 
+.. note:: These aliases do not cover all RAJA policies for CUDA/HIP.
+
 In particular, the following aliases are available when building with a GPU
 device back-end (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
-``RAJA_ENABLE_SYCL`` is enabled):
+``RAJA_ENABLE_SYCL`` is turned on in a RAJA build configuration):
 
 .. list-table:: ``device_*`` alias coverage
    :widths: 34 14 14 14 24
@@ -1180,67 +1243,6 @@ device back-end (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
    so unsupported code paths are caught immediately.
 
 See also the example code ``examples/device-policy-aliases.cpp``.
-
------------------------------------------------------
-RAJA IndexSet Execution Policies
------------------------------------------------------
-
-When an IndexSet iteration space is used in RAJA by passing a ``RAJA::IndexSet``
-to a ``RAJA::forall`` method, an index set execution policy is
-required. An index set execution policy is a **two-level policy**: an 'outer'
-policy for iterating over segments in the index set, and an 'inner' policy
-used to execute the iterations defined by each segment. An index set execution
-policy type has the form::
-
-  RAJA::ExecPolicy< segment_iteration_policy, segment_execution_policy >
-
-In general, any policy that can be used with a ``RAJA::forall`` method
-can be used as an (inner) segment execution policy. The following policies are
-available to use for the outer segment iteration policy:
-
-====================================== =========================================
-Execution Policy                       Brief description
-====================================== =========================================
-**Serial**
-seq_segit                              Iterate over index set segments
-                                       sequentially.
-
-**OpenMP CPU multithreading**
-omp_parallel_segit                     Create OpenMP parallel region and
-                                       iterate over segments in parallel inside
-                                       it; i.e., apply ``omp parallel for``
-                                       pragma on loop over segments.
-omp_parallel_for_segit                 Same as above.
-====================================== =========================================
-
--------------------------
-Parallel Region Policies
--------------------------
-
-Earlier, we discussed using the ``RAJA::region`` construct to
-execute multiple kernels in an OpenMP parallel region. To support source code
-portability, RAJA provides a sequential region concept that can be used to
-surround code that uses execution back-ends other than OpenMP. This simplifies
-switching user code between sequential and parallel execution and does not
-require changing the code structure. For example::
-
-  RAJA::region<RAJA::seq_region>([=]() {
-
-     RAJA::forall<RAJA::seq_exec>(segment, [=] (int idx) {
-         // do something at iterate 'idx'
-     } );
-
-     RAJA::forall<RAJA::seq_exec>(segment, [=] (int idx) {
-         // do something else at iterate 'idx'
-     } );
-
-   });
-
-.. note:: The sequential region specialization is essentially a *pass through*
-          operation. It is provided so that if you want to turn off OpenMP in
-          your code, for example, you can simply replace the region policy
-          type and you do not have to change your algorithm source code.
-
 
 .. _reducepolicy-label:
 
