@@ -319,6 +319,54 @@ resources::EventProxy<resources::Resource> launch_nd_flattened_execute(
       });
 }
 
+template<typename LoopPolicyList, typename Body, typename Idx0, typename Idx1>
+struct launch_nd_grid_body_2d
+{
+  TypedRangeSegmentPack<Idx0, Idx1> segs;
+  Body body;
+
+  RAJA_HOST_DEVICE RAJA_INLINE void operator()(RAJA::LaunchContext ctx) const
+  {
+    using loop0 = typename camp::at<LoopPolicyList, camp::num<0>>::type;
+    using loop1 = typename camp::at<LoopPolicyList, camp::num<1>>::type;
+
+    auto const seg0 = camp::get<0>(segs.data);
+    auto const seg1 = camp::get<1>(segs.data);
+
+    RAJA::loop<loop0>(ctx, seg0, [&](Idx0 i0) {
+      RAJA::loop<loop1>(ctx, seg1, [&](Idx1 i1) { body(i0, i1); });
+    });
+  }
+};
+
+template<typename LoopPolicyList,
+         typename Body,
+         typename Idx0,
+         typename Idx1,
+         typename Idx2>
+struct launch_nd_grid_body_3d
+{
+  TypedRangeSegmentPack<Idx0, Idx1, Idx2> segs;
+  Body body;
+
+  RAJA_HOST_DEVICE RAJA_INLINE void operator()(RAJA::LaunchContext ctx) const
+  {
+    using loop0 = typename camp::at<LoopPolicyList, camp::num<0>>::type;
+    using loop1 = typename camp::at<LoopPolicyList, camp::num<1>>::type;
+    using loop2 = typename camp::at<LoopPolicyList, camp::num<2>>::type;
+
+    auto const seg0 = camp::get<0>(segs.data);
+    auto const seg1 = camp::get<1>(segs.data);
+    auto const seg2 = camp::get<2>(segs.data);
+
+    RAJA::loop<loop0>(ctx, seg0, [&](Idx0 i0) {
+      RAJA::loop<loop1>(ctx, seg1, [&](Idx1 i1) {
+        RAJA::loop<loop2>(ctx, seg2, [&](Idx2 i2) { body(i0, i1, i2); });
+      });
+    });
+  }
+};
+
 template<typename LaunchPolicy,
          typename LoopPolicyList,
          typename Lambda,
@@ -329,21 +377,10 @@ void launch_nd_grid_execute(LaunchParams const& launch_params,
                             Lambda&& body,
                             camp::num<2>)
 {
-  using loop0 = typename camp::at<LoopPolicyList, camp::num<0>>::type;
-  using loop1 = typename camp::at<LoopPolicyList, camp::num<1>>::type;
-
-  auto const seg0 = camp::get<0>(segs.data);
-  auto const seg1 = camp::get<1>(segs.data);
-  auto user_body  = std::forward<Lambda>(body);
-
-  RAJA::launch<LaunchPolicy>(launch_params,
-                             [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx) {
-                               RAJA::loop<loop0>(ctx, seg0, [&](Idx0 i0) {
-                                 RAJA::loop<loop1>(ctx, seg1, [&](Idx1 i1) {
-                                   user_body(i0, i1);
-                                 });
-                               });
-                             });
+  RAJA::launch<LaunchPolicy>(
+      launch_params,
+      launch_nd_grid_body_2d<LoopPolicyList, camp::decay<Lambda>, Idx0, Idx1> {
+          segs, std::forward<Lambda>(body)});
 }
 
 template<typename LaunchPolicy,
@@ -357,25 +394,13 @@ void launch_nd_grid_execute(LaunchParams const& launch_params,
                             Lambda&& body,
                             camp::num<3>)
 {
-  using loop0 = typename camp::at<LoopPolicyList, camp::num<0>>::type;
-  using loop1 = typename camp::at<LoopPolicyList, camp::num<1>>::type;
-  using loop2 = typename camp::at<LoopPolicyList, camp::num<2>>::type;
-
-  auto const seg0 = camp::get<0>(segs.data);
-  auto const seg1 = camp::get<1>(segs.data);
-  auto const seg2 = camp::get<2>(segs.data);
-  auto user_body  = std::forward<Lambda>(body);
-
-  RAJA::launch<LaunchPolicy>(launch_params,
-                             [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx) {
-                               RAJA::loop<loop0>(ctx, seg0, [&](Idx0 i0) {
-                                 RAJA::loop<loop1>(ctx, seg1, [&](Idx1 i1) {
-                                   RAJA::loop<loop2>(ctx, seg2, [&](Idx2 i2) {
-                                     user_body(i0, i1, i2);
-                                   });
-                                 });
-                               });
-                             });
+  RAJA::launch<LaunchPolicy>(
+      launch_params,
+      launch_nd_grid_body_3d<LoopPolicyList,
+                             camp::decay<Lambda>,
+                             Idx0,
+                             Idx1,
+                             Idx2> {segs, std::forward<Lambda>(body)});
 }
 
 template<typename LaunchPolicy,
@@ -390,21 +415,11 @@ resources::EventProxy<resources::Resource> launch_nd_grid_execute(
     Lambda&& body,
     camp::num<2>)
 {
-  using loop0 = typename camp::at<LoopPolicyList, camp::num<0>>::type;
-  using loop1 = typename camp::at<LoopPolicyList, camp::num<1>>::type;
-
-  auto const seg0 = camp::get<0>(segs.data);
-  auto const seg1 = camp::get<1>(segs.data);
-  auto user_body  = std::forward<Lambda>(body);
-
   return RAJA::launch<LaunchPolicy>(
-      resource, launch_params, [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx) {
-        RAJA::loop<loop0>(ctx, seg0, [&](Idx0 i0) {
-          RAJA::loop<loop1>(ctx, seg1, [&](Idx1 i1) {
-            user_body(i0, i1);
-          });
-        });
-      });
+      resource,
+      launch_params,
+      launch_nd_grid_body_2d<LoopPolicyList, camp::decay<Lambda>, Idx0, Idx1> {
+          segs, std::forward<Lambda>(body)});
 }
 
 template<typename LaunchPolicy,
@@ -420,25 +435,14 @@ resources::EventProxy<resources::Resource> launch_nd_grid_execute(
     Lambda&& body,
     camp::num<3>)
 {
-  using loop0 = typename camp::at<LoopPolicyList, camp::num<0>>::type;
-  using loop1 = typename camp::at<LoopPolicyList, camp::num<1>>::type;
-  using loop2 = typename camp::at<LoopPolicyList, camp::num<2>>::type;
-
-  auto const seg0 = camp::get<0>(segs.data);
-  auto const seg1 = camp::get<1>(segs.data);
-  auto const seg2 = camp::get<2>(segs.data);
-  auto user_body  = std::forward<Lambda>(body);
-
   return RAJA::launch<LaunchPolicy>(
-      resource, launch_params, [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx) {
-        RAJA::loop<loop0>(ctx, seg0, [&](Idx0 i0) {
-          RAJA::loop<loop1>(ctx, seg1, [&](Idx1 i1) {
-            RAJA::loop<loop2>(ctx, seg2, [&](Idx2 i2) {
-              user_body(i0, i1, i2);
-            });
-          });
-        });
-      });
+      resource,
+      launch_params,
+      launch_nd_grid_body_3d<LoopPolicyList,
+                             camp::decay<Lambda>,
+                             Idx0,
+                             Idx1,
+                             Idx2> {segs, std::forward<Lambda>(body)});
 }
 
 }  // namespace detail
