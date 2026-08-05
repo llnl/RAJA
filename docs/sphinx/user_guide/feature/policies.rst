@@ -528,37 +528,6 @@ more code to execute in the parallel region and the
 ``RAJA::omp_parallel_region`` construct applies a barrier
 at the end of it.
 
-OpenMP Target Offload Policies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-RAJA provides policies to use OpenMP to offload kernel execution to a GPU
-device, for example. They are summarized in the following table.
-
- ====================================== ============= ==========================
- OpenMP Target Execution Policies       Works with    Brief description
- ====================================== ============= ==========================
- omp_target_parallel_for_exec<#>        forall,       Create parallel target
-                                        kernel(For)   region and execute with
-                                                      given number of threads
-                                                      per team inside it. Number
-                                                      of teams is calculated
-                                                      internally; i.e.,
-                                                      apply ``omp teams
-                                                      distribute parallel for
-                                                      num_teams(iteration space
-                                                      size/#)
-                                                      thread_limit(#)`` pragma
- omp_target_parallel_collapse_exec      kernel        Similar to above, but
-                                        (Collapse)    collapse
-                                                      *perfectly-nested*
-                                                      loops, indicated in
-                                                      arguments to RAJA
-                                                      Collapse statement. Note:
-                                                      compiler determines number
-                                                      of thread teams and
-                                                      threads per team
- ====================================== ============= ==========================
-
 -------------------------
 Parallel Region Policies
 -------------------------
@@ -586,6 +555,8 @@ require changing the code structure. For example::
           operation. It is provided so that if you want to turn off OpenMP in
           your code, for example, you can simply replace the region policy
           type and you do not have to change your algorithm source code.
+
+.. _indexsetpolicy-label:
 
 -----------------------------------------------------
 RAJA IndexSet Execution Policies
@@ -620,8 +591,9 @@ omp_parallel_for_segit                 Same as above.
 ====================================== =========================================
 
 
+-----------------------------------------------------
 GPU Policies for CUDA and HIP
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------------
 
 RAJA policies for GPU execution using CUDA or HIP are similar. The only
 syntactic difference is that CUDA policies have the prefix ``cuda_`` and HIP
@@ -692,7 +664,7 @@ Several notes regarding CUDA/HIP *loop* policies are also good to know.
           better performance.
 
 Basic ``forall`` and ``launch`` policies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These policies are the typical starting point for CUDA/HIP execution.
 Use the ``exec`` policies for single-loop ``RAJA::forall`` kernels, scans, and sorts.
@@ -749,7 +721,7 @@ not the desired mapping.
        on the device.
 
 Thread mapping policies
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These policies map one loop level to GPU threads within a thread block. They
 are most useful inside ``RAJA::kernel`` or ``RAJA::launch`` when expressing a
@@ -792,7 +764,7 @@ range is less than or equal to the size of the block or grid.
      - Compile-time-size version of ``cuda/hip_thread_{x,y,z}_direct``.
 
 Flattened thread mapping policies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These policies are used for ``RAJA::launch`` loops that need to treat a
 multi-dimensional thread team as a one-dimensional set of workers. They are
@@ -819,7 +791,7 @@ launch configuration is specified with multiple thread dimensions.
      - Same as above, but with strided-loop mapping.
 
 Block mapping policies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These policies map one loop level to GPU thread blocks. They are useful for
 outer loop levels, tiles, or other coarse-grained work where each block handles
@@ -858,7 +830,7 @@ policies for tiled patterns when each block owns a known tile, and use
      - Compile-time-size version of ``cuda/hip_block_{x,y,z}_loop``.
 
 Global thread mapping policies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These policies map loop iterations to the unique global thread id formed from
 the block and thread indices. They are often the most direct fit for simple
@@ -899,7 +871,7 @@ mapping gives more explicit control.
      - Compile-time-size version of ``cuda/hip_global_{x,y,z}_loop``.
 
 Warp and block reduction mapping policies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These policies are specialized building blocks for warp-level and block-level
 execution patterns inside ``RAJA::kernel``. Use them when the algorithm needs
@@ -945,7 +917,7 @@ CUDA/HIP reduction policy as described in earlier examples instead.
      - Perform a reduction across a single GPU thread warp.
 
 Occupancy concretizers
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When a CUDA or HIP policy leaves parameters like the block size and/or grid size
 unspecified, such as ``cuda/hip_exec_occ_custom`` in the table above, a
@@ -1003,8 +975,9 @@ write more explicit policies.
             unspecified so a runtime number of threads is used, but grid_size is
             ignored so blocks are ignored when getting indices.
 	    
+-----------------------------------------------------
 GPU Policies for SYCL
-~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------------
 
 .. note:: SYCL uses C++-style ordering for its work group and global thread
           dimension/indexing types. This is due, in part, to SYCL's closer
@@ -1130,7 +1103,37 @@ sycl_group_2_loop                        kernel (For)  Same as above, but use
                                                        dimension
 ======================================== ============= ==============================
 
-.. _indexsetpolicy-label:
+-----------------------------------------------------
+OpenMP Target Offload Policies
+-----------------------------------------------------
+
+RAJA provides policies to use OpenMP to offload kernel execution to a GPU
+device, for example. They are summarized in the following table.
+
+ ====================================== ============= ==========================
+ OpenMP Target Execution Policies       Works with    Brief description
+ ====================================== ============= ==========================
+ omp_target_parallel_for_exec<#>        forall,       Create parallel target
+                                        kernel(For)   region and execute with
+                                                      given number of threads
+                                                      per team inside it. Number
+                                                      of teams is calculated
+                                                      internally; i.e.,
+                                                      apply ``omp teams
+                                                      distribute parallel for
+                                                      num_teams(iteration space
+                                                      size/#)
+                                                      thread_limit(#)`` pragma
+ omp_target_parallel_collapse_exec      kernel        Similar to above, but
+                                        (Collapse)    collapse
+                                                      *perfectly-nested*
+                                                      loops, indicated in
+                                                      arguments to RAJA
+                                                      Collapse statement. Note:
+                                                      compiler determines number
+                                                      of thread teams and
+                                                      threads per team
+ ====================================== ============= ==========================
 
 -----------------------------------------------------
 Device policy aliases
@@ -1586,7 +1589,7 @@ can be represented using the RAJA kernel interface as::
           for users.
 
 RAJA::kernel Statement Types
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The list below summarizes the current collection of statement types that
 can be used with ``RAJA::kernel`` and ``RAJA::kernel_param``. More detailed
@@ -1679,8 +1682,9 @@ RAJA provides some statement types that apply in specific kernel scenarios.
 
 .. _auxilliarypolicy_label:
 
+--------------------------------
 Auxilliary Types
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------
 
 The following list summarizes auxiliary types used in the above statements. These
 types live in the ``RAJA`` namespace.
