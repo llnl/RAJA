@@ -334,7 +334,9 @@ struct launch_nd_grid_body_2d
     auto const seg1 = camp::get<1>(segs.data);
 
     RAJA::loop<loop0>(ctx, seg0, [&](Idx0 i0) {
-      RAJA::loop<loop1>(ctx, seg1, [&](Idx1 i1) { body(i0, i1); });
+      RAJA::loop<loop1>(ctx, seg1, [&](Idx1 i1) {
+        body(i0, i1);
+      });
     });
   }
 };
@@ -361,7 +363,9 @@ struct launch_nd_grid_body_3d
 
     RAJA::loop<loop0>(ctx, seg0, [&](Idx0 i0) {
       RAJA::loop<loop1>(ctx, seg1, [&](Idx1 i1) {
-        RAJA::loop<loop2>(ctx, seg2, [&](Idx2 i2) { body(i0, i1, i2); });
+        RAJA::loop<loop2>(ctx, seg2, [&](Idx2 i2) {
+          body(i0, i1, i2);
+        });
       });
     });
   }
@@ -396,10 +400,7 @@ void launch_nd_grid_execute(LaunchParams const& launch_params,
 {
   RAJA::launch<LaunchPolicy>(
       launch_params,
-      launch_nd_grid_body_3d<LoopPolicyList,
-                             camp::decay<Lambda>,
-                             Idx0,
-                             Idx1,
+      launch_nd_grid_body_3d<LoopPolicyList, camp::decay<Lambda>, Idx0, Idx1,
                              Idx2> {segs, std::forward<Lambda>(body)});
 }
 
@@ -416,8 +417,7 @@ resources::EventProxy<resources::Resource> launch_nd_grid_execute(
     camp::num<2>)
 {
   return RAJA::launch<LaunchPolicy>(
-      resource,
-      launch_params,
+      resource, launch_params,
       launch_nd_grid_body_2d<LoopPolicyList, camp::decay<Lambda>, Idx0, Idx1> {
           segs, std::forward<Lambda>(body)});
 }
@@ -436,12 +436,8 @@ resources::EventProxy<resources::Resource> launch_nd_grid_execute(
     camp::num<3>)
 {
   return RAJA::launch<LaunchPolicy>(
-      resource,
-      launch_params,
-      launch_nd_grid_body_3d<LoopPolicyList,
-                             camp::decay<Lambda>,
-                             Idx0,
-                             Idx1,
+      resource, launch_params,
+      launch_nd_grid_body_3d<LoopPolicyList, camp::decay<Lambda>, Idx0, Idx1,
                              Idx2> {segs, std::forward<Lambda>(body)});
 }
 
