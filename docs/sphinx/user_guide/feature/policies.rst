@@ -601,68 +601,6 @@ policies have the prefix ``hip_``. In the tables below, policy names use
 ``cuda/hip_`` as shorthand for the corresponding CUDA or HIP policy.
 Names containing angle brackets take template parameters to specialize execution behavior.
 
-Several notable constraints apply to RAJA CUDA/HIP *direct_unchecked* policies.
-
-.. note:: * Direct unchecked policies do not mask out threads that are out-of-range.
-            So they should only be used when the size of the range matches the
-            size of the block or grid.
-          * Repeating direct_unchecked policies with the same dimension in perfectly
-            nested loops is not recommended. Your code may do something, but
-            likely will not do what you expect and/or be correct.
-          * If multiple direct_unchecked policies are used in a kernel (using different
-            dimensions), the product of sizes of the corresponding iteration
-            spaces cannot be greater than the maximum allowable threads per
-            block or blocks per grid. Typically, this is 1024 threads per
-            block. Attempting to execute a kernel with more than the maximum
-            allowed threads per block or blocks per grid will cause the CUDA/HIP
-            runtime to complain about *illegal launch parameters.*
-          * **Block-direct-unchecked policies are recommended for most tiled loop
-            patterns. In these cases the CUDA/HIP kernel is launched with the
-            exact number of blocks needed so no iteration space size checking is needed.**
-
-Several notable constraints apply to RAJA CUDA/HIP *direct* policies.
-
-.. note:: * Direct policies mask out threads that are out-of-range.
-            So they should only be used when the size of the range is less than
-            or equal to the size of the block or grid.
-          * Repeating direct policies with the same dimension in perfectly
-            nested loops is not recommended. Your code may do something, but
-            likely will not do what you expect and/or be correct.
-          * If multiple direct policies are used in a kernel (using different
-            dimensions), the product of sizes of the corresponding iteration
-            spaces cannot be greater than the maximum allowable threads per
-            block or blocks per grid. Typically, this is 1024 threads per
-            block. Attempting to execute a kernel with more than the maximum
-            allowed causes the CUDA/HIP runtime to complain about
-            *illegal launch parameters.*
-          * **Global-direct-sized policies are recommended for most loop
-            patterns, but may be inappropriate for kernels using block level
-            synchronization.**
-          * **Thread-direct policies are recommended only for certain loop
-            patterns, such as block tiling, that produce small
-            fixed size iteration spaces within each block.**
-
-Several notes regarding CUDA/HIP *loop* policies are also good to know.
-
-.. note:: * Loop policies perform a block or grid stride loop. Thus,
-            they can be used when the size of the loop iteration space exceeds the size of
-            the block or grid.
-          * There is no constraint on the product of sizes of the associated
-            loop iteration space.
-          * These polices allow having a larger number of iterates than
-            threads/blocks in the x, y, or z dimension.
-          * The cuda/hip_thread_loop policies are not safe to use with Cuda/HipSyncThreads,
-            use the cuda/hip_thread_syncable_loop<dims...> policies instead. For example
-            cuda_thread_x_loop -> cuda_thread_syncable_loop<named_dim::x>.
-          * **CUDA/HIP loop policies are recommended for some loop patterns
-            where a large or unknown sized iteration space is mapped to a small
-            or fixed number of threads.**
-
-.. note:: CUDA/HIP block-direct-unchecked or block-direct policies may be preferable
-          to block-loop policies in situations where block load balancing may
-          be an issue as the block-direct-unchecked or block-direct policies may yield
-          better performance.
-
 Basic ``forall`` and ``launch`` policies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -720,6 +658,31 @@ not the desired mapping.
      - Launches a device kernel. Code inside the lambda expression is executed
        on the device.
 
+Mapping policy rules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The thread, block, global, and flattened mapping policies below share a few
+important rules:
+
+.. note:: * ``*_direct_unchecked`` policies do not mask out threads or blocks
+            that are out of range. Use them only when the size of the range
+            matches the selected block or grid shape.
+          * ``*_direct`` policies mask out-of-range threads or blocks. Use them
+            when the size of the range is less than or equal to the selected
+            block or grid shape.
+          * ``*_loop`` policies perform a block- or grid-stride loop. Use them
+            when the loop iteration space may exceed the selected block or grid
+            shape, or when the loop size is not known to fit a direct mapping.
+          * Repeating direct or direct-unchecked policies with the same
+            dimension in perfectly nested loops is not recommended. The code may
+            compile and run, but likely will not do what you expect.
+          * If multiple direct or direct-unchecked policies are used in a kernel
+            with different dimensions, the product of the corresponding
+            iteration-space sizes cannot be greater than the maximum allowed
+            threads per block or blocks per grid. Attempting to exceed that
+            limit will cause the CUDA/HIP runtime to report illegal launch
+            parameters.
+
 Thread mapping policies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -727,10 +690,15 @@ These policies map one loop level to GPU threads within a thread block. They
 are most useful inside ``RAJA::kernel`` or ``RAJA::launch`` when expressing a
 nested loop mapping, especially for tiled loop bodies where a tile is processed
 by the threads in a block. Prefer ``*_loop`` variants when the loop extent may
-be larger than the available threads in the selected dimension. The
-``*_direct`` or ``*_direct_unchecked`` policies mask out threads that are outside the
-range of the iteration space. They should only be used when the size of the
-range is less than or equal to the size of the block or grid.
+be larger than the available threads in the selected dimension. Thread-direct
+policies are recommended only for loop patterns, such as block tiling, that
+produce small fixed-size iteration spaces within each block.
+
+.. note:: ``cuda/hip_thread_loop`` policies are not safe to use with
+          ``Cuda/HipSyncThreads``. Use
+          ``cuda/hip_thread_syncable_loop<dims...>`` instead. For example,
+          use ``cuda_thread_syncable_loop<named_dim::x>`` instead of
+          ``cuda_thread_x_loop``.
 
 .. list-table::
    :widths: 38 18 44
@@ -799,6 +767,11 @@ one or more iterations. Prefer block ``*_direct`` or ``*_direct_unchecked``
 policies for tiled patterns when each block owns a known tile, and use
 ``*_loop`` variants when the loop extent may exceed the grid shape.
 
+.. note:: CUDA/HIP block-direct-unchecked or block-direct policies may be
+          preferable to block-loop policies when block load balancing may be an
+          issue. In those cases, block-direct-unchecked or block-direct policies
+          may yield better performance.
+
 .. list-table::
    :widths: 38 18 44
    :header-rows: 1
@@ -839,6 +812,10 @@ iteration can be assigned to one global GPU thread. They may be inappropriate
 for kernels that require block-local synchronization, where thread or block
 mapping gives more explicit control.
 
+.. note:: Global-direct-sized policies are recommended for most loop patterns,
+          but may be inappropriate for kernels using block-level
+          synchronization.
+
 .. list-table::
    :widths: 38 18 44
    :header-rows: 1
@@ -847,27 +824,27 @@ mapping gives more explicit control.
      - Works with
      - Brief description
    * - ``cuda/hip_global_{x,y,z}_direct_unchecked``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Map loop iterates directly to global GPU thread ids in the selected
        dimension, without checking loop bounds. In the x dimension, this is
        equivalent to ``threadIdx.x + blockDim.x * blockIdx.x``.
    * - ``cuda/hip_global_{x,y,z}_direct``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Map loop iterates directly to global GPU thread ids in the selected
        dimension, with bounds masking.
    * - ``cuda/hip_global_{x,y,z}_loop``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Map loop iterates to global GPU thread ids in the selected dimension
        using a grid-stride loop.
    * - ``cuda/hip_global_size_{x,y,z}_direct_unchecked<n_threads>``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Compile-time-size version of
        ``cuda/hip_global_{x,y,z}_direct_unchecked``.
    * - ``cuda/hip_global_size_{x,y,z}_direct<n_threads>``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Compile-time-size version of ``cuda/hip_global_{x,y,z}_direct``.
    * - ``cuda/hip_global_size_{x,y,z}_loop<n_threads>``
-     - kernel ``For``, launch loop
+     - kernel ``For``, launch ``loop``
      - Compile-time-size version of ``cuda/hip_global_{x,y,z}_loop``.
 
 Warp and block reduction mapping policies
