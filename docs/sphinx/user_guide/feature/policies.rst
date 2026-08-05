@@ -598,8 +598,9 @@ GPU Policies for CUDA and HIP
 RAJA policies for GPU execution using CUDA or HIP are similar. The only
 syntactic difference is that CUDA policies have the prefix ``cuda_`` and HIP
 policies have the prefix ``hip_``. In the tables below, policy names use
-``cuda/hip_`` as shorthand for the corresponding CUDA or HIP policy.
-Names containing angle brackets take template parameters to specialize execution behavior.
+``cuda/hip_`` as shorthand for the corresponding CUDA or HIP policy when their
+behavior is the same. Angle brackets indicate template parameters that are
+used to specialize execution behavior.
 
 Basic ``forall`` and ``launch`` policies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -661,14 +662,14 @@ not the desired mapping.
 Mapping policy rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The thread, block, global, and flattened mapping policies below share a few
-important rules:
+The thread, block, global, and flattened mapping policies described below share
+a few important rules:
 
 .. note:: * ``*_direct_unchecked`` policies do not mask out threads or blocks
             that are out of range. Use them only when the size of the range
             matches the selected block or grid shape.
           * ``*_direct`` policies mask out-of-range threads or blocks. Use them
-            when the size of the range is less than or equal to the selected
+            when the size of the range is **less than or equal to** the selected
             block or grid shape.
           * ``*_loop`` policies perform a block- or grid-stride loop. Use them
             when the loop iteration space may exceed the selected block or grid
