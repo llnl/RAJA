@@ -187,6 +187,11 @@
 #include "RAJA/pattern/synchronize.hpp"
 
 //
+// Message handler to pass messages between host and device
+//
+#include "RAJA/pattern/messages.hpp"
+
+//
 //////////////////////////////////////////////////////////////////////
 //
 // These contents of the header files included here define index set
