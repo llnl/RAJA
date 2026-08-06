@@ -1475,30 +1475,28 @@ for ``RAJA::LocalArray`` objects:
 RAJA::kernel Execution Policies
 --------------------------------
 
-``RAJA::kernel`` execution policy constructs form a simple domain specific language
-for composing and transforming complex loops that relies
+What a KernelPolicy Is
+~~~~~~~~~~~~~~~~~~~~~~
+
+The constructs used in ``RAJA::kernel`` execution policies form a simple
+domain-specific language that composes and transforms complex loops and relies
 **solely on standard C++20 template support**.
 RAJA kernel policies are constructed using a combination of *Statements* and
-*Statement Lists*. A RAJA Statement is an action, such as execute a loop,
-invoke a lambda, set a thread barrier, etc. A StatementList is an ordered list
+*Statement Lists*. A RAJA Statement is an action, such as executing a loop,
+invoking a lambda, or setting a thread barrier. A StatementList is an ordered list
 of Statements that are composed in the order that they appear in the kernel
 policy to construct a kernel. A Statement may contain an enclosed StatementList.
 Thus, a ``RAJA::KernelPolicy`` type is really just a StatementList.
 
 The main Statement types provided by RAJA are ``RAJA::statement::For`` and
-``RAJA::statement::Lambda``, that we discussed in
-:ref:`loop_elements-kernel-label`.
-A ``RAJA::statement::For<ArgID, ExecPolicy, Enclosed Statements>`` type
-indicates a for-loop structure. The ``ArgID`` parameter is an integral constant
-that identifies the position of the iteration space in the iteration space
-tuple passed to the ``RAJA::kernel`` method to be used for the loop. The
-``ExecPolicy`` is the RAJA execution policy to use on the loop, which is
-similar to ``RAJA::forall`` usage. The ``EnclosedStatements`` type is a
-nested template parameter that contains whatever is needed to execute the
-kernel and which forms a valid StatementList. The
-``RAJA::statement::Lambda<LambdaID>``
-type invokes the lambda expression corresponding to its position 'LambdaID'
-in the sequence of lambda expressions in the ``RAJA::kernel`` argument list.
+``RAJA::statement::Lambda``, as discussed in
+:ref:`loop_elements-kernel-label`. A ``For`` statement describes a loop over
+one entry in the iteration-space tuple passed to ``RAJA::kernel``. A
+``Lambda`` statement invokes one of the lambda expressions passed to
+``RAJA::kernel``.
+
+Basic For and Lambda Example
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For example, we've seen how a simple sequential for-loop::
 
@@ -1513,7 +1511,8 @@ can be written using ``RAJA::forall`` as::
       // loop body
     });
 
-The same single-loop kernel can be represented using the ``RAJA::kernel`` interface as::
+The same single-loop kernel can be represented using the ``RAJA::kernel``
+interface as::
 
   using KERNEL_POLICY =
     RAJA::KernelPolicy<
@@ -1529,13 +1528,57 @@ The same single-loop kernel can be represented using the ``RAJA::kernel`` interf
     }
   );
 
-Clearly, the ``RAJA::kernel`` implementation is more verbose. ``RAJA::kernel`` is 
-designed to be used for more complex, nested loop kernels. 
+Clearly, the ``RAJA::kernel`` implementation is more verbose. ``RAJA::kernel`` is
+designed to be used for more complex, nested loop kernels.
 
 .. note:: All ``RAJA::forall`` functionality can be done using the
           ``RAJA::kernel`` interface. We maintain the ``RAJA::forall``
           interface since it is less verbose and thus more convenient
           for users working with simple single-loop kernels.
+
+How to Read Statement Type Signatures
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Many statement types use the same template argument names. Understanding these
+names makes the statement reference below easier to scan.
+
+.. list-table::
+   :widths: 24 76
+   :header-rows: 1
+
+   * - Template argument
+     - Meaning
+   * - ``ArgId``
+     - Position of an iteration segment in the tuple passed to
+       ``RAJA::kernel`` or ``RAJA::kernel_param``.
+   * - ``LambdaId``
+     - Position of a lambda expression in the sequence of lambda arguments
+       passed to ``RAJA::kernel`` or ``RAJA::kernel_param``.
+   * - ``ExecPolicy``
+     - Execution policy used by a loop, collapse, tiling, or reduction
+       statement.
+   * - ``EnclosedStatements``
+     - Nested statement list executed inside the current statement.
+   * - ``ArgList``
+     - Compile-time list of iteration segment indices used by statements such
+       as ``Collapse`` and ``Hyperplane``.
+   * - ``ParamId``
+     - Position of an entry in the parameter tuple passed to
+       ``RAJA::kernel_param``.
+   * - ``TilePolicy``
+     - Tiling policy, such as ``tile_fixed`` or ``tile_dynamic``, that controls
+       how a loop iteration space is partitioned into tiles.
+   * - ``Operator``
+     - Binary operation used by a reduction statement.
+
+.. note:: All of the statement types described below are in the namespace
+          ``RAJA::statement``. For brevity, we omit the namespace in
+          the discussion in this section.
+
+.. note:: ``RAJA::kernel_param`` functions similarly to ``RAJA::kernel``
+          except that the second argument is a *tuple of parameters* used
+          in a kernel for local arrays, thread local variables, tiling
+          information, etc.
 
 RAJA::kernel Statement Types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1544,15 +1587,6 @@ The list below summarizes the current collection of statement types that
 can be used with ``RAJA::kernel`` and ``RAJA::kernel_param``. More detailed
 explanation along with examples of how they are used can be found in
 the ``RAJA::kernel`` examples in :ref:`tutorial-label`.
-
-.. note:: All of the statement types described below are in the namespace
-          ``RAJA::statement``. For brevity, we omit the namespaces in
-          the discussion in this section.
-
-.. note::  ``RAJA::kernel_param`` functions similarly to ``RAJA::kernel``
-           except that the second argument is a *tuple of parameters* used
-           in a kernel for local arrays, thread local variables, tiling
-           information, etc.
 
 Several RAJA statements can be specialized with auxiliary types, which are
 described in :ref:`auxilliarypolicy_label`.
