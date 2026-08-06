@@ -190,7 +190,7 @@ Choose the RAJA interface first:
        level.
    * - ``RAJA::launch``
      - A launch policy such as ``seq_launch_t``, ``omp_launch_t``, or
-       ``cuda_launch_t``, to create an execution regions, plus loop policies
+       ``cuda_launch_t`` to create an execution region, plus loop policies
        inside the launch body.
    * - ``RAJA::IndexSet`` with ``RAJA::forall``
      - A ``RAJA::ExecPolicy`` with one policy for iterating over index-set
@@ -210,7 +210,7 @@ Next, choose the back-end:
    * - Sequential CPU
      - Use ``seq_exec`` for loops and ``seq_reduce`` for reductions.
    * - CPU with SIMD hints
-     - Use ``simd_exec`` only for loops that that are data parallel; e.g.,
+     - Use ``simd_exec`` only for loops that are data parallel; e.g.,
        they do not use RAJA reductions or multi-reductions.
    * - OpenMP CPU threading
      - Use ``omp_parallel_for_exec`` for a single ``RAJA::forall`` loop. Use
@@ -248,9 +248,9 @@ Then choose specialized behavior when needed:
        ``RAJA::statement::Collapse``.
    * - GPU tiled loop mapping
      - Use GPU thread, block, or global mapping policies. Prefer ``*_loop``
-       until the direct mapping constraints are understood. The ``*_loop``,
-       while potentially less optimal, are most forgiving and do not need
-       the mapping constraints of other policies.
+       until the direct mapping constraints are understood. The ``*_loop``
+       policies, while potentially less optimal, are most forgiving and do not
+       need the mapping constraints of other policies.
    * - GPU reduction inside ``RAJA::forall``
      - Use the reduction-aware CUDA/HIP execution policy variants where
        appropriate, and match the reducer policy to the loop back-end.
@@ -262,11 +262,11 @@ Then choose specialized behavior when needed:
 Basic Policy Examples
 -----------------------------------------------------
 
-The examples below show how to usethe basic ``RAJA::forall`` construct to execute
+The examples below show how to use the basic ``RAJA::forall`` construct to execute
 a simple loop kernel with various execution policies. In each case, the lambda
 expression body describes the work done for each kernel iterate and the
-policy selects where and how the loop runs. For brevity, these snippets omit allocation,
-data movement, and backend-specific build guards.
+policy selects where and how the loop runs. For brevity, these snippets omit
+allocation, data movement, and backend-specific build guards.
 
 Sequential CPU execution:
 
@@ -286,9 +286,9 @@ OpenMP parallel CPU execution:
       y[i] = a * x[i] + y[i];
     });
 
-CUDA and HIP execution policies take a block-size template parameter. Device lambdas must
-be marked with the appropriate device annotation. Here, the ``RAJA_DEVICE``
-macro constant is shown:
+CUDA and HIP execution policies take a block-size template parameter. Device
+lambdas must be marked with the appropriate device annotation. Here, the
+``RAJA_DEVICE`` macro is shown:
 
 .. code-block:: C++
 
@@ -507,7 +507,7 @@ takes a template argument to specify the execution back-end. For example::
     RAJA::forall<RAJA::omp_for_static_exec< > >(segment,
       [=] (int idx) {
         // do something else at iterate 'idx'
-                }
+      }
     );
 
   });
@@ -519,12 +519,12 @@ policy, meaning that no thread synchronization is needed after the
 kernel. Thus, threads can start working on the second kernel while
 others are still working on the first kernel. In general, this will
 be correct when the iteration segments used in the two kernels are
-the same and their are no loop carried dependences in either kernel.
+the same and there are no loop carried dependences in either kernel.
 Static scheduling is applied to both kernels. The second kernel uses the 
 ``RAJA::omp_for_static_exec`` policy (without 'no wait' clause), which
 means that all threads will complete before the kernel exits. In
 this example, this is not really needed since there is no
-more code to execute in the parallel region and the 
+more code to execute in the parallel region and the
 ``RAJA::omp_parallel_region`` construct applies a barrier
 at the end of it.
 
@@ -899,8 +899,8 @@ Occupancy concretizers
 
 When a CUDA or HIP policy leaves parameters like the block size and/or grid size
 unspecified, such as ``cuda/hip_exec_occ_custom`` in the table above, a
-concretizer object is used to decide those parameters. RAJA provides the following concretizers
-to use with the ``cuda/hip_exec_occ_custom`` policies:
+concretizer object is used to decide those parameters. RAJA provides the
+following concretizers to use with the ``cuda/hip_exec_occ_custom`` policies:
 
 +----------------------------------------------------+-----------------------------------------+
 | Execution Policy                                   | Brief description                       |
@@ -922,7 +922,7 @@ to use with the ``cuda/hip_exec_occ_custom`` policies:
 |                                                    | occupancy of the device.                |
 +----------------------------------------------------+-----------------------------------------+
 | Cuda/HipFractionOffsetOccupancyConcretizer<        | Uses a fraction and offset to choose an |
-| Fraction<size_t, numerator, denomenator>,          | occupancy based on the max occupancy    |
+| Fraction<size_t, numerator, denominator>,          | occupancy based on the max occupancy    |
 | BLOCKS_PER_SM_OFFSET>                              | using the following formula:            |
 |                                                    | (Fraction * kernel_max_blocks_per_sm +  |
 |                                                    | BLOCKS_PER_SM_OFFSET) * sm_per_device   |
@@ -1021,7 +1021,7 @@ CUDA/HIP x/y/z-style indexing.
      - Create a unique global work-item id in the selected dimension. For
        dimension 0, this is equivalent to
        ``itm.get_group(0) * itm.get_local_range(0) + itm.get_local_id(0)``.
-       Similary, for dimensions 1 and 2.
+       Similarly, for dimensions 1 and 2.
    * - sycl_local_{0,1,2}_direct
      - kernel ``For``, launch ``loop``
      - Map loop iterates directly to SYCL local work-items in the selected
@@ -1177,9 +1177,10 @@ device back-end (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
    RAJA mapping described above: ``x`` corresponds to SYCL dimension 2,
    ``y`` to SYCL dimension 1, and ``z`` to SYCL dimension 0. These build options enable
    the corresponding internal ``RAJA_*_ACTIVE`` compile-time macros used by
-   the implementation. Device aliases that have no SYCL equivalent are intentionally not defined
-   under SYCL as usable policies. Attempting to use them will cause compile time failure
-   so unsupported code paths are caught immediately.
+   the implementation. Device aliases that have no SYCL equivalent are
+   intentionally not defined under SYCL as usable policies. Attempting to use
+   them will cause compile-time failure so unsupported code paths are caught
+   immediately.
 
 See also the example code ``examples/device-policy-aliases.cpp``.
 
@@ -1330,7 +1331,7 @@ cuda/hip_multi_reduce_atomic_low_performance_low_overhead     any CUDA/HIP  Same
                                                               any OpenMP
                                                               policy,
                                                               seq_exec
-                                                                            set of resources. This minimally effects
+                                                                            set of resources. This minimally affects
                                                                             the performance of loops containing the
                                                                             multi-reducer though it may cause the
                                                                             multi-reducer itself to perform poorly if
@@ -1619,7 +1620,7 @@ RAJA provides some statement types that apply in specific kernel scenarios.
 .. _auxilliarypolicy_label:
 
 --------------------------------
-Auxilliary Types
+Auxiliary Types
 --------------------------------
 
 The following list summarizes auxiliary types used in the above statements. These
