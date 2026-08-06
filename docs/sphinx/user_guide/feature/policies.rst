@@ -1472,17 +1472,18 @@ for ``RAJA::LocalArray`` objects:
 .. _loop_elements-kernelpol-label:
 
 --------------------------------
-RAJA Kernel Execution Policies
+RAJA::kernel Execution Policies
 --------------------------------
 
-RAJA kernel execution policy constructs form a simple domain specific language
+``RAJA::kernel`` execution policy constructs form a simple domain specific language
 for composing and transforming complex loops that relies
 **solely on standard C++20 template support**.
 RAJA kernel policies are constructed using a combination of *Statements* and
 *Statement Lists*. A RAJA Statement is an action, such as execute a loop,
 invoke a lambda, set a thread barrier, etc. A StatementList is an ordered list
 of Statements that are composed in the order that they appear in the kernel
-policy to construct a kernel. A Statement may contain an enclosed StatementList. Thus, a ``RAJA::KernelPolicy`` type is really just a StatementList.
+policy to construct a kernel. A Statement may contain an enclosed StatementList.
+Thus, a ``RAJA::KernelPolicy`` type is really just a StatementList.
 
 The main Statement types provided by RAJA are ``RAJA::statement::For`` and
 ``RAJA::statement::Lambda``, that we discussed in
@@ -1498,13 +1499,21 @@ kernel and which forms a valid StatementList. The
 ``RAJA::statement::Lambda<LambdaID>``
 type invokes the lambda expression corresponding to its position 'LambdaID'
 in the sequence of lambda expressions in the ``RAJA::kernel`` argument list.
-For example, a simple sequential for-loop::
+
+For example, we've seen how a simple sequential for-loop::
 
   for (int i = 0; i < N; ++i) {
     // loop body
   }
 
-can be represented using the RAJA kernel interface as::
+can be written using ``RAJA::forall`` as::
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::RangeSegment(0, N),
+    [=] (RAJA::Index_type i) {
+      // loop body
+    });
+
+The same single-loop kernel can be represented using the ``RAJA::kernel`` interface as::
 
   using KERNEL_POLICY =
     RAJA::KernelPolicy<
@@ -1514,16 +1523,19 @@ can be represented using the RAJA kernel interface as::
     >;
 
   RAJA::kernel<KERNEL_POLICY>(
-    RAJA::make_tuple(range),
+    RAJA::make_tuple(RAJA::RangeSegment(0, N)),
     [=](int i) {
       // loop body
     }
   );
 
+Clearly, the ``RAJA::kernel`` implementation is more verbose. ``RAJA::kernel`` is 
+designed to be used for more complex, nested loop kernels. 
+
 .. note:: All ``RAJA::forall`` functionality can be done using the
           ``RAJA::kernel`` interface. We maintain the ``RAJA::forall``
           interface since it is less verbose and thus more convenient
-          for users.
+          for users working with simple single-loop kernels.
 
 RAJA::kernel Statement Types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
