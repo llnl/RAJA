@@ -94,6 +94,10 @@ raja_add_executable(
   SOURCES pi-reduce_vs_atomic.cpp)
 
 raja_add_executable(
+  NAME prefix_sum
+  SOURCES prefix_sum.cpp)
+  
+raja_add_executable(
   NAME raja-launch
   SOURCES raja-launch.cpp)
 
