@@ -992,94 +992,51 @@ GPU Policies for SYCL
           configuration. SYCL dimension 2 always exists and should be used as
           one would use the x dimension in CUDA and HIP.  
 
-======================================== ============= ==============================
-SYCL Execution Policies                  Works with    Brief description
-======================================== ============= ==============================
-sycl_exec<WORK_GROUP_SIZE>               forall        Execute loop iterations
-                                                       in a GPU kernel launched
-                                                       with given work group
-                                                       size.
-sycl_launch_t                            launch        Launches a SYCL kernel,
-                                                       any code express within
-                                                       the lambda is executed
-                                                       on the device.
-sycl_global_0<WORK_GROUP_SIZE>           kernel (For)  Map loop iterates
-                                                       directly to GPU global
-                                                       ids in first
-                                                       dimension, one iterate
-                                                       per work item. Group
-                                                       execution into work
-                                                       groups of given size.
-sycl_global_1<WORK_GROUP_SIZE>           kernel (For)  Same as above, but map
-                                                       to global ids in second
-                                                       dim
-sycl_global_2<WORK_GROUP_SIZE>           kernel (For)  Same as above, but map
-                                                       to global ids in third
-                                                       dim
-sycl_global_item_0                       launch (loop) Creates a unique thread
-                                                       id for each thread for
-                                                       dimension 0 of the grid.
-                                                       Same as computing
-                                                       itm.get_group(0) *
-                                                       itm.get_local_range(0) +
-                                                       itm.get_local_id(0).
-sycl_global_item_1                       launch (loop) Same as above, but uses
-                                                       threads in dimension 1
-                                                       Same as computing
-                                                       itm.get_group(1) +
-                                                       itm.get_local_range(1) *
-                                                       itm.get_local_id(1).
-sycl_global_item_2                       launch (loop) Same as above, but uses
-                                                       threads in dimension 2
-                                                       Same as computing
-                                                       itm.get_group(2) +
-                                                       itm.get_local_range(2) *
-                                                       itm.get_local_id(2).
-sycl_local_0_direct                      kernel (For)  Map loop iterates
-                                         launch (loop) directly to GPU work
-                                                       items in first
-                                                       dimension, one iterate
-                                                       per work item (see note
-                                                       below about limitations)
-sycl_local_1_direct                      kernel (For)  Same as above, but map
-                                         launch (loop) to work items in second
-                                                       dim
-sycl_local_2_direct                      kernel (For)  Same as above, but map
-                                         launch (loop) to work items in third
-                                                       dim
-sycl_local_0_loop                        kernel (For)  Similar to
-                                         launch (loop) local-1-direct policy,
-                                                       but use a work
-                                                       group-stride loop which
-                                                       doesn't limit number of
-                                                       loop iterates
-sycl_local_1_loop                        kernel (For)  Same as above, but for
-                                         launch (loop) work items in second
-                                                       dimension
-sycl_local_2_loop                        kernel (For)  Same as above, but for
-                                         launch (loop) work items in third
-                                                       dimension
-sycl_group_0_direct                      kernel (For)  Map loop iterates
-                                         launch (loop) directly to GPU group
-                                                       ids in first dimension,
-                                                       one iterate per group
-sycl_group_1_direct                      kernel (For)  Same as above, but map
-                                         launch (loop) to groups in second
-                                                       dimension
-sycl_group_2_direct                      kernel (For)  Same as above, but map
-                                         launch (loop) to groups in third
-                                                       dimension
-sycl_group_0_loop                        kernel (For)  Similar to
-                                         launch (loop) group-1-direct policy,
-                                                       but use a group-stride
-                                                       loop.
-sycl_group_1_loop                        kernel (For)  Same as above, but use
-                                         launch (loop) groups in second
-                                                       dimension
-sycl_group_2_loop                        kernel (For)  Same as above, but use
-                                         launch (loop) groups in third
-                                                       dimension
-======================================== ============= ==============================
+Policies with ``{0,1,2}`` indicate that the same policy family is available for
+each SYCL dimension. See the note above for how SYCL dimensions relate to
+CUDA/HIP x/y/z-style indexing.
+
+.. list-table:: SYCL Execution Policies
+   :widths: 38 18 44
+   :header-rows: 1
+
+   * - Policy family
+     - Works with
+     - Brief description
+   * - ``sycl_exec<WORK_GROUP_SIZE>``
+     - forall
+     - Execute loop iterations in a GPU kernel launched with the given work
+       group size.
+   * - ``sycl_launch_t``
+     - launch
+     - Launches a SYCL kernel. Code inside the lambda expression is executed on
+       the device.
+   * - ``sycl_global_{0,1,2}<WORK_GROUP_SIZE>``
+     - kernel ``For``
+     - Map loop iterates directly to SYCL global ids in the selected dimension,
+       one iterate per work item. Group execution into work groups of the given
+       size.
+   * - ``sycl_global_item_{0,1,2}``
+     - launch ``loop``
+     - Create a unique global work-item id in the selected dimension. For
+       dimension 0, this is equivalent to
+       ``itm.get_group(0) * itm.get_local_range(0) + itm.get_local_id(0)``.
+   * - ``sycl_local_{0,1,2}_direct``
+     - kernel ``For``, launch ``loop``
+     - Map loop iterates directly to SYCL local work-items in the selected
+       dimension, one iterate per work item.
+   * - ``sycl_local_{0,1,2}_loop``
+     - kernel ``For``, launch ``loop``
+     - Map loop iterates to SYCL local work-items in the selected dimension
+       using a work-group-stride loop.
+   * - ``sycl_group_{0,1,2}_direct``
+     - kernel ``For``, launch ``loop``
+     - Map loop iterates directly to SYCL group ids in the selected dimension,
+       one iterate per group.
+   * - ``sycl_group_{0,1,2}_loop``
+     - kernel ``For``, launch ``loop``
+     - Map loop iterates to SYCL group ids in the selected dimension using a
+       group-stride loop.
 
 -----------------------------------------------------
 OpenMP Target Offload Policies
