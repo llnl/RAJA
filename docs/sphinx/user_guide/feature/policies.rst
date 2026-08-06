@@ -1021,6 +1021,7 @@ CUDA/HIP x/y/z-style indexing.
      - Create a unique global work-item id in the selected dimension. For
        dimension 0, this is equivalent to
        ``itm.get_group(0) * itm.get_local_range(0) + itm.get_local_id(0)``.
+       Similary, for dimensions 1 and 2.
    * - sycl_local_{0,1,2}_direct
      - kernel ``For``, launch ``loop``
      - Map loop iterates directly to SYCL local work-items in the selected
