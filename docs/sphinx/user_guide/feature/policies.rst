@@ -1475,8 +1475,12 @@ for ``RAJA::LocalArray`` objects:
 RAJA::kernel Execution Policies
 --------------------------------
 
-What a KernelPolicy Is
-~~~~~~~~~~~~~~~~~~~~~~
+What is a KernelPolicy?
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``RAJA::kernel`` interface is designed to support portability for complex
+nested loop kernels. It provides compile-time porting of kernels to execute
+with different RAJA back-ends and transformations such as loop nest reordering.
 
 The constructs used in ``RAJA::kernel`` execution policies form a simple
 domain-specific language that composes and transforms complex loops and relies
@@ -1485,20 +1489,19 @@ RAJA kernel policies are constructed using a combination of *Statements* and
 *Statement Lists*. A RAJA Statement is an action, such as executing a loop,
 invoking a lambda, or setting a thread barrier. A StatementList is an ordered list
 of Statements that are composed in the order that they appear in the kernel
-policy to construct a kernel. A Statement may contain an enclosed StatementList.
-Thus, a ``RAJA::KernelPolicy`` type is really just a StatementList.
+policy to construct the execution behavior of a kernel. A Statement may contain
+a StatementList. Thus, a ``RAJA::KernelPolicy`` type is really just a StatementList.
 
 The main Statement types provided by RAJA are ``RAJA::statement::For`` and
 ``RAJA::statement::Lambda``, as discussed in
 :ref:`loop_elements-kernel-label`. A ``For`` statement describes a loop over
 one entry in the iteration-space tuple passed to ``RAJA::kernel``. A
-``Lambda`` statement invokes one of the lambda expressions passed to
-``RAJA::kernel``.
+``Lambda`` statement invokes a lambda expressions passed to ``RAJA::kernel``.
 
 Basic For and Lambda Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For example, we've seen how a simple sequential for-loop::
+We have seen how a simple sequential for-loop::
 
   for (int i = 0; i < N; ++i) {
     // loop body
@@ -1528,8 +1531,14 @@ interface as::
     }
   );
 
-Clearly, the ``RAJA::kernel`` implementation is more verbose. ``RAJA::kernel`` is
-designed to be used for more complex, nested loop kernels.
+Clearly, the ``RAJA::kernel`` implementation is more verbose. However, keep in mind
+that ``RAJA::kernel`` is designed to be used for more complex, nested loop kernels.
+A key difference between ``RAJA::kernel`` and ``RAJA::forall`` is that ``RAJA::kernel``
+takes a *tuple* of segments, each one representing the iteration space of a loop in
+a loop nest whereas ``RAJA::forall`` takes a single segment because it can only execute
+a single loop kernel. In addition, ``RAJA::kernel`` accepts one or more lambda expression
+arguments depending on how one choose to break apart and represent the work done in the
+kernel.
 
 .. note:: All ``RAJA::forall`` functionality can be done using the
           ``RAJA::kernel`` interface. We maintain the ``RAJA::forall``
@@ -1572,13 +1581,13 @@ names makes the statement reference below easier to scan.
      - Binary operation used by a reduction statement.
 
 .. note:: All of the statement types described below are in the namespace
-          ``RAJA::statement``. For brevity, we omit the namespace in
+          ``RAJA::statement``. For brevity, we omit the ``RAJA`` namespace in
           the discussion in this section.
 
-.. note:: ``RAJA::kernel_param`` functions similarly to ``RAJA::kernel``
-          except that the second argument is a *tuple of parameters* used
-          in a kernel for local arrays, thread local variables, tiling
-          information, etc.
+.. important:: ``RAJA::kernel_param`` functions similarly to ``RAJA::kernel``
+                except that the second argument is a *tuple of parameters* used
+                in a kernel for local arrays, thread local variables, tiling
+                information, etc. that are used in one or more lambda expressions.
 
 RAJA::kernel Statement Types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
