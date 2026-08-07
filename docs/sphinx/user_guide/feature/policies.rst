@@ -1125,12 +1125,37 @@ Device policy aliases
 To simplify transitions between GPU back-ends (CUDA/HIP/SYCL) and reduce
 downstream preprocessor conditionals, RAJA provides a set of
 ``device_*`` policy aliases that resolve to the *active* GPU back-end.
+Use these aliases when code should follow the GPU back-end selected in the
+RAJA build configuration. Use explicit ``cuda_*``, ``hip_*``, or ``sycl_*``
+policies when code depends on behavior that is specific to one back-end.
 
-.. note:: These aliases do not cover all RAJA policies for CUDA/HIP.
+.. note:: These aliases do not cover all RAJA policies for CUDA/HIP or SYCL.
 
-In particular, the following aliases are available when building with a GPU
-device back-end (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
-``RAJA_ENABLE_SYCL`` is turned on in a RAJA build configuration):
+For example, ``device_exec`` and ``device_reduce`` can be used together so
+the loop execution and reduction policies both follow the active GPU back-end:
+
+.. code-block:: C++
+
+  using EXEC_POL = RAJA::device_exec<256>;
+  using REDUCE_POL = RAJA::device_reduce;
+
+  RAJA::ReduceSum<REDUCE_POL, double> sum(0.0);
+
+  RAJA::forall<EXEC_POL>(segment,
+    [=] RAJA_DEVICE (RAJA::Index_type i) {
+      sum += values[i];
+    });
+
+.. note:: Use ``RAJA_HOST_DEVICE`` instead of ``RAJA_DEVICE`` when the same
+          lambda may be used with either GPU or CPU execution policies. This
+          makes the code more portable because one can swap execution policies
+          to run on the device or host without changing the lambda annotation.
+
+In the table below, ``partial`` means that the alias family exists for that
+back-end, but not every variant in the row is available for that back-end.
+The table lists aliases available when building with a GPU device back-end
+(i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or ``RAJA_ENABLE_SYCL`` is turned
+on in a RAJA build configuration).
 
 .. list-table:: ``device_*`` alias coverage
    :widths: 34 14 14 14 24
@@ -1145,74 +1170,78 @@ device back-end (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or
      - yes
      - yes
      - partial
-     - Block-size templated exec aliases, for example
-       ``device_exec<256>``. ``device_exec`` and ``device_exec_async`` exist
-       for SYCL; the CUDA/HIP occupancy and reduction variants do not.
+     - Execution policy aliases for simple GPU loops, for example
+       ``device_exec<256>``. SYCL supports ``device_exec`` and
+       ``device_exec_async``; CUDA/HIP occupancy and reduction exec variants do
+       not have SYCL aliases.
    * - device_atomic and device_atomic_explicit<host_policy>
      - yes
      - yes
      - yes
-     - Back-end atomic policy aliases are available on all three back-ends, for
-       example ``device_atomic_explicit<RAJA::seq_atomic>``.
+     - Atomic policy aliases for all three GPU back-ends, for example
+       ``device_atomic_explicit<RAJA::seq_atomic>``.
    * - device_reduce
      - yes
      - yes
      - yes
-     - Back-end default reduce policy alias.
+     - Default reduction policy alias for the active GPU back-end.
    * - device_reduce_atomic and device_reduce_base<with_atomic>
      - yes
      - yes
      - no
-     - CUDA/HIP expose tuning and base reduce aliases, for example
-       ``device_reduce_base<true>``; SYCL currently only exposes
+     - Reduction tuning aliases for CUDA/HIP, for example
+       ``device_reduce_base<true>``. SYCL currently only exposes
        ``device_reduce``.
    * - device_multi_reduce_atomic and
        device_multi_reduce_atomic_low_performance_low_overhead
      - yes
      - yes
      - no
-     - CUDA/HIP expose multi_reduce aliases; SYCL does not currently
-       provide a back-end-equivalent device_* mapping.
+     - Multi-reduction aliases for CUDA/HIP. SYCL does not currently provide a
+       back-end-equivalent ``device_*`` mapping.
    * - device_launch_t
      - yes
      - yes
      - yes
-     - Back-end launch policy alias, for example ``device_launch_t<false>``.
+     - Launch policy alias for the active GPU back-end, for example
+       ``device_launch_t<false>``.
    * - device_global_size_{x,y,z}_{direct,direct_unchecked,loop}<N>
      - yes
      - yes
      - partial
-     - Size-templated aliases, for example ``device_global_size_x_direct<64>``.
-       SYCL currently exposes only the direct x/y/z aliases; the unchecked and
-       loop variants are CUDA/HIP only.
+     - Size-templated global mapping aliases, for example
+       ``device_global_size_x_direct<64>``. SYCL currently exposes only the
+       direct x/y/z aliases; unchecked and loop variants are CUDA/HIP only.
    * - device_thread_{x,y,z}_{direct,loop}
      - yes
      - yes
      - yes
-     - Single-dimension thread mapping.
+     - Thread mapping aliases for one GPU dimension.
    * - device_thread_size_{x,y,z}_{direct,direct_unchecked,loop}<N>
      - yes
      - yes
      - no
-     - Size-templated aliases, for example ``device_thread_size_x_direct<128>``.
-       These aliases are declared as compile-time errors under SYCL.
+     - Size-templated thread mapping aliases, for example
+       ``device_thread_size_x_direct<128>``. These aliases are declared as
+       compile-time errors under SYCL.
    * - device_block_{x,y,z}_{direct,loop}
      - yes
      - yes
      - yes
-     - Single-dimension block mapping.
+     - Block mapping aliases for one GPU dimension.
    * - device_block_size_{x,y,z}_{direct,direct_unchecked,loop}<N>
      - yes
      - yes
      - no
-     - Size-templated aliases, for example ``device_block_size_x_direct<128>``.
-       These aliases are declared as compile-time errors under SYCL.
+     - Size-templated block mapping aliases, for example
+       ``device_block_size_x_direct<128>``. These aliases are declared as
+       compile-time errors under SYCL.
    * - device_flatten_thread_size_*, device_flatten_block_size_*,
        device_flatten_global_size_*
      - yes
      - yes
      - no
-     - Size-templated aliases, for example
+     - Size-templated flattened mapping aliases, for example
        ``device_flatten_thread_size_x_direct<128>``,
        ``device_flatten_block_size_x_direct<128>``, and
        ``device_flatten_global_size_x_direct<128>``. These flattened size
