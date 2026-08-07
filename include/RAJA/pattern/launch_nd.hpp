@@ -21,6 +21,7 @@
 #define RAJA_pattern_launch_nd_HPP
 
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 
 #include "RAJA/pattern/launch.hpp"
@@ -40,16 +41,53 @@
 namespace RAJA
 {
 
+namespace detail
+{
+
 template<typename... IdxTs>
 struct TypedRangeSegmentPack
 {
   camp::tuple<RAJA::TypedRangeSegment<IdxTs>...> data;
 };
 
+template<typename T>
+struct is_typed_range_segment_pack : std::false_type
+{
+};
+
+template<typename... IdxTs>
+struct is_typed_range_segment_pack<TypedRangeSegmentPack<IdxTs...>>
+    : std::true_type
+{
+};
+
+template<typename T>
+inline constexpr bool is_typed_range_segment_pack_v =
+    is_typed_range_segment_pack<T>::value;
+
+template<typename T>
+struct typed_range_segment_pack_rank;
+
+template<typename... IdxTs>
+struct typed_range_segment_pack_rank<TypedRangeSegmentPack<IdxTs...>>
+    : std::integral_constant<camp::idx_t, sizeof...(IdxTs)>
+{
+};
+
+template<typename T>
+inline constexpr camp::idx_t typed_range_segment_pack_rank_v =
+    typed_range_segment_pack_rank<T>::value;
+
+template<typename T>
+concept typed_range_segment_pack =
+    is_typed_range_segment_pack_v<std::decay_t<T>>;
+
+}  // namespace detail
+
 template<typename... IdxTs>
 RAJA_INLINE auto segments(RAJA::TypedRangeSegment<IdxTs> const&... segs)
 {
-  return TypedRangeSegmentPack<IdxTs...> {camp::make_tuple(segs...)};
+  return detail::TypedRangeSegmentPack<IdxTs...> {camp::make_tuple(segs...)};
 }
 
 template<typename ExecPolicy, typename LayoutTag = RAJA::layout_right>
@@ -126,11 +164,13 @@ template<typename PolicyList>
 RAJA_INLINE auto make_launch_nd_context(RAJA::resources::Resource resource,
                                         std::string&& kernel_name)
 {
-  return resource.get_platform() == RAJA::Platform::host
-             ? util::make_context<typename PolicyList::host_policy_t>(
-                   std::move(kernel_name))
-             : util::make_context<typename PolicyList::device_policy_t>(
-                   std::move(kernel_name));
+  if (resource.get_platform() == RAJA::Platform::host)
+  {
+    return util::make_context<typename PolicyList::host_policy_t>(
+        std::move(kernel_name));
+  }
+  return util::make_context<typename PolicyList::device_policy_t>(
+      std::move(kernel_name));
 }
 #endif
 
@@ -158,13 +198,15 @@ struct layout_to_permutation<RAJA::layout_left, Rank>
   using type = typename reverse_idx_seq<camp::make_idx_seq_t<Rank>>::type;
 };
 
-template<typename LayoutTag, typename Lambda, typename... IdxTs>
-RAJA_INLINE auto make_launch_nd_adapter(
-    Lambda&& body,
-    TypedRangeSegmentPack<IdxTs...> const& segs)
+template<typename LayoutTag,
+         typename Lambda,
+         typed_range_segment_pack SegmentPack>
+RAJA_INLINE auto make_launch_nd_adapter(Lambda&& body, SegmentPack const& segs)
 {
-  using perm =
-      typename layout_to_permutation<LayoutTag, sizeof...(IdxTs)>::type;
+  constexpr camp::idx_t Rank =
+      typed_range_segment_pack_rank_v<std::decay_t<SegmentPack>>;
+
+  using perm = typename layout_to_permutation<LayoutTag, Rank>::type;
 
   return camp::apply(
       [&](auto const&... unpacked_segs) {
@@ -278,8 +320,8 @@ struct launch_nd_flattened_launch_traits<
 template<typename ExecPolicy,
          typename LayoutTag,
          typename Lambda,
-         typename... IdxTs>
-void launch_nd_flattened_execute(TypedRangeSegmentPack<IdxTs...> const& segs,
+         typed_range_segment_pack SegmentPack>
+void launch_nd_flattened_execute(SegmentPack const& segs,
                                  Lambda&& body)
 {
   auto adapter =
@@ -299,10 +341,10 @@ void launch_nd_flattened_execute(TypedRangeSegmentPack<IdxTs...> const& segs,
 template<typename ExecPolicy,
          typename LayoutTag,
          typename Lambda,
-         typename... IdxTs>
+         typed_range_segment_pack SegmentPack>
 resources::EventProxy<resources::Resource> launch_nd_flattened_execute(
     RAJA::resources::Resource resource,
-    TypedRangeSegmentPack<IdxTs...> const& segs,
+    SegmentPack const& segs,
     Lambda&& body)
 {
   auto adapter =
@@ -319,10 +361,12 @@ resources::EventProxy<resources::Resource> launch_nd_flattened_execute(
       });
 }
 
-template<typename LoopPolicyList, typename Body, typename Idx0, typename Idx1>
+template<typename LoopPolicyList,
+         typename Body,
+         typed_range_segment_pack SegmentPack>
 struct launch_nd_grid_body_2d
 {
-  TypedRangeSegmentPack<Idx0, Idx1> segs;
+  SegmentPack segs;
   Body body;
 
   RAJA_HOST_DEVICE RAJA_INLINE void operator()(RAJA::LaunchContext ctx) const
@@ -333,22 +377,18 @@ struct launch_nd_grid_body_2d
     auto const seg0 = camp::get<0>(segs.data);
     auto const seg1 = camp::get<1>(segs.data);
 
-    RAJA::loop<loop0>(ctx, seg0, [&](Idx0 i0) {
-      RAJA::loop<loop1>(ctx, seg1, [&](Idx1 i1) {
-        body(i0, i1);
-      });
+    RAJA::loop<loop0>(ctx, seg0, [&](auto i0) {
+      RAJA::loop<loop1>(ctx, seg1, [&](auto i1) { body(i0, i1); });
     });
   }
 };
 
 template<typename LoopPolicyList,
          typename Body,
-         typename Idx0,
-         typename Idx1,
-         typename Idx2>
+         typed_range_segment_pack SegmentPack>
 struct launch_nd_grid_body_3d
 {
-  TypedRangeSegmentPack<Idx0, Idx1, Idx2> segs;
+  SegmentPack segs;
   Body body;
 
   RAJA_HOST_DEVICE RAJA_INLINE void operator()(RAJA::LaunchContext ctx) const
@@ -361,11 +401,9 @@ struct launch_nd_grid_body_3d
     auto const seg1 = camp::get<1>(segs.data);
     auto const seg2 = camp::get<2>(segs.data);
 
-    RAJA::loop<loop0>(ctx, seg0, [&](Idx0 i0) {
-      RAJA::loop<loop1>(ctx, seg1, [&](Idx1 i1) {
-        RAJA::loop<loop2>(ctx, seg2, [&](Idx2 i2) {
-          body(i0, i1, i2);
-        });
+    RAJA::loop<loop0>(ctx, seg0, [&](auto i0) {
+      RAJA::loop<loop1>(ctx, seg1, [&](auto i1) {
+        RAJA::loop<loop2>(ctx, seg2, [&](auto i2) { body(i0, i1, i2); });
       });
     });
   }
@@ -374,81 +412,75 @@ struct launch_nd_grid_body_3d
 template<typename LaunchPolicy,
          typename LoopPolicyList,
          typename Lambda,
-         typename Idx0,
-         typename Idx1>
+         typed_range_segment_pack SegmentPack>
 void launch_nd_grid_execute(LaunchParams const& launch_params,
-                            TypedRangeSegmentPack<Idx0, Idx1> const& segs,
+                            SegmentPack const& segs,
                             Lambda&& body,
                             camp::num<2>)
 {
   RAJA::launch<LaunchPolicy>(
       launch_params,
-      launch_nd_grid_body_2d<LoopPolicyList, camp::decay<Lambda>, Idx0, Idx1> {
+      launch_nd_grid_body_2d<LoopPolicyList, camp::decay<Lambda>, SegmentPack> {
           segs, std::forward<Lambda>(body)});
 }
 
 template<typename LaunchPolicy,
          typename LoopPolicyList,
          typename Lambda,
-         typename Idx0,
-         typename Idx1,
-         typename Idx2>
+         typed_range_segment_pack SegmentPack>
 void launch_nd_grid_execute(LaunchParams const& launch_params,
-                            TypedRangeSegmentPack<Idx0, Idx1, Idx2> const& segs,
+                            SegmentPack const& segs,
                             Lambda&& body,
                             camp::num<3>)
 {
   RAJA::launch<LaunchPolicy>(
       launch_params,
-      launch_nd_grid_body_3d<LoopPolicyList, camp::decay<Lambda>, Idx0, Idx1,
-                             Idx2> {segs, std::forward<Lambda>(body)});
-}
-
-template<typename LaunchPolicy,
-         typename LoopPolicyList,
-         typename Lambda,
-         typename Idx0,
-         typename Idx1>
-resources::EventProxy<resources::Resource> launch_nd_grid_execute(
-    RAJA::resources::Resource resource,
-    LaunchParams const& launch_params,
-    TypedRangeSegmentPack<Idx0, Idx1> const& segs,
-    Lambda&& body,
-    camp::num<2>)
-{
-  return RAJA::launch<LaunchPolicy>(
-      resource, launch_params,
-      launch_nd_grid_body_2d<LoopPolicyList, camp::decay<Lambda>, Idx0, Idx1> {
+      launch_nd_grid_body_3d<LoopPolicyList, camp::decay<Lambda>, SegmentPack> {
           segs, std::forward<Lambda>(body)});
 }
 
 template<typename LaunchPolicy,
          typename LoopPolicyList,
          typename Lambda,
-         typename Idx0,
-         typename Idx1,
-         typename Idx2>
+         typed_range_segment_pack SegmentPack>
 resources::EventProxy<resources::Resource> launch_nd_grid_execute(
     RAJA::resources::Resource resource,
     LaunchParams const& launch_params,
-    TypedRangeSegmentPack<Idx0, Idx1, Idx2> const& segs,
+    SegmentPack const& segs,
+    Lambda&& body,
+    camp::num<2>)
+{
+  return RAJA::launch<LaunchPolicy>(
+      resource, launch_params,
+      launch_nd_grid_body_2d<LoopPolicyList, camp::decay<Lambda>, SegmentPack> {
+          segs, std::forward<Lambda>(body)});
+}
+
+template<typename LaunchPolicy,
+         typename LoopPolicyList,
+         typename Lambda,
+         typed_range_segment_pack SegmentPack>
+resources::EventProxy<resources::Resource> launch_nd_grid_execute(
+    RAJA::resources::Resource resource,
+    LaunchParams const& launch_params,
+    SegmentPack const& segs,
     Lambda&& body,
     camp::num<3>)
 {
   return RAJA::launch<LaunchPolicy>(
       resource, launch_params,
-      launch_nd_grid_body_3d<LoopPolicyList, camp::decay<Lambda>, Idx0, Idx1,
-                             Idx2> {segs, std::forward<Lambda>(body)});
+      launch_nd_grid_body_3d<LoopPolicyList, camp::decay<Lambda>, SegmentPack> {
+          segs, std::forward<Lambda>(body)});
 }
 
 }  // namespace detail
 
 template<typename ExecPolicy,
          typename LayoutTag,
-         typename... IdxTs,
+         detail::typed_range_segment_pack SegmentPack,
          typename... Params>
 void launch_nd(launch_nd_flattened_policy<ExecPolicy, LayoutTag>,
-               TypedRangeSegmentPack<IdxTs...> const& segs,
+               SegmentPack const& segs,
                Params&&... params)
 {
   auto f_params = expt::make_forall_param_pack(std::forward<Params>(params)...);
@@ -475,12 +507,12 @@ void launch_nd(launch_nd_flattened_policy<ExecPolicy, LayoutTag>,
 
 template<typename ExecPolicy,
          typename LayoutTag,
-         typename... IdxTs,
+         detail::typed_range_segment_pack SegmentPack,
          typename... Params>
 resources::EventProxy<resources::Resource> launch_nd(
     RAJA::resources::Resource resource,
     launch_nd_flattened_policy<ExecPolicy, LayoutTag>,
-    TypedRangeSegmentPack<IdxTs...> const& segs,
+    SegmentPack const& segs,
     Params&&... params)
 {
   auto f_params = expt::make_forall_param_pack(std::forward<Params>(params)...);
@@ -508,13 +540,14 @@ resources::EventProxy<resources::Resource> launch_nd(
 
 template<typename LaunchPolicy,
          typename... LoopPolicies,
-         typename... IdxTs,
+         detail::typed_range_segment_pack SegmentPack,
          typename... Params>
 void launch_nd(launch_nd_grid_policy<LaunchPolicy, LoopPolicies...> policy,
-               TypedRangeSegmentPack<IdxTs...> const& segs,
+               SegmentPack const& segs,
                Params&&... params)
 {
-  static_assert(sizeof...(IdxTs) == sizeof...(LoopPolicies),
+  static_assert(detail::typed_range_segment_pack_rank_v<std::decay_t<SegmentPack>> ==
+                    static_cast<camp::idx_t>(sizeof...(LoopPolicies)),
                 "RAJA::launch_nd launch backend requires one loop policy per "
                 "segment");
 
@@ -537,22 +570,25 @@ void launch_nd(launch_nd_grid_policy<LaunchPolicy, LoopPolicies...> policy,
 
   detail::launch_nd_grid_execute<LaunchPolicy, camp::list<LoopPolicies...>>(
       policy.launch_params, segs, std::move(body),
-      camp::num<sizeof...(IdxTs)> {});
+      camp::num<
+          detail::typed_range_segment_pack_rank_v<std::decay_t<SegmentPack>>> {
+      });
 
   util::callPostLaunchPlugins(context);
 }
 
 template<typename LaunchPolicy,
          typename... LoopPolicies,
-         typename... IdxTs,
+         detail::typed_range_segment_pack SegmentPack,
          typename... Params>
 resources::EventProxy<resources::Resource> launch_nd(
     RAJA::resources::Resource resource,
     launch_nd_grid_policy<LaunchPolicy, LoopPolicies...> policy,
-    TypedRangeSegmentPack<IdxTs...> const& segs,
+    SegmentPack const& segs,
     Params&&... params)
 {
-  static_assert(sizeof...(IdxTs) == sizeof...(LoopPolicies),
+  static_assert(detail::typed_range_segment_pack_rank_v<std::decay_t<SegmentPack>> ==
+                    static_cast<camp::idx_t>(sizeof...(LoopPolicies)),
                 "RAJA::launch_nd launch backend requires one loop policy per "
                 "segment");
 
@@ -581,7 +617,9 @@ resources::EventProxy<resources::Resource> launch_nd(
   auto event =
       detail::launch_nd_grid_execute<LaunchPolicy, camp::list<LoopPolicies...>>(
           resource, policy.launch_params, segs, std::move(body),
-          camp::num<sizeof...(IdxTs)> {});
+          camp::num<
+              detail::typed_range_segment_pack_rank_v<std::decay_t<SegmentPack>>> {
+          });
 
   util::callPostLaunchPlugins(context);
   return event;
@@ -590,13 +628,13 @@ resources::EventProxy<resources::Resource> launch_nd(
 template<typename HostExecPolicy,
          typename DeviceExecPolicy,
          typename LayoutTag,
-         typename... IdxTs,
+         detail::typed_range_segment_pack SegmentPack,
          typename... Params>
 void launch_nd(ExecPlace place,
                launch_nd_flattened_place_policy<HostExecPolicy,
                                                 DeviceExecPolicy,
                                                 LayoutTag>,
-               TypedRangeSegmentPack<IdxTs...> const& segs,
+               SegmentPack const& segs,
                Params&&... params)
 {
   switch (place)
@@ -620,7 +658,7 @@ void launch_nd(ExecPlace place,
 template<typename HostExecPolicy,
          typename DeviceExecPolicy,
          typename LayoutTag,
-         typename... IdxTs,
+         detail::typed_range_segment_pack SegmentPack,
          typename... Params>
 resources::EventProxy<resources::Resource> launch_nd(
     RAJA::resources::Resource resource,
@@ -628,7 +666,7 @@ resources::EventProxy<resources::Resource> launch_nd(
     launch_nd_flattened_place_policy<HostExecPolicy,
                                      DeviceExecPolicy,
                                      LayoutTag>,
-    TypedRangeSegmentPack<IdxTs...> const& segs,
+    SegmentPack const& segs,
     Params&&... params)
 {
   switch (place)
@@ -651,11 +689,11 @@ resources::EventProxy<resources::Resource> launch_nd(
 
 template<typename HostPolicy,
          typename DevicePolicy,
-         typename... IdxTs,
+         detail::typed_range_segment_pack SegmentPack,
          typename... Params>
 void launch_nd(ExecPlace place,
                launch_nd_place_policy<HostPolicy, DevicePolicy> const& policy,
-               TypedRangeSegmentPack<IdxTs...> const& segs,
+               SegmentPack const& segs,
                Params&&... params)
 {
   switch (place)
@@ -675,13 +713,13 @@ void launch_nd(ExecPlace place,
 
 template<typename HostPolicy,
          typename DevicePolicy,
-         typename... IdxTs,
+         detail::typed_range_segment_pack SegmentPack,
          typename... Params>
 resources::EventProxy<resources::Resource> launch_nd(
     RAJA::resources::Resource resource,
     ExecPlace place,
     launch_nd_place_policy<HostPolicy, DevicePolicy> const& policy,
-    TypedRangeSegmentPack<IdxTs...> const& segs,
+    SegmentPack const& segs,
     Params&&... params)
 {
   switch (place)
