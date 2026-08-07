@@ -69,27 +69,62 @@ For a first implementation, users usually start with one of the policies below
 and move to more specialized policies only when they need a specific scheduling,
 mapping, synchronization, or performance behavior.
 
-============================================== =================================
-Common need                                    Typical starting policy
-============================================== =================================
-Sequential CPU loop                            ``seq_exec``
-CPU loop with SIMD compiler hints              ``simd_exec``
-OpenMP parallel CPU loop                       ``omp_parallel_for_exec``
-OpenMP launch region                           ``omp_launch_t`` with
-                                               ``omp_for_exec`` loops
-CUDA ``forall`` loop                           ``cuda_exec<BLOCK_SIZE>``
-HIP ``forall`` loop                            ``hip_exec<BLOCK_SIZE>``
-Portable GPU ``forall`` loop                   ``device_exec<BLOCK_SIZE>``
-SYCL ``forall`` loop                           ``sycl_exec<WORK_GROUP_SIZE>``
-Sequential reduction                           ``seq_reduce``
-OpenMP reduction                               ``omp_reduce``
-CUDA/HIP/SYCL reduction                        ``cuda_reduce``, ``hip_reduce``,
-                                               or ``sycl_reduce``
-Atomic update                                  Match the atomic policy to the
-                                               loop back-end, such as
-                                               ``omp_atomic`` or
-                                               ``cuda_atomic``
-============================================== =================================
+Common Goals Quick Reference
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use this table to find a reasonable starting policy for common use cases.
+The reference links point to the detailed policy tables later in this section.
+
+.. list-table::
+   :widths: 34 32 34
+   :header-rows: 1
+
+   * - Goal
+     - Starting policy
+     - Reference
+   * - Sequential CPU loop
+     - ``seq_exec``
+     - :ref:`Sequential CPU Policies <feat-policies-cpu-label>`
+   * - CPU loop with SIMD compiler hints
+     - ``simd_exec``
+     - :ref:`Sequential CPU Policies <feat-policies-cpu-label>`
+   * - OpenMP parallel CPU loop
+     - ``omp_parallel_for_exec``
+     - :ref:`OpenMP CPU Policies <feat-policies-openmp-cpu-label>`
+   * - Multiple loops in an OpenMP parallel region
+     - ``RAJA::region`` with ``omp_for_exec`` or another OpenMP inner policy
+     - :ref:`Parallel Region Policies <parallelregionpolicy-label>`
+   * - CUDA ``forall`` loop
+     - ``cuda_exec<BLOCK_SIZE>``
+     - :ref:`GPU Policies for CUDA and HIP <feat-policies-gpu-label>`
+   * - HIP ``forall`` loop
+     - ``hip_exec<BLOCK_SIZE>``
+     - :ref:`GPU Policies for CUDA and HIP <feat-policies-gpu-label>`
+   * - Portable GPU ``forall`` loop
+     - ``device_exec<BLOCK_SIZE>``
+     - :ref:`Device policy aliases <feat-policies-gpu-aliases-label>`
+   * - SYCL ``forall`` loop
+     - ``sycl_exec<WORK_GROUP_SIZE>``
+     - :ref:`GPU Policies for SYCL <feat-policies-sycl-label>`
+   * - OpenMP target offload loop
+     - ``omp_target_parallel_for_exec<#>``
+     - :ref:`OpenMP Target Offload Policies <feat-policies-omp-target-label>`
+   * - Nested loop kernel
+     - ``RAJA::KernelPolicy`` with ``For`` and ``Lambda`` statements
+     - :ref:`RAJA::kernel Execution Policies <loop_elements-kernelpol-label>`
+   * - Nested GPU loop mapping
+     - CUDA/HIP/SYCL thread, block, group, or global mapping policies
+     - :ref:`GPU Policies for CUDA and HIP <feat-policies-gpu-label>` and
+       :ref:`GPU Policies for SYCL <feat-policies-sycl-label>`
+   * - Reduction
+     - Match the reduction policy to the loop back-end, such as
+       ``seq_reduce``, ``omp_reduce``, ``cuda_reduce``, ``hip_reduce``, or
+       ``sycl_reduce``
+     - :ref:`Reduction Policies <reducepolicy-label>`
+   * - Atomic update
+     - Match the atomic policy to the loop back-end, such as ``omp_atomic`` or
+       ``cuda_atomic``
+     - :ref:`Atomic Policies <atomicpolicy-label>`
 
 The tutorial sections provide worked examples that are easier to follow than
 the full reference tables on this page. See :ref:`tut-kernelexecpols-label`
@@ -341,6 +376,7 @@ The following tables summarize RAJA policies for executing kernels.
 Please see notes below policy descriptions for additional usage details and
 caveats.
 
+.. _feat-policies-cpu-label:
 
 Sequential CPU Policies
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -369,6 +405,8 @@ apply.
                                                       internal implementation.
  ====================================== ============= ==========================
 
+
+.. _feat-policies-openmp-cpu-label:
 
 OpenMP CPU Policies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -528,6 +566,8 @@ more code to execute in the parallel region and the
 ``RAJA::omp_parallel_region`` construct applies a barrier
 at the end of it.
 
+.. _parallelregionpolicy-label:
+
 -------------------------
 Parallel Region Policies
 -------------------------
@@ -590,6 +630,7 @@ omp_parallel_segit                     Create OpenMP parallel region and
 omp_parallel_for_segit                 Same as above.
 ====================================== =========================================
 
+.. _feat-policies-gpu-label:
 
 -----------------------------------------------------
 GPU Policies for CUDA and HIP
@@ -949,10 +990,12 @@ write more explicit policies.
             parameters. These can be positive integers, in which case they must
             match the number used in the kernel launch. These can also be values
             of the named_usage enum. The possible values are unspecified and
-            ignored. For example, in cuda_thread_x_direct block_size is
-            unspecified so a runtime number of threads is used, but grid_size is
-            ignored so blocks are ignored when getting indices.
+           ignored. For example, in cuda_thread_x_direct block_size is
+           unspecified so a runtime number of threads is used, but grid_size is
+           ignored so blocks are ignored when getting indices.
 	    
+.. _feat-policies-sycl-label:
+
 -----------------------------------------------------
 GPU Policies for SYCL
 -----------------------------------------------------
@@ -1039,6 +1082,8 @@ CUDA/HIP x/y/z-style indexing.
      - Map loop iterates to SYCL group ids in the selected dimension using a
        group-stride loop.
 
+.. _feat-policies-omp-target-label:
+
 -----------------------------------------------------
 OpenMP Target Offload Policies
 -----------------------------------------------------
@@ -1070,6 +1115,8 @@ device, for example. They are summarized in the following table.
                                                       of thread teams and
                                                       threads per team
  ====================================== ============= ==========================
+
+.. _feat-policies-gpu-aliases-label:
 
 -----------------------------------------------------
 Device policy aliases
@@ -1545,6 +1592,8 @@ kernel.
           interface since it is less verbose and thus more convenient
           for users working with simple single-loop kernels.
 
+For more realistic and advanced examples of ``RAJA::kernel``, please see :ref:`tut-kernelexecpols-label`
+
 How to Read Statement Type Signatures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1598,7 +1647,7 @@ explanation along with examples of how they are used can be found in
 the ``RAJA::kernel`` examples in :ref:`tutorial-label`.
 
 Several RAJA statements can be specialized with auxiliary types, which are
-described in :ref:`auxilliarypolicy_label`.
+described in :ref:`auxiliarypolicy_label`.
 
 Core Loop and Lambda Statements
 """""""""""""""""""""""""""""""
@@ -1781,7 +1830,7 @@ as reductions, conditional execution, and hyperplane iteration.
        iteration, everything in the ``EnclosedStatements`` is executed.
 
 
-.. _auxilliarypolicy_label:
+.. _auxiliarypolicy_label:
 
 --------------------------------
 Auxiliary Types
