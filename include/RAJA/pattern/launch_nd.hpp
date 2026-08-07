@@ -103,23 +103,6 @@ struct launch_nd_flattened_policy
 };
 
 /*!
- * A flattened launch_nd policy that supports selecting between a host and
- * device exec policy at runtime via RAJA::ExecPlace.
- *
- * This is useful when the caller wants a single launch site but needs to choose
- * between e.g. seq_exec and cuda_exec/hip_exec based on runtime conditions.
- */
-template<typename HostExecPolicy,
-         typename DeviceExecPolicy,
-         typename LayoutTag = RAJA::layout_right>
-struct launch_nd_flattened_place_policy
-{
-  using host_exec_policy   = HostExecPolicy;
-  using device_exec_policy = DeviceExecPolicy;
-  using layout_tag         = LayoutTag;
-};
-
-/*!
  * General runtime host/device launch_nd policy container.
  *
  * This allows callers to select different launch_nd policy *kinds* for host and
@@ -132,6 +115,17 @@ struct launch_nd_place_policy
   HostPolicy host;
   DevicePolicy device;
 };
+
+/*!
+ * Convenience alias for selecting between host/device exec policies for the
+ * flattened launch_nd mapping at runtime via RAJA::ExecPlace.
+ */
+template<typename HostExecPolicy,
+         typename DeviceExecPolicy,
+         typename LayoutTag = RAJA::layout_right>
+using launch_nd_flattened_place_policy =
+    launch_nd_place_policy<launch_nd_flattened_policy<HostExecPolicy, LayoutTag>,
+                           launch_nd_flattened_policy<DeviceExecPolicy, LayoutTag>>;
 
 template<typename HostPolicy, typename DevicePolicy>
 RAJA_INLINE launch_nd_place_policy<HostPolicy, DevicePolicy>
@@ -661,69 +655,6 @@ resources::EventProxy<resources::Resource> launch_nd(
 
   util::callPostLaunchPlugins(context);
   return event;
-}
-
-template<typename HostExecPolicy,
-         typename DeviceExecPolicy,
-         typename LayoutTag,
-         detail::typed_range_segment_pack SegmentPack,
-         typename... Params>
-void launch_nd(ExecPlace place,
-               launch_nd_flattened_place_policy<HostExecPolicy,
-                                                DeviceExecPolicy,
-                                                LayoutTag>,
-               SegmentPack const& segs,
-               Params&&... params)
-{
-  switch (place)
-  {
-    case ExecPlace::HOST:
-      RAJA::launch_nd(launch_nd_flattened_policy<HostExecPolicy, LayoutTag> {},
-                      segs, std::forward<Params>(params)...);
-      break;
-#if defined(RAJA_GPU_ACTIVE)
-    case ExecPlace::DEVICE:
-      RAJA::launch_nd(
-          launch_nd_flattened_policy<DeviceExecPolicy, LayoutTag> {}, segs,
-          std::forward<Params>(params)...);
-      break;
-#endif
-    default:
-      RAJA_ABORT_OR_THROW("Unknown launch place or device is not enabled");
-  }
-}
-
-template<typename HostExecPolicy,
-         typename DeviceExecPolicy,
-         typename LayoutTag,
-         detail::typed_range_segment_pack SegmentPack,
-         typename... Params>
-resources::EventProxy<resources::Resource> launch_nd(
-    RAJA::resources::Resource resource,
-    ExecPlace place,
-    launch_nd_flattened_place_policy<HostExecPolicy,
-                                     DeviceExecPolicy,
-                                     LayoutTag>,
-    SegmentPack const& segs,
-    Params&&... params)
-{
-  detail::validate_launch_nd_place_matches_resource(resource, place);
-  switch (place)
-  {
-    case ExecPlace::HOST:
-      return RAJA::launch_nd(
-          resource, launch_nd_flattened_policy<HostExecPolicy, LayoutTag> {},
-          segs, std::forward<Params>(params)...);
-#if defined(RAJA_GPU_ACTIVE)
-    case ExecPlace::DEVICE:
-      return RAJA::launch_nd(
-          resource, launch_nd_flattened_policy<DeviceExecPolicy, LayoutTag> {},
-          segs, std::forward<Params>(params)...);
-#endif
-    default:
-      RAJA_ABORT_OR_THROW("Unknown launch place or device is not enabled");
-  }
-  return resources::EventProxy<resources::Resource>(resource);
 }
 
 template<typename HostPolicy,
