@@ -638,9 +638,9 @@ write more explicit policies.
             parameters. These can be positive integers, in which case they must
             match the number used in the kernel launch. These can also be values
             of the named_usage enum. The possible values are unspecified and
-           ignored. For example, in cuda_thread_x_direct block_size is
-           unspecified so a runtime number of threads is used, but grid_size is
-           ignored so blocks are ignored when getting indices.
+            ignored. For example, in cuda_thread_x_direct block_size is
+            unspecified so a runtime number of threads is used, but grid_size is
+            ignored so blocks are ignored when getting indices.
 
 .. _feat-policies-sycl-label:
 
