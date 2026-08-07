@@ -114,3 +114,7 @@ Use direct ``RAJA::launch`` when the kernel needs explicit shared memory, team
 synchronization, multiple cooperating loops in a single launch body, or other
 hierarchical launch features that do not fit the single logical body accepted by
 ``RAJA::launch_nd``.
+
+When using overloads that take both a ``RAJA::resources::Resource`` and an
+explicit ``RAJA::ExecPlace``, the place must match the resource platform (host
+vs device); otherwise RAJA aborts or throws.

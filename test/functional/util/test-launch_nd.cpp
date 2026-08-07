@@ -100,3 +100,25 @@ TEST(launch_nd, grid_resource)
     }
   }
 }
+
+TEST(launch_nd, resource_place_mismatch_throws)
+{
+  RAJA::resources::Host host_res;
+  RAJA::resources::Resource res(host_res);
+
+  auto rows    = RAJA::TypedRangeSegment<int>(0, 1);
+  auto batches = RAJA::TypedRangeSegment<int>(0, 1);
+
+  // Need gtest death test to avoid complete failure due to eventual seg fault
+#if defined(RAJA_ENABLE_TARGET_OPENMP)
+  EXPECT_DEATH_IF_SUPPORTED(
+      (RAJA::launch_nd(res, RAJA::ExecPlace::DEVICE, flat_policy {},
+                       RAJA::nd_segments(rows, batches), [](int, int) {})),
+      "");
+#else
+  EXPECT_THROW((RAJA::launch_nd(res, RAJA::ExecPlace::DEVICE, flat_policy {},
+                                RAJA::nd_segments(rows, batches),
+                                [](int, int) {})),
+               std::runtime_error);
+#endif
+}

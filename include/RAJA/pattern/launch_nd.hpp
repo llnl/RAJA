@@ -165,6 +165,39 @@ RAJA_INLINE auto make_launch_nd_context(std::string&& kernel_name)
 }
 
 #if defined(RAJA_GPU_ACTIVE)
+RAJA_INLINE void validate_launch_nd_place_matches_resource(
+    RAJA::resources::Resource const& resource,
+    ExecPlace place)
+{
+  const bool resource_is_host =
+      (resource.get_platform() == RAJA::Platform::host);
+
+  if (place == ExecPlace::HOST && !resource_is_host)
+  {
+    RAJA_ABORT_OR_THROW(
+        "RAJA::launch_nd: ExecPlace::HOST requires a host resource");
+  }
+  else if (place == ExecPlace::DEVICE && resource_is_host)
+  {
+    RAJA_ABORT_OR_THROW(
+        "RAJA::launch_nd: ExecPlace::DEVICE requires a device resource");
+  }
+}
+#else
+RAJA_INLINE void validate_launch_nd_place_matches_resource(
+    RAJA::resources::Resource const& resource,
+    ExecPlace place)
+{
+  RAJA_UNUSED_VAR(resource);
+  if (place == ExecPlace::DEVICE)
+  {
+    RAJA_ABORT_OR_THROW(
+        "RAJA::launch_nd: ExecPlace::DEVICE requested but device is not enabled");
+  }
+}
+#endif
+
+#if defined(RAJA_GPU_ACTIVE)
 template<typename PolicyList>
 RAJA_INLINE auto make_launch_nd_context(RAJA::resources::Resource resource,
                                         std::string&& kernel_name)
@@ -674,6 +707,7 @@ resources::EventProxy<resources::Resource> launch_nd(
     SegmentPack const& segs,
     Params&&... params)
 {
+  detail::validate_launch_nd_place_matches_resource(resource, place);
   switch (place)
   {
     case ExecPlace::HOST:
@@ -727,6 +761,7 @@ resources::EventProxy<resources::Resource> launch_nd(
     SegmentPack const& segs,
     Params&&... params)
 {
+  detail::validate_launch_nd_place_matches_resource(resource, place);
   switch (place)
   {
     case ExecPlace::HOST:
