@@ -112,11 +112,15 @@ TEST(launch_nd, resource_place_mismatch_throws)
   // Need gtest death test to avoid complete failure due to eventual seg fault
 #if defined(RAJA_ENABLE_TARGET_OPENMP)
   EXPECT_DEATH_IF_SUPPORTED(
-      (RAJA::launch_nd(res, RAJA::ExecPlace::DEVICE, flat_policy {},
+      (RAJA::launch_nd(res, RAJA::ExecPlace::DEVICE,
+                       RAJA::make_launch_nd_place_policy(flat_policy {},
+                                                        flat_policy {}),
                        RAJA::nd_segments(rows, batches), [](int, int) {})),
       "");
 #else
-  EXPECT_THROW((RAJA::launch_nd(res, RAJA::ExecPlace::DEVICE, flat_policy {},
+  EXPECT_THROW((RAJA::launch_nd(res, RAJA::ExecPlace::DEVICE,
+                                RAJA::make_launch_nd_place_policy(flat_policy {},
+                                                                 flat_policy {}),
                                 RAJA::nd_segments(rows, batches),
                                 [](int, int) {})),
                std::runtime_error);
