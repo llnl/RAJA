@@ -52,14 +52,12 @@ struct TypedRangeSegmentPack
 
 template<typename T>
 struct is_typed_range_segment_pack : std::false_type
-{
-};
+{};
 
 template<typename... IdxTs>
 struct is_typed_range_segment_pack<TypedRangeSegmentPack<IdxTs...>>
     : std::true_type
-{
-};
+{};
 
 template<typename T>
 inline constexpr bool is_typed_range_segment_pack_v =
@@ -71,8 +69,7 @@ struct typed_range_segment_pack_rank;
 template<typename... IdxTs>
 struct typed_range_segment_pack_rank<TypedRangeSegmentPack<IdxTs...>>
     : std::integral_constant<camp::idx_t, sizeof...(IdxTs)>
-{
-};
+{};
 
 template<typename T>
 inline constexpr camp::idx_t typed_range_segment_pack_rank_v =
@@ -123,9 +120,9 @@ struct launch_nd_place_policy
 template<typename HostExecPolicy,
          typename DeviceExecPolicy,
          typename LayoutTag = RAJA::layout_right>
-using launch_nd_flattened_place_policy =
-    launch_nd_place_policy<launch_nd_flattened_policy<HostExecPolicy, LayoutTag>,
-                           launch_nd_flattened_policy<DeviceExecPolicy, LayoutTag>>;
+using launch_nd_flattened_place_policy = launch_nd_place_policy<
+    launch_nd_flattened_policy<HostExecPolicy, LayoutTag>,
+    launch_nd_flattened_policy<DeviceExecPolicy, LayoutTag>>;
 
 template<typename HostPolicy, typename DevicePolicy>
 RAJA_INLINE launch_nd_place_policy<HostPolicy, DevicePolicy>
@@ -185,8 +182,8 @@ RAJA_INLINE void validate_launch_nd_place_matches_resource(
   RAJA_UNUSED_VAR(resource);
   if (place == ExecPlace::DEVICE)
   {
-    RAJA_ABORT_OR_THROW(
-        "RAJA::launch_nd: ExecPlace::DEVICE requested but device is not enabled");
+    RAJA_ABORT_OR_THROW("RAJA::launch_nd: ExecPlace::DEVICE requested but "
+                        "device is not enabled");
   }
 }
 #endif
@@ -353,8 +350,7 @@ template<typename ExecPolicy,
          typename LayoutTag,
          typename Lambda,
          typed_range_segment_pack SegmentPack>
-void launch_nd_flattened_execute(SegmentPack const& segs,
-                                 Lambda&& body)
+void launch_nd_flattened_execute(SegmentPack const& segs, Lambda&& body)
 {
   auto adapter =
       make_launch_nd_adapter<LayoutTag>(std::forward<Lambda>(body), segs);
@@ -410,7 +406,9 @@ struct launch_nd_grid_body_2d
     auto const seg1 = camp::get<1>(segs.data);
 
     RAJA::loop<loop0>(ctx, seg0, [&](auto i0) {
-      RAJA::loop<loop1>(ctx, seg1, [&](auto i1) { body(i0, i1); });
+      RAJA::loop<loop1>(ctx, seg1, [&](auto i1) {
+        body(i0, i1);
+      });
     });
   }
 };
@@ -435,7 +433,9 @@ struct launch_nd_grid_body_3d
 
     RAJA::loop<loop0>(ctx, seg0, [&](auto i0) {
       RAJA::loop<loop1>(ctx, seg1, [&](auto i1) {
-        RAJA::loop<loop2>(ctx, seg2, [&](auto i2) { body(i0, i1, i2); });
+        RAJA::loop<loop2>(ctx, seg2, [&](auto i2) {
+          body(i0, i1, i2);
+        });
       });
     });
   }
@@ -578,10 +578,11 @@ void launch_nd(launch_nd_grid_policy<LaunchPolicy, LoopPolicies...> policy,
                SegmentPack const& segs,
                Params&&... params)
 {
-  static_assert(detail::typed_range_segment_pack_rank_v<std::decay_t<SegmentPack>> ==
-                    static_cast<camp::idx_t>(sizeof...(LoopPolicies)),
-                "RAJA::launch_nd launch backend requires one loop policy per "
-                "segment");
+  static_assert(
+      detail::typed_range_segment_pack_rank_v<std::decay_t<SegmentPack>> ==
+          static_cast<camp::idx_t>(sizeof...(LoopPolicies)),
+      "RAJA::launch_nd launch backend requires one loop policy per "
+      "segment");
 
   auto f_params = expt::make_forall_param_pack(std::forward<Params>(params)...);
   std::string kernel_name =
@@ -602,9 +603,8 @@ void launch_nd(launch_nd_grid_policy<LaunchPolicy, LoopPolicies...> policy,
 
   detail::launch_nd_grid_execute<LaunchPolicy, camp::list<LoopPolicies...>>(
       policy.launch_params, segs, std::move(body),
-      camp::num<
-          detail::typed_range_segment_pack_rank_v<std::decay_t<SegmentPack>>> {
-      });
+      camp::num<detail::typed_range_segment_pack_rank_v<
+          std::decay_t<SegmentPack>>> {});
 
   util::callPostLaunchPlugins(context);
 }
@@ -619,10 +619,11 @@ resources::EventProxy<resources::Resource> launch_nd(
     SegmentPack const& segs,
     Params&&... params)
 {
-  static_assert(detail::typed_range_segment_pack_rank_v<std::decay_t<SegmentPack>> ==
-                    static_cast<camp::idx_t>(sizeof...(LoopPolicies)),
-                "RAJA::launch_nd launch backend requires one loop policy per "
-                "segment");
+  static_assert(
+      detail::typed_range_segment_pack_rank_v<std::decay_t<SegmentPack>> ==
+          static_cast<camp::idx_t>(sizeof...(LoopPolicies)),
+      "RAJA::launch_nd launch backend requires one loop policy per "
+      "segment");
 
   auto f_params = expt::make_forall_param_pack(std::forward<Params>(params)...);
   std::string kernel_name =
@@ -649,9 +650,8 @@ resources::EventProxy<resources::Resource> launch_nd(
   auto event =
       detail::launch_nd_grid_execute<LaunchPolicy, camp::list<LoopPolicies...>>(
           resource, policy.launch_params, segs, std::move(body),
-          camp::num<
-              detail::typed_range_segment_pack_rank_v<std::decay_t<SegmentPack>>> {
-          });
+          camp::num<detail::typed_range_segment_pack_rank_v<
+              std::decay_t<SegmentPack>>> {});
 
   util::callPostLaunchPlugins(context);
   return event;
