@@ -354,20 +354,38 @@ as reductions, conditional execution, and hyperplane iteration.
 Auxiliary Types
 --------------------------------
 
-The following list summarizes auxiliary types used in the above statements. These
-types live in the ``RAJA`` namespace.
+The following table summarizes auxiliary types used in the above statements.
+These types live in the ``RAJA`` namespace.
 
-  * ``tile_fixed<TileSize>`` tile policy argument to a ``Tile`` or ``TileTCount`` statement; partitions loop iterations into tiles of a fixed size specified by ``TileSize``. This statement type can be used as the ``TilePolicy`` template parameter in the ``Tile`` statements above.
+.. list-table::
+   :widths: 34 66
+   :header-rows: 1
 
-  * ``tile_dynamic<ParamIdx>`` TilePolicy argument to a Tile or TileTCount statement; partitions loop iterations into tiles of a size specified by a ``TileSize{}`` positional parameter argument. This statement type can be used as the ``TilePolicy`` template parameter in the ``Tile`` statements above.
-
-  * ``Segs<...>`` argument to a Lambda statement; used to specify which segments in a tuple will be used as lambda arguments.
-
-  * ``Offsets<...>`` argument to a Lambda statement; used to specify which segment offsets in a tuple will be used as lambda arguments.
-
-  * ``Params<...>`` argument to a Lambda statement; used to specify which params in a tuple will be used as lambda arguments.
-
-  * ``ValuesT<T, ...>`` argument to a Lambda statement; used to specify compile time constants, of type T, that will be used as lambda arguments.
+   * - Auxiliary type
+     - Description
+   * - tile_fixed<TileSize>
+     - Tile policy argument to a ``Tile`` or ``TileTCount`` statement;
+       partitions loop iterations into tiles of a fixed size specified by
+       ``TileSize``. This statement type can be used as the ``TilePolicy``
+       template parameter in the ``Tile`` statements above.
+   * - tile_dynamic<ParamIdx>
+     - Tile policy argument to a ``Tile`` or ``TileTCount`` statement;
+       partitions loop iterations into tiles of a size specified by a
+       ``TileSize{}`` positional parameter argument. This statement type can be
+       used as the ``TilePolicy`` template parameter in the ``Tile`` statements
+       above.
+   * - Segs<...>
+     - Argument to a ``Lambda`` statement; used to specify which segments in a
+       tuple will be used as lambda arguments.
+   * - Offsets<...>
+     - Argument to a ``Lambda`` statement; used to specify which segment
+       offsets in a tuple will be used as lambda arguments.
+   * - Params<...>
+     - Argument to a ``Lambda`` statement; used to specify which params in a
+       tuple will be used as lambda arguments.
+   * - ValuesT<T, ...>
+     - Argument to a ``Lambda`` statement; used to specify compile-time
+       constants, of type ``T``, that will be used as lambda arguments.
 
 Examples that show how to use a variety of these statement types can be found
 in :ref:`loop_elements-kernel-label`.
