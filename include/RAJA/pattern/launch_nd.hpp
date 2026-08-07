@@ -84,8 +84,13 @@ concept typed_range_segment_pack =
 
 }  // namespace detail
 
+/*!
+ * Create a segment pack for use with ``RAJA::launch_nd``.
+ *
+ * Currently supports packs of ``RAJA::TypedRangeSegment`` only.
+ */
 template<typename... IdxTs>
-RAJA_INLINE auto segments(RAJA::TypedRangeSegment<IdxTs> const&... segs)
+RAJA_INLINE auto nd_segments(RAJA::TypedRangeSegment<IdxTs> const&... segs)
 {
   return detail::TypedRangeSegmentPack<IdxTs...> {camp::make_tuple(segs...)};
 }

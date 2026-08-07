@@ -385,7 +385,7 @@ void launch_kernel(RAJA::resources::Resource res,
   auto cell_segment = RAJA::TypedRangeSegment<int>(0, size.cells);
   auto comp_segment = RAJA::TypedRangeSegment<int>(0, size.components);
 
-  RAJA::launch_nd(res, exec_place, policy, RAJA::segments(cell_segment, comp_segment),
+  RAJA::launch_nd(res, exec_place, policy, RAJA::nd_segments(cell_segment, comp_segment),
                   RAJA::Name(name.c_str()),
                   [=] RAJA_HOST_DEVICE(int cell, int comp) {
                     values_ptr[comp + size.components * cell] =

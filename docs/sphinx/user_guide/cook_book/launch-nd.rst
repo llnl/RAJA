@@ -104,7 +104,7 @@ Current Capabilities
 --------------------
 
 ``RAJA::launch_nd`` currently supports ``RAJA::TypedRangeSegment`` packs created
-with ``RAJA::segments``. The grid mapping supports 2-D and 3-D loops and
+with ``RAJA::nd_segments``. The grid mapping supports 2-D and 3-D loops and
 requires one loop policy per segment. The flattened mapping uses
 ``RAJA::layout_right`` by default, or ``RAJA::layout_left`` when that layout tag
 is supplied, to control which logical index is unit stride in the flattened

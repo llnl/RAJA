@@ -32,7 +32,7 @@ TEST(launch_nd, layout_right_default_resource)
   auto rows    = RAJA::TypedRangeSegment<int>(0, n);
   auto batches = RAJA::TypedRangeSegment<int>(0, batch_size);
 
-  RAJA::launch_nd(flat_policy {}, RAJA::segments(rows, batches),
+  RAJA::launch_nd(flat_policy {}, RAJA::nd_segments(rows, batches),
                   [&](int r, int b) {
                     values[b + batch_size * r] = 100 * r + b;
                   });
@@ -58,7 +58,7 @@ TEST(launch_nd, layout_left_resource)
   RAJA::resources::Host host_res;
   RAJA::resources::Resource res(host_res);
 
-  RAJA::launch_nd(res, flat_left_policy {}, RAJA::segments(rows, batches),
+  RAJA::launch_nd(res, flat_left_policy {}, RAJA::nd_segments(rows, batches),
                   [&](int r, int b) {
                     values[r + n * b] = 100 * r + b;
                   });
@@ -88,7 +88,7 @@ TEST(launch_nd, grid_resource)
       res,
       RAJA::launch_nd_grid_policy<launch_policy, row_loop, col_loop>(
           RAJA::LaunchParams()),
-      RAJA::segments(rows, batches), [&](int r, int b) {
+      RAJA::nd_segments(rows, batches), [&](int r, int b) {
         values[b + batch_size * r] = 100 * r + b;
       });
 
