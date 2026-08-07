@@ -767,7 +767,7 @@ device, for example. They are summarized in the following table.
 .. _feat-policies-gpu-aliases-label:
 
 -----------------------------------------------------
-Device policy aliases
+Device Policy Aliases
 -----------------------------------------------------
 
 To simplify transitions between GPU back-ends (CUDA/HIP/SYCL) and reduce
