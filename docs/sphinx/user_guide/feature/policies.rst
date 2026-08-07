@@ -127,7 +127,7 @@ The reference links point to the detailed policy tables later in this section.
      - :ref:`Atomic Policies <atomicpolicy-label>`
 
 The tutorial sections provide worked examples that are easier to follow than
-the full reference tables on this page. Please see :ref:`_tutorial-examples-label`.
+the full reference tables on this page. Please see :ref:`tutorial-examples-label`.
 
 -----------------------------------------------------
 How to Read Policy Names
