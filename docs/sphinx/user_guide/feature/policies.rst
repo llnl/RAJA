@@ -135,7 +135,9 @@ How to Read Policy Names
 
 RAJA policy names are intentionally descriptive. Most names combine a back-end
 prefix with words that describe where work runs and how iterations are mapped.
-Understanding these pieces makes the reference tables easier to scan.
+Understanding these pieces makes the reference tables easier to scan. See
+:ref:`policy-glossary-label` for definitions of terms that appear throughout
+the policy reference tables.
 
 Back-end prefixes identify the implementation used by the policy:
 
@@ -1851,3 +1853,110 @@ types live in the ``RAJA`` namespace.
 
 Examples that show how to use a variety of these statement types can be found
 in :ref:`loop_elements-kernel-label`.
+
+.. _policy-glossary-label:
+
+--------------------------------
+Glossary of Policy Terms
+--------------------------------
+
+This glossary defines terms that appear throughout the policy tables. It is not
+intended to be a complete parallel programming glossary; the definitions focus
+on how the terms are used in RAJA policy names and descriptions.
+
+.. glossary::
+
+   execution policy
+     A C++ type that tells RAJA how to execute a loop or related operation.
+     Loop execution policies are used with ``RAJA::forall`` and with
+     individual loop levels in ``RAJA::kernel`` and ``RAJA::launch``.
+
+   launch policy
+     A policy that creates an execution environment for ``RAJA::launch``. Loop
+     policies used inside the launch body then describe how individual loops
+     map onto that environment.
+
+   back-end
+     The programming model or execution target used to run work, such as
+     sequential CPU execution, OpenMP, CUDA, HIP, SYCL, or OpenMP target.
+
+   forall policy
+     A loop execution policy used directly with ``RAJA::forall`` to execute a
+     single loop kernel.
+
+   kernel policy
+     A ``RAJA::KernelPolicy`` type used with ``RAJA::kernel``. A kernel policy
+     is built from statement types that describe loop nesting, loop execution
+     policies, lambda invocation, and other kernel behavior.
+
+   mapping policy
+     A policy that maps a loop level to execution resources such as CPU
+     threads, GPU threads, GPU blocks, SYCL work-items, or SYCL work-groups.
+
+   direct mapping
+     A mapping in which each execution resource maps directly to one loop
+     iterate, with bounds masking for out-of-range resources.
+
+   direct unchecked mapping
+     A direct mapping without bounds checks. Use unchecked policies only when
+     the execution shape exactly matches the iteration space required by the
+     policy.
+
+   loop mapping
+     A mapping in which execution resources cover the iteration space using a
+     strided loop. Loop mappings are usually the most forgiving GPU mapping
+     choice when the iteration space may be larger than the selected execution
+     shape.
+
+   strided loop
+     A loop pattern where one execution resource handles multiple loop iterates
+     separated by a fixed stride, often the number of available threads,
+     blocks, work-items, or work-groups.
+
+   thread
+     In CUDA/HIP policy names, a GPU thread in a thread block. In more general
+     descriptions, this may also refer to a CPU thread when the context is
+     OpenMP.
+
+   block
+     In CUDA/HIP policy names, a GPU thread block. A block contains one or more
+     GPU threads and can support block-local synchronization.
+
+   warp
+     A CUDA/HIP group of GPU threads that execute together at warp level. RAJA
+     provides specialized warp mapping and warp reduction policies for kernels
+     that need this level of control.
+
+   global thread
+     A unique GPU thread index formed from block and thread indices. Global
+     thread mapping policies are often a good fit for simple data-parallel
+     loops.
+
+   work-item
+     In SYCL policy names, an individual unit of work within a work-group. It
+     is roughly analogous to a CUDA/HIP thread.
+
+   work-group
+     In SYCL policy names, a group of work-items that execute together. It is
+     roughly analogous to a CUDA/HIP thread block.
+
+   occupancy
+     A measure of how much GPU execution capacity a kernel can use. RAJA
+     provides CUDA/HIP occupancy policies that choose launch parameters using
+     occupancy information.
+
+   concretizer
+     A helper type used by some CUDA/HIP occupancy policies to choose launch
+     parameters that were not specified directly in the policy.
+
+   reduction policy
+     A policy used by RAJA reduction objects or reduction statements to combine
+     values across loop iterates or threads.
+
+   atomic policy
+     A policy used by RAJA atomic operations to select the atomic implementation
+     appropriate for the active loop back-end.
+
+   device alias
+     A ``device_*`` policy alias that resolves to the active GPU back-end when
+     RAJA is built with CUDA, HIP, or SYCL support.
