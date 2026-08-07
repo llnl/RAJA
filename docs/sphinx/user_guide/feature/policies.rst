@@ -65,9 +65,9 @@ Local array memory policies            Choosing where ``RAJA::LocalArray``
                                        storage lives.
 ====================================== ========================================
 
-For a first implementation, users usually start with one of the policies below
-and move to more specialized policies only when they need a specific scheduling,
-mapping, synchronization, or performance behavior.
+For a first implementation, we recommend starting with one of the policies below
+and then move to more specialized policies when specific scheduling, mapping,
+synchronization, or performance behavior is needed.
 
 Common Goals Quick Reference
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,9 +127,7 @@ The reference links point to the detailed policy tables later in this section.
      - :ref:`Atomic Policies <atomicpolicy-label>`
 
 The tutorial sections provide worked examples that are easier to follow than
-the full reference tables on this page. See :ref:`tut-kernelexecpols-label`
-for ``RAJA::kernel`` examples and :ref:`tut-launchexecpols-label` for
-``RAJA::launch`` examples.
+the full reference tables on this page. Please see :ref:`_tutorial-examples-label`.
 
 -----------------------------------------------------
 How to Read Policy Names
