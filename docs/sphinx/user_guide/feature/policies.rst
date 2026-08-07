@@ -1039,11 +1039,11 @@ Policies with ``{0,1,2}`` indicate that the same policy family is available for
 each SYCL dimension. See the note above for how SYCL dimensions relate to
 CUDA/HIP x/y/z-style indexing.
 
-.. list-table:: SYCL Execution Policies
+.. list-table::
    :widths: 38 18 44
    :header-rows: 1
 
-   * - Policy family
+   * - SYCL execution policy family
      - Works with
      - Brief description
    * - sycl_exec<WORK_GROUP_SIZE>
@@ -1151,17 +1151,18 @@ the loop execution and reduction policies both follow the active GPU back-end:
           makes the code more portable because one can swap execution policies
           to run on the device or host without changing the lambda annotation.
 
-In the table below, ``partial`` means that the alias family exists for that
+The table below summarizes coverage of the device alias policies available in RAJA.
+In the table, *partial* means that the alias family exists for that
 back-end, but not every variant in the row is available for that back-end.
 The table lists aliases available when building with a GPU device back-end
 (i.e., when ``ENABLE_CUDA``, ``ENABLE_HIP``, or ``RAJA_ENABLE_SYCL`` is turned
 on in a RAJA build configuration).
 
-.. list-table:: ``device_*`` alias coverage
+.. list-table::
    :widths: 34 14 14 14 24
    :header-rows: 1
 
-   * - Alias family
+   * - Device policy alias family
      - CUDA
      - HIP
      - SYCL
@@ -1574,8 +1575,8 @@ The main Statement types provided by RAJA are ``RAJA::statement::For`` and
 one entry in the iteration-space tuple passed to ``RAJA::kernel``. A
 ``Lambda`` statement invokes a lambda expressions passed to ``RAJA::kernel``.
 
-Basic For and Lambda Example
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``RAJA::statement``: Basic For and Lambda Example
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We have seen how a simple sequential for-loop::
 
