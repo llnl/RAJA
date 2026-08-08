@@ -459,7 +459,8 @@ private:
     }
     else
     {
-      using loop_policy = typename camp::at<LoopPolicyList, camp::num<Dim>>::type;
+      using loop_policy =
+          typename camp::at<LoopPolicyList, camp::num<Dim>>::type;
       auto const seg = camp::get<Dim>(segs.data);
 
       RAJA::loop<loop_policy>(ctx, seg, [&](auto idx) {
