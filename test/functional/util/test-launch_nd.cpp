@@ -20,6 +20,7 @@ using flat_left_policy =
     RAJA::launch_nd_flattened_policy<RAJA::seq_exec, RAJA::layout_left>;
 using row_loop = RAJA::LoopPolicy<RAJA::seq_exec>;
 using col_loop = RAJA::LoopPolicy<RAJA::seq_exec>;
+using depth_loop = RAJA::LoopPolicy<RAJA::seq_exec>;
 
 }  // namespace
 
@@ -97,6 +98,43 @@ TEST(launch_nd, grid_resource)
     for (int b = 0; b < batch_size; ++b)
     {
       ASSERT_EQ(values[b + batch_size * r], 100 * r + b);
+    }
+  }
+}
+
+TEST(launch_nd, grid_3d_resource)
+{
+  constexpr int n          = 3;
+  constexpr int batch_size = 4;
+  constexpr int depth      = 2;
+
+  std::vector<int> values(n * batch_size * depth, -1);
+  auto rows    = RAJA::TypedRangeSegment<int>(0, n);
+  auto batches = RAJA::TypedRangeSegment<int>(0, batch_size);
+  auto depths  = RAJA::TypedRangeSegment<int>(0, depth);
+
+  RAJA::resources::Host host_res;
+  RAJA::resources::Resource res(host_res);
+
+  RAJA::launch_nd(
+      res,
+      RAJA::launch_nd_grid_policy<launch_policy,
+                                  row_loop,
+                                  col_loop,
+                                  depth_loop>(RAJA::LaunchParams()),
+      RAJA::nd_segments(rows, batches, depths), [&](int r, int b, int d) {
+        values[d + depth * (b + batch_size * r)] = 100 * r + 10 * b + d;
+      });
+
+  for (int r = 0; r < n; ++r)
+  {
+    for (int b = 0; b < batch_size; ++b)
+    {
+      for (int d = 0; d < depth; ++d)
+      {
+        ASSERT_EQ(values[d + depth * (b + batch_size * r)],
+                  100 * r + 10 * b + d);
+      }
     }
   }
 }
