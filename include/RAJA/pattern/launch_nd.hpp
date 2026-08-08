@@ -346,6 +346,17 @@ struct launch_nd_flattened_launch_traits<
 };
 #endif
 
+template<typename LoopPolicy, typename Adapter>
+struct launch_nd_flattened_body
+{
+  Adapter adapter;
+
+  RAJA_HOST_DEVICE RAJA_INLINE void operator()(RAJA::LaunchContext ctx) const
+  {
+    RAJA::loop<LoopPolicy>(ctx, adapter.getRange(), adapter);
+  }
+};
+
 template<typename ExecPolicy,
          typename LayoutTag,
          typename Lambda,
@@ -359,11 +370,10 @@ void launch_nd_flattened_execute(SegmentPack const& segs, Lambda&& body)
   using launch_policy = typename traits::launch_policy;
   using loop_policy   = typename traits::loop_policy;
 
-  RAJA::launch<launch_policy>(traits::make_launch_params(adapter.size()),
-                              [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx) {
-                                RAJA::loop<loop_policy>(ctx, adapter.getRange(),
-                                                        adapter);
-                              });
+  RAJA::launch<launch_policy>(
+      traits::make_launch_params(adapter.size()),
+      launch_nd_flattened_body<loop_policy, camp::decay<decltype(adapter)>> {
+          std::move(adapter)});
 }
 
 template<typename ExecPolicy,
@@ -384,9 +394,8 @@ resources::EventProxy<resources::Resource> launch_nd_flattened_execute(
 
   return RAJA::launch<launch_policy>(
       resource, traits::make_launch_params(adapter.size()),
-      [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx) {
-        RAJA::loop<loop_policy>(ctx, adapter.getRange(), adapter);
-      });
+      launch_nd_flattened_body<loop_policy, camp::decay<decltype(adapter)>> {
+          std::move(adapter)});
 }
 
 template<typename LoopPolicyList,
