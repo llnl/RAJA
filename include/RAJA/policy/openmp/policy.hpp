@@ -24,6 +24,8 @@
 #include <omp.h>
 
 #include "RAJA/policy/PolicyBase.hpp"
+#include "RAJA/pattern/launch/launch_context_policy.hpp"
+#include "RAJA/util/macros.hpp"
 
 // Rely on builtin_atomic when OpenMP can't do the job
 #include "RAJA/policy/atomic_builtin.hpp"
@@ -44,6 +46,13 @@ typedef enum omp_sched_t
 
 namespace RAJA
 {
+
+template<>
+struct reduction_supported_policies<Policy::openmp>
+{
+  using type = PolicyList<Policy::sequential, Policy::openmp>;
+};
+
 namespace omp
 {
 
@@ -344,7 +353,7 @@ struct omp_atomic
 
 #endif
 
-struct omp_thread
+struct omp_thread : make_policy_pattern_t<Policy::openmp, Pattern::undefined>
 {};
 
 template<RAJA::omp::multi_reduce_algorithm algorithm>
@@ -478,6 +487,24 @@ using policy::omp::omp_synchronize;
 
 ///
 using policy::omp::omp_work;
+
+template<typename POLICY>
+struct MaskExecute;
+
+template<>
+struct MaskExecute<RAJA::policy::omp::omp_thread>
+{
+  template<typename LaunchContextPolicy, typename BODY>
+  static RAJA_INLINE RAJA_HOST_DEVICE void exec(
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
+      BODY const& body)
+  {
+    if (omp_get_thread_num() == 0)
+    {
+      body();
+    }
+  }
+};
 
 }  // namespace RAJA
 

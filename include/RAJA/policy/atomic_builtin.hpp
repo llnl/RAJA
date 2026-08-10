@@ -22,6 +22,7 @@
 
 #include "RAJA/config.hpp"
 
+#include <concepts>
 #include <cstdint>
 #include <utility>
 
@@ -993,6 +994,16 @@ RAJA_DEVICE_HIP RAJA_INLINE T atomicGeneric(builtin_atomic,
 {
   return detail::builtin_atomicCAS_loop(acc,
                                         std::forward<Operation>(operation));
+}
+
+template<typename T, typename Operation, std::predicate<T> StopPredicate>
+RAJA_DEVICE_HIP RAJA_INLINE T atomicGeneric(builtin_atomic,
+                                            T* acc,
+                                            Operation&& operation,
+                                            StopPredicate&& stop)
+{
+  return detail::builtin_atomicCAS_loop(acc, std::forward<Operation>(operation),
+                                        std::forward<StopPredicate>(stop));
 }
 
 

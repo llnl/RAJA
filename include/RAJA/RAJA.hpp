@@ -97,6 +97,8 @@
 #include "RAJA/policy/desul.hpp"
 #endif
 
+#include "RAJA/policy/device.hpp"
+
 #include "RAJA/index/IndexSet.hpp"
 
 //
@@ -182,6 +184,11 @@
 // Synchronization
 //
 #include "RAJA/pattern/synchronize.hpp"
+
+//
+// Message handler to pass messages between host and device
+//
+#include "RAJA/pattern/messages.hpp"
 
 //
 //////////////////////////////////////////////////////////////////////

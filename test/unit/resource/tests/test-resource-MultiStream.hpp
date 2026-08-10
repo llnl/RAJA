@@ -47,8 +47,8 @@ void ResourceMultiStreamTestImpl()
       }
   });
 
-  dev1.wait_for(&e2);
-  dev1.wait_for(&e3);
+  dev1.wait_for(e2);
+  dev1.wait_for(e3);
 
   dev1.memcpy(h_array, d_array, sizeof(int) * ARRAY_SIZE);
 

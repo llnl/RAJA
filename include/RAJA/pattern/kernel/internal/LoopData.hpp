@@ -129,7 +129,7 @@ struct LoopData
       typename RAJA::expt::detail::ParamToArgHelper<ParamTuple>::type;
   ParamTuple param_tuple;
 
-  Resource res;
+  Resource* res;
 
   // Lambdas that were passed into the kernel
   using BodiesTuple = camp::tuple<Bodies...>;
@@ -143,11 +143,11 @@ struct LoopData
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr LoopData(SegmentTuple const& s,
                                                   ParamTuple const& p,
-                                                  Resource r,
+                                                  Resource& r,
                                                   Bodies const&... b)
       : segment_tuple(s),
         param_tuple(p),
-        res(r),
+        res(&r),
         bodies(b...)
   {}
 
@@ -175,7 +175,7 @@ struct LoopData
     return camp::get<ParamId::param_idx>(param_tuple);
   }
 
-  RAJA_HOST_DEVICE RAJA_INLINE Resource get_resource() { return res; }
+  RAJA_INLINE Resource& get_resource() { return *res; }
 };
 
 template<camp::idx_t ArgumentId, typename Data>

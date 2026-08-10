@@ -57,6 +57,20 @@ then enclosed by a host/device lambda which takes a
 ``RAJA::LaunchContext`` object, which may be used to control the flow 
 within the kernel, for example by creating thread-team synchronization points.
 
+.. note::
+  RAJA treats ``Teams(i,j,k)`` and ``Threads(i,j,k)`` as an (x,y,z) ordering.
+  For users who prefer SYCL's (dim0, dim1, dim2) ordering, RAJA provides
+  ``Teams::sycl_order(dim0, dim1, dim2)`` and
+  ``Threads::sycl_order(dim0, dim1, dim2)``, which map SYCL dimensions to
+  RAJA coordinates as ``x = dim2``, ``y = dim1``, and ``z = dim0``. In other
+  words, ``Teams::sycl_order(dim0, dim1, dim2)`` is equivalent to
+  ``Teams(dim2, dim1, dim0)``, and similarly for ``Threads``. For example::
+
+    RAJA::LaunchParams(RAJA::Teams::sycl_order(g0, g1, g2),
+                       RAJA::Threads::sycl_order(l0, l1, l2))
+
+  See also the example ``examples/launch-device-policy-aliases.cpp``.
+
 Inside the execution space, developers write a kernel using nested
 ``RAJA::loop`` methods. The manner in which each loop is executed 
 is determined by a template parameter type, which
@@ -97,4 +111,13 @@ equivalent of the kernel body using the policy shown above is:
 .. literalinclude:: ../../../../examples/tut_launch_basic.cpp
    :start-after: // _device_loop_start
    :end-before: // _device_loop_end
+   :language: C++
+
+When only one logical thread should execute a piece of work inside a RAJA::launch
+kernel execution space, use ``RAJA::mask<threads_x>(ctx, ...)``. This keeps the intent explicit
+for per-team setup before a synchronization point:
+
+.. literalinclude:: ../../../../examples/raja-launch.cpp
+   :start-after: // __mask_loop_start
+   :end-before: // __mask_loop_end
    :language: C++

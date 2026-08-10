@@ -32,6 +32,16 @@ endif()
 #
 # Generate tests for each enabled RAJA back-end.
 #
+foreach( SCAN_BACKEND ${SORT_BACKENDS} )
+  configure_file( test-algorithm-scan.cpp.in
+                  test-algorithm-scan-${SCAN_BACKEND}.cpp )
+  raja_add_test( NAME test-algorithm-scan-${SCAN_BACKEND}
+                 SOURCES ${CMAKE_CURRENT_BINARY_DIR}/test-algorithm-scan-${SCAN_BACKEND}.cpp )
+
+  target_include_directories(test-algorithm-scan-${SCAN_BACKEND}.exe
+                               PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+endforeach()
+
 foreach( SORT_BACKEND ${SORT_BACKENDS} )
   configure_file( test-algorithm-sort.cpp.in
                   test-algorithm-sort-${SORT_BACKEND}.cpp )

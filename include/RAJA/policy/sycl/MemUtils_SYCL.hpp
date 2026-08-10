@@ -27,44 +27,17 @@
 
 #include "RAJA/util/sycl_compat.hpp"
 
-#include <cassert>
 #include <cstddef>
-#include <cstdio>
-#include <mutex>
-#include <type_traits>
-#include <unordered_map>
-
 
 #include "RAJA/util/basic_mempool.hpp"
-#include "RAJA/util/types.hpp"
 
-#include "RAJA/policy/sycl/policy.hpp"
+#include "camp/resource/sycl.hpp"
 
 namespace RAJA
 {
 
 namespace sycl
 {
-
-namespace detail
-{
-
-//! struct containing data necessary to coordinate kernel launches with reducers
-struct syclInfo
-{
-  sycl_dim_t gridDim {0};
-  sycl_dim_t blockDim {0};
-  ::sycl::queue qu    = ::sycl::queue();
-  bool setup_reducers = false;
-};
-
-extern syclInfo g_status;
-
-thread_local extern syclInfo tl_status;
-
-extern std::unordered_map<::sycl::queue, bool> g_queue_info_map;
-
-}  // namespace detail
 
 //! Allocator for pinned memory for use in basic_mempool
 struct PinnedAllocator
@@ -74,8 +47,9 @@ struct PinnedAllocator
   void* malloc(size_t nbytes)
   {
     void* ptr;
-    ::sycl::queue* q = ::camp::resources::Sycl::get_default().get_queue();
-    ptr              = ::sycl::malloc_host(nbytes, *q);
+    auto resource    = ::camp::resources::Sycl::get_default();
+    ::sycl::queue& q = resource.get_queue();
+    ptr              = ::sycl::malloc_host(nbytes, q);
     return ptr;
   }
 
@@ -83,8 +57,9 @@ struct PinnedAllocator
   // Will throw if ptr is not in q's context
   bool free(void* ptr)
   {
-    ::sycl::queue* q = ::camp::resources::Sycl::get_default().get_queue();
-    ::sycl::free(ptr, *q);
+    auto resource    = ::camp::resources::Sycl::get_default();
+    ::sycl::queue& q = resource.get_queue();
+    ::sycl::free(ptr, q);
     return true;
   }
 };
@@ -97,8 +72,9 @@ struct DeviceAllocator
   void* malloc(size_t nbytes)
   {
     void* ptr;
-    ::sycl::queue* q = ::camp::resources::Sycl::get_default().get_queue();
-    ptr              = ::sycl::malloc_device(nbytes, *q);
+    auto resource    = ::camp::resources::Sycl::get_default();
+    ::sycl::queue& q = resource.get_queue();
+    ptr              = ::sycl::malloc_device(nbytes, q);
     return ptr;
   }
 
@@ -106,8 +82,9 @@ struct DeviceAllocator
   // Will throw if ptr is not in q's context
   bool free(void* ptr)
   {
-    ::sycl::queue* q = ::camp::resources::Sycl::get_default().get_queue();
-    ::sycl::free(ptr, *q);
+    auto resource    = ::camp::resources::Sycl::get_default();
+    ::sycl::queue& q = resource.get_queue();
+    ::sycl::free(ptr, q);
     return true;
   }
 };
@@ -121,9 +98,10 @@ struct DeviceZeroedAllocator
   void* malloc(size_t nbytes)
   {
     void* ptr;
-    ::sycl::queue* q = ::camp::resources::Sycl::get_default().get_queue();
-    ptr              = ::sycl::malloc_device(nbytes, *q);
-    q->memset(ptr, 0, nbytes);
+    auto resource    = ::camp::resources::Sycl::get_default();
+    ::sycl::queue& q = resource.get_queue();
+    ptr              = ::sycl::malloc_device(nbytes, q);
+    q.memset(ptr, 0, nbytes);
     return ptr;
   }
 
@@ -131,8 +109,9 @@ struct DeviceZeroedAllocator
   // Will throw if ptr is not in q's context
   bool free(void* ptr)
   {
-    ::sycl::queue* q = ::camp::resources::Sycl::get_default().get_queue();
-    ::sycl::free(ptr, *q);
+    auto resource    = ::camp::resources::Sycl::get_default();
+    ::sycl::queue& q = resource.get_queue();
+    ::sycl::free(ptr, q);
     return true;
   }
 };

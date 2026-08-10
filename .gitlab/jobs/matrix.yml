@@ -36,3 +36,8 @@ clang_18_1_8_cuda_12_6_0:
   variables:
     SPEC: " ~shared +cuda cuda_arch=90 +tests %llvm@=18.1.8 ^cuda@12.6.0+allow-unsupported-compilers"
   extends: .job_on_matrix
+
+clang_18_1_8_cuda_13_1_1:
+  variables:
+    SPEC: " ~shared +cuda cuda_arch=90 +tests %llvm@=18.1.8 ^cuda@13.1.1+allow-unsupported-compilers"
+  extends: .job_on_matrix

@@ -33,6 +33,10 @@ Also
             a CUDA kernel, a CUDA reduction policy must be used.
           * Each RAJA reduction type accepts an **initial reduction value or
             values** at construction (see below).
+          * Each RAJA reduction type optionally accepts a **``RAJA::Policy``
+            enum value** argument at construction and reset (see below). A
+            specific policy argument must match the execution-policy family
+            used by the kernel in which the reducer is used.
           * Each RAJA reduction type has a 'get' method to access reduced
             values after kernel execution completes.
 
@@ -80,6 +84,41 @@ and two less common bitwise reduction types:
             where the min or max occurs.
 
 .. note:: ``RAJA::ReduceBitAnd`` and ``RAJA::ReduceBitOr`` reduction types are designed to work on integral data types because **in C++, at the language level, there is no such thing as a bitwise operator on floating-point numbers.**
+
+-------------------
+Reduction Policies
+-------------------
+
+For more information about available RAJA reduction policies and guidance
+on which to use with RAJA execution policies, please see
+:ref:`reducepolicy-label`.
+
+------------------------
+Runtime Policy Selection
+------------------------
+
+The optional ``RAJA::Policy`` argument on a reducer constructor or ``reset``
+call selects the family of loop execution policies that the reducer object
+will support at runtime.
+
+* Constructing a reducer with no ``RAJA::Policy`` argument, or with
+  ``RAJA::Policy::undefined``, supports any loop execution policy supported
+  by the reducer's reduction policy.
+* Constructing a reducer with a specific policy, such as
+  ``RAJA::Policy::sequential``, restricts that object to that execution-policy
+  family.
+* Calling ``reset(...)`` with no policy argument preserves the object's
+  current runtime policy support.
+* Calling ``reset(RAJA::Policy::undefined, ...)`` broadens the object back to
+  any loop execution policy supported by the reduction policy.
+* Calling ``reset(specific_policy, ...)`` narrows the object to that
+  execution-policy family.
+
+Using a reducer in a loop whose execution policy does not match the most recent
+constructor or ``reset`` policy setup is undefined behavior. When the execution
+policy is known by type, ``RAJA::policy_of<exec_policy>::value`` is the
+preferred way to pass the matching ``RAJA::Policy`` value. Use an explicit
+``RAJA::Policy::*`` value when selecting the policy at runtime.
 
 -------------------
 Reduction Examples
@@ -162,13 +201,121 @@ The result of the reduction is the value '13'. In binary representation
 :math:`5 = ...00101` (the initial reduction value).
 So :math:`9 | 5 = ...01001 | ...00101 = ...01101 = 13`.
 
--------------------
-Reduction Policies
--------------------
+----------------------------------------------------------------------
+Reduction Example with Differing Reduction and Loop Execution Policies
+----------------------------------------------------------------------
 
-For more information about available RAJA reduction policies and guidance
-on which to use with RAJA execution policies, please see
-:ref:`reducepolicy-label`.
+Here, we provide more a advanced example of RAJA Reduction types used with
+different a loop execution policy.
+
+Note that the reduction policy must support the loop execution policy that the
+reduction object is used with, see the policy section for details:
+
+ * :ref:`reducepolicy-label`.
+
+Here is a RAJA reduction example that shows how to use a sum reduction
+type with a different reduction policy than the execution policy::
+
+  //
+  // Initialize array of length N with all ones. Then, set some other
+  // values in the array to make the example mildly interesting...
+  //
+  int vec[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+  // Create sum reduction objects with initial value of zero
+  RAJA::ReduceSum< RAJA::cuda_reduce, int > vsum0(0);
+  RAJA::ReduceSum< RAJA::cuda_reduce, int > vsum1(RAJA::Policy::undefined, 0);
+  RAJA::ReduceSum< RAJA::cuda_reduce, int > vsum2(RAJA::Policy::sequential, 0);
+
+  // Run a kernel using the reduction objects
+  RAJA::forall<RAJA::sequential_exec>( RAJA::RangeSegment(0, 10),
+    [=](RAJA::Index_type i) {
+
+    vsum0 += vec[i];
+    vsum1 += vec[i];
+    vsum2 += vec[i];
+
+  });
+
+  // After kernel is run, extract the reduced values
+  int my_vsum0 = static_cast<int>(vsum0.get());
+  int my_vsum1 = static_cast<int>(vsum1.get());
+  int my_vsum2 = static_cast<int>(vsum2.get());
+
+The results of these operations will yield the following values:
+
+ * my_vsum0 == 10
+ * my_vsum1 == 10
+ * my_vsum2 == 10
+
+Note that the setup steps of vsum0 and vsum1 have to prepare for all of the
+loop execution policies supported by ``RAJA::cuda_reduce`` while the setup of
+vsum2 only has to prepare for sequential loops. This reduces the cost and
+ensures that no cuda calls are made by vsum2 during its lifetime.
+
+------------------------
+Reducer Helper Utilities
+------------------------
+
+RAJA also provides small reducer helper classes and functions in
+``RAJA/util/reduce.hpp``. These helpers are useful when values are already in a
+range-like object, or when an algorithm needs to combine values incrementally
+outside a ``RAJA::forall``, ``RAJA::kernel``, or ``RAJA::launch`` body.
+They are also available through the main ``RAJA/RAJA.hpp`` header.
+
+The range helper functions are:
+
+* ``RAJA::accumulate`` and ``RAJA::left_fold_reduce`` - combine values with a
+  left-fold algorithm in input order using ``O(N)`` operations and ``O(1)``
+  extra memory. ``RAJA::accumulate`` is the most direct analogue to
+  ``std::accumulate``.
+
+* ``RAJA::binary_tree_reduce`` - combines values with a binary-tree algorithm
+  using ``O(N)`` operations and ``O(log(N))`` extra memory. Since this changes
+  the grouping of operations, it is best suited to associative operations.
+
+* ``RAJA::high_accuracy_reduce`` - chooses a higher-accuracy implementation
+  when floating-point round-off is a concern, and otherwise uses a left fold.
+
+* ``RAJA::kahan_sum`` and ``RAJA::kahan_sum_volatile`` - perform compensated
+  summation for floating-point ranges. The volatile variant keeps intermediate
+  values volatile to discourage compiler optimizations, such as fast-math
+  transformations, that can remove the compensation steps.
+
+For example::
+
+  std::array<int, 4> ints {1, 2, 3, 4};
+
+  int sum = RAJA::accumulate(ints, 0);
+
+  int max = RAJA::binary_tree_reduce(
+      ints,
+      RAJA::operators::maximum<int>::identity(),
+      RAJA::operators::maximum<int> {});
+
+  std::array<double, 4> vals {1.0e16, 1.0, -1.0e16, 3.0};
+
+  double compensated_sum = RAJA::kahan_sum(vals);
+
+The corresponding reducer helper types are ``RAJA::LeftFoldReduce``,
+``RAJA::BinaryTreeReduce``, ``RAJA::HighAccuracyReduce``, and
+``RAJA::KahanSum``. These types expose a small common interface:
+
+* ``combine(value)`` and ``operator+=(value)`` add a value to the reducer.
+* ``get()`` returns the current reduced value.
+* ``reset(init)`` resets the reducer to an initial value.
+* ``get_and_reset(init)`` returns the current value and then resets the
+  reducer.
+
+For example::
+
+  RAJA::KahanSum<double> reducer(0.0);
+
+  for (double value : vals) {
+    reducer += value;
+  }
+
+  double result = reducer.get_and_reset();
 
 --------------------------------
 Experimental Reduction Interface
