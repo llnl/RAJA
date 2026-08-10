@@ -130,7 +130,8 @@ include(cmake/SetupCompilers.cmake)
 include (cmake/RAJAMacros.cmake)
 
 # Configure `style` target for enforcing code style
-raja_add_code_checks()
+# TODO(bowen) Add examples, exercises, test, and benchmark to the list below
+raja_add_code_checks(DIRS "RAJA" "include" "src")
 
 set (raja_sources
   src/AlignedRangeIndexSetBuilders.cpp
