@@ -188,6 +188,23 @@ RAJA_INLINE void validate_launch_nd_place_matches_resource(
 }
 #endif
 
+template<typename ExecPolicy, typename LayoutTag>
+RAJA_INLINE RAJA::resources::Resource get_launch_nd_default_resource(
+    launch_nd_flattened_policy<ExecPolicy, LayoutTag> const&)
+{
+  using Res = typename resources::get_resource<ExecPolicy>::type;
+  return RAJA::resources::Resource(Res::get_default());
+}
+
+template<typename LaunchPolicy, typename... LoopPolicies>
+RAJA_INLINE RAJA::resources::Resource get_launch_nd_default_resource(
+    launch_nd_grid_policy<LaunchPolicy, LoopPolicies...> const&)
+{
+  using Res = typename resources::get_resource<
+      typename LaunchPolicy::host_policy_t>::type;
+  return RAJA::resources::Resource(Res::get_default());
+}
+
 #if defined(RAJA_GPU_ACTIVE)
 template<typename PolicyList>
 RAJA_INLINE auto make_launch_nd_context(RAJA::resources::Resource resource,
@@ -611,10 +628,14 @@ void launch_nd(ExecPlace place,
   switch (place)
   {
     case ExecPlace::HOST:
+      detail::validate_launch_nd_place_matches_resource(
+          detail::get_launch_nd_default_resource(policy.host), place);
       RAJA::launch_nd(policy.host, segs, std::forward<Params>(params)...);
       break;
 #if defined(RAJA_GPU_ACTIVE)
     case ExecPlace::DEVICE:
+      detail::validate_launch_nd_place_matches_resource(
+          detail::get_launch_nd_default_resource(policy.device), place);
       RAJA::launch_nd(policy.device, segs, std::forward<Params>(params)...);
       break;
 #endif
