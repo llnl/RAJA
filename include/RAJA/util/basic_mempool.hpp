@@ -346,7 +346,7 @@ public:
   {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    size_t released = 0;
+    size_t released                     = 0;
     arena_container_type::iterator iter = m_arenas.begin();
     while (iter != m_arenas.end())
     {
