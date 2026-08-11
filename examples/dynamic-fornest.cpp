@@ -79,6 +79,14 @@ using policy_list = camp::list<seq_nested,
 #endif
                                >;
 
+/*
+ * Print the list of selectable policies and their numeric indices.
+ *
+ * This is used for the help/usage message. The ordering here is the "UI view"
+ * of `policy_list`, so it must stay consistent with:
+ *  - get_policy_name(): to print the selected policy label
+ *  - parse_policy_arg(): to translate stable string aliases to indices
+ */
 static void print_policy_menu()
 {
   int idx    = 0;
@@ -104,6 +112,12 @@ static void print_policy_menu()
 #endif
 }
 
+/*
+ * Map a policy index to a human-readable name for logging.
+ *
+ * Returns "<unknown>" for out-of-range indices. The ordering must match
+ * `print_policy_menu()` and `policy_list`.
+ */
 static const char* get_policy_name(int pol)
 {
   int idx    = 0;
@@ -135,6 +149,15 @@ static const char* get_policy_name(int pol)
   return "<unknown>";
 }
 
+/*
+ * Parse the policy selector passed on the command line.
+ *
+ * Supports:
+ *  - numeric indices (e.g., "0", "3", ...)
+ *  - stable string aliases (e.g., "seq", "dev256_flat", ...)
+ *
+ * On success, writes the selected policy index into `pol_out` and returns true.
+ */
 static bool parse_policy_arg(const char* arg, int& pol_out)
 {
   std::string s(arg ? arg : "");
@@ -193,6 +216,12 @@ static bool parse_policy_arg(const char* arg, int& pol_out)
   return false;
 }
 
+/*
+ * Validate the kernel output against the expected reference values.
+ *
+ * This is a lightweight correctness check for the example: each output element
+ * should equal `1000*i + j` at logical index (i, j).
+ */
 static void check_result(const int* out, int ni, int nj)
 {
   int errors = 0;

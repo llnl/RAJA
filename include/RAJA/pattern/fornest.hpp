@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <cmath>
 #include <iterator>
+#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -55,6 +56,18 @@ namespace RAJA
 /*!
  * Policy wrapper that requests a flattened mapping for a rank-2 or rank-3
  * fornest.
+ *
+ * With a flattened policy, `RAJA::fornest` linearizes the 2D/3D iteration
+ * space and executes a single 1D `RAJA::forall` over that linear index.
+ * The `LayoutTag` controls how the linear index is mapped back to `(i0,i1)`
+ * or `(i0,i1,i2)` (e.g., `RAJA::layout_right` vs `RAJA::layout_left`).
+ *
+ * Notes:
+ * - The provided segments must support random-access iteration since the
+ *   implementation computes `*(seg.begin() + offset)` to recover the per-dim
+ *   index values.
+ * - Optional `forall` parameters (e.g., `RAJA::kernel_name`, reducers) are
+ *   supported and forwarded to the underlying `RAJA::forall`.
  */
 template<typename ExecPolicy, typename LayoutTag = RAJA::layout_right>
 struct fornest_flattened_policy
@@ -67,7 +80,16 @@ struct fornest_flattened_policy
  * Policy wrapper that requests an explicit per-dimension mapping for a rank-2
  * or rank-3 fornest.
  *
- * LoopPolicies must be RAJA::LoopPolicy<HostPolicy, DevicePolicy> types.
+ * With a mapping policy, `RAJA::fornest` builds a nested `RAJA::launch` region
+ * and applies one `RAJA::loop` per dimension using the provided loop policies.
+ * This is the interface used to request specific CUDA/HIP mappings such as
+ * mapping one dimension to `thread_x` and another to `block_y`, etc.
+ *
+ * `LoopPolicies...` must be `RAJA::LoopPolicy<HostPolicy[, DevicePolicy]>`
+ * types (the optional device policy parameter is available when GPU support
+ * is enabled). Examples:
+ * - `RAJA::LoopPolicy<RAJA::seq_exec>` (portable host-only nested loops)
+ * - `RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_thread_x_direct>` (CUDA/HIP)
  */
 template<typename ExecPolicy, typename... LoopPolicies>
 struct fornest_mapping_policy
@@ -192,7 +214,7 @@ concept segment_like = requires(Seg const& seg) {
 template<typename T>
 RAJA_HOST_DEVICE RAJA_INLINE T ceil_div(T n, T d)
 {
-  return (n + d - 1) / d;
+  return static_cast<T>(RAJA_DIVIDE_CEILING_INT(n, d));
 }
 
 template<typename Tuple, typename F, camp::idx_t... Seq>
@@ -367,6 +389,193 @@ RAJA_HOST_DEVICE RAJA_INLINE void linear_to_3d(std::size_t lin,
   }
 }
 
+template<typename LayoutTag, typename Seg0, typename Seg1, typename Body>
+struct FornestFlattenedForallBody2D
+{
+  using seg0_type  = camp::decay<Seg0>;
+  using seg1_type  = camp::decay<Seg1>;
+  using body_type  = camp::decay<Body>;
+  using index_type = std::size_t;
+
+  index_type n0 = 0;
+  index_type n1 = 0;
+  seg0_type seg0;
+  seg1_type seg1;
+  body_type body;
+
+  template<typename B>
+  RAJA_INLINE FornestFlattenedForallBody2D(index_type n0_,
+                                          index_type n1_,
+                                          Seg0 const& seg0_,
+                                          Seg1 const& seg1_,
+                                          B&& body_)
+      : n0(n0_),
+        n1(n1_),
+        seg0(seg0_),
+        seg1(seg1_),
+        body(std::forward<B>(body_))
+  {}
+
+  RAJA_SUPPRESS_HD_WARN
+  template<typename... Reducers>
+  RAJA_HOST_DEVICE RAJA_INLINE void operator()(index_type lin,
+                                               Reducers&... reducers) const
+  {
+    index_type i0 = 0;
+    index_type i1 = 0;
+    detail::linear_to_2d<LayoutTag>(lin, n0, n1, i0, i1);
+
+    using It0 = decltype(seg0.begin());
+    using It1 = decltype(seg1.begin());
+    using D0  = typename std::iterator_traits<It0>::difference_type;
+    using D1  = typename std::iterator_traits<It1>::difference_type;
+
+    auto v0 = *(seg0.begin() + static_cast<D0>(i0));
+    auto v1 = *(seg1.begin() + static_cast<D1>(i1));
+    body(v0, v1, reducers...);
+  }
+};
+
+template<typename LayoutTag,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename Body>
+struct FornestFlattenedForallBody3D
+{
+  using seg0_type  = camp::decay<Seg0>;
+  using seg1_type  = camp::decay<Seg1>;
+  using seg2_type  = camp::decay<Seg2>;
+  using body_type  = camp::decay<Body>;
+  using index_type = std::size_t;
+
+  index_type n0 = 0;
+  index_type n1 = 0;
+  index_type n2 = 0;
+  seg0_type seg0;
+  seg1_type seg1;
+  seg2_type seg2;
+  body_type body;
+
+  template<typename B>
+  RAJA_INLINE FornestFlattenedForallBody3D(index_type n0_,
+                                          index_type n1_,
+                                          index_type n2_,
+                                          Seg0 const& seg0_,
+                                          Seg1 const& seg1_,
+                                          Seg2 const& seg2_,
+                                          B&& body_)
+      : n0(n0_),
+        n1(n1_),
+        n2(n2_),
+        seg0(seg0_),
+        seg1(seg1_),
+        seg2(seg2_),
+        body(std::forward<B>(body_))
+  {}
+
+  RAJA_SUPPRESS_HD_WARN
+  template<typename... Reducers>
+  RAJA_HOST_DEVICE RAJA_INLINE void operator()(index_type lin,
+                                               Reducers&... reducers) const
+  {
+    index_type i0 = 0;
+    index_type i1 = 0;
+    index_type i2 = 0;
+    detail::linear_to_3d<LayoutTag>(lin, n0, n1, n2, i0, i1, i2);
+
+    using It0 = decltype(seg0.begin());
+    using It1 = decltype(seg1.begin());
+    using It2 = decltype(seg2.begin());
+    using D0  = typename std::iterator_traits<It0>::difference_type;
+    using D1  = typename std::iterator_traits<It1>::difference_type;
+    using D2  = typename std::iterator_traits<It2>::difference_type;
+
+    auto v0 = *(seg0.begin() + static_cast<D0>(i0));
+    auto v1 = *(seg1.begin() + static_cast<D1>(i1));
+    auto v2 = *(seg2.begin() + static_cast<D2>(i2));
+    body(v0, v1, v2, reducers...);
+  }
+};
+
+template<typename Loop0, typename Loop1, typename Seg0, typename Seg1, typename Body>
+struct FornestLaunchBody2D
+{
+  using seg0_type = camp::decay<Seg0>;
+  using seg1_type = camp::decay<Seg1>;
+  using body_type = camp::decay<Body>;
+
+  seg0_type seg0;
+  seg1_type seg1;
+  body_type body;
+
+  template<typename B>
+  RAJA_INLINE FornestLaunchBody2D(Seg0 const& seg0_,
+                                 Seg1 const& seg1_,
+                                 B&& body_)
+      : seg0(seg0_),
+        seg1(seg1_),
+        body(std::forward<B>(body_))
+  {}
+
+  RAJA_SUPPRESS_HD_WARN
+  template<typename... Reducers>
+  RAJA_HOST_DEVICE RAJA_INLINE void operator()(RAJA::LaunchContext ctx,
+                                               Reducers&... reducers) const
+  {
+    RAJA::loop<Loop0>(ctx, seg0, [&](auto i0) {
+      RAJA::loop<Loop1>(ctx, seg1, [&](auto i1) {
+        body(i0, i1, reducers...);
+      });
+    });
+  }
+};
+
+template<typename Loop0,
+         typename Loop1,
+         typename Loop2,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename Body>
+struct FornestLaunchBody3D
+{
+  using seg0_type = camp::decay<Seg0>;
+  using seg1_type = camp::decay<Seg1>;
+  using seg2_type = camp::decay<Seg2>;
+  using body_type = camp::decay<Body>;
+
+  seg0_type seg0;
+  seg1_type seg1;
+  seg2_type seg2;
+  body_type body;
+
+  template<typename B>
+  RAJA_INLINE FornestLaunchBody3D(Seg0 const& seg0_,
+                                 Seg1 const& seg1_,
+                                 Seg2 const& seg2_,
+                                 B&& body_)
+      : seg0(seg0_),
+        seg1(seg1_),
+        seg2(seg2_),
+        body(std::forward<B>(body_))
+  {}
+
+  RAJA_SUPPRESS_HD_WARN
+  template<typename... Reducers>
+  RAJA_HOST_DEVICE RAJA_INLINE void operator()(RAJA::LaunchContext ctx,
+                                               Reducers&... reducers) const
+  {
+    RAJA::loop<Loop0>(ctx, seg0, [&](auto i0) {
+      RAJA::loop<Loop1>(ctx, seg1, [&](auto i1) {
+        RAJA::loop<Loop2>(ctx, seg2, [&](auto i2) {
+          body(i0, i1, i2, reducers...);
+        });
+      });
+    });
+  }
+};
+
 template<typename ExecPolicy>
 struct exec_block_size
 {
@@ -483,7 +692,7 @@ struct fornest_indexglobal_info
 };
 
 #if defined(RAJA_CUDA_ACTIVE)
-template<iteration_mapping::type IterationMapping,
+template<typename IterationMapping,
          kernel_sync_requirement sync,
          typename Indexer>
 struct fornest_indexglobal_info<
@@ -495,7 +704,7 @@ struct fornest_indexglobal_info<
   static constexpr int grid_size     = -1;
 };
 
-template<iteration_mapping::type IterationMapping,
+template<typename IterationMapping,
          kernel_sync_requirement sync,
          named_dim dim,
          size_t BLOCK_SIZE,
@@ -523,7 +732,7 @@ struct fornest_indexglobal_info<::RAJA::policy::cuda::cuda_indexer<
 #endif
 
 #if defined(RAJA_HIP_ACTIVE)
-template<iteration_mapping::type IterationMapping,
+template<typename IterationMapping,
          kernel_sync_requirement sync,
          typename Indexer>
 struct fornest_indexglobal_info<
@@ -535,7 +744,7 @@ struct fornest_indexglobal_info<
   static constexpr int grid_size     = -1;
 };
 
-template<iteration_mapping::type IterationMapping,
+template<typename IterationMapping,
          kernel_sync_requirement sync,
          named_dim dim,
          size_t BLOCK_SIZE,
@@ -1733,14 +1942,10 @@ RAJA_INLINE auto fornest(fornest_mapping_policy<ExecPolicy, Loop0, Loop1>,
   auto seg0_c = seg0;
   auto seg1_c = seg1;
 
-  auto launch_body = [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx,
-                                          auto&... reducers) {
-    RAJA::loop<Loop0>(ctx, seg0_c, [&](auto i0) {
-      RAJA::loop<Loop1>(ctx, seg1_c, [&](auto i1) {
-        body_c(i0, i1, reducers...);
-      });
-    });
-  };
+  auto launch_body =
+      detail::FornestLaunchBody2D<Loop0, Loop1, decltype(seg0_c),
+                                  decltype(seg1_c), decltype(body_c)>(
+          seg0_c, seg1_c, std::move(body_c));
 
   auto args_tuple = camp::forward_as_tuple(std::forward<Params>(params)...);
 
@@ -1811,14 +2016,10 @@ RAJA_INLINE auto fornest(
   auto seg0_c = seg0;
   auto seg1_c = seg1;
 
-  auto launch_body = [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx,
-                                          auto&... reducers) {
-    RAJA::loop<Loop0>(ctx, seg0_c, [&](auto i0) {
-      RAJA::loop<Loop1>(ctx, seg1_c, [&](auto i1) {
-        body_c(i0, i1, reducers...);
-      });
-    });
-  };
+  auto launch_body =
+      detail::FornestLaunchBody2D<Loop0, Loop1, decltype(seg0_c),
+                                  decltype(seg1_c), decltype(body_c)>(
+          seg0_c, seg1_c, std::move(body_c));
 
   auto args_tuple = camp::forward_as_tuple(std::forward<Params>(params)...);
 
@@ -1897,15 +2098,9 @@ RAJA_INLINE auto fornest(
     using launch_pol = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
     return RAJA::launch<launch_pol>(
         LaunchParams {}, std::forward<Args>(args)...,
-        [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx, auto&... reducers) {
-          RAJA::loop<Loop0>(ctx, seg0, [&](auto i0) {
-            RAJA::loop<Loop1>(ctx, seg1, [&](auto i1) {
-              RAJA::loop<Loop2>(ctx, seg2, [&](auto i2) {
-                body_c(i0, i1, i2, reducers...);
-              });
-            });
-          });
-        });
+        detail::FornestLaunchBody3D<Loop0, Loop1, Loop2, Seg0, Seg1, Seg2,
+                                    decltype(body_c)>(seg0, seg1, seg2,
+                                                      std::move(body_c)));
   }
 #if defined(RAJA_GPU_ACTIVE)
   else
@@ -1927,15 +2122,9 @@ RAJA_INLINE auto fornest(
     using launch_pol = detail::fornest_launch_policy_t<ExecPolicy>;
     return RAJA::launch<launch_pol>(
         launch_params, std::forward<Args>(args)...,
-        [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx, auto&... reducers) {
-          RAJA::loop<Loop0>(ctx, seg0, [&](auto i0) {
-            RAJA::loop<Loop1>(ctx, seg1, [&](auto i1) {
-              RAJA::loop<Loop2>(ctx, seg2, [&](auto i2) {
-                body_c(i0, i1, i2, reducers...);
-              });
-            });
-          });
-        });
+        detail::FornestLaunchBody3D<Loop0, Loop1, Loop2, Seg0, Seg1, Seg2,
+                                    decltype(body_c)>(seg0, seg1, seg2,
+                                                      std::move(body_c)));
   }
 #else
   else
@@ -1975,15 +2164,9 @@ RAJA_INLINE auto fornest(
     using launch_pol = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
     return RAJA::launch<launch_pol>(
         r, LaunchParams {}, std::forward<Args>(args)...,
-        [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx, auto&... reducers) {
-          RAJA::loop<Loop0>(ctx, seg0, [&](auto i0) {
-            RAJA::loop<Loop1>(ctx, seg1, [&](auto i1) {
-              RAJA::loop<Loop2>(ctx, seg2, [&](auto i2) {
-                body_c(i0, i1, i2, reducers...);
-              });
-            });
-          });
-        });
+        detail::FornestLaunchBody3D<Loop0, Loop1, Loop2, Seg0, Seg1, Seg2,
+                                    decltype(body_c)>(seg0, seg1, seg2,
+                                                      std::move(body_c)));
   }
 #if defined(RAJA_GPU_ACTIVE)
   else
@@ -2005,15 +2188,9 @@ RAJA_INLINE auto fornest(
     using launch_pol = detail::fornest_launch_policy_t<ExecPolicy>;
     return RAJA::launch<launch_pol>(
         r, launch_params, std::forward<Args>(args)...,
-        [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx, auto&... reducers) {
-          RAJA::loop<Loop0>(ctx, seg0, [&](auto i0) {
-            RAJA::loop<Loop1>(ctx, seg1, [&](auto i1) {
-              RAJA::loop<Loop2>(ctx, seg2, [&](auto i2) {
-                body_c(i0, i1, i2, reducers...);
-              });
-            });
-          });
-        });
+        detail::FornestLaunchBody3D<Loop0, Loop1, Loop2, Seg0, Seg1, Seg2,
+                                    decltype(body_c)>(seg0, seg1, seg2,
+                                                      std::move(body_c)));
   }
 #else
   else
@@ -2060,21 +2237,14 @@ RAJA_INLINE auto fornest(fornest_flattened_policy<ExecPolicy, LayoutTag>,
   auto body_c = camp::decay<decltype(body)>(std::move(body));
 
   using Res = typename resources::get_resource<camp::decay<ExecPolicy>>::type;
-  auto e    = wrap::forall(
+  auto flat_body =
+      detail::FornestFlattenedForallBody2D<LayoutTag, Seg0, Seg1,
+                                           decltype(body_c)>(
+          n0, n1, seg0, seg1, std::move(body_c));
+  auto e = wrap::forall(
       Res::get_default(), ExecPolicy {},
       RAJA::TypedRangeSegment<std::size_t>(0, total),
-      [=] RAJA_HOST_DEVICE(std::size_t lin, auto&... reducers) {
-        std::size_t i0 = 0;
-        std::size_t i1 = 0;
-        detail::linear_to_2d<LayoutTag>(lin, n0, n1, i0, i1);
-        using It0 = decltype(seg0.begin());
-        using It1 = decltype(seg1.begin());
-        using D0  = typename std::iterator_traits<It0>::difference_type;
-        using D1  = typename std::iterator_traits<It1>::difference_type;
-        auto v0   = *(seg0.begin() + static_cast<D0>(i0));
-        auto v1   = *(seg1.begin() + static_cast<D1>(i1));
-        body_c(v0, v1, reducers...);
-      },
+      std::move(flat_body),
       f_params);
 
   util::callPostLaunchPlugins(context);
@@ -2115,20 +2285,13 @@ RAJA_INLINE auto fornest(
 
   auto body_c = camp::decay<decltype(body)>(std::move(body));
 
+  auto flat_body =
+      detail::FornestFlattenedForallBody2D<LayoutTag, Seg0, Seg1,
+                                           decltype(body_c)>(
+          n0, n1, seg0, seg1, std::move(body_c));
   auto e = wrap::forall(
       r, ExecPolicy {}, RAJA::TypedRangeSegment<std::size_t>(0, total),
-      [=] RAJA_HOST_DEVICE(std::size_t lin, auto&... reducers) {
-        std::size_t i0 = 0;
-        std::size_t i1 = 0;
-        detail::linear_to_2d<LayoutTag>(lin, n0, n1, i0, i1);
-        using It0 = decltype(seg0.begin());
-        using It1 = decltype(seg1.begin());
-        using D0  = typename std::iterator_traits<It0>::difference_type;
-        using D1  = typename std::iterator_traits<It1>::difference_type;
-        auto v0   = *(seg0.begin() + static_cast<D0>(i0));
-        auto v1   = *(seg1.begin() + static_cast<D1>(i1));
-        body_c(v0, v1, reducers...);
-      },
+      std::move(flat_body),
       f_params);
 
   util::callPostLaunchPlugins(context);
@@ -2175,25 +2338,14 @@ RAJA_INLINE auto fornest(fornest_flattened_policy<ExecPolicy, LayoutTag>,
   auto body_c = camp::decay<decltype(body)>(std::move(body));
 
   using Res = typename resources::get_resource<camp::decay<ExecPolicy>>::type;
-  auto e    = wrap::forall(
+  auto flat_body =
+      detail::FornestFlattenedForallBody3D<LayoutTag, Seg0, Seg1, Seg2,
+                                           decltype(body_c)>(
+          n0, n1, n2, seg0, seg1, seg2, std::move(body_c));
+  auto e = wrap::forall(
       Res::get_default(), ExecPolicy {},
       RAJA::TypedRangeSegment<std::size_t>(0, total),
-      [=] RAJA_HOST_DEVICE(std::size_t lin, auto&... reducers) {
-        std::size_t i0 = 0;
-        std::size_t i1 = 0;
-        std::size_t i2 = 0;
-        detail::linear_to_3d<LayoutTag>(lin, n0, n1, n2, i0, i1, i2);
-        using It0 = decltype(seg0.begin());
-        using It1 = decltype(seg1.begin());
-        using It2 = decltype(seg2.begin());
-        using D0  = typename std::iterator_traits<It0>::difference_type;
-        using D1  = typename std::iterator_traits<It1>::difference_type;
-        using D2  = typename std::iterator_traits<It2>::difference_type;
-        auto v0   = *(seg0.begin() + static_cast<D0>(i0));
-        auto v1   = *(seg1.begin() + static_cast<D1>(i1));
-        auto v2   = *(seg2.begin() + static_cast<D2>(i2));
-        body_c(v0, v1, v2, reducers...);
-      },
+      std::move(flat_body),
       f_params);
 
   util::callPostLaunchPlugins(context);
@@ -2238,24 +2390,13 @@ RAJA_INLINE auto fornest(
 
   auto body_c = camp::decay<decltype(body)>(std::move(body));
 
+  auto flat_body =
+      detail::FornestFlattenedForallBody3D<LayoutTag, Seg0, Seg1, Seg2,
+                                           decltype(body_c)>(
+          n0, n1, n2, seg0, seg1, seg2, std::move(body_c));
   auto e = wrap::forall(
       r, ExecPolicy {}, RAJA::TypedRangeSegment<std::size_t>(0, total),
-      [=] RAJA_HOST_DEVICE(std::size_t lin, auto&... reducers) {
-        std::size_t i0 = 0;
-        std::size_t i1 = 0;
-        std::size_t i2 = 0;
-        detail::linear_to_3d<LayoutTag>(lin, n0, n1, n2, i0, i1, i2);
-        using It0 = decltype(seg0.begin());
-        using It1 = decltype(seg1.begin());
-        using It2 = decltype(seg2.begin());
-        using D0  = typename std::iterator_traits<It0>::difference_type;
-        using D1  = typename std::iterator_traits<It1>::difference_type;
-        using D2  = typename std::iterator_traits<It2>::difference_type;
-        auto v0   = *(seg0.begin() + static_cast<D0>(i0));
-        auto v1   = *(seg1.begin() + static_cast<D1>(i1));
-        auto v2   = *(seg2.begin() + static_cast<D2>(i2));
-        body_c(v0, v1, v2, reducers...);
-      },
+      std::move(flat_body),
       f_params);
 
   util::callPostLaunchPlugins(context);
@@ -2318,14 +2459,10 @@ RAJA_INLINE auto fornest(ExecPolicy,
 
     auto seg0_c      = seg0;
     auto seg1_c      = seg1;
-    auto launch_body = [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx,
-                                            auto&... reducers) {
-      RAJA::loop<loop0>(ctx, seg0_c, [&](auto i0) {
-        RAJA::loop<loop1>(ctx, seg1_c, [&](auto i1) {
-          body_c(i0, i1, reducers...);
-        });
-      });
-    };
+    auto launch_body =
+        detail::FornestLaunchBody2D<loop0, loop1, decltype(seg0_c),
+                                    decltype(seg1_c), decltype(body_c)>(
+            seg0_c, seg1_c, std::move(body_c));
 
     auto args_tuple = camp::forward_as_tuple(std::forward<Params>(params)...);
     return detail::apply_without_last(
@@ -2413,16 +2550,11 @@ RAJA_INLINE auto fornest(ExecPolicy,
     auto seg0_c      = seg0;
     auto seg1_c      = seg1;
     auto seg2_c      = seg2;
-    auto launch_body = [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx,
-                                            auto&... reducers) {
-      RAJA::loop<loop0>(ctx, seg0_c, [&](auto i0) {
-        RAJA::loop<loop1>(ctx, seg1_c, [&](auto i1) {
-          RAJA::loop<loop2>(ctx, seg2_c, [&](auto i2) {
-            body_c(i0, i1, i2, reducers...);
-          });
-        });
-      });
-    };
+    auto launch_body =
+        detail::FornestLaunchBody3D<loop0, loop1, loop2, decltype(seg0_c),
+                                    decltype(seg1_c), decltype(seg2_c),
+                                    decltype(body_c)>(seg0_c, seg1_c, seg2_c,
+                                                      std::move(body_c));
 
     auto args_tuple = camp::forward_as_tuple(std::forward<Params>(params)...);
     return detail::apply_without_last(
@@ -2498,14 +2630,10 @@ RAJA_INLINE auto fornest(
 
     auto seg0_c      = seg0;
     auto seg1_c      = seg1;
-    auto launch_body = [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx,
-                                            auto&... reducers) {
-      RAJA::loop<loop0>(ctx, seg0_c, [&](auto i0) {
-        RAJA::loop<loop1>(ctx, seg1_c, [&](auto i1) {
-          body_c(i0, i1, reducers...);
-        });
-      });
-    };
+    auto launch_body =
+        detail::FornestLaunchBody2D<loop0, loop1, decltype(seg0_c),
+                                    decltype(seg1_c), decltype(body_c)>(
+            seg0_c, seg1_c, std::move(body_c));
 
     auto args_tuple = camp::forward_as_tuple(std::forward<Params>(params)...);
     return detail::apply_without_last(
@@ -2589,16 +2717,11 @@ RAJA_INLINE auto fornest(
     auto seg0_c      = seg0;
     auto seg1_c      = seg1;
     auto seg2_c      = seg2;
-    auto launch_body = [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx,
-                                            auto&... reducers) {
-      RAJA::loop<loop0>(ctx, seg0_c, [&](auto i0) {
-        RAJA::loop<loop1>(ctx, seg1_c, [&](auto i1) {
-          RAJA::loop<loop2>(ctx, seg2_c, [&](auto i2) {
-            body_c(i0, i1, i2, reducers...);
-          });
-        });
-      });
-    };
+    auto launch_body =
+        detail::FornestLaunchBody3D<loop0, loop1, loop2, decltype(seg0_c),
+                                    decltype(seg1_c), decltype(seg2_c),
+                                    decltype(body_c)>(seg0_c, seg1_c, seg2_c,
+                                                      std::move(body_c));
 
     auto args_tuple = camp::forward_as_tuple(std::forward<Params>(params)...);
     return detail::apply_without_last(

@@ -51,6 +51,15 @@ enum class Mapping
   Map
 };
 
+/*
+ * Parse the command-line mapping selector.
+ *
+ * Accepted values:
+ *  - "flat" / "flattened": use fornest_flattened_policy (1-D iteration space)
+ *  - "map" / "mapped": use fornest_mapping_policy (per-dimension mapping)
+ *
+ * Throws on unrecognized input so main() can report a clear error.
+ */
 Mapping parse_mapping(const std::string& arg)
 {
   if (arg == "flat" || arg == "flattened")
@@ -70,8 +79,8 @@ using flat_policy = RAJA::fornest_flattened_policy<exec_pol>;
 // A portable "nested loops" mapping policy.
 using map_policy = RAJA::fornest_mapping_policy<
     exec_pol,
-    RAJA::LoopPolicy<RAJA::seq_exec, RAJA::seq_exec>,
-    RAJA::LoopPolicy<RAJA::seq_exec, RAJA::seq_exec>>;
+    RAJA::LoopPolicy<RAJA::seq_exec>,
+    RAJA::LoopPolicy<RAJA::seq_exec>>;
 
 #if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
 // CUDA/HIP can use explicit device mapping tags (global/block/thread spaces).
