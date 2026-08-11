@@ -126,7 +126,7 @@
 #include "RAJA/util/StaticLayout.hpp"
 #include "RAJA/util/IndexLayout.hpp"
 #include "RAJA/util/View.hpp"
-#include "RAJA/pattern/launch_nd.hpp"
+#include "RAJA/pattern/fornest.hpp"
 
 
 //

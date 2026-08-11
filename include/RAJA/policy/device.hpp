@@ -158,6 +158,30 @@ using device_launch_t =
     RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(launch_t)<Async, num_threads>;
 
 // kernel (For) index mapping
+using device_global_x_direct =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_x_direct);
+using device_global_y_direct =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_y_direct);
+using device_global_z_direct =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_z_direct);
+
+using device_global_xy_direct =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_xy_direct);
+using device_global_xyz_direct =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_xyz_direct);
+
+using device_global_x_direct_unchecked =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_x_direct_unchecked);
+using device_global_y_direct_unchecked =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_y_direct_unchecked);
+using device_global_z_direct_unchecked =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_z_direct_unchecked);
+
+using device_global_xy_direct_unchecked =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_xy_direct_unchecked);
+using device_global_xyz_direct_unchecked =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_xyz_direct_unchecked);
+
 template<int nx_threads>
 using device_global_size_x_direct =
     RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_size_x_direct)<nx_threads>;
@@ -167,6 +191,30 @@ using device_global_size_y_direct =
 template<int nz_threads>
 using device_global_size_z_direct =
     RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_size_z_direct)<nz_threads>;
+
+template<int X_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
+using device_global_size_xy_direct =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_size_xy_direct)<X_BLOCK_SIZE,
+                                                               Y_BLOCK_SIZE,
+                                                               X_GRID_SIZE,
+                                                               Y_GRID_SIZE>;
+
+template<int X_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
+using device_global_size_xyz_direct =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_size_xyz_direct)<X_BLOCK_SIZE,
+                                                                Y_BLOCK_SIZE,
+                                                                Z_BLOCK_SIZE,
+                                                                X_GRID_SIZE,
+                                                                Y_GRID_SIZE,
+                                                                Z_GRID_SIZE>;
 
 template<int nx_threads>
 using device_global_size_x_direct_unchecked =
@@ -180,6 +228,32 @@ template<int nz_threads>
 using device_global_size_z_direct_unchecked =
     RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(
         global_size_z_direct_unchecked)<nz_threads>;
+
+template<int X_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified>
+using device_global_size_xy_direct_unchecked =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(
+        global_size_xy_direct_unchecked)<X_BLOCK_SIZE,
+                                         Y_BLOCK_SIZE,
+                                         X_GRID_SIZE,
+                                         Y_GRID_SIZE>;
+
+template<int X_BLOCK_SIZE,
+         int Y_BLOCK_SIZE,
+         int Z_BLOCK_SIZE,
+         int X_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Y_GRID_SIZE = RAJA::named_usage::unspecified,
+         int Z_GRID_SIZE = RAJA::named_usage::unspecified>
+using device_global_size_xyz_direct_unchecked =
+    RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(
+        global_size_xyz_direct_unchecked)<X_BLOCK_SIZE,
+                                          Y_BLOCK_SIZE,
+                                          Z_BLOCK_SIZE,
+                                          X_GRID_SIZE,
+                                          Y_GRID_SIZE,
+                                          Z_GRID_SIZE>;
 
 template<int nx_threads>
 using device_global_size_x_loop =
