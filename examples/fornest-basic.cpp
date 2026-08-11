@@ -23,13 +23,13 @@
  *  - Caliper labeling via RAJA::Name
  *
  * Run:
- *   ./fornest_basic flat
- *   ./fornest_basic map
+ *   ./fornest-basic flat
+ *   ./fornest-basic map
  *
  * Caliper (built with RAJA_ENABLE_CALIPER=ON and RAJA_ENABLE_RUNTIME_PLUGINS=ON):
- *   RAJA_CALIPER=1 CALI_CONFIG=runtime-report ./fornest_basic flat
- *   RAJA_CALIPER=1 CALI_CONFIG=runtime-profile(output=fornest_basic.cali,output.format=cali) \
- *     ./fornest_basic map
+ *   RAJA_CALIPER=1 CALI_CONFIG=runtime-report ./fornest-basic flat
+ *   RAJA_CALIPER=1 CALI_CONFIG=runtime-profile(output=fornest-basic.cali,output.format=cali) \
+ *     ./fornest-basic map
  */
 
 namespace
@@ -154,4 +154,3 @@ int main(int argc, char** argv)
     return 1;
   }
 }
-

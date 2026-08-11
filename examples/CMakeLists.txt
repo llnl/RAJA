@@ -82,8 +82,8 @@ raja_add_executable(
   SOURCES launch_flatten.cpp)
 
 raja_add_executable(
-  NAME fornest_basic
-  SOURCES fornest_basic.cpp)
+  NAME fornest-basic
+  SOURCES fornest-basic.cpp)
 
 raja_add_executable(
   NAME launch_reductions

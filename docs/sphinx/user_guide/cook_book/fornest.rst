@@ -58,7 +58,7 @@ Mapping Policies
 The minimal example source defines backend-specific policy aliases. CUDA/HIP can
 use direct device mapping tags for explicit mapping:
 
-.. literalinclude:: ../../../../examples/fornest_basic.cpp
+.. literalinclude:: ../../../../examples/fornest-basic.cpp
    :start-after: // _fornest_policy_aliases_start
    :end-before: // _fornest_policy_aliases_end
    :language: C++
@@ -69,7 +69,7 @@ uses one loop policy per dimension.
 
 Both mappings call the same logical body through one ``RAJA::fornest`` call:
 
-.. literalinclude:: ../../../../examples/fornest_basic.cpp
+.. literalinclude:: ../../../../examples/fornest-basic.cpp
    :start-after: // _fornest_call_start
    :end-before: // _fornest_call_end
    :language: C++
@@ -81,7 +81,7 @@ Runtime Policy Choice
 The mapping can be selected at run time by choosing which policy object is
 passed to the common implementation:
 
-.. literalinclude:: ../../../../examples/fornest_basic.cpp
+.. literalinclude:: ../../../../examples/fornest-basic.cpp
    :start-after: // _fornest_runtime_select_start
    :end-before: // _fornest_runtime_select_end
    :language: C++
@@ -89,8 +89,8 @@ passed to the common implementation:
 Run the example both ways and compare timing with the profiling tool normally
 used for the target backend::
 
-  ./fornest_basic flat
-  ./fornest_basic map
+  ./fornest-basic flat
+  ./fornest-basic map
 
 --------------------
 Current Capabilities
@@ -115,9 +115,9 @@ Profiling with Caliper
 to individual kernels. Build RAJA with Caliper + runtime plugins enabled and run
 with Caliper environment variables::
 
-  RAJA_CALIPER=1 CALI_CONFIG=runtime-report ./fornest_basic flat
+  RAJA_CALIPER=1 CALI_CONFIG=runtime-report ./fornest-basic flat
 
 To produce a profile for offline analysis::
 
-  RAJA_CALIPER=1 CALI_CONFIG=runtime-profile(output=fornest_basic.cali,output.format=cali) \
-    ./fornest_basic map
+  RAJA_CALIPER=1 CALI_CONFIG=runtime-profile(output=fornest-basic.cali,output.format=cali) \
+    ./fornest-basic map
