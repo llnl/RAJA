@@ -720,12 +720,16 @@ struct fornest_indexglobal_info<::RAJA::policy::cuda::cuda_indexer<
                                        : (dim == named_dim::z)
                                            ? fornest_axis::z
                                            : fornest_axis::none;
-  static constexpr int block_size = (BLOCK_SIZE == named_usage::unspecified ||
-                                     BLOCK_SIZE == named_usage::ignored)
+  static constexpr std::size_t unspecified_sz =
+      static_cast<std::size_t>(named_usage::unspecified);
+  static constexpr std::size_t ignored_sz =
+      static_cast<std::size_t>(named_usage::ignored);
+  static constexpr int block_size = (BLOCK_SIZE == unspecified_sz ||
+                                     BLOCK_SIZE == ignored_sz)
                                         ? -1
                                         : static_cast<int>(BLOCK_SIZE);
-  static constexpr int grid_size  = (GRID_SIZE == named_usage::unspecified ||
-                                    GRID_SIZE == named_usage::ignored)
+  static constexpr int grid_size  = (GRID_SIZE == unspecified_sz ||
+                                    GRID_SIZE == ignored_sz)
                                         ? -1
                                         : static_cast<int>(GRID_SIZE);
 };
@@ -760,12 +764,16 @@ struct fornest_indexglobal_info<::RAJA::policy::hip::hip_indexer<
                                        : (dim == named_dim::z)
                                            ? fornest_axis::z
                                            : fornest_axis::none;
-  static constexpr int block_size = (BLOCK_SIZE == named_usage::unspecified ||
-                                     BLOCK_SIZE == named_usage::ignored)
+  static constexpr std::size_t unspecified_sz =
+      static_cast<std::size_t>(named_usage::unspecified);
+  static constexpr std::size_t ignored_sz =
+      static_cast<std::size_t>(named_usage::ignored);
+  static constexpr int block_size = (BLOCK_SIZE == unspecified_sz ||
+                                     BLOCK_SIZE == ignored_sz)
                                         ? -1
                                         : static_cast<int>(BLOCK_SIZE);
-  static constexpr int grid_size  = (GRID_SIZE == named_usage::unspecified ||
-                                    GRID_SIZE == named_usage::ignored)
+  static constexpr int grid_size  = (GRID_SIZE == unspecified_sz ||
+                                    GRID_SIZE == ignored_sz)
                                         ? -1
                                         : static_cast<int>(GRID_SIZE);
 };
