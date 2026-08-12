@@ -259,6 +259,12 @@ require changing the code structure. For example::
 RAJA IndexSet Execution Policies
 -----------------------------------------------------
 
+A ``RAJA::TypedIndexSet`` is a container that can hold an arbitrary collection
+of segments to compose iteration patterns in a single kernel invocation. For
+example, one may have a kernel that contains stride-1 access patterns alongside
+irregular, non-unit stride accesses. All of these could be run in a single
+kernel lauch using appropriately defined segments assembled in an index set.
+
 When an IndexSet iteration space is used in RAJA by passing a ``RAJA::IndexSet``
 to a ``RAJA::forall`` method, an index set execution policy is
 required. An index set execution policy is a **two-level policy**: an 'outer'
