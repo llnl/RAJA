@@ -20,9 +20,10 @@ index sets, GPU back-ends, OpenMP target offload, and device aliases.
 RAJA Loop/Kernel Execution Policies
 -----------------------------------------------------
 
-The following tables summarize RAJA policies for executing kernels.
-Please see notes below policy descriptions for additional usage details and
-caveats.
+The following tables summarize RAJA policies for executing kernels. Specifically,
+they provide a brief explanation of each policy and state which policies work
+with which RAJA abstractions. Please see notes below policy descriptions for
+additional usage details and caveats.
 
 .. _feat-policies-cpu-label:
 
@@ -227,13 +228,21 @@ surround code that uses execution back-ends other than OpenMP. This simplifies
 switching user code between sequential and parallel execution and does not
 require changing the code structure. For example::
 
-  RAJA::region<RAJA::seq_region>([=]() {
+  #if RAJA_ENABLE_OPENMP
+    #define REGION_POLICY RAJA::omp_parallel_region
+    #define EXEC_POLICY RAJA::omp_for_exec
+  #else
+    #define REGION_POLICY RAJA::seq_region
+    #define EXEC_POLICY RAJA::seq_exec
+  #endif
 
-     RAJA::forall<RAJA::seq_exec>(segment, [=] (int idx) {
+  RAJA::region<REGION_POLICY>([=]() {
+
+     RAJA::forall<EXEC_POLICY>(segment, [=] (int idx) {
          // do something at iterate 'idx'
      } );
 
-     RAJA::forall<RAJA::seq_exec>(segment, [=] (int idx) {
+     RAJA::forall<EXEC_POLICY>(segment, [=] (int idx) {
          // do something else at iterate 'idx'
      } );
 
