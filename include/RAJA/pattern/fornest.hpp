@@ -550,6 +550,27 @@ struct FornestLaunchBody2D
   }
 };
 
+// NOTE:
+// launch_context_type relies on taking the address of BODY::operator() to
+// deduce the launch context type. Since FornestLaunchBody* define operator()
+// as a function template (to accept an arbitrary reducer pack), that trait
+// cannot deduce the first argument type and falls back to a host context.
+// This breaks mixed host/device launch policies (e.g. seq + CUDA/HIP).
+// Provide explicit specializations so LaunchExecute selects the correct
+// context type.
+template<typename LaunchContext,
+         typename Loop0,
+         typename Loop1,
+         typename Seg0,
+         typename Seg1,
+         typename Body>
+struct launch_context_type<
+    FornestLaunchBody2D<LaunchContext, Loop0, Loop1, Seg0, Seg1, Body>,
+    void>
+{
+  using type = camp::decay<LaunchContext>;
+};
+
 template<typename LaunchContext,
          typename Loop0,
          typename Loop1,
@@ -595,6 +616,21 @@ struct FornestLaunchBody3D
       });
     });
   }
+};
+
+template<typename LaunchContext,
+         typename Loop0,
+         typename Loop1,
+         typename Loop2,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename Body>
+struct launch_context_type<
+    FornestLaunchBody3D<LaunchContext, Loop0, Loop1, Loop2, Seg0, Seg1, Seg2, Body>,
+    void>
+{
+  using type = camp::decay<LaunchContext>;
 };
 
 template<typename ExecPolicy>

@@ -109,8 +109,16 @@ int main(int argc, char** argv)
     auto rows = RAJA::RangeSegment(0, n_rows);
     auto cols = RAJA::RangeSegment(0, n_cols);
 
-    auto body = [&](int r, int c) {
-      values[c + n_cols * r] = 100 * r + c;
+    int* values_ptr = values.data();
+
+#if defined(RAJA_GPU_ACTIVE)
+    auto device_res = RAJA::resources::get_default_resource<exec_pol>();
+    int* values_d = device_res.allocate<int>(n_rows * n_cols);
+    values_ptr    = values_d;
+#endif
+
+    auto body = [=] RAJA_HOST_DEVICE(int r, int c) {
+      values_ptr[c + n_cols * r] = 100 * r + c;
     };
 
     // _fornest_runtime_select_start
@@ -133,6 +141,12 @@ int main(int argc, char** argv)
 #endif
     }
     // _fornest_runtime_select_end
+
+#if defined(RAJA_GPU_ACTIVE)
+    device_res.memcpy(values.data(), values_d, sizeof(int) * values.size());
+    device_res.wait();
+    device_res.deallocate(values_d);
+#endif
 
     int errors = 0;
     for (int r = 0; r < n_rows; ++r)
