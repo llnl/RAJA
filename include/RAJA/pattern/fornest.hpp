@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <cmath>
 #include <iterator>
+#include <limits>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -542,9 +543,10 @@ struct FornestLaunchBody2D
   RAJA_HOST_DEVICE RAJA_INLINE void operator()(context_type ctx,
                                                Reducers&... reducers) const
   {
+    camp::tuple<Reducers&...> reducer_refs{reducers...};
     RAJA::loop<Loop0>(ctx, seg0, [&](auto i0) {
       RAJA::loop<Loop1>(ctx, seg1, [&](auto i1) {
-        body(i0, i1, reducers...);
+        camp::apply([&](auto&... rs) { body(i0, i1, rs...); }, reducer_refs);
       });
     });
   }
@@ -608,10 +610,12 @@ struct FornestLaunchBody3D
   RAJA_HOST_DEVICE RAJA_INLINE void operator()(context_type ctx,
                                                Reducers&... reducers) const
   {
+    camp::tuple<Reducers&...> reducer_refs{reducers...};
     RAJA::loop<Loop0>(ctx, seg0, [&](auto i0) {
       RAJA::loop<Loop1>(ctx, seg1, [&](auto i1) {
         RAJA::loop<Loop2>(ctx, seg2, [&](auto i2) {
-          body(i0, i1, i2, reducers...);
+          camp::apply([&](auto&... rs) { body(i0, i1, i2, rs...); },
+                      reducer_refs);
         });
       });
     });
@@ -797,7 +801,7 @@ struct fornest_indexglobal_info<::RAJA::policy::cuda::cuda_indexer<
   static constexpr std::size_t unspecified_sz =
       static_cast<std::size_t>(named_usage::unspecified);
   static constexpr std::size_t ignored_sz =
-      static_cast<std::size_t>(named_usage::ignored);
+      std::numeric_limits<std::size_t>::max();
   static constexpr int block_size =
       (BLOCK_SIZE == unspecified_sz || BLOCK_SIZE == ignored_sz)
           ? -1
@@ -841,7 +845,7 @@ struct fornest_indexglobal_info<::RAJA::policy::hip::hip_indexer<
   static constexpr std::size_t unspecified_sz =
       static_cast<std::size_t>(named_usage::unspecified);
   static constexpr std::size_t ignored_sz =
-      static_cast<std::size_t>(named_usage::ignored);
+      std::numeric_limits<std::size_t>::max();
   static constexpr int block_size =
       (BLOCK_SIZE == unspecified_sz || BLOCK_SIZE == ignored_sz)
           ? -1
