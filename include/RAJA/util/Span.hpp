@@ -20,10 +20,9 @@
 #ifndef RAJA_SPAN_HPP
 #define RAJA_SPAN_HPP
 
-#include "RAJA/index/IndexValue.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
-#include "camp/concepts.hpp"
+#include "RAJA/pattern/concepts.hpp"
 
 namespace RAJA
 {
@@ -190,8 +189,8 @@ struct Span
     offset_type stripped_begin  = RAJA::stripIndexType(begin);
     offset_type stripped_length = RAJA::stripIndexType(length);
     auto start                  = m_begin + stripped_begin;
-    auto end = start + stripped_length > m_end ? m_end
-                                               : start + stripped_length;
+    auto end =
+        start + stripped_length > m_end ? m_end : start + stripped_length;
     return Span(start, end);
   }
 
