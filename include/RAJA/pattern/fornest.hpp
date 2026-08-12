@@ -626,9 +626,15 @@ template<typename LaunchContext,
          typename Seg1,
          typename Seg2,
          typename Body>
-struct launch_context_type<
-    FornestLaunchBody3D<LaunchContext, Loop0, Loop1, Loop2, Seg0, Seg1, Seg2, Body>,
-    void>
+struct launch_context_type<FornestLaunchBody3D<LaunchContext,
+                                               Loop0,
+                                               Loop1,
+                                               Loop2,
+                                               Seg0,
+                                               Seg1,
+                                               Seg2,
+                                               Body>,
+                           void>
 {
   using type = camp::decay<LaunchContext>;
 };
