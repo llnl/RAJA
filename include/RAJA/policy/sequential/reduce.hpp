@@ -53,7 +53,8 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  ReduceSeq(Policy p, T init_val, T identity_) : Base(init_val, identity_)
+  ReduceSeq(Policy p [[maybe_unused]], T init_val, T identity_)
+      : Base(init_val, identity_)
   {
 #if !defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
     policy_matches_or_throw(
@@ -64,7 +65,7 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  void reset(Policy p, T init_val, T identity_)
+  void reset(Policy p [[maybe_unused]], T init_val, T identity_)
   {
 #if !defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
     policy_matches_or_throw(

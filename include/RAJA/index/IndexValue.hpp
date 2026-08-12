@@ -24,7 +24,7 @@
 
 #include <string>
 
-#include "RAJA/util/concepts.hpp"
+// #include "RAJA/util/concepts.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 
@@ -307,28 +307,31 @@ convertIndex_helper(typename FROM::IndexValueType const val)
 
 }  // namespace internal
 
+namespace concepts
+{
+// Should we try to move this to either util/concepts.hpp
+// or pattern/concepts.hpp?
+template<typename T>
+concept IndexValued = std::is_base_of_v<
+    RAJA::IndexValue<std::remove_cvref_t<T>,
+                     typename std::remove_cvref_t<T>::value_type>,
+    std::remove_cvref_t<T>>;
+
+
+}  // namespace concepts
+
 namespace type_traits
 {
 template<typename T>
 struct is_instance_of_index_value
-    : std::is_base_of<RAJA::IndexValue<std::remove_cvref_t<T>>,
-                      std::remove_cvref_t<T>>
+    : std::bool_constant<RAJA::concepts::IndexValued<T>>
 {};
 
-template<typename T, typename U>
-constexpr bool is_instance_of_index_value_v =
-    is_instance_of_index_value<T, U>::value;
+template<typename T>
+inline constexpr bool is_instance_of_index_value_v =
+    is_instance_of_index_value<T>::value;
+
 }  // namespace type_traits
-
-namespace concepts
-{
-template<typename T>
-concept IndexValued =
-    type_traits::is_instance_of_index_value_v<T, typename T::value_type>;
-
-template<typename T>
-concept Index = concepts::Integral<T> || concepts::IndexValued<T>;
-}  // namespace concepts
 
 template<concepts::IndexValued TYPE>
 RAJA_HOST_DEVICE RAJA_INLINE TYPE operator+(typename TYPE::value_type lhs,

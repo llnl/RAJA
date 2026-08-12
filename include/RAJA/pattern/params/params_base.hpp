@@ -28,8 +28,8 @@ using valloc_index_storage_t =
                        IndexType>;
 
 template<typename IndexType>
-RAJA_HOST_DEVICE constexpr valloc_index_storage_t<IndexType>
-strip_valloc_index(IndexType const& index)
+RAJA_HOST_DEVICE constexpr valloc_index_storage_t<IndexType> strip_valloc_index(
+    IndexType const& index)
 {
   if constexpr (std::is_base_of<RAJA::IndexValueBase, IndexType>::value)
   {
@@ -42,8 +42,8 @@ strip_valloc_index(IndexType const& index)
 }
 
 template<typename IndexType>
-RAJA_HOST_DEVICE constexpr IndexType
-restore_valloc_index(valloc_index_storage_t<IndexType> const& index)
+RAJA_HOST_DEVICE constexpr IndexType restore_valloc_index(
+    valloc_index_storage_t<IndexType> const& index)
 {
   if constexpr (std::is_base_of<RAJA::IndexValueBase, IndexType>::value)
   {

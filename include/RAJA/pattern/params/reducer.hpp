@@ -184,8 +184,8 @@ struct Reducer<Op<ValLoc<T, I>, ValLoc<T, I>, ValLoc<T, I>>,
 
   // Points to either dual value and index defined by the user, or value and
   // index within a ValLoc defined by the user
-  target_value_type* target_value    = nullptr;
-  stored_index_type* target_index    = nullptr;
+  target_value_type* target_value          = nullptr;
+  stored_index_type* target_index          = nullptr;
   target_index_type* external_target_index = nullptr;
 
   // combineTarget() performs the final op on the target data and location in

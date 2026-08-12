@@ -53,9 +53,10 @@ using RawIdxTypeList = camp::list<RAJA::Index_type,
 // Raw signed index types list
 //
 // Use this list for tests that require signed builtin integer semantics.
-using RawSignedIdxTypeList = camp::list<RAJA::Index_type,
-                                        int,
-                                        long long>;
+using SignedIdxTypeList = camp::list<RAJA::Index_type,
+                                     StrongInt,
+                                     int,
+                                     long long>;
 
 //
 // Strong-compatible index types list
@@ -66,7 +67,6 @@ using StrongIdxTypeList = camp::list<RAJA::Index_type,
                                      int,
                                      StrongIndexType,
                                      StrongInt,
-                                     StrongUL,
 #if defined(RAJA_TEST_EXHAUSTIVE)
                                      unsigned int,
 // short int types will break a bunch of tests due to assumptions made in
