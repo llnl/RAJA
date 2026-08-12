@@ -29,6 +29,21 @@ be redefined and to work in new ways.
             implementation that they use; e.g., ``omp_`` for OpenMP, ``cuda_``
             for CUDA, etc.
 
+This page includes mostly introductory and mildly pedagogical material about RAJA
+execution policies. The sections include: policy basics/categories, policy naming conventions,
+advice on policies to try first based on RAJA interface method and execution back-end,
+basic examples, and a glossary of terms. 
+
+Those who are familar with RAJA policies may want to skip the introductory material
+and jump right to the details policy reference sections:
+
+.. toctree::
+   :maxdepth: 1
+
+   policies/execution
+   policies/reductions_atomics
+   policies/kernel
+
 -----------------------------------------------------
 Policy Basics
 -----------------------------------------------------
