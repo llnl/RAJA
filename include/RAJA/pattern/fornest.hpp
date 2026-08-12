@@ -721,6 +721,17 @@ struct fornest_launch_policy<
 };
 #endif
 
+#if defined(RAJA_SYCL_ACTIVE)
+template<size_t BlockSize, bool Async>
+struct fornest_launch_policy<::RAJA::policy::sycl::sycl_exec<BlockSize, Async>>
+{
+  // sycl_launch_t is specialized only for num_threads=0, and uses LaunchParams
+  // for the actual threads/teams configuration.
+  using type =
+      RAJA::LaunchPolicy<RAJA::seq_launch_t, RAJA::sycl_launch_t<Async, 0>>;
+};
+#endif
+
 template<typename ExecPolicy>
 using fornest_launch_policy_t =
     typename fornest_launch_policy<camp::decay<ExecPolicy>>::type;
@@ -2527,9 +2538,8 @@ RAJA_INLINE auto fornest(ExecPolicy,
     auto body_c      = camp::decay<decltype(user_body)>(
         std::forward<decltype(user_body)>(user_body));
 
-    using launch_policy = detail::fornest_launch_policy_t<ExecPolicy>;
-
 #if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
+    using launch_policy = detail::fornest_launch_policy_t<ExecPolicy>;
     using loop0 =
         RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_global_x_direct>;
     using loop1 =
@@ -2551,6 +2561,13 @@ RAJA_INLINE auto fornest(ExecPolicy,
               launch_body);
         },
         std::move(args_tuple));
+#elif defined(RAJA_SYCL_ACTIVE)
+    // SYCL does not support the CUDA/HIP-style explicit mapping tags used for
+    // this launch path. Fall back to flattened execution with index
+    // reconstruction, which is portable across device backends.
+    return RAJA::fornest(
+        fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
+        std::forward<Params>(params)...);
 #else
     RAJA_ABORT_OR_THROW("RAJA::fornest: unsupported device platform");
 #endif
@@ -2617,9 +2634,8 @@ RAJA_INLINE auto fornest(ExecPolicy,
     auto body_c      = camp::decay<decltype(user_body)>(
         std::forward<decltype(user_body)>(user_body));
 
-    using launch_policy = detail::fornest_launch_policy_t<ExecPolicy>;
-
 #if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
+    using launch_policy = detail::fornest_launch_policy_t<ExecPolicy>;
     using loop0 =
         RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_global_x_direct>;
     using loop1 =
@@ -2644,6 +2660,10 @@ RAJA_INLINE auto fornest(ExecPolicy,
               launch_body);
         },
         std::move(args_tuple));
+#elif defined(RAJA_SYCL_ACTIVE)
+    return RAJA::fornest(
+        fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
+        seg2, std::forward<Params>(params)...);
 #else
     RAJA_ABORT_OR_THROW("RAJA::fornest: unsupported device platform");
 #endif
@@ -2701,9 +2721,8 @@ RAJA_INLINE auto fornest(
     auto body_c      = camp::decay<decltype(user_body)>(
         std::forward<decltype(user_body)>(user_body));
 
-    using launch_policy = detail::fornest_launch_policy_t<ExecPolicy>;
-
 #if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
+    using launch_policy = detail::fornest_launch_policy_t<ExecPolicy>;
     using loop0 =
         RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_global_x_direct>;
     using loop1 =
@@ -2725,6 +2744,10 @@ RAJA_INLINE auto fornest(
               launch_body);
         },
         std::move(args_tuple));
+#elif defined(RAJA_SYCL_ACTIVE)
+    return RAJA::fornest(
+        r, fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0,
+        seg1, std::forward<Params>(params)...);
 #else
     RAJA_ABORT_OR_THROW("RAJA::fornest: unsupported device platform");
 #endif
@@ -2786,9 +2809,8 @@ RAJA_INLINE auto fornest(
     auto body_c      = camp::decay<decltype(user_body)>(
         std::forward<decltype(user_body)>(user_body));
 
-    using launch_policy = detail::fornest_launch_policy_t<ExecPolicy>;
-
 #if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
+    using launch_policy = detail::fornest_launch_policy_t<ExecPolicy>;
     using loop0 =
         RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_global_x_direct>;
     using loop1 =
@@ -2813,6 +2835,10 @@ RAJA_INLINE auto fornest(
               launch_body);
         },
         std::move(args_tuple));
+#elif defined(RAJA_SYCL_ACTIVE)
+    return RAJA::fornest(
+        r, fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0,
+        seg1, seg2, std::forward<Params>(params)...);
 #else
     RAJA_ABORT_OR_THROW("RAJA::fornest: unsupported device platform");
 #endif
