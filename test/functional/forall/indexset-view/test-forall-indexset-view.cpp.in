@@ -32,7 +32,7 @@
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@ForallIndexSetViewTypes =
-  Test< camp::cartesian_product<RawIdxTypeList,
+  Test< camp::cartesian_product<StrongIdxTypeList,
                                 @BACKEND@ResourceList,
                                 @BACKEND@ForallIndexSetExecPols>>::Types;
 

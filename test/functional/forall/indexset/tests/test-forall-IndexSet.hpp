@@ -50,23 +50,33 @@ void ForallIndexSetTestImpl()
                                      &check_array,
                                      &test_array);
 
-  memset( test_array, 0, sizeof(INDEX_TYPE) * N );  
+  memset( test_array, 0, sizeof(INDEX_TYPE) * RAJA::stripIndexType(N) );
 
-  working_res.memcpy(working_array, test_array, sizeof(INDEX_TYPE) * N);
+  working_res.memcpy(working_array, test_array,
+                     sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
+
+  using layout_type =
+      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
+  using view_type = RAJA::View< INDEX_TYPE, layout_type >;
+
+  view_type test_view(test_array, N);
+  view_type work_view(working_array, N);
+  view_type check_view(check_array, N);
 
   for (size_t i = 0; i < is_indices.size(); ++i) {
-    test_array[ is_indices[i] ] = is_indices[i];
+    test_view(is_indices[i]) = is_indices[i];
   }
 
   RAJA::forall(EXEC_POLICY(), iset, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
-    working_array[idx] = idx;
+    work_view(idx) = idx;
   });
 
-  working_res.memcpy(check_array, working_array, sizeof(INDEX_TYPE) * N);
+  working_res.memcpy(check_array, working_array,
+                     sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
   // 
   for (INDEX_TYPE i = 0; i < N; i++) {
-    ASSERT_EQ(test_array[i], check_array[i]);
+    ASSERT_EQ(test_view(i), check_view(i));
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,

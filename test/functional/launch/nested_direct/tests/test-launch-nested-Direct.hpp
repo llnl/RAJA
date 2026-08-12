@@ -57,6 +57,17 @@ void LaunchNestedDirectTestImpl(INDEX_TYPE M)
   std::iota(test_array, test_array + data_len, 0);
   working_res.memset(working_array, 0, sizeof(INDEX_TYPE) * data_len);
 
+  INDEX_TYPE view_len = N;
+  if (RAJA::stripIndexType(view_len) == 0) {
+    view_len = INDEX_TYPE(1);
+  }
+
+  using linear_layout_t =
+      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
+  RAJA::View<INDEX_TYPE, linear_layout_t> test_view(test_array, view_len);
+  RAJA::View<INDEX_TYPE, linear_layout_t> work_view(working_array, view_len);
+  RAJA::View<INDEX_TYPE, linear_layout_t> check_view(check_array, view_len);
+
   //6 threads total
   constexpr int threads_x = 2;
   constexpr int threads_y = 3;
@@ -68,8 +79,10 @@ void LaunchNestedDirectTestImpl(INDEX_TYPE M)
 
   if ( RAJA::stripIndexType(N) > 0 ) {
 
-    constexpr int DIM = 6;
-    using layout_t = RAJA::Layout<DIM, INDEX_TYPE,DIM-1>;
+    using layout_t =
+        RAJA::TypedLayout<INDEX_TYPE,
+                          camp::tuple<INDEX_TYPE, INDEX_TYPE, INDEX_TYPE,
+                                      INDEX_TYPE, INDEX_TYPE, INDEX_TYPE>>;
     RAJA::View<INDEX_TYPE, layout_t> Aview(working_array, N6, N5, N4, N3, N2, N1);
 
     RAJA::launch<LAUNCH_POLICY>
@@ -110,7 +123,7 @@ void LaunchNestedDirectTestImpl(INDEX_TYPE M)
                         RAJA::loop<THREAD_Y_POLICY>(ctx, r2, [&](INDEX_TYPE RAJA_UNUSED_ARG(ty)) {
                             RAJA::loop<THREAD_X_POLICY>(ctx, r1, [&](INDEX_TYPE RAJA_UNUSED_ARG(tx)) {
 
-                                working_array[0]++;
+                                work_view(INDEX_TYPE(0))++;
                                 
                               });
                           });
@@ -128,12 +141,12 @@ void LaunchNestedDirectTestImpl(INDEX_TYPE M)
   if (RAJA::stripIndexType(N) > 0) {
     
     for (INDEX_TYPE i = INDEX_TYPE(0); i < N; i++) {
-      ASSERT_EQ(test_array[RAJA::stripIndexType(i)], check_array[RAJA::stripIndexType(i)]);
+      ASSERT_EQ(test_view(i), check_view(i));
     }
     
   } else {
     
-    ASSERT_EQ(test_array[0], check_array[0]);
+    ASSERT_EQ(test_view(INDEX_TYPE(0)), check_view(INDEX_TYPE(0)));
     
   }
 

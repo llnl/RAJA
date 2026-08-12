@@ -17,10 +17,12 @@ template <typename INDEX_TYPE, typename WORKING_RES, typename LAUNCH_POLICY,
 void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
 {
 
-  constexpr INDEX_TYPE threads_x = 4;
-  const     INDEX_TYPE blocks_x  = M*4;
+  constexpr int threads_x = 4;
+  const int blocks_x = RAJA::stripIndexType(M) * 4;
+  INDEX_TYPE threads_x_idx(threads_x);
+  INDEX_TYPE blocks_x_idx(blocks_x);
 
-  RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, threads_x*blocks_x);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, threads_x_idx * blocks_x_idx);
 
   INDEX_TYPE N = static_cast<INDEX_TYPE>(r1.end() - r1.begin());
 
@@ -54,6 +56,15 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
     working_res.memset(working_iloop_array, 0, sizeof(INDEX_TYPE) * data_len);
   }
 
+  using layout_type =
+      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
+  using view_type = RAJA::View< INDEX_TYPE, layout_type >;
+
+  view_type work_ttile_view(working_ttile_array, N);
+  view_type work_iloop_view(working_iloop_array, N);
+  view_type check_ttile_view(check_ttile_array, N);
+  view_type check_iloop_view(check_iloop_array, N);
+
   RAJA::launch<LAUNCH_POLICY>(
     RAJA::LaunchParams(RAJA::Teams(blocks_x), RAJA::Threads(threads_x)), [=] RAJA_HOST_DEVICE(RAJA::LaunchContext ctx) {
 
@@ -62,8 +73,8 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
           RAJA::loop_icount<THREAD_X_POLICY>(
             ctx, x_tile, [&](INDEX_TYPE tx, INDEX_TYPE ix) {
 
-              working_ttile_array[tx] = bx;
-              working_iloop_array[tx] = ix;
+              work_ttile_view(tx) = bx;
+              work_iloop_view(tx) = ix;
 
             }
           );
@@ -79,11 +90,11 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
   working_res.wait();
 
   INDEX_TYPE idx = 0;
-  for (INDEX_TYPE bx = INDEX_TYPE(0); bx < blocks_x; ++bx) {
-    for (INDEX_TYPE tx = INDEX_TYPE(0); tx < threads_x; ++tx) {
+  for (INDEX_TYPE bx = INDEX_TYPE(0); bx < blocks_x_idx; ++bx) {
+    for (INDEX_TYPE tx = INDEX_TYPE(0); tx < threads_x_idx; ++tx) {
 
-      ASSERT_EQ(check_ttile_array[RAJA::stripIndexType(idx)], bx);
-      ASSERT_EQ(check_iloop_array[RAJA::stripIndexType(idx)], tx);
+      ASSERT_EQ(check_ttile_view(idx), bx);
+      ASSERT_EQ(check_iloop_view(idx), tx);
 
       idx++;
     }

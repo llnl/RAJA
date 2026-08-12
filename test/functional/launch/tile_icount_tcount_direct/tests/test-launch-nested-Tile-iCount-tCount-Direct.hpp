@@ -17,14 +17,15 @@ template <typename INDEX_TYPE, typename WORKING_RES, typename LAUNCH_POLICY,
 void LaunchNestedTileDirectTestImpl(INDEX_TYPE M)
 {
 
-  constexpr INDEX_TYPE threads_x   = 4;
-  constexpr INDEX_TYPE blocks_x    = 4;
+  constexpr int threads_x = 4;
+  constexpr int blocks_x  = 4;
+  INDEX_TYPE threads_x_idx(threads_x);
 
-  RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, M*threads_x+1);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, M * threads_x_idx + 1);
 
   INDEX_TYPE N1 = static_cast<INDEX_TYPE>(r1.end() - r1.begin());
 
-  INDEX_TYPE no_tiles = (N1-1)/threads_x + 1;
+  INDEX_TYPE no_tiles = (N1 - 1) / threads_x_idx + 1;
 
   INDEX_TYPE N = static_cast<INDEX_TYPE>(RAJA::stripIndexType(N1));
 
@@ -59,6 +60,20 @@ void LaunchNestedTileDirectTestImpl(INDEX_TYPE M)
   working_res.memset(working_ttile_array, 0, sizeof(INDEX_TYPE) * data_len);
   working_res.memset(working_iloop_array, 0, sizeof(INDEX_TYPE) * data_len);
 
+  INDEX_TYPE view_len = N;
+  if (RAJA::stripIndexType(view_len) == 0) {
+    view_len = INDEX_TYPE(1);
+  }
+
+  using layout_type =
+      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
+  using view_type = RAJA::View< INDEX_TYPE, layout_type >;
+
+  view_type work_ttile_view(working_ttile_array, view_len);
+  view_type work_iloop_view(working_iloop_array, view_len);
+  view_type check_ttile_view(check_ttile_array, view_len);
+  view_type check_iloop_view(check_iloop_array, view_len);
+
   if ( RAJA::stripIndexType(N) > 0 ) {
 
     RAJA::launch<LAUNCH_POLICY>(
@@ -69,8 +84,8 @@ void LaunchNestedTileDirectTestImpl(INDEX_TYPE M)
             RAJA::loop_icount<THREAD_X_POLICY>(
               ctx, x_tile, [&](INDEX_TYPE tx, INDEX_TYPE ix) {
 
-                working_ttile_array[tx] += bx;
-                working_iloop_array[tx] += ix;
+                work_ttile_view(tx) += bx;
+                work_iloop_view(tx) += ix;
 
               }
             );
@@ -89,8 +104,8 @@ void LaunchNestedTileDirectTestImpl(INDEX_TYPE M)
             RAJA::loop_icount<THREAD_X_POLICY>(
               ctx, x_tile, [&](INDEX_TYPE RAJA_UNUSED_ARG(tx), INDEX_TYPE RAJA_UNUSED_ARG (ix)) {
 
-                working_ttile_array[0]++;
-                working_iloop_array[0]++;
+                work_ttile_view(INDEX_TYPE(0))++;
+                work_iloop_view(INDEX_TYPE(0))++;
 
               }
             );
@@ -112,8 +127,8 @@ void LaunchNestedTileDirectTestImpl(INDEX_TYPE M)
 
         if(idx >= N1) break;
 
-        ASSERT_EQ(check_ttile_array[RAJA::stripIndexType(idx)], bx);
-        ASSERT_EQ(check_iloop_array[RAJA::stripIndexType(idx)], tx);
+        ASSERT_EQ(check_ttile_view(idx), bx);
+        ASSERT_EQ(check_iloop_view(idx), tx);
 
         idx++;
       }
@@ -121,8 +136,8 @@ void LaunchNestedTileDirectTestImpl(INDEX_TYPE M)
     
   } else {
     
-    ASSERT_EQ(check_ttile_array[0], check_ttile_array[0]);
-    ASSERT_EQ(check_iloop_array[0], check_iloop_array[0]);
+    ASSERT_EQ(check_ttile_view(INDEX_TYPE(0)), check_ttile_view(INDEX_TYPE(0)));
+    ASSERT_EQ(check_iloop_view(INDEX_TYPE(0)), check_iloop_view(INDEX_TYPE(0)));
     
   }
 

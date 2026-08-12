@@ -56,17 +56,24 @@ void LaunchNestedDirectUncheckedTestImpl(INDEX_TYPE M)
     working_res.memset(working_array, 0, sizeof(INDEX_TYPE) * data_len);
   }
 
+  using linear_layout_t =
+      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
+  RAJA::View<INDEX_TYPE, linear_layout_t> test_view(test_array, N);
+  RAJA::View<INDEX_TYPE, linear_layout_t> check_view(check_array, N);
+
   //6 threads total
-  const int threads_x = 2*M;
-  const int threads_y = 3*M;
-  const int threads_z = 4*M;
+  const int threads_x = 2 * RAJA::stripIndexType(M);
+  const int threads_y = 3 * RAJA::stripIndexType(M);
+  const int threads_z = 4 * RAJA::stripIndexType(M);
 
-  const int blocks_x = 4*M;
-  const int blocks_y = 5*M;
-  const int blocks_z = 6*M;
+  const int blocks_x = 4 * RAJA::stripIndexType(M);
+  const int blocks_y = 5 * RAJA::stripIndexType(M);
+  const int blocks_z = 6 * RAJA::stripIndexType(M);
 
-  const int DIM = 6;
-  using layout_t = RAJA::Layout<DIM, INDEX_TYPE,DIM-1>;
+  using layout_t =
+      RAJA::TypedLayout<INDEX_TYPE,
+                        camp::tuple<INDEX_TYPE, INDEX_TYPE, INDEX_TYPE,
+                                    INDEX_TYPE, INDEX_TYPE, INDEX_TYPE>>;
   RAJA::View<INDEX_TYPE, layout_t> Aview(working_array, N6, N5, N4, N3, N2, N1);
 
   RAJA::launch<LAUNCH_POLICY>
@@ -100,7 +107,7 @@ void LaunchNestedDirectUncheckedTestImpl(INDEX_TYPE M)
   working_res.wait();
     
   for (INDEX_TYPE i = INDEX_TYPE(0); i < N; i++) {
-    ASSERT_EQ(test_array[RAJA::stripIndexType(i)], check_array[RAJA::stripIndexType(i)]);
+    ASSERT_EQ(test_view(i), check_view(i));
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,

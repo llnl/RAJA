@@ -17,7 +17,6 @@ template <typename INDEX_TYPE, typename WORKING_RES, typename EXEC_POLICY>
 void ForallRangeSegment2DViewTestImpl(INDEX_TYPE N)
 {
   INDEX_TYPE lentot = N * N;
-  const int NDIMS = 2;
 
   RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, lentot);
 
@@ -32,12 +31,15 @@ void ForallRangeSegment2DViewTestImpl(INDEX_TYPE N)
                                      &check_array,
                                      &test_array);
 
-  std::iota(test_array, test_array + lentot, 0);
+  std::iota(test_array, test_array + RAJA::stripIndexType(lentot), 0);
 
-  using view_type = RAJA::View< INDEX_TYPE, RAJA::Layout<NDIMS> >;
-  RAJA::Layout<NDIMS> layout(N, N);
+  using layout_type =
+      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE>>;
+  using view_type = RAJA::View< INDEX_TYPE, layout_type >;
   
-  view_type work_view(working_array, layout);
+  view_type test_view(test_array, N, N);
+  view_type work_view(working_array, N, N);
+  view_type check_view(check_array, N, N);
 
   RAJA::forall<EXEC_POLICY>(r1, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
     const INDEX_TYPE row = idx / N;
@@ -45,10 +47,13 @@ void ForallRangeSegment2DViewTestImpl(INDEX_TYPE N)
     work_view(row, col) = row * N + col;
   });
 
-  working_res.memcpy(check_array, working_array, sizeof(INDEX_TYPE) * lentot);
+  working_res.memcpy(check_array, working_array,
+                     sizeof(INDEX_TYPE) * RAJA::stripIndexType(lentot));
 
   for (INDEX_TYPE i = 0; i < lentot; i++) {
-    ASSERT_EQ(test_array[i], check_array[i]);
+    const INDEX_TYPE row = i / N;
+    const INDEX_TYPE col = i % N;
+    ASSERT_EQ(test_view(row, col), check_view(row, col));
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,
@@ -62,7 +67,6 @@ void ForallRangeSegment2DOffsetViewTestImpl(INDEX_TYPE N)
 {
   const INDEX_TYPE leninterior = N * N;
   const INDEX_TYPE lentot = (N + 2) * (N + 2);
-  const int NDIMS = 2;
 
   RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, leninterior);
 
@@ -77,22 +81,28 @@ void ForallRangeSegment2DOffsetViewTestImpl(INDEX_TYPE N)
                                      &check_array,
                                      &test_array);
 
-  memset( test_array, 0, sizeof(INDEX_TYPE) * lentot ); 
+  memset( test_array, 0, sizeof(INDEX_TYPE) * RAJA::stripIndexType(lentot) );
 
-  working_res.memcpy(working_array, test_array, sizeof(INDEX_TYPE) * lentot);
+  working_res.memcpy(working_array, test_array,
+                     sizeof(INDEX_TYPE) * RAJA::stripIndexType(lentot));
 
-  for (int row = 1; row < N + 1; ++row) {
-    for (int col = 1; col < N + 1; ++col) {
-      int idx = row * (N+2) + col;
-      test_array[ idx ] = (row - 1) * N + (col - 1);
+  using layout_type =
+      RAJA::TypedOffsetLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE>>;
+  using view_type = RAJA::View< INDEX_TYPE, layout_type >;
+
+  using raw_index_type = RAJA::strip_index_type_t<INDEX_TYPE>;
+  raw_index_type first = -1;
+  raw_index_type last  = RAJA::stripIndexType(N + 1);
+  layout_type layout({{first, first}}, {{last, last}});
+  view_type test_view(test_array, layout);
+  view_type work_view(working_array, layout);
+  view_type check_view(check_array, layout);
+
+  for (INDEX_TYPE row = 0; row < N; ++row) {
+    for (INDEX_TYPE col = 0; col < N; ++col) {
+      test_view(row, col) = row * N + col;
     }
   }
-
-  using view_type = RAJA::View< INDEX_TYPE, RAJA::OffsetLayout<NDIMS> >;
-  RAJA::OffsetLayout<NDIMS> layout =
-    RAJA::make_offset_layout<NDIMS>( {{-1, -1}} , {{N+1, N+1}} );
-
-  view_type work_view(working_array, layout);
 
   RAJA::forall<EXEC_POLICY>(r1, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
     const INDEX_TYPE row = idx / N;
@@ -100,10 +110,13 @@ void ForallRangeSegment2DOffsetViewTestImpl(INDEX_TYPE N)
     work_view(row, col) = idx;  
   });
 
-  working_res.memcpy(check_array, working_array, sizeof(INDEX_TYPE) * lentot);
+  working_res.memcpy(check_array, working_array,
+                     sizeof(INDEX_TYPE) * RAJA::stripIndexType(lentot));
 
-  for (INDEX_TYPE i = 0; i < lentot; i++) {
-    ASSERT_EQ(test_array[i], check_array[i]);
+  for (INDEX_TYPE row = INDEX_TYPE(-1); row < N + 1; ++row) {
+    for (INDEX_TYPE col = INDEX_TYPE(-1); col < N + 1; ++col) {
+      ASSERT_EQ(test_view(row, col), check_view(row, col));
+    }
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,
@@ -119,13 +132,13 @@ class ForallRangeSegment2DViewTest : public ::testing::Test
 };
 
 template <typename INDEX_TYPE, typename WORKING_RES, typename EXEC_POLICY,
-  typename std::enable_if<std::is_unsigned<INDEX_TYPE>::value>::type* = nullptr>
+  typename std::enable_if<std::is_unsigned<RAJA::strip_index_type_t<INDEX_TYPE>>::value>::type* = nullptr>
 void runOffsetViewTests()
 {
 }
 
 template <typename INDEX_TYPE, typename WORKING_RES, typename EXEC_POLICY,
-  typename std::enable_if<std::is_signed<INDEX_TYPE>::value>::type* = nullptr>
+  typename std::enable_if<std::is_signed<RAJA::strip_index_type_t<INDEX_TYPE>>::value>::type* = nullptr>
 void runOffsetViewTests()
 {
   ForallRangeSegment2DOffsetViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(4);

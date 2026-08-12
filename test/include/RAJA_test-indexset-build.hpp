@@ -57,8 +57,8 @@ void buildIndexSet(
   INDEX_TYPE stride = 0;
   INDEX_TYPE last_idx = 0;
   INDEX_TYPE lseg_len = static_cast<INDEX_TYPE>( lindices.size() );
-  std::vector<INDEX_TYPE> lseg(lseg_len);
-  std::vector<INDEX_TYPE> lseg_vec(lseg_len);
+  std::vector<INDEX_TYPE> lseg(RAJA::stripIndexType(lseg_len));
+  std::vector<INDEX_TYPE> lseg_vec(RAJA::stripIndexType(lseg_len));
 
   indices_out.clear(); 
 
@@ -79,25 +79,29 @@ void buildIndexSet(
 
   // Create List segment
   for (INDEX_TYPE i = 0; i < lseg_len; ++i) {
-    lseg[i] = lindices[i] + last_idx + 3;
-    indices_out.push_back( lseg[i] );
+    auto ii = RAJA::stripIndexType(i);
+    lseg[ii] = lindices[ii] + last_idx + 3;
+    indices_out.push_back( lseg[ii] );
   }
-  iset.push_back(LIST_TYPE(&lseg[0], lseg_len, working_res));
-  last_idx = lseg[lseg_len - 1];
+  iset.push_back(LIST_TYPE(&lseg[0], RAJA::stripIndexType(lseg_len), working_res));
+  last_idx = lseg[RAJA::stripIndexType(lseg_len - 1)];
 
   // Create List segment using alternate ctor
   for (INDEX_TYPE i = 0; i < lseg_len; ++i) {
-    lseg_vec[i] = lindices[i] + last_idx + 3;
-    indices_out.push_back( lseg_vec[i] );
+    auto ii = RAJA::stripIndexType(i);
+    lseg_vec[ii] = lindices[ii] + last_idx + 3;
+    indices_out.push_back( lseg_vec[ii] );
   }
   iset.push_back(LIST_TYPE(lseg_vec, working_res));
-  last_idx = lseg_vec[lseg_len - 1];
+  last_idx = lseg_vec[RAJA::stripIndexType(lseg_len - 1)];
 
   // Create Range-stride segment
   rbeg = last_idx + 16;
   rend = rbeg + 2040;
   stride = 3;
-  iset.push_back(RANGESTRIDE_TYPE(rbeg, rend, stride));
+  iset.push_back(RANGESTRIDE_TYPE(RAJA::stripIndexType(rbeg),
+                                  RAJA::stripIndexType(rend),
+                                  RAJA::stripIndexType(stride)));
   for (INDEX_TYPE i = rbeg; i < rend; i += stride) { 
     indices_out.push_back( i ); 
   }
@@ -114,11 +118,12 @@ void buildIndexSet(
 
   // Create List segment
   for (INDEX_TYPE i = 0; i < lseg_len; ++i) {
-    lseg[i] = lindices[i] + last_idx + 5;
-    indices_out.push_back( lseg[i] );
+    auto ii = RAJA::stripIndexType(i);
+    lseg[ii] = lindices[ii] + last_idx + 5;
+    indices_out.push_back( lseg[ii] );
   }
-  iset.push_back(LIST_TYPE(&lseg[0], lseg_len, working_res));
-  last_idx = lseg[lseg_len - 1];
+  iset.push_back(LIST_TYPE(&lseg[0], RAJA::stripIndexType(lseg_len), working_res));
+  last_idx = lseg[RAJA::stripIndexType(lseg_len - 1)];
 
   // Create Range segment
   rbeg = last_idx + 1;
@@ -131,11 +136,12 @@ void buildIndexSet(
 
   // Create List segment using alternate ctor
   for (INDEX_TYPE i = 0; i < lseg_len; ++i) {
-    lseg_vec[i] = lindices[i] + last_idx + 7;
-    indices_out.push_back( lseg_vec[i] );
+    auto ii = RAJA::stripIndexType(i);
+    lseg_vec[ii] = lindices[ii] + last_idx + 7;
+    indices_out.push_back( lseg_vec[ii] );
   }
   iset.push_back(LIST_TYPE(lseg_vec, working_res));
-  last_idx = lseg_vec[lseg_len - 1];
+  last_idx = lseg_vec[RAJA::stripIndexType(lseg_len - 1)];
 }
 
 #endif  // __TEST_FORALL_INDEXSET_BUILD_HPP__

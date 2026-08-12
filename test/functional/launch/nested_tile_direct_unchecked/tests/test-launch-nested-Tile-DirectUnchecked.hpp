@@ -26,9 +26,9 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
   const int threads_y = tile_size_y;
   const int threads_z = tile_size_z;
 
-  const int blocks_x = 4*M;
-  const int blocks_y = 5*M;
-  const int blocks_z = 6*M;
+  const int blocks_x = 4 * RAJA::stripIndexType(M);
+  const int blocks_y = 5 * RAJA::stripIndexType(M);
+  const int blocks_z = 6 * RAJA::stripIndexType(M);
 
   // Use exactly the number of teams and threads
   RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, threads_x*blocks_x);
@@ -61,8 +61,14 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
     working_res.memset(working_array, 0, sizeof(INDEX_TYPE) * data_len);
   }
 
-  constexpr int DIM = 3;
-  using layout_t = RAJA::Layout<DIM, INDEX_TYPE,DIM-1>;
+  using linear_layout_t =
+      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
+  RAJA::View<INDEX_TYPE, linear_layout_t> test_view(test_array, N);
+  RAJA::View<INDEX_TYPE, linear_layout_t> check_view(check_array, N);
+
+  using layout_t =
+      RAJA::TypedLayout<INDEX_TYPE,
+                        camp::tuple<INDEX_TYPE, INDEX_TYPE, INDEX_TYPE>>;
   RAJA::View<INDEX_TYPE, layout_t> Aview(working_array, N3, N2, N1);
 
   RAJA::launch<LAUNCH_POLICY>
@@ -96,7 +102,7 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
   working_res.wait();
 
   for (INDEX_TYPE i = INDEX_TYPE(0); i < N; i++) {
-    ASSERT_EQ(test_array[RAJA::stripIndexType(i)], check_array[RAJA::stripIndexType(i)]);
+    ASSERT_EQ(test_view(i), check_view(i));
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,

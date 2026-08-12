@@ -38,14 +38,22 @@ void ForallCombiningAdapter2DTestImpl(INDEX_TYPE first0, INDEX_TYPE last0,
                                      &check_array,
                                      &test_array);
 
+  using layout_type =
+      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
+  using view_type = RAJA::View< INDEX_TYPE, layout_type >;
+
+  view_type test_view(test_array, N + INDEX_TYPE(1));
+  view_type work_view(working_array, N + INDEX_TYPE(1));
+  view_type check_view(check_array, N + INDEX_TYPE(1));
+
   {
 
     for (INDEX_TYPE i0 = INDEX_TYPE(0); i0 < N0; i0++) {
       for (INDEX_TYPE i1 = INDEX_TYPE(0); i1 < N1; i1++) {
-        test_array[i0 * N1 + i1] = i0 * N1 + i1;
+        test_view(i0 * N1 + i1) = i0 * N1 + i1;
       }
     }
-    test_array[RAJA::stripIndexType(N)] = INDEX_TYPE(0);
+    test_view(N) = INDEX_TYPE(0);
 
     working_res.memset(working_array, 0, sizeof(INDEX_TYPE) * data_len);
 
@@ -53,12 +61,11 @@ void ForallCombiningAdapter2DTestImpl(INDEX_TYPE first0, INDEX_TYPE last0,
       if (idx0 >= first0 && idx0 < last0 &&
           idx1 >= first1 && idx1 < last1) {
         // in bounds
-        working_array[RAJA::stripIndexType((idx0 - first0) * N1 +
-                                           (idx1 - first1))] += (idx0 - first0) * N1 +
-                                                                (idx1 - first1);
+        work_view((idx0 - first0) * N1 + (idx1 - first1)) +=
+            (idx0 - first0) * N1 + (idx1 - first1);
       } else {
         // out of bounds
-        working_array[RAJA::stripIndexType(N)]++;
+        work_view(N)++;
       }
     }, r0, r1);
 
@@ -69,7 +76,7 @@ void ForallCombiningAdapter2DTestImpl(INDEX_TYPE first0, INDEX_TYPE last0,
   working_res.memcpy(check_array, working_array, sizeof(INDEX_TYPE) * data_len);
 
   for (INDEX_TYPE i = INDEX_TYPE(0); i <= N; i++) {
-    ASSERT_EQ(test_array[RAJA::stripIndexType(i)], check_array[RAJA::stripIndexType(i)]);
+    ASSERT_EQ(test_view(i), check_view(i));
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,
