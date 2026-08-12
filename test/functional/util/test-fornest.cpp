@@ -179,10 +179,16 @@ TEST(fornest, dynamic_resource_host)
 
 TEST(fornest, mapping_policy_host)
 {
+#if defined(RAJA_GPU_ACTIVE)
+  using loop_pol = RAJA::LoopPolicy<RAJA::seq_exec, RAJA::seq_exec>;
+#else
+  using loop_pol = RAJA::LoopPolicy<RAJA::seq_exec>;
+#endif
+
   using mapping_pol = RAJA::fornest_mapping_policy<
       RAJA::seq_exec,
-      RAJA::LoopPolicy<RAJA::seq_exec, RAJA::seq_exec>,
-      RAJA::LoopPolicy<RAJA::seq_exec, RAJA::seq_exec>>;
+      loop_pol,
+      loop_pol>;
 
   constexpr int n          = 3;
   constexpr int batch_size = 4;
