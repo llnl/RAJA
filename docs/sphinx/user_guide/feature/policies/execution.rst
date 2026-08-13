@@ -405,7 +405,8 @@ nested loop mapping, especially for tiled loop bodies where a tile is processed
 by the threads in a block. Prefer ``*_loop`` variants when the loop extent may
 be larger than the available threads in the selected dimension. Thread-direct
 policies are recommended only for loop patterns, such as block tiling, that
-produce small fixed-size iteration spaces within each block.
+produce small fixed-size iteration spaces within each block. For some 
+illustrative code examples, please see :ref:`tut-tiledmatrixtranspose-label`
 
 .. note:: ``cuda/hip_thread_loop`` policies are not safe to use with
           ``Cuda/HipSyncThreads``. Use
