@@ -13,8 +13,17 @@
 Execution Policy Reference
 ==========================
 
-This page contains execution policy reference material for loops, launches,
-index sets, GPU back-ends, OpenMP target offload, and device aliases.
+This page contains execution policy reference material for kernel launches,
+index sets, GPU back-ends, OpenMP target offload, and device aliases:
+
+  * :ref:`feat-policies-cpu-label`
+  * :ref:`feat-policies-openmp-cpu-label`
+  * :ref:`parallelregionpolicy-label`
+  * :ref:`indexsetpolicy-label`
+  * :ref:`feat-policies-gpu-label`
+  * :ref:`feat-policies-sycl-label`
+  * :ref:`feat-policies-omp-target-label`
+  * :ref:`feat-policies-gpu-aliases-label`
 
 -----------------------------------------------------
 RAJA Loop/Kernel Execution Policies
@@ -221,7 +230,7 @@ at the end of it.
 Parallel Region Policies
 -------------------------
 
-Earlier, we discussed using the ``RAJA::region`` construct to
+Above, we discussed using the ``RAJA::region`` construct to
 execute multiple kernels in an OpenMP parallel region. To support source code
 portability, RAJA provides a sequential region concept that can be used to
 surround code that uses execution back-ends other than OpenMP. This simplifies
