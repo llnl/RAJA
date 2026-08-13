@@ -184,13 +184,19 @@ a template argument as described above.
                loop iteration under any circumstance other than static schedule
                are non-conforming.*
 
+.. _parallelregionpolicy-label:
+
+-------------------------
+Parallel Region Policies
+-------------------------
+
+The ``RAJA::region`` construct is helpful to manage execution of multiple
+parallel kernels within a single OpenMP parallel region.
 As noted above, RAJA inner OpenMP policies must be used within an
 **existing** parallel region to work properly. Embedding an inner
 policy inside the RAJA outer ``omp_parallel_exec`` will allow you to
 apply the OpenMP execution prescription specified by the policies to
-a single kernel. To support use cases with multiple kernels inside an
-OpenMP parallel region, RAJA provides a **region** construct that
-takes a template argument to specify the execution back-end. For example::
+a single kernel. For example::
 
   RAJA::region<RAJA::omp_parallel_region>([=]() {
 
@@ -224,18 +230,11 @@ more code to execute in the parallel region and the
 ``RAJA::omp_parallel_region`` construct applies a barrier
 at the end of it.
 
-.. _parallelregionpolicy-label:
-
--------------------------
-Parallel Region Policies
--------------------------
-
-Above, we discussed using the ``RAJA::region`` construct to
-execute multiple kernels in an OpenMP parallel region. To support source code
-portability, RAJA provides a sequential region concept that can be used to
-surround code that uses execution back-ends other than OpenMP. This simplifies
-switching user code between sequential and parallel execution and does not
-require changing the code structure. For example::
+To better support source code portability, RAJA provides a sequential
+region construct that can be used to surround code that uses execution
+back-ends other than OpenMP. This simplifies switching user code between
+sequential and parallel execution and does not require changing the code
+structure. For example::
 
   #if RAJA_ENABLE_OPENMP
     #define REGION_POLICY RAJA::omp_parallel_region
