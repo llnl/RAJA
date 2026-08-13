@@ -20,27 +20,28 @@
  *  2D example with dynamic policy selection for RAJA::fornest
  *
  *  Selects a policy at runtime. The policy list contains both nested
- *  (exec/mapping policy) and flattened (fornest_flattened_policy) entries so
+ *  (exec/mapping policy) and collapsed (fornest_collapsed_policy) entries so
  *  the runtime selection can switch between mappings.
  */
 
 //------------------------------------------------------------------------------
 // Policies
 //------------------------------------------------------------------------------
-using seq_nested = RAJA::seq_exec;
-using seq_flat   = RAJA::fornest_flattened_policy<RAJA::seq_exec>;
+	using seq_nested = RAJA::seq_exec;
+using seq_collapse = RAJA::fornest_collapsed_policy<RAJA::seq_exec>;
 
-using simd_nested = RAJA::simd_exec;
-using simd_flat   = RAJA::fornest_flattened_policy<RAJA::simd_exec>;
+	using simd_nested = RAJA::simd_exec;
+using simd_collapse = RAJA::fornest_collapsed_policy<RAJA::simd_exec>;
 
 #if defined(RAJA_ENABLE_OPENMP)
-using omp_nested = RAJA::omp_parallel_for_exec;
-using omp_flat   = RAJA::fornest_flattened_policy<RAJA::omp_parallel_for_exec>;
+	using omp_nested = RAJA::omp_parallel_for_exec;
+using omp_collapse =
+    RAJA::fornest_collapsed_policy<RAJA::omp_parallel_for_exec>;
 #endif
 
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-using dev256_nested = RAJA::device_exec<256>;
-using dev256_flat   = RAJA::fornest_flattened_policy<dev256_nested>;
+	using dev256_nested = RAJA::device_exec<256>;
+using dev256_collapse = RAJA::fornest_collapsed_policy<dev256_nested>;
 
 // Perfectly nested loop structure: outer is global-parallel, inner is
 // sequential.
@@ -55,29 +56,29 @@ using dev256_block_thread = RAJA::fornest_mapping_policy<
     RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_block_x_direct>,
     RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_thread_x_loop>>;
 
-using dev512_nested = RAJA::device_exec<512>;
-using dev512_flat   = RAJA::fornest_flattened_policy<dev512_nested>;
+	using dev512_nested = RAJA::device_exec<512>;
+using dev512_collapse = RAJA::fornest_collapsed_policy<dev512_nested>;
 #endif
 
-using policy_list = camp::list<seq_nested,
-                               seq_flat,
-                               simd_nested,
-                               simd_flat
+	using policy_list = camp::list<seq_nested,
+	                               seq_collapse,
+	                               simd_nested,
+	                               simd_collapse
 #if defined(RAJA_ENABLE_OPENMP)
-                               ,
-                               omp_nested,
-                               omp_flat
+	                               ,
+	                               omp_nested,
+	                               omp_collapse
 #endif
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-                               ,
-                               dev256_nested,
-                               dev256_flat,
-                               dev256_perfect,
-                               dev256_block_thread,
-                               dev512_nested,
-                               dev512_flat
+	                               ,
+	                               dev256_nested,
+	                               dev256_collapse,
+	                               dev256_perfect,
+	                               dev256_block_thread,
+	                               dev512_nested,
+	                               dev512_collapse
 #endif
-                               >;
+	                               >;
 
 /*
  * Print the list of selectable policies and their numeric indices.
@@ -94,21 +95,21 @@ static void print_policy_menu()
     std::cout << "  " << idx++ << ": " << name << "\n";
   };
 
-  print("seq nested");
-  print("seq flattened");
-  print("simd nested");
-  print("simd flattened");
+	print("seq nested");
+	print("seq collapsed");
+	print("simd nested");
+	print("simd collapsed");
 #if defined(RAJA_ENABLE_OPENMP)
-  print("omp nested");
-  print("omp flattened");
+	print("omp nested");
+	print("omp collapsed");
 #endif
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-  print("device_exec<256> nested (default device mapping)");
-  print("device_exec<256> flattened");
-  print("device_exec<256> perfectly nested (global_x, seq)");
-  print("device_exec<256> block/thread (block_x, thread_x_loop)");
-  print("device_exec<512> nested (default device mapping)");
-  print("device_exec<512> flattened");
+	print("device_exec<256> nested (default device mapping)");
+	print("device_exec<256> collapsed");
+	print("device_exec<256> perfectly nested (global_x, seq)");
+	print("device_exec<256> block/thread (block_x, thread_x_loop)");
+	print("device_exec<512> nested (default device mapping)");
+	print("device_exec<512> collapsed");
 #endif
 }
 
@@ -125,25 +126,25 @@ static const char* get_policy_name(int pol)
     return (pol == idx++) ? name : nullptr;
   };
 
-  if (auto n = match("seq nested")) return n;
-  if (auto n = match("seq flattened")) return n;
-  if (auto n = match("simd nested")) return n;
-  if (auto n = match("simd flattened")) return n;
+	if (auto n = match("seq nested")) return n;
+	if (auto n = match("seq collapsed")) return n;
+	if (auto n = match("simd nested")) return n;
+	if (auto n = match("simd collapsed")) return n;
 #if defined(RAJA_ENABLE_OPENMP)
-  if (auto n = match("omp nested")) return n;
-  if (auto n = match("omp flattened")) return n;
+	if (auto n = match("omp nested")) return n;
+	if (auto n = match("omp collapsed")) return n;
 #endif
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-  if (auto n = match("device_exec<256> nested (default device mapping)"))
-    return n;
-  if (auto n = match("device_exec<256> flattened")) return n;
-  if (auto n = match("device_exec<256> perfectly nested (global_x, seq)"))
-    return n;
-  if (auto n = match("device_exec<256> block/thread (block_x, thread_x_loop)"))
-    return n;
-  if (auto n = match("device_exec<512> nested (default device mapping)"))
-    return n;
-  if (auto n = match("device_exec<512> flattened")) return n;
+	if (auto n = match("device_exec<256> nested (default device mapping)"))
+		return n;
+	if (auto n = match("device_exec<256> collapsed")) return n;
+	if (auto n = match("device_exec<256> perfectly nested (global_x, seq)"))
+		return n;
+	if (auto n = match("device_exec<256> block/thread (block_x, thread_x_loop)"))
+		return n;
+	if (auto n = match("device_exec<512> nested (default device mapping)"))
+		return n;
+	if (auto n = match("device_exec<512> collapsed")) return n;
 #endif
 
   return "<unknown>";
@@ -154,7 +155,7 @@ static const char* get_policy_name(int pol)
  *
  * Supports:
  *  - numeric indices (e.g., "0", "3", ...)
- *  - stable string aliases (e.g., "seq", "dev256_flat", ...)
+ *  - stable string aliases (e.g., "seq", "dev256_collapse", ...)
  *
  * On success, writes the selected policy index into `pol_out` and returns true.
  */
@@ -193,24 +194,26 @@ static bool parse_policy_arg(const char* arg, int& pol_out)
     return false;
   };
 
-  if (accept("seq", "seq_nested", "seq-nested")) return true;
-  if (accept("seq_flat", "seq_flattened", "seq-flat")) return true;
-  if (accept("simd", "simd_nested", "simd-nested")) return true;
-  if (accept("simd_flat", "simd_flattened", "simd-flat")) return true;
+	if (accept("seq", "seq_nested", "seq-nested")) return true;
+	if (accept("seq_collapse", "seq_collapsed", "seq-collapse")) return true;
+	if (accept("simd", "simd_nested", "simd-nested")) return true;
+	if (accept("simd_collapse", "simd_collapsed", "simd-collapse")) return true;
 #if defined(RAJA_ENABLE_OPENMP)
-  if (accept("omp", "omp_nested", "omp-nested")) return true;
-  if (accept("omp_flat", "omp_flattened", "omp-flat")) return true;
+	if (accept("omp", "omp_nested", "omp-nested")) return true;
+	if (accept("omp_collapse", "omp_collapsed", "omp-collapse")) return true;
 #endif
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-  if (accept("dev256", "dev256_nested", "dev256-nested")) return true;
-  if (accept("dev256_flat", "dev256_flattened", "dev256-flat")) return true;
-  if (accept("dev256_perfect", "dev256_perfectly_nested", "dev256-perfect"))
-    return true;
-  if (accept("dev256_block_thread", "dev256_block-thread",
-             "dev256-block-thread"))
-    return true;
-  if (accept("dev512", "dev512_nested", "dev512-nested")) return true;
-  if (accept("dev512_flat", "dev512_flattened", "dev512-flat")) return true;
+	if (accept("dev256", "dev256_nested", "dev256-nested")) return true;
+	if (accept("dev256_collapse", "dev256_collapsed", "dev256-collapse"))
+		return true;
+	if (accept("dev256_perfect", "dev256_perfectly_nested", "dev256-perfect"))
+		return true;
+	if (accept("dev256_block_thread", "dev256_block-thread",
+	           "dev256-block-thread"))
+		return true;
+	if (accept("dev512", "dev512_nested", "dev512-nested")) return true;
+	if (accept("dev512_collapse", "dev512_collapsed", "dev512-collapse"))
+		return true;
 #endif
 
   return false;
@@ -248,15 +251,15 @@ int main(int argc, char* argv[])
     std::cerr << "Usage: ./dynamic-fornest POLICY\n";
     std::cerr << "Where POLICY is a numeric index or a name:\n";
     print_policy_menu();
-    std::cerr << "Names: seq, seq_flat, simd, simd_flat"
+	std::cerr << "Names: seq, seq_collapse, simd, simd_collapse"
 #if defined(RAJA_ENABLE_OPENMP)
-              << ", omp, omp_flat"
+	          << ", omp, omp_collapse"
 #endif
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-              << ", dev256, dev256_flat, dev256_perfect, dev256_block_thread, "
-                 "dev512, dev512_flat"
+	          << ", dev256, dev256_collapse, dev256_perfect, dev256_block_thread, "
+	             "dev512, dev512_collapse"
 #endif
-              << "\n";
+	          << "\n";
     return 1;
   }
 

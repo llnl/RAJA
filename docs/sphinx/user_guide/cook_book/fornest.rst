@@ -20,7 +20,7 @@ the source alone.
 
 The interface supports two mapping policy families:
 
- * ``RAJA::fornest_flattened_policy<ExecPolicy, LayoutTag>`` maps the product
+ * ``RAJA::fornest_collapsed_policy<ExecPolicy, LayoutTag>`` maps the product
    of the logical dimensions to a 1-D iteration space. The ``ExecPolicy`` is a
    regular forall-style policy such as ``RAJA::device_exec<256>`` (CUDA/HIP) or
    ``RAJA::seq_exec`` (host). RAJA performs the linear-to-logical index
@@ -34,7 +34,7 @@ the mapping policy from problem size, backend, or measurements while preserving
 one logical loop body.
 
 ----------------------------------
-Why Compare Flat and Explicit Mappings
+Why Compare Collapsed and Explicit Mappings
 -------------------------------------
 
 Many application kernels are logically 2-D or 3-D but have historically run on
@@ -45,7 +45,7 @@ dimension is small.
 For example, a ``cells x components`` kernel with only a few components may not
 fit a fixed 2-D thread-block shape well. An explicit 2-D mapping can leave many
 threads inactive in each block when one logical dimension is small. The
-flattened mapping instead runs over ``cells * components`` as a 1-D space, which
+collapsed mapping instead runs over ``cells * components`` as a 1-D space, which
 can produce fuller blocks. The tradeoff is the extra index reconstruction
 arithmetic. The explicit mapping can still win when the dimensions fit the block
 shape, when the body is very small and index reconstruction dominates, or when
@@ -63,7 +63,7 @@ use direct device mapping tags for explicit mapping:
    :end-before: // _fornest_policy_aliases_end
    :language: C++
 
-The flattened policy uses a forall-style execution policy such as
+The collapsed policy uses a forall-style execution policy such as
 ``RAJA::device_exec<block_size_1d>`` (when GPU is enabled). The mapping policy
 uses one loop policy per dimension.
 
@@ -89,7 +89,7 @@ passed to the common implementation:
 Run the example both ways and compare timing with the profiling tool normally
 used for the target backend::
 
-  ./fornest-basic flat
+  ./fornest-basic collapse
   ./fornest-basic map
 
 --------------------
@@ -98,9 +98,9 @@ Current Capabilities
 
 ``RAJA::fornest`` supports rank-2 and rank-3 loop nests over standard RAJA
 segments (e.g., ``RAJA::RangeSegment``). The mapping policy requires one loop
-policy per segment. The flattened mapping uses ``RAJA::layout_right`` by
+policy per segment. The collapsed mapping uses ``RAJA::layout_right`` by
 default, or ``RAJA::layout_left`` when that layout tag is supplied, to control
-which logical index is unit stride in the flattened space.
+which logical index is unit stride in the collapsed space.
 
 Use direct ``RAJA::launch`` when the kernel needs explicit shared memory, team
 synchronization, multiple cooperating loops in a single launch body, or other
@@ -115,7 +115,7 @@ Profiling with Caliper
 to individual kernels. Build RAJA with Caliper + runtime plugins enabled and run
 with Caliper environment variables::
 
-  RAJA_CALIPER=1 CALI_CONFIG=runtime-report ./fornest-basic flat
+  RAJA_CALIPER=1 CALI_CONFIG=runtime-report ./fornest-basic collapse
 
 To produce a profile for offline analysis::
 

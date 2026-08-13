@@ -55,10 +55,10 @@ namespace RAJA
 {
 
 /*!
- * Policy wrapper that requests a flattened mapping for a rank-2 or rank-3
+ * Policy wrapper that requests a collapsed mapping for a rank-2 or rank-3
  * fornest.
  *
- * With a flattened policy, `RAJA::fornest` linearizes the 2D/3D iteration
+ * With a collapsed policy, `RAJA::fornest` linearizes the 2D/3D iteration
  * space and executes a single 1D `RAJA::forall` over that linear index.
  * The `LayoutTag` controls how the linear index is mapped back to `(i0,i1)`
  * or `(i0,i1,i2)` (e.g., `RAJA::layout_right` vs `RAJA::layout_left`).
@@ -71,7 +71,7 @@ namespace RAJA
  *   supported and forwarded to the underlying `RAJA::forall`.
  */
 template<typename ExecPolicy, typename LayoutTag = RAJA::layout_right>
-struct fornest_flattened_policy
+struct fornest_collapsed_policy
 {
   using exec_policy = ExecPolicy;
   using layout_tag  = LayoutTag;
@@ -157,7 +157,7 @@ struct fornest_underlying_exec_policy
 
 template<typename ExecPolicy, typename LayoutTag>
 struct fornest_underlying_exec_policy<
-    ::RAJA::fornest_flattened_policy<ExecPolicy, LayoutTag>>
+    ::RAJA::fornest_collapsed_policy<ExecPolicy, LayoutTag>>
 {
   using type = camp::decay<ExecPolicy>;
 };
@@ -2310,7 +2310,7 @@ RAJA_INLINE auto fornest(
 }
 
 //------------------------------------------------------------------------------
-// fornest: flattened wrapper policy (2D)
+// fornest: collapsed wrapper policy (2D)
 //------------------------------------------------------------------------------
 template<typename ExecPolicy,
          typename LayoutTag,
@@ -2318,7 +2318,7 @@ template<typename ExecPolicy,
          typename Seg1,
          typename... Params>
   requires(!detail::first_arg_is_segment_like_v<Params...>)
-RAJA_INLINE auto fornest(fornest_flattened_policy<ExecPolicy, LayoutTag>,
+RAJA_INLINE auto fornest(fornest_collapsed_policy<ExecPolicy, LayoutTag>,
                          Seg0 const& seg0,
                          Seg1 const& seg1,
                          Params&&... params)
@@ -2364,7 +2364,7 @@ template<typename ExecPolicy,
          typename... Params>
 RAJA_INLINE auto fornest(
     typename resources::get_resource<camp::decay<ExecPolicy>>::type r,
-    fornest_flattened_policy<ExecPolicy, LayoutTag>,
+    fornest_collapsed_policy<ExecPolicy, LayoutTag>,
     Seg0 const& seg0,
     Seg1 const& seg1,
     Params&&... params)
@@ -2403,7 +2403,7 @@ RAJA_INLINE auto fornest(
 }
 
 //------------------------------------------------------------------------------
-// fornest: flattened wrapper policy (3D)
+// fornest: collapsed wrapper policy (3D)
 //------------------------------------------------------------------------------
 template<typename ExecPolicy,
          typename LayoutTag,
@@ -2412,7 +2412,7 @@ template<typename ExecPolicy,
          typename Seg2,
          typename... Params>
   requires detail::segment_like<Seg2>
-RAJA_INLINE auto fornest(fornest_flattened_policy<ExecPolicy, LayoutTag>,
+RAJA_INLINE auto fornest(fornest_collapsed_policy<ExecPolicy, LayoutTag>,
                          Seg0 const& seg0,
                          Seg1 const& seg1,
                          Seg2 const& seg2,
@@ -2462,7 +2462,7 @@ template<typename ExecPolicy,
   requires detail::segment_like<Seg2>
 RAJA_INLINE auto fornest(
     typename resources::get_resource<camp::decay<ExecPolicy>>::type r,
-    fornest_flattened_policy<ExecPolicy, LayoutTag>,
+    fornest_collapsed_policy<ExecPolicy, LayoutTag>,
     Seg0 const& seg0,
     Seg1 const& seg1,
     Seg2 const& seg2,
@@ -2504,7 +2504,7 @@ RAJA_INLINE auto fornest(
 
 //------------------------------------------------------------------------------
 // fornest: non-dimensional exec policy (2D)
-//   - host platform: flattened forall<ExecPolicy>
+//   - host platform: collapsed forall<ExecPolicy>
 //   - device platform: nested/grid launch with default mapping + tiling
 //------------------------------------------------------------------------------
 template<typename ExecPolicy, typename Seg0, typename Seg1, typename... Params>
@@ -2516,7 +2516,7 @@ RAJA_INLINE auto fornest(ExecPolicy,
 {
   static_assert(type_traits::policy_dimensionality_v<ExecPolicy> == 0,
                 "RAJA::fornest v1 requires a non-dimensional execution policy "
-                "(e.g., cuda_exec<256>) or a fornest_flattened_policy.");
+                "(e.g., cuda_exec<256>) or a fornest_collapsed_policy.");
 
   constexpr Platform platform =
       detail::get_platform<camp::decay<ExecPolicy>>::value;
@@ -2524,7 +2524,7 @@ RAJA_INLINE auto fornest(ExecPolicy,
   if constexpr (platform == Platform::host)
   {
     return RAJA::fornest(
-        fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
+        fornest_collapsed_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
         std::forward<Params>(params)...);
   }
 #if defined(RAJA_GPU_ACTIVE)
@@ -2574,10 +2574,10 @@ RAJA_INLINE auto fornest(ExecPolicy,
         std::move(args_tuple));
 #elif defined(RAJA_SYCL_ACTIVE)
     // SYCL does not support the CUDA/HIP-style explicit mapping tags used for
-    // this launch path. Fall back to flattened execution with index
+    // this launch path. Fall back to collapsed execution with index
     // reconstruction, which is portable across device backends.
     return RAJA::fornest(
-        fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
+        fornest_collapsed_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
         std::forward<Params>(params)...);
 #else
     RAJA_ABORT_OR_THROW("RAJA::fornest: unsupported device platform");
@@ -2610,7 +2610,7 @@ RAJA_INLINE auto fornest(ExecPolicy,
 {
   static_assert(type_traits::policy_dimensionality_v<ExecPolicy> == 0,
                 "RAJA::fornest v1 requires a non-dimensional execution policy "
-                "(e.g., cuda_exec<256>) or a fornest_flattened_policy.");
+                "(e.g., cuda_exec<256>) or a fornest_collapsed_policy.");
 
   constexpr Platform platform =
       detail::get_platform<camp::decay<ExecPolicy>>::value;
@@ -2618,7 +2618,7 @@ RAJA_INLINE auto fornest(ExecPolicy,
   if constexpr (platform == Platform::host)
   {
     return RAJA::fornest(
-        fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
+        fornest_collapsed_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
         seg2, std::forward<Params>(params)...);
   }
 #if defined(RAJA_GPU_ACTIVE)
@@ -2673,7 +2673,7 @@ RAJA_INLINE auto fornest(ExecPolicy,
         std::move(args_tuple));
 #elif defined(RAJA_SYCL_ACTIVE)
     return RAJA::fornest(
-        fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
+        fornest_collapsed_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
         seg2, std::forward<Params>(params)...);
 #else
     RAJA_ABORT_OR_THROW("RAJA::fornest: unsupported device platform");
@@ -2707,7 +2707,7 @@ RAJA_INLINE auto fornest(
   if constexpr (platform == Platform::host)
   {
     return RAJA::fornest(
-        r, fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0,
+        r, fornest_collapsed_policy<ExecPolicy, RAJA::layout_right> {}, seg0,
         seg1, std::forward<Params>(params)...);
   }
 #if defined(RAJA_GPU_ACTIVE)
@@ -2757,7 +2757,7 @@ RAJA_INLINE auto fornest(
         std::move(args_tuple));
 #elif defined(RAJA_SYCL_ACTIVE)
     return RAJA::fornest(
-        r, fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0,
+        r, fornest_collapsed_policy<ExecPolicy, RAJA::layout_right> {}, seg0,
         seg1, std::forward<Params>(params)...);
 #else
     RAJA_ABORT_OR_THROW("RAJA::fornest: unsupported device platform");
@@ -2793,7 +2793,7 @@ RAJA_INLINE auto fornest(
   if constexpr (platform == Platform::host)
   {
     return RAJA::fornest(
-        r, fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0,
+        r, fornest_collapsed_policy<ExecPolicy, RAJA::layout_right> {}, seg0,
         seg1, seg2, std::forward<Params>(params)...);
   }
 #if defined(RAJA_GPU_ACTIVE)
@@ -2848,7 +2848,7 @@ RAJA_INLINE auto fornest(
         std::move(args_tuple));
 #elif defined(RAJA_SYCL_ACTIVE)
     return RAJA::fornest(
-        r, fornest_flattened_policy<ExecPolicy, RAJA::layout_right> {}, seg0,
+        r, fornest_collapsed_policy<ExecPolicy, RAJA::layout_right> {}, seg0,
         seg1, seg2, std::forward<Params>(params)...);
 #else
     RAJA_ABORT_OR_THROW("RAJA::fornest: unsupported device platform");
@@ -2864,7 +2864,7 @@ RAJA_INLINE auto fornest(
 }
 
 //------------------------------------------------------------------------------
-// fornest: typed-erased resource overloads (exec + flattened)
+// fornest: typed-erased resource overloads (exec + collapsed)
 //------------------------------------------------------------------------------
 template<typename Policy, typename Seg0, typename Seg1, typename... Params>
   requires(!detail::first_arg_is_segment_like_v<Params...>)

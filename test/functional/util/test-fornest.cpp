@@ -46,10 +46,10 @@ TEST(fornest, static_2d_seq_exec)
   }
 }
 
-TEST(fornest, flattened_layout_left_seq_exec)
+TEST(fornest, collapsed_layout_left_seq_exec)
 {
-  using flat_left_policy =
-      RAJA::fornest_flattened_policy<RAJA::seq_exec, RAJA::layout_left>;
+  using collapse_left_policy =
+      RAJA::fornest_collapsed_policy<RAJA::seq_exec, RAJA::layout_left>;
 
   constexpr int n          = 3;
   constexpr int batch_size = 4;
@@ -58,7 +58,7 @@ TEST(fornest, flattened_layout_left_seq_exec)
   auto rows    = RAJA::RangeSegment(0, n);
   auto batches = RAJA::RangeSegment(0, batch_size);
 
-  RAJA::fornest(flat_left_policy {}, rows, batches, [&](int r, int b) {
+  RAJA::fornest(collapse_left_policy {}, rows, batches, [&](int r, int b) {
     values[r + n * b] = 100 * r + b;
   });
 
@@ -105,10 +105,10 @@ TEST(fornest, static_3d_seq_exec)
   }
 }
 
-TEST(fornest, dynamic_switch_flattened_vs_default)
+TEST(fornest, dynamic_switch_collapsed_vs_default)
 {
   using policy_list = camp::list<RAJA::seq_exec,
-                                 RAJA::fornest_flattened_policy<RAJA::seq_exec>>;
+                                 RAJA::fornest_collapsed_policy<RAJA::seq_exec>>;
 
   constexpr int n          = 3;
   constexpr int batch_size = 4;
@@ -142,7 +142,7 @@ TEST(fornest, dynamic_switch_flattened_vs_default)
 TEST(fornest, dynamic_resource_host)
 {
   using policy_list = camp::list<RAJA::seq_exec,
-                                 RAJA::fornest_flattened_policy<RAJA::seq_exec>>;
+                                 RAJA::fornest_collapsed_policy<RAJA::seq_exec>>;
 
   constexpr int n          = 3;
   constexpr int batch_size = 4;

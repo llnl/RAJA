@@ -18,16 +18,16 @@
  * Minimal RAJA::fornest example (2-D)
  *
  * Demonstrates:
- *  - flattened mapping (1-D space + index reconstruction)
+ *  - collapsed mapping (1-D space + index reconstruction)
  *  - explicit per-dimension mapping via fornest_mapping_policy
  *  - Caliper labeling via RAJA::Name
  *
  * Run:
- *   ./fornest-basic flat
+ *   ./fornest-basic collapse
  *   ./fornest-basic map
  *
  * Caliper (built with RAJA_ENABLE_CALIPER=ON and RAJA_ENABLE_RUNTIME_PLUGINS=ON):
- *   RAJA_CALIPER=1 CALI_CONFIG=runtime-report ./fornest-basic flat
+ *   RAJA_CALIPER=1 CALI_CONFIG=runtime-report ./fornest-basic collapse
  *   RAJA_CALIPER=1 CALI_CONFIG=runtime-profile(output=fornest-basic.cali,output.format=cali) \
  *     ./fornest-basic map
  */
@@ -47,7 +47,7 @@ using exec_pol = RAJA::seq_exec;
 
 enum class Mapping
 {
-  Flat,
+  Collapse,
   Map
 };
 
@@ -55,26 +55,26 @@ enum class Mapping
  * Parse the command-line mapping selector.
  *
  * Accepted values:
- *  - "flat" / "flattened": use fornest_flattened_policy (1-D iteration space)
+ *  - "collapse" / "collapsed": use fornest_collapsed_policy (1-D iteration space)
  *  - "map" / "mapped": use fornest_mapping_policy (per-dimension mapping)
  *
  * Throws on unrecognized input so main() can report a clear error.
  */
 Mapping parse_mapping(const std::string& arg)
 {
-  if (arg == "flat" || arg == "flattened")
+  if (arg == "collapse" || arg == "collapsed")
   {
-    return Mapping::Flat;
+    return Mapping::Collapse;
   }
   if (arg == "map" || arg == "mapped")
   {
     return Mapping::Map;
   }
-  throw std::runtime_error("expected 'flat' or 'map'");
+  throw std::runtime_error("expected 'collapse' or 'map'");
 }
 
 // _fornest_policy_aliases_start
-using flat_policy = RAJA::fornest_flattened_policy<exec_pol>;
+using collapse_policy = RAJA::fornest_collapsed_policy<exec_pol>;
 
 // A portable "nested loops" mapping policy.
 using map_policy = RAJA::fornest_mapping_policy<
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
   {
     if (argc != 2)
     {
-      std::cerr << "Usage: " << argv[0] << " <flat|map>\n";
+      std::cerr << "Usage: " << argv[0] << " <collapse|map>\n";
       return 2;
     }
 
@@ -122,11 +122,11 @@ int main(int argc, char** argv)
     };
 
     // _fornest_runtime_select_start
-    if (mapping == Mapping::Flat)
+    if (mapping == Mapping::Collapse)
     {
       // _fornest_call_start
-      RAJA::fornest(flat_policy {}, rows, cols, RAJA::Name("fornest_basic_flat"),
-                    body);
+      RAJA::fornest(collapse_policy {}, rows, cols,
+                    RAJA::Name("fornest_basic_collapse"), body);
       // _fornest_call_end
     }
     else
