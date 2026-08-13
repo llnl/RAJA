@@ -543,10 +543,14 @@ struct FornestLaunchBody2D
   RAJA_HOST_DEVICE RAJA_INLINE void operator()(context_type ctx,
                                                Reducers&... reducers) const
   {
-    camp::tuple<Reducers&...> reducer_refs{reducers...};
+    camp::tuple<Reducers&...> reducer_refs {reducers...};
     RAJA::loop<Loop0>(ctx, seg0, [&](auto i0) {
       RAJA::loop<Loop1>(ctx, seg1, [&](auto i1) {
-        camp::apply([&](auto&... rs) { body(i0, i1, rs...); }, reducer_refs);
+        camp::apply(
+            [&](auto&... rs) {
+              body(i0, i1, rs...);
+            },
+            reducer_refs);
       });
     });
   }
@@ -610,12 +614,15 @@ struct FornestLaunchBody3D
   RAJA_HOST_DEVICE RAJA_INLINE void operator()(context_type ctx,
                                                Reducers&... reducers) const
   {
-    camp::tuple<Reducers&...> reducer_refs{reducers...};
+    camp::tuple<Reducers&...> reducer_refs {reducers...};
     RAJA::loop<Loop0>(ctx, seg0, [&](auto i0) {
       RAJA::loop<Loop1>(ctx, seg1, [&](auto i1) {
         RAJA::loop<Loop2>(ctx, seg2, [&](auto i2) {
-          camp::apply([&](auto&... rs) { body(i0, i1, i2, rs...); },
-                      reducer_refs);
+          camp::apply(
+              [&](auto&... rs) {
+                body(i0, i1, i2, rs...);
+              },
+              reducer_refs);
         });
       });
     });
