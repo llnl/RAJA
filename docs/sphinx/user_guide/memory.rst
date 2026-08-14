@@ -27,4 +27,4 @@ to the backend allocator.
 The function returns the number of bytes released and does not synchronize
 CUDA, HIP, or SYCL work. RAJA does not do this automatically during static
 destruction because CUDA and HIP runtime teardown can make late ``cudaFree`` or
-``hipFree`` calls fail.
+``hipFree`` calls fail.  As such, this function must only be called before the end of main to avoid racing with backend runtime cleanup.
