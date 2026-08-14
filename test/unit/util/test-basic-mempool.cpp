@@ -73,12 +73,12 @@ TEST(BasicMemPool, release_unused_internal_memory_public_api)
   ASSERT_EQ(released, size_t {0});
 
 #if defined(RAJA_CUDA_ACTIVE)
-  (void)RAJA::cuda::release_unused_internal_memory();
+  ASSERT_EQ(RAJA::cuda::release_unused_internal_memory(), size_t {0});
 #endif
 #if defined(RAJA_HIP_ACTIVE)
-  (void)RAJA::hip::release_unused_internal_memory();
+  ASSERT_EQ(RAJA::hip::release_unused_internal_memory(), size_t {0});
 #endif
 #if defined(RAJA_SYCL_ACTIVE)
-  (void)RAJA::sycl::release_unused_internal_memory();
+  ASSERT_EQ(RAJA::sycl::release_unused_internal_memory(), size_t {0});
 #endif
 }
