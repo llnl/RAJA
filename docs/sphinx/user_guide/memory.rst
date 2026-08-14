@@ -24,7 +24,7 @@ pools. Applications can call ``RAJA::release_unused_internal_memory()`` after
 outstanding RAJA and device work has completed to return unused internal memory
 to the backend allocator. Typical use is to call the function at application shutdown
 to prevent the internal memory pools from appearing in memory-leak reports. Frequent
-runtime calls are generally unnecessary because the pools are retained for reuse are
+runtime calls are generally unnecessary because the pools retained for reuse are
 typically not large.
 
 The function returns the number of bytes released and does not synchronize
