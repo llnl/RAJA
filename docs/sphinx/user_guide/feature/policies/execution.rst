@@ -396,7 +396,7 @@ a few important rules:
             limit will cause the CUDA/HIP runtime to report illegal launch
             parameters.
 
-Thread mapping policies
+Thread block mapping policies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These policies map one loop level to GPU threads within a thread block. They
