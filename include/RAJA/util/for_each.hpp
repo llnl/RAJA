@@ -25,8 +25,8 @@
 #include <iterator>
 #include <type_traits>
 
-#include "camp/list.hpp"
 #include "camp/concepts.hpp"
+#include "camp/list.hpp"
 #include "camp/number.hpp"
 #include "camp/tuple.hpp"
 
@@ -41,7 +41,7 @@ namespace RAJA
 namespace detail
 {
 
-// compile time expansion applying func to each of the indices
+// compile-time expansion applying func to each index in order
 RAJA_SUPPRESS_HD_WARN
 template<typename UnaryFunc, camp::idx_t... Is>
 constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc
@@ -99,7 +99,7 @@ for_each_tuple(Tuple&& t, UnaryFunc func, camp::idx_seq<Is...>)
   return func;
 }
 
-// compile time expansion applying func to a each type in the tuple in order
+// compile-time expansion applying func to each tuple object and index in order
 RAJA_SUPPRESS_HD_WARN
 template<typename Tuple, typename BinaryFunc, camp::idx_t... Is>
 constexpr RAJA_HOST_DEVICE RAJA_INLINE BinaryFunc
@@ -118,6 +118,10 @@ for_each_tuple_index(Tuple&& t, BinaryFunc func, camp::idx_seq<Is...>)
 
 }  // namespace detail
 
+/*!
+  \brief Apply func to each index in [0, N) in order using a compile-time
+  expansion in O(N) operations and O(1) extra memory
+*/
 RAJA_SUPPRESS_HD_WARN
 template<size_t N, typename UnaryFunc>
 constexpr RAJA_HOST_DEVICE RAJA_INLINE UnaryFunc for_each_index(UnaryFunc func)
