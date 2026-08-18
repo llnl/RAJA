@@ -107,11 +107,10 @@ the target backend::
 
   ./fornest-basic collapse
   ./fornest-basic map
-  ./fornest-basic basic
+  ./fornest-basic nested-loops
   ./fornest-basic tile-fixed
   ./fornest-basic tile-runtime
   ./fornest-basic tile-auto
-  ./fornest-basic dynamic
 
 On OpenMP builds::
 

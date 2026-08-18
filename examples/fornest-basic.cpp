@@ -20,19 +20,17 @@
  * Demonstrates:
  *  - collapsed mapping (1-D space + index reconstruction)
  *  - explicit per-dimension mapping via fornest_mapping_policy
- *  - basic mapping aliases
+ *  - nested-loops mapping alias
  *  - fixed, runtime, and auto tiling
- *  - dynamic_fornest policy selection
  *  - Caliper labeling via RAJA::Name
  *
  * Run:
  *   ./fornest-basic collapse
  *   ./fornest-basic map
- *   ./fornest-basic basic
+ *   ./fornest-basic nested-loops
  *   ./fornest-basic tile-fixed
  *   ./fornest-basic tile-runtime
  *   ./fornest-basic tile-auto
- *   ./fornest-basic dynamic
  *   ./fornest-basic omp-outer       (OpenMP builds)
  *   ./fornest-basic omp-collapse    (OpenMP host execution)
  *
@@ -63,7 +61,6 @@ enum class Mapping
   TileFixed,
   TileRuntime,
   TileAuto,
-  Dynamic,
 #if defined(RAJA_ENABLE_OPENMP)
   OmpOuter,
   OmpCollapse,
@@ -76,11 +73,10 @@ enum class Mapping
  * Accepted values:
  *  - "collapse" / "collapsed": use fornest_collapsed_policy (1-D iteration space)
  *  - "map" / "mapped": use fornest_mapping_policy (per-dimension mapping)
- *  - "basic": use the convenience basic mapping alias
+ *  - "nested-loops" (or "basic"): use the convenience nested-loops alias
  *  - "tile-fixed": use compile-time tile sizes
  *  - "tile-runtime": use RAJA::TileSize runtime tile sizes
  *  - "tile-auto": let RAJA pick tile sizes
- *  - "dynamic": use dynamic_fornest to select a policy from a list
  *  - "omp-outer": use an outer OpenMP loop (OpenMP builds)
  *  - "omp-collapse": use OpenMP collapse on the host (OpenMP builds)
  *
@@ -96,7 +92,7 @@ Mapping parse_mapping(const std::string& arg)
   {
     return Mapping::Map;
   }
-  if (arg == "basic")
+  if (arg == "nested-loops" || arg == "basic")
   {
     return Mapping::Basic;
   }
@@ -112,10 +108,6 @@ Mapping parse_mapping(const std::string& arg)
   {
     return Mapping::TileAuto;
   }
-  if (arg == "dynamic")
-  {
-    return Mapping::Dynamic;
-  }
 #if defined(RAJA_ENABLE_OPENMP)
   if (arg == "omp-outer")
   {
@@ -127,13 +119,13 @@ Mapping parse_mapping(const std::string& arg)
   }
 #endif
   throw std::runtime_error(
-      "expected 'collapse', 'map', 'basic', 'tile-fixed', 'tile-runtime', "
-      "'tile-auto', or 'dynamic'");
+      "expected 'collapse', 'map', 'nested-loops', 'tile-fixed', "
+      "'tile-runtime', or 'tile-auto'");
 }
 
 // _fornest_policy_aliases_start
 using collapse_policy = RAJA::fornest_collapsed_policy<exec_pol>;
-using basic_policy    = RAJA::fornest_basic_seq_2d<exec_pol>;
+using nested_loops_policy = RAJA::fornest_basic_seq_2d<exec_pol>;
 using tile_fixed_policy =
     RAJA::fornest_tiling_policy<exec_pol,
                                 RAJA::fornest_tile_fixed<2>,
@@ -146,8 +138,6 @@ using tile_auto_policy =
     RAJA::fornest_tiling_policy<exec_pol,
                                 RAJA::fornest_tile_auto,
                                 RAJA::fornest_tile_auto>;
-using dynamic_policy_list =
-    camp::list<basic_policy, collapse_policy, tile_fixed_policy>;
 
 // A portable "nested loops" mapping policy.
 using map_policy = RAJA::fornest_mapping_policy<
@@ -211,8 +201,8 @@ int main(int argc, char** argv)
     if (argc != 2)
     {
       std::cerr << "Usage: " << argv[0]
-                << " <collapse|map|basic|tile-fixed|tile-runtime|tile-auto|"
-                   "dynamic";
+                << " <collapse|map|nested-loops|tile-fixed|tile-runtime|"
+                   "tile-auto";
 #if defined(RAJA_ENABLE_OPENMP)
       std::cerr << "|omp-outer";
       std::cerr << "|omp-collapse";
@@ -265,7 +255,8 @@ int main(int argc, char** argv)
 #endif
       break;
     case Mapping::Basic:
-      run_fornest(basic_policy {}, rows, cols, "fornest_basic_alias", body);
+      run_fornest(nested_loops_policy {}, rows, cols, "fornest_basic_alias",
+                  body);
       break;
     case Mapping::TileFixed:
       run_fornest(tile_fixed_policy {}, rows, cols, "fornest_basic_tile_fixed",
@@ -275,21 +266,14 @@ int main(int argc, char** argv)
       run_fornest(tile_runtime_policy {RAJA::TileSize(2), RAJA::TileSize(2)},
                   rows, cols, "fornest_basic_tile_runtime", body);
       break;
-    case Mapping::TileAuto:
-      run_fornest(tile_auto_policy {}, rows, cols, "fornest_basic_tile_auto",
-                  body);
-      break;
-    case Mapping::Dynamic:
-    {
-      constexpr int policy_index = 2;
-      RAJA::dynamic_fornest<dynamic_policy_list>(
-          policy_index, rows, cols, RAJA::Name("fornest_basic_dynamic"), body);
-      break;
-    }
+	case Mapping::TileAuto:
+	  run_fornest(tile_auto_policy {}, rows, cols, "fornest_basic_tile_auto",
+				  body);
+	  break;
 #if defined(RAJA_ENABLE_OPENMP)
-    case Mapping::OmpOuter:
-      run_fornest(omp_outer_policy {}, rows, cols, "fornest_basic_omp_outer",
-                  body);
+	case Mapping::OmpOuter:
+	  run_fornest(omp_outer_policy {}, rows, cols, "fornest_basic_omp_outer",
+				  body);
       break;
     case Mapping::OmpCollapse:
       run_fornest(omp_collapse_policy {}, rows, cols,
