@@ -41,6 +41,9 @@
 #include "RAJA/util/resource.hpp"
 #include "RAJA/policy/device.hpp"
 
+#if defined(RAJA_ENABLE_OPENMP)
+#include "RAJA/policy/openmp.hpp"
+#endif
 #if defined(RAJA_ENABLE_CUDA)
 #include "RAJA/policy/cuda.hpp"
 #endif
@@ -55,11 +58,10 @@ namespace RAJA
 {
 
 /*!
- * Policy wrapper that requests a collapsed mapping for a rank-2 or rank-3
- * fornest.
+ * Policy wrapper that requests a collapsed mapping for a fornest loop nest.
  *
- * With a collapsed policy, `RAJA::fornest` linearizes the 2D/3D iteration
- * space and executes a single 1D `RAJA::forall` over that linear index.
+ * With a collapsed policy, `RAJA::fornest` linearizes the iteration space and
+ * executes a single 1D `RAJA::forall` over that linear index.
  * The `LayoutTag` controls how the linear index is mapped back to `(i0,i1)`
  * or `(i0,i1,i2)` (e.g., `RAJA::layout_right` vs `RAJA::layout_left`).
  *
@@ -69,6 +71,7 @@ namespace RAJA
  *   index values.
  * - Optional `forall` parameters (e.g., `RAJA::kernel_name`, reducers) are
  *   supported and forwarded to the underlying `RAJA::forall`.
+ * - The current implementation supports only 2- or 3-level loop nests.
  */
 template<typename ExecPolicy, typename LayoutTag = RAJA::layout_right>
 struct fornest_collapsed_policy
@@ -78,19 +81,23 @@ struct fornest_collapsed_policy
 };
 
 /*!
- * Policy wrapper that requests an explicit per-dimension mapping for a rank-2
- * or rank-3 fornest.
+ * Policy wrapper that requests an explicit per-dimension mapping for a fornest
+ * loop nest.
  *
  * With a mapping policy, `RAJA::fornest` builds a nested `RAJA::launch` region
  * and applies one `RAJA::loop` per dimension using the provided loop policies.
- * This is the interface used to request specific CUDA/HIP mappings such as
- * mapping one dimension to `thread_x` and another to `block_y`, etc.
+ * This is the interface used to request specific device mappings such as
+ * mapping one dimension to a work item/thread and another to a work group/block.
  *
- * `LoopPolicies...` must be `RAJA::LoopPolicy<HostPolicy[, DevicePolicy]>`
- * types (the optional device policy parameter is available when GPU support
- * is enabled). Examples:
+ * `LoopPolicies...` must be `RAJA::LoopPolicy<...>` types. A host policy may
+ * be supplied by itself, or paired with a device policy when GPU support is
+ * enabled. Device-only policies are also valid when the active execution
+ * policy launches only the device backend. Examples:
  * - `RAJA::LoopPolicy<RAJA::seq_exec>` (portable host-only nested loops)
- * - `RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_thread_x_direct>` (CUDA/HIP)
+ * - `RAJA::LoopPolicy<RAJA::device_block_x_direct>` (active device backend)
+ * - `RAJA::LoopPolicy<RAJA::device_thread_x_loop>` (active device backend)
+ *
+ * \note The current implementation supports only 2- or 3-level loop nests.
  */
 template<typename ExecPolicy, typename... LoopPolicies>
 struct fornest_mapping_policy
@@ -99,6 +106,174 @@ struct fornest_mapping_policy
   using loop_policies               = camp::list<LoopPolicies...>;
   static constexpr camp::idx_t rank = sizeof...(LoopPolicies);
 };
+
+template<typename BasePolicy, typename... TileSpecs>
+struct fornest_tiling_policy
+{
+  using base_policy                 = BasePolicy;
+  using tile_specs                  = camp::list<TileSpecs...>;
+  static constexpr camp::idx_t rank = sizeof...(TileSpecs);
+
+  camp::idx_t runtime_tile0 = 0;
+  camp::idx_t runtime_tile1 = 0;
+  camp::idx_t runtime_tile2 = 0;
+
+  RAJA_INLINE constexpr fornest_tiling_policy() = default;
+
+  RAJA_INLINE constexpr fornest_tiling_policy(RAJA::TileSize tile0,
+                                              RAJA::TileSize tile1)
+      : runtime_tile0(tile0.size),
+        runtime_tile1(tile1.size)
+  {
+    static_assert(rank == 2,
+                  "RAJA::fornest 2D tiling policy requires two tile sizes");
+  }
+
+  RAJA_INLINE constexpr fornest_tiling_policy(RAJA::TileSize tile0,
+                                              RAJA::TileSize tile1,
+                                              RAJA::TileSize tile2)
+      : runtime_tile0(tile0.size),
+        runtime_tile1(tile1.size),
+        runtime_tile2(tile2.size)
+  {
+    static_assert(rank == 3,
+                  "RAJA::fornest 3D tiling policy requires three tile sizes");
+  }
+};
+
+template<camp::idx_t TileSize>
+struct fornest_tile_fixed
+{
+  static_assert(TileSize > 0, "RAJA::fornest fixed tile size must be positive");
+  static constexpr camp::idx_t size = TileSize;
+};
+
+struct fornest_tile_runtime
+{};
+
+struct fornest_tile_auto
+{};
+
+#if defined(RAJA_ENABLE_OPENMP)
+template<typename ExecPolicy>
+struct fornest_omp_collapse_policy
+{
+  using exec_policy = ExecPolicy;
+};
+#endif
+
+#if defined(RAJA_GPU_ACTIVE)
+template<typename HostPolicy, typename DevicePolicy>
+using fornest_platform_loop_policy =
+    RAJA::LoopPolicy<HostPolicy, DevicePolicy>;
+
+template<typename ExecPolicy,
+         typename HostPolicy,
+         typename DevicePolicy,
+         bool HostExec =
+             (RAJA::detail::get_platform<camp::decay<ExecPolicy>>::value ==
+              Platform::host)>
+struct fornest_loop_policy_for_exec
+{
+  using type = RAJA::LoopPolicy<HostPolicy, DevicePolicy>;
+};
+
+template<typename ExecPolicy, typename HostPolicy, typename DevicePolicy>
+struct fornest_loop_policy_for_exec<ExecPolicy, HostPolicy, DevicePolicy, true>
+{
+  using type = RAJA::LoopPolicy<HostPolicy>;
+};
+
+template<typename ExecPolicy, typename HostPolicy, typename DevicePolicy>
+using fornest_loop_policy_for_exec_t =
+    typename fornest_loop_policy_for_exec<ExecPolicy,
+                                          HostPolicy,
+                                          DevicePolicy>::type;
+#else
+template<typename HostPolicy, typename DevicePolicy = HostPolicy>
+using fornest_platform_loop_policy = RAJA::LoopPolicy<HostPolicy>;
+
+template<typename ExecPolicy, typename HostPolicy, typename DevicePolicy>
+using fornest_loop_policy_for_exec_t = RAJA::LoopPolicy<HostPolicy>;
+#endif
+
+#if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
+template<typename ExecPolicy>
+using fornest_basic_seq_2d = RAJA::fornest_mapping_policy<
+    ExecPolicy,
+    RAJA::fornest_loop_policy_for_exec_t<ExecPolicy,
+                                         RAJA::seq_exec,
+                                         RAJA::device_global_x_direct>,
+    RAJA::fornest_loop_policy_for_exec_t<ExecPolicy,
+                                         RAJA::seq_exec,
+                                         RAJA::device_global_y_direct>>;
+
+template<typename ExecPolicy>
+using fornest_basic_seq_3d = RAJA::fornest_mapping_policy<
+    ExecPolicy,
+    RAJA::fornest_loop_policy_for_exec_t<ExecPolicy,
+                                         RAJA::seq_exec,
+                                         RAJA::device_global_x_direct>,
+    RAJA::fornest_loop_policy_for_exec_t<ExecPolicy,
+                                         RAJA::seq_exec,
+                                         RAJA::device_global_y_direct>,
+    RAJA::fornest_loop_policy_for_exec_t<ExecPolicy,
+                                         RAJA::seq_exec,
+                                         RAJA::device_global_z_direct>>;
+#else
+template<typename ExecPolicy>
+using fornest_basic_seq_2d = RAJA::fornest_mapping_policy<
+    ExecPolicy,
+    RAJA::fornest_platform_loop_policy<RAJA::seq_exec>,
+    RAJA::fornest_platform_loop_policy<RAJA::seq_exec>>;
+
+template<typename ExecPolicy>
+using fornest_basic_seq_3d = RAJA::fornest_mapping_policy<
+    ExecPolicy,
+    RAJA::fornest_platform_loop_policy<RAJA::seq_exec>,
+    RAJA::fornest_platform_loop_policy<RAJA::seq_exec>,
+    RAJA::fornest_platform_loop_policy<RAJA::seq_exec>>;
+#endif
+
+#if defined(RAJA_ENABLE_OPENMP)
+#if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE)
+template<typename ExecPolicy>
+using fornest_basic_omp_outer_2d = RAJA::fornest_mapping_policy<
+    ExecPolicy,
+    RAJA::fornest_loop_policy_for_exec_t<ExecPolicy,
+                                         RAJA::omp_parallel_for_exec,
+                                         RAJA::device_global_x_direct>,
+    RAJA::fornest_loop_policy_for_exec_t<ExecPolicy,
+                                         RAJA::seq_exec,
+                                         RAJA::device_global_y_direct>>;
+
+template<typename ExecPolicy>
+using fornest_basic_omp_outer_3d = RAJA::fornest_mapping_policy<
+    ExecPolicy,
+    RAJA::fornest_loop_policy_for_exec_t<ExecPolicy,
+                                         RAJA::omp_parallel_for_exec,
+                                         RAJA::device_global_x_direct>,
+    RAJA::fornest_loop_policy_for_exec_t<ExecPolicy,
+                                         RAJA::seq_exec,
+                                         RAJA::device_global_y_direct>,
+    RAJA::fornest_loop_policy_for_exec_t<ExecPolicy,
+                                         RAJA::seq_exec,
+                                         RAJA::device_global_z_direct>>;
+#else
+template<typename ExecPolicy>
+using fornest_basic_omp_outer_2d = RAJA::fornest_mapping_policy<
+    ExecPolicy,
+    RAJA::fornest_platform_loop_policy<RAJA::omp_parallel_for_exec>,
+    RAJA::fornest_platform_loop_policy<RAJA::seq_exec>>;
+
+template<typename ExecPolicy>
+using fornest_basic_omp_outer_3d = RAJA::fornest_mapping_policy<
+    ExecPolicy,
+    RAJA::fornest_platform_loop_policy<RAJA::omp_parallel_for_exec>,
+    RAJA::fornest_platform_loop_policy<RAJA::seq_exec>,
+    RAJA::fornest_platform_loop_policy<RAJA::seq_exec>>;
+#endif
+#endif
 
 namespace type_traits
 {
@@ -168,6 +343,22 @@ struct fornest_underlying_exec_policy<
 {
   using type = camp::decay<ExecPolicy>;
 };
+
+template<typename BasePolicy, typename... TileSpecs>
+struct fornest_underlying_exec_policy<
+    ::RAJA::fornest_tiling_policy<BasePolicy, TileSpecs...>>
+{
+  using type = typename fornest_underlying_exec_policy<BasePolicy>::type;
+};
+
+#if defined(RAJA_ENABLE_OPENMP)
+template<typename ExecPolicy>
+struct fornest_underlying_exec_policy<
+    ::RAJA::fornest_omp_collapse_policy<ExecPolicy>>
+{
+  using type = camp::decay<ExecPolicy>;
+};
+#endif
 
 template<typename Policy>
 using fornest_underlying_exec_policy_t =
@@ -650,6 +841,329 @@ struct launch_context_type<FornestLaunchBody3D<LaunchContext,
   using type = camp::decay<LaunchContext>;
 };
 
+template<typename T>
+struct is_runtime_tile : std::false_type
+{};
+
+template<>
+struct is_runtime_tile<RAJA::fornest_tile_runtime> : std::true_type
+{};
+
+template<typename TileSpec>
+RAJA_INLINE int resolve_tile_size(int auto_size, camp::idx_t runtime_size)
+{
+  if constexpr (std::is_same_v<camp::decay<TileSpec>, RAJA::fornest_tile_auto>)
+  {
+    return auto_size;
+  }
+  else if constexpr (std::is_same_v<camp::decay<TileSpec>,
+                                    RAJA::fornest_tile_runtime>)
+  {
+    return static_cast<int>(runtime_size);
+  }
+  else
+  {
+    return static_cast<int>(camp::decay<TileSpec>::size);
+  }
+}
+
+RAJA_INLINE void validate_positive_tile(int tile_size)
+{
+  if (tile_size < 1)
+  {
+    RAJA_ABORT_OR_THROW("RAJA::fornest tile size must be positive");
+  }
+}
+
+#if defined(RAJA_GPU_ACTIVE)
+template<typename HostPolicy, typename DevicePolicy>
+using fornest_tile_loop_policy =
+    RAJA::LoopPolicy<HostPolicy, DevicePolicy>;
+#else
+template<typename HostPolicy, typename DevicePolicy = HostPolicy>
+using fornest_tile_loop_policy = RAJA::LoopPolicy<HostPolicy>;
+#endif
+
+template<typename LaunchContext,
+         typename TileLoop0,
+         typename TileLoop1,
+         typename InnerLoop0,
+         typename InnerLoop1,
+         typename Seg0,
+         typename Seg1,
+         typename Body>
+struct FornestTiledLaunchBody2D
+{
+  using seg0_type    = camp::decay<Seg0>;
+  using seg1_type    = camp::decay<Seg1>;
+  using body_type    = camp::decay<Body>;
+  using context_type = camp::decay<LaunchContext>;
+
+  int tile0;
+  int tile1;
+  seg0_type seg0;
+  seg1_type seg1;
+  body_type body;
+
+  template<typename B>
+  RAJA_INLINE FornestTiledLaunchBody2D(int tile0_,
+                                       int tile1_,
+                                       Seg0 const& seg0_,
+                                       Seg1 const& seg1_,
+                                       B&& body_)
+      : tile0(tile0_),
+        tile1(tile1_),
+        seg0(seg0_),
+        seg1(seg1_),
+        body(std::forward<B>(body_))
+  {}
+
+  RAJA_SUPPRESS_HD_WARN
+  template<typename... Reducers>
+  RAJA_HOST_DEVICE RAJA_INLINE void operator()(context_type ctx,
+                                               Reducers&... reducers) const
+  {
+    camp::tuple<Reducers&...> reducer_refs {reducers...};
+    RAJA::tile<TileLoop0>(ctx, tile0, seg0, [&](auto tile_seg0) {
+      RAJA::tile<TileLoop1>(ctx, tile1, seg1, [&](auto tile_seg1) {
+        RAJA::loop<InnerLoop0>(ctx, tile_seg0, [&](auto i0) {
+          RAJA::loop<InnerLoop1>(ctx, tile_seg1, [&](auto i1) {
+            camp::apply(
+                [&](auto&... rs) {
+                  body(i0, i1, rs...);
+                },
+                reducer_refs);
+          });
+        });
+      });
+    });
+  }
+};
+
+template<typename LaunchContext,
+         typename TileLoop0,
+         typename TileLoop1,
+         typename InnerLoop0,
+         typename InnerLoop1,
+         typename Seg0,
+         typename Seg1,
+         typename Body>
+struct launch_context_type<FornestTiledLaunchBody2D<LaunchContext,
+                                                    TileLoop0,
+                                                    TileLoop1,
+                                                    InnerLoop0,
+                                                    InnerLoop1,
+                                                    Seg0,
+                                                    Seg1,
+                                                    Body>,
+                           void>
+{
+  using type = camp::decay<LaunchContext>;
+};
+
+template<typename LaunchContext,
+         typename TileLoop0,
+         typename TileLoop1,
+         typename TileLoop2,
+         typename InnerLoop0,
+         typename InnerLoop1,
+         typename InnerLoop2,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename Body>
+struct FornestTiledLaunchBody3D
+{
+  using seg0_type    = camp::decay<Seg0>;
+  using seg1_type    = camp::decay<Seg1>;
+  using seg2_type    = camp::decay<Seg2>;
+  using body_type    = camp::decay<Body>;
+  using context_type = camp::decay<LaunchContext>;
+
+  int tile0;
+  int tile1;
+  int tile2;
+  seg0_type seg0;
+  seg1_type seg1;
+  seg2_type seg2;
+  body_type body;
+
+  template<typename B>
+  RAJA_INLINE FornestTiledLaunchBody3D(int tile0_,
+                                       int tile1_,
+                                       int tile2_,
+                                       Seg0 const& seg0_,
+                                       Seg1 const& seg1_,
+                                       Seg2 const& seg2_,
+                                       B&& body_)
+      : tile0(tile0_),
+        tile1(tile1_),
+        tile2(tile2_),
+        seg0(seg0_),
+        seg1(seg1_),
+        seg2(seg2_),
+        body(std::forward<B>(body_))
+  {}
+
+  RAJA_SUPPRESS_HD_WARN
+  template<typename... Reducers>
+  RAJA_HOST_DEVICE RAJA_INLINE void operator()(context_type ctx,
+                                               Reducers&... reducers) const
+  {
+    camp::tuple<Reducers&...> reducer_refs {reducers...};
+    RAJA::tile<TileLoop0>(ctx, tile0, seg0, [&](auto tile_seg0) {
+      RAJA::tile<TileLoop1>(ctx, tile1, seg1, [&](auto tile_seg1) {
+        RAJA::tile<TileLoop2>(ctx, tile2, seg2, [&](auto tile_seg2) {
+          RAJA::loop<InnerLoop0>(ctx, tile_seg0, [&](auto i0) {
+            RAJA::loop<InnerLoop1>(ctx, tile_seg1, [&](auto i1) {
+              RAJA::loop<InnerLoop2>(ctx, tile_seg2, [&](auto i2) {
+                camp::apply(
+                    [&](auto&... rs) {
+                      body(i0, i1, i2, rs...);
+                    },
+                    reducer_refs);
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+};
+
+template<typename LaunchContext,
+         typename TileLoop0,
+         typename TileLoop1,
+         typename TileLoop2,
+         typename InnerLoop0,
+         typename InnerLoop1,
+         typename InnerLoop2,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename Body>
+struct launch_context_type<FornestTiledLaunchBody3D<LaunchContext,
+                                                    TileLoop0,
+                                                    TileLoop1,
+                                                    TileLoop2,
+                                                    InnerLoop0,
+                                                    InnerLoop1,
+                                                    InnerLoop2,
+                                                    Seg0,
+                                                    Seg1,
+                                                    Seg2,
+                                                    Body>,
+                           void>
+{
+  using type = camp::decay<LaunchContext>;
+};
+
+#if defined(RAJA_ENABLE_OPENMP)
+template<typename LaunchContext, typename Seg0, typename Seg1, typename Body>
+struct FornestOmpCollapseLaunchBody2D
+{
+  using seg0_type    = camp::decay<Seg0>;
+  using seg1_type    = camp::decay<Seg1>;
+  using body_type    = camp::decay<Body>;
+  using context_type = camp::decay<LaunchContext>;
+
+  seg0_type seg0;
+  seg1_type seg1;
+  body_type body;
+
+  template<typename B>
+  RAJA_INLINE FornestOmpCollapseLaunchBody2D(Seg0 const& seg0_,
+                                             Seg1 const& seg1_,
+                                             B&& body_)
+      : seg0(seg0_),
+        seg1(seg1_),
+        body(std::forward<B>(body_))
+  {}
+
+  RAJA_SUPPRESS_HD_WARN
+  template<typename... Reducers>
+  RAJA_HOST_DEVICE RAJA_INLINE void operator()(context_type ctx,
+                                               Reducers&... reducers) const
+  {
+    camp::tuple<Reducers&...> reducer_refs {reducers...};
+    RAJA::expt::loop<RAJA::LoopPolicy<RAJA::omp_parallel_for_exec>>(
+        ctx, seg0, seg1, [&](auto i0, auto i1) {
+          camp::apply(
+              [&](auto&... rs) {
+                body(i0, i1, rs...);
+              },
+              reducer_refs);
+        });
+  }
+};
+
+template<typename LaunchContext, typename Seg0, typename Seg1, typename Body>
+struct launch_context_type<
+    FornestOmpCollapseLaunchBody2D<LaunchContext, Seg0, Seg1, Body>,
+    void>
+{
+  using type = camp::decay<LaunchContext>;
+};
+
+template<typename LaunchContext,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename Body>
+struct FornestOmpCollapseLaunchBody3D
+{
+  using seg0_type    = camp::decay<Seg0>;
+  using seg1_type    = camp::decay<Seg1>;
+  using seg2_type    = camp::decay<Seg2>;
+  using body_type    = camp::decay<Body>;
+  using context_type = camp::decay<LaunchContext>;
+
+  seg0_type seg0;
+  seg1_type seg1;
+  seg2_type seg2;
+  body_type body;
+
+  template<typename B>
+  RAJA_INLINE FornestOmpCollapseLaunchBody3D(Seg0 const& seg0_,
+                                             Seg1 const& seg1_,
+                                             Seg2 const& seg2_,
+                                             B&& body_)
+      : seg0(seg0_),
+        seg1(seg1_),
+        seg2(seg2_),
+        body(std::forward<B>(body_))
+  {}
+
+  RAJA_SUPPRESS_HD_WARN
+  template<typename... Reducers>
+  RAJA_HOST_DEVICE RAJA_INLINE void operator()(context_type ctx,
+                                               Reducers&... reducers) const
+  {
+    camp::tuple<Reducers&...> reducer_refs {reducers...};
+    RAJA::expt::loop<RAJA::LoopPolicy<RAJA::omp_parallel_for_exec>>(
+        ctx, seg0, seg1, seg2, [&](auto i0, auto i1, auto i2) {
+          camp::apply(
+              [&](auto&... rs) {
+                body(i0, i1, i2, rs...);
+              },
+              reducer_refs);
+        });
+  }
+};
+
+template<typename LaunchContext,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename Body>
+struct launch_context_type<
+    FornestOmpCollapseLaunchBody3D<LaunchContext, Seg0, Seg1, Seg2, Body>,
+    void>
+{
+  using type = camp::decay<LaunchContext>;
+};
+#endif
+
 template<typename ExecPolicy>
 struct exec_block_size
 {
@@ -686,18 +1200,74 @@ struct exec_block_size<
 };
 #endif
 
+#if defined(RAJA_SYCL_ACTIVE)
+template<size_t BlockSize, bool Async>
+struct exec_block_size<::RAJA::policy::sycl::sycl_exec<BlockSize, Async>>
+{
+  static constexpr int value = static_cast<int>(BlockSize);
+};
+#endif
+
 template<typename ExecPolicy>
 inline constexpr int exec_block_size_v =
     exec_block_size<camp::decay<ExecPolicy>>::value;
+
+template<typename ExecPolicy>
+RAJA_INLINE tile3 auto_tile_2d(std::size_t n0, std::size_t n1)
+{
+  constexpr Platform platform =
+      detail::get_platform<camp::decay<ExecPolicy>>::value;
+  if constexpr (platform == Platform::host)
+  {
+    RAJA_UNUSED_VAR(n0);
+    RAJA_UNUSED_VAR(n1);
+    return tile3 {32, 32, 1};
+  }
+  else
+  {
+    constexpr int block_size = exec_block_size_v<ExecPolicy>;
+    static_assert(block_size > 0,
+                  "RAJA::fornest auto tiling requires a fixed GPU block size");
+    return choose_2d_tile(block_size, n0, n1);
+  }
+}
+
+template<typename ExecPolicy>
+RAJA_INLINE tile3 auto_tile_3d(std::size_t n0,
+                               std::size_t n1,
+                               std::size_t n2)
+{
+  constexpr Platform platform =
+      detail::get_platform<camp::decay<ExecPolicy>>::value;
+  if constexpr (platform == Platform::host)
+  {
+    RAJA_UNUSED_VAR(n0);
+    RAJA_UNUSED_VAR(n1);
+    RAJA_UNUSED_VAR(n2);
+    return tile3 {16, 16, 4};
+  }
+  else
+  {
+    constexpr int block_size = exec_block_size_v<ExecPolicy>;
+    static_assert(block_size > 0,
+                  "RAJA::fornest auto tiling requires a fixed GPU block size");
+    return choose_3d_tile(block_size, n0, n1, n2);
+  }
+}
 
 #if defined(RAJA_GPU_ACTIVE)
 template<typename ExecPolicy>
 struct fornest_launch_policy;
 
-template<>
-struct fornest_launch_policy<RAJA::seq_exec>
+// Exposes both the host and device launch policies used by fornest.
+// Note: selecting host vs device launch still depends on which RAJA::launch
+// overload is called (e.g., resource-based launch chooses by resource platform).
+template<typename ExecPolicy>
+struct fornest_launch_policy
 {
-  using type = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
+  using host_t = RAJA::seq_launch_t;
+  using device_t = host_t;
+  using type = RAJA::LaunchPolicy<host_t, device_t>;
 };
 
 #if defined(RAJA_CUDA_ACTIVE)
@@ -713,8 +1283,9 @@ struct fornest_launch_policy<
                                              BlocksPerSM,
                                              Async>>
 {
-  using type =
-      RAJA::LaunchPolicy<RAJA::seq_launch_t, RAJA::device_launch_t<Async>>;
+  using host_t   = RAJA::device_launch_t<Async>;
+  using device_t = host_t;
+  using type     = RAJA::LaunchPolicy<host_t>;
 };
 #endif
 
@@ -727,8 +1298,9 @@ struct fornest_launch_policy<
     ::RAJA::policy::hip::
         hip_exec<IterationMapping, IterationGetter, LaunchConcretizer, Async>>
 {
-  using type =
-      RAJA::LaunchPolicy<RAJA::seq_launch_t, RAJA::device_launch_t<Async>>;
+  using host_t   = RAJA::device_launch_t<Async>;
+  using device_t = host_t;
+  using type     = RAJA::LaunchPolicy<host_t>;
 };
 #endif
 
@@ -738,8 +1310,9 @@ struct fornest_launch_policy<::RAJA::policy::sycl::sycl_exec<BlockSize, Async>>
 {
   // sycl_launch_t is specialized only for num_threads=0, and uses LaunchParams
   // for the actual threads/teams configuration.
-  using type =
-      RAJA::LaunchPolicy<RAJA::seq_launch_t, RAJA::sycl_launch_t<Async, 0>>;
+  using host_t   = RAJA::seq_launch_t;
+  using device_t = RAJA::sycl_launch_t<Async, 0>;
+  using type     = RAJA::LaunchPolicy<device_t>;
 };
 #endif
 
@@ -762,6 +1335,15 @@ enum class fornest_axis
   x,
   y,
   z
+};
+
+template<int DIM>
+struct fornest_sycl_dim_axis
+{
+  static constexpr fornest_axis value = (DIM == 2)   ? fornest_axis::x
+                                      : (DIM == 1) ? fornest_axis::y
+                                      : (DIM == 0) ? fornest_axis::z
+                                                   : fornest_axis::none;
 };
 
 // Extract IndexGlobal (dimension + sizes) from a policy::cuda/hip *_indexer
@@ -1161,6 +1743,36 @@ struct fornest_map_traits<RAJA::device_block_size_z_loop<Z_SIZE>>
 {
   static constexpr fornest_map_spec spec {fornest_map_space::block,
                                           fornest_axis::z, true};
+};
+#endif
+
+#if defined(RAJA_SYCL_ACTIVE)
+template<int DIM>
+struct fornest_map_traits<::RAJA::policy::sycl::sycl_group_012_direct<DIM>>
+{
+  static constexpr fornest_map_spec spec {
+      fornest_map_space::block, fornest_sycl_dim_axis<DIM>::value, false};
+};
+
+template<int DIM>
+struct fornest_map_traits<::RAJA::policy::sycl::sycl_group_012_loop<DIM>>
+{
+  static constexpr fornest_map_spec spec {
+      fornest_map_space::block, fornest_sycl_dim_axis<DIM>::value, true};
+};
+
+template<int DIM>
+struct fornest_map_traits<::RAJA::policy::sycl::sycl_local_012_direct<DIM>>
+{
+  static constexpr fornest_map_spec spec {
+      fornest_map_space::thread, fornest_sycl_dim_axis<DIM>::value, false};
+};
+
+template<int DIM>
+struct fornest_map_traits<::RAJA::policy::sycl::sycl_local_012_loop<DIM>>
+{
+  static constexpr fornest_map_spec spec {
+      fornest_map_space::thread, fornest_sycl_dim_axis<DIM>::value, true};
 };
 #endif
 
@@ -2004,6 +2616,18 @@ RAJA_INLINE LaunchParams make_launch_params_for_mapping_3d(int block_size,
 //------------------------------------------------------------------------------
 // Static fornest template wrappers (match forall style)
 //------------------------------------------------------------------------------
+/*!
+ * \brief Run a logical multi-dimensional loop nest from one loop body.
+ *
+ * The loop body is written in terms of logical indices such as `(i,j)` or
+ * `(i,j,k)`. A policy controls how those logical dimensions are traversed and
+ * mapped between loop levels; e.g., keep them as nested loops, collapse to a
+ * 1-D iteration space, map dimensions onto a device hierarchy, and/or apply
+ * tiling.
+ *
+ * \note `RAJA::fornest` is intended as a general loop-nest abstraction; the
+ *       current implementation supports only 2- or 3-level loop nests.
+ */
 template<typename Policy, typename... Args>
   requires(!detail::is_camp_list_v<Policy>)
 RAJA_INLINE auto fornest(Args&&... args)
@@ -2310,6 +2934,600 @@ RAJA_INLINE auto fornest(
 }
 
 //------------------------------------------------------------------------------
+// fornest: tiling wrapper policy (2D)
+//------------------------------------------------------------------------------
+template<typename ExecPolicy,
+         typename Loop0,
+         typename Loop1,
+         typename Tile0,
+         typename Tile1,
+         typename Seg0,
+         typename Seg1,
+         typename... Params>
+  requires(!detail::first_arg_is_segment_like_v<Params...>)
+RAJA_INLINE auto fornest(
+    fornest_tiling_policy<fornest_mapping_policy<ExecPolicy, Loop0, Loop1>,
+                          Tile0,
+                          Tile1>,
+    RAJA::TileSize runtime_tile0,
+    RAJA::TileSize runtime_tile1,
+    Seg0 const& seg0,
+    Seg1 const& seg1,
+    Params&&... params);
+
+template<typename ExecPolicy,
+         typename Loop0,
+         typename Loop1,
+         typename Tile0,
+         typename Tile1,
+         typename Seg0,
+         typename Seg1,
+         typename... Params>
+  requires(!detail::first_arg_is_segment_like_v<Params...>)
+RAJA_INLINE auto fornest(
+    fornest_tiling_policy<fornest_mapping_policy<ExecPolicy, Loop0, Loop1>,
+                          Tile0,
+                          Tile1> policy,
+    Seg0 const& seg0,
+    Seg1 const& seg1,
+    Params&&... params)
+{
+  const detail::tile3 auto_tile = detail::auto_tile_2d<ExecPolicy>(
+      detail::segment_length_host(seg0), detail::segment_length_host(seg1));
+  const int tile0 =
+      detail::resolve_tile_size<Tile0>(auto_tile.x, policy.runtime_tile0);
+  const int tile1 =
+      detail::resolve_tile_size<Tile1>(auto_tile.y, policy.runtime_tile1);
+  detail::validate_positive_tile(tile0);
+  detail::validate_positive_tile(tile1);
+
+  return RAJA::fornest(
+      fornest_tiling_policy<fornest_mapping_policy<ExecPolicy, Loop0, Loop1>,
+                            Tile0,
+                            Tile1> {},
+      RAJA::TileSize(tile0), RAJA::TileSize(tile1), seg0, seg1,
+      std::forward<Params>(params)...);
+}
+
+template<typename ExecPolicy,
+         typename Loop0,
+         typename Loop1,
+         typename Tile0,
+         typename Tile1,
+         typename Seg0,
+         typename Seg1,
+         typename... Params>
+  requires(!detail::first_arg_is_segment_like_v<Params...>)
+RAJA_INLINE auto fornest(
+    fornest_tiling_policy<fornest_mapping_policy<ExecPolicy, Loop0, Loop1>,
+                          Tile0,
+                          Tile1>,
+    RAJA::TileSize runtime_tile0,
+    RAJA::TileSize runtime_tile1,
+    Seg0 const& seg0,
+    Seg1 const& seg1,
+    Params&&... params)
+{
+  constexpr Platform platform =
+      detail::get_platform<camp::decay<ExecPolicy>>::value;
+
+  const detail::tile3 auto_tile = detail::auto_tile_2d<ExecPolicy>(
+      detail::segment_length_host(seg0), detail::segment_length_host(seg1));
+  const int tile0 =
+      detail::resolve_tile_size<Tile0>(auto_tile.x, runtime_tile0.size);
+  const int tile1 =
+      detail::resolve_tile_size<Tile1>(auto_tile.y, runtime_tile1.size);
+  detail::validate_positive_tile(tile0);
+  detail::validate_positive_tile(tile1);
+
+  auto&& user_body = expt::get_lambda(std::forward<Params>(params)...);
+  auto body_c      = camp::decay<decltype(user_body)>(
+      std::forward<decltype(user_body)>(user_body));
+
+  auto seg0_c = seg0;
+  auto seg1_c = seg1;
+  auto args_tuple = camp::forward_as_tuple(std::forward<Params>(params)...);
+
+  if constexpr (platform == Platform::host)
+  {
+    using host_ctx   = RAJA::LaunchContextT<RAJA::LaunchContextHostPolicy>;
+    using launch_pol = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
+    using inner0     = RAJA::LoopPolicy<RAJA::seq_exec>;
+    using inner1     = RAJA::LoopPolicy<RAJA::seq_exec>;
+    auto launch_body =
+        detail::FornestTiledLaunchBody2D<host_ctx,
+                                         Loop0,
+                                         Loop1,
+                                         inner0,
+                                         inner1,
+                                         decltype(seg0_c),
+                                         decltype(seg1_c),
+                                         decltype(body_c)>(
+            tile0, tile1, seg0_c, seg1_c, std::move(body_c));
+    return detail::apply_without_last(
+        [&](auto&&... opt_args) {
+          return RAJA::launch<launch_pol>(
+              LaunchParams {}, std::forward<decltype(opt_args)>(opt_args)...,
+              launch_body);
+        },
+        std::move(args_tuple));
+  }
+#if defined(RAJA_GPU_ACTIVE)
+  else
+  {
+#if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE) ||                  \
+    defined(RAJA_SYCL_ACTIVE)
+    constexpr int block_size = detail::exec_block_size_v<ExecPolicy>;
+    static_assert(block_size > 0,
+                  "RAJA::fornest tiling requires an execution policy with a "
+                  "fixed block size on GPU");
+    if (static_cast<std::size_t>(tile0) * static_cast<std::size_t>(tile1) >
+        static_cast<std::size_t>(block_size))
+    {
+      RAJA_ABORT_OR_THROW("RAJA::fornest tiling Threads exceed ExecPolicy "
+                          "block size");
+    }
+
+    const std::size_t n0 = detail::segment_length_host(seg0);
+    const std::size_t n1 = detail::segment_length_host(seg1);
+    const LaunchParams launch_params(
+        Teams(static_cast<int>(
+                  detail::ceil_div<std::size_t>(n0, static_cast<std::size_t>(tile0))),
+              static_cast<int>(
+                  detail::ceil_div<std::size_t>(n1, static_cast<std::size_t>(tile1)))),
+        Threads(tile0, tile1));
+
+    using launch_pol = detail::fornest_launch_policy_t<ExecPolicy>;
+    using tile_loop0 = detail::fornest_tile_loop_policy<
+        RAJA::seq_exec,
+        RAJA::device_block_x_direct>;
+    using tile_loop1 = detail::fornest_tile_loop_policy<
+        RAJA::seq_exec,
+        RAJA::device_block_y_direct>;
+    using inner0 = detail::fornest_tile_loop_policy<
+        RAJA::seq_exec,
+        RAJA::device_thread_x_direct>;
+    using inner1 = detail::fornest_tile_loop_policy<
+        RAJA::seq_exec,
+        RAJA::device_thread_y_direct>;
+    auto launch_body =
+        detail::FornestTiledLaunchBody2D<RAJA::LaunchContext,
+                                         tile_loop0,
+                                         tile_loop1,
+                                         inner0,
+                                         inner1,
+                                         decltype(seg0_c),
+                                         decltype(seg1_c),
+                                         decltype(body_c)>(
+            tile0, tile1, seg0_c, seg1_c, std::move(body_c));
+    return detail::apply_without_last(
+        [&](auto&&... opt_args) {
+          return RAJA::launch<launch_pol>(
+              launch_params, std::forward<decltype(opt_args)>(opt_args)...,
+              launch_body);
+        },
+        std::move(args_tuple));
+#else
+    return RAJA::fornest(
+        fornest_collapsed_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
+        std::forward<Params>(params)...);
+#endif
+  }
+#else
+  else
+  {
+    RAJA_ABORT_OR_THROW("RAJA::fornest: device execution requested but GPU is "
+                        "not enabled");
+  }
+#endif
+}
+
+template<typename ExecPolicy,
+         typename Tile0,
+         typename Tile1,
+         typename Seg0,
+         typename Seg1,
+         typename... Params>
+  requires(!detail::first_arg_is_segment_like_v<Params...>)
+RAJA_INLINE auto fornest(fornest_tiling_policy<ExecPolicy, Tile0, Tile1> policy,
+                         Seg0 const& seg0,
+                         Seg1 const& seg1,
+                         Params&&... params)
+{
+  using base_policy = RAJA::fornest_basic_seq_2d<ExecPolicy>;
+  return RAJA::fornest(fornest_tiling_policy<base_policy, Tile0, Tile1> {
+                           RAJA::TileSize(policy.runtime_tile0),
+                           RAJA::TileSize(policy.runtime_tile1)},
+                       seg0, seg1, std::forward<Params>(params)...);
+}
+
+template<typename ExecPolicy,
+         typename Tile0,
+         typename Tile1,
+         typename Seg0,
+         typename Seg1,
+         typename... Params>
+  requires(!detail::first_arg_is_segment_like_v<Params...>)
+RAJA_INLINE auto fornest(fornest_tiling_policy<ExecPolicy, Tile0, Tile1>,
+                         RAJA::TileSize runtime_tile0,
+                         RAJA::TileSize runtime_tile1,
+                         Seg0 const& seg0,
+                         Seg1 const& seg1,
+                         Params&&... params)
+{
+  using base_policy = RAJA::fornest_basic_seq_2d<ExecPolicy>;
+  return RAJA::fornest(fornest_tiling_policy<base_policy, Tile0, Tile1> {},
+                       runtime_tile0, runtime_tile1, seg0, seg1,
+                       std::forward<Params>(params)...);
+}
+
+//------------------------------------------------------------------------------
+// fornest: tiling wrapper policy (3D)
+//------------------------------------------------------------------------------
+template<typename ExecPolicy,
+         typename Loop0,
+         typename Loop1,
+         typename Loop2,
+         typename Tile0,
+         typename Tile1,
+         typename Tile2,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename... Params>
+  requires detail::segment_like<Seg2>
+RAJA_INLINE auto fornest(
+    fornest_tiling_policy<
+        fornest_mapping_policy<ExecPolicy, Loop0, Loop1, Loop2>,
+        Tile0,
+        Tile1,
+        Tile2>,
+    RAJA::TileSize runtime_tile0,
+    RAJA::TileSize runtime_tile1,
+    RAJA::TileSize runtime_tile2,
+    Seg0 const& seg0,
+    Seg1 const& seg1,
+    Seg2 const& seg2,
+    Params&&... params);
+
+template<typename ExecPolicy,
+         typename Loop0,
+         typename Loop1,
+         typename Loop2,
+         typename Tile0,
+         typename Tile1,
+         typename Tile2,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename... Params>
+  requires detail::segment_like<Seg2>
+RAJA_INLINE auto fornest(
+    fornest_tiling_policy<
+        fornest_mapping_policy<ExecPolicy, Loop0, Loop1, Loop2>,
+        Tile0,
+        Tile1,
+        Tile2> policy,
+    Seg0 const& seg0,
+    Seg1 const& seg1,
+    Seg2 const& seg2,
+    Params&&... params)
+{
+  const detail::tile3 auto_tile =
+      detail::auto_tile_3d<ExecPolicy>(detail::segment_length_host(seg0),
+                                       detail::segment_length_host(seg1),
+                                       detail::segment_length_host(seg2));
+  const int tile0 =
+      detail::resolve_tile_size<Tile0>(auto_tile.x, policy.runtime_tile0);
+  const int tile1 =
+      detail::resolve_tile_size<Tile1>(auto_tile.y, policy.runtime_tile1);
+  const int tile2 =
+      detail::resolve_tile_size<Tile2>(auto_tile.z, policy.runtime_tile2);
+  detail::validate_positive_tile(tile0);
+  detail::validate_positive_tile(tile1);
+  detail::validate_positive_tile(tile2);
+
+  return RAJA::fornest(
+      fornest_tiling_policy<
+          fornest_mapping_policy<ExecPolicy, Loop0, Loop1, Loop2>,
+          Tile0,
+          Tile1,
+          Tile2> {},
+      RAJA::TileSize(tile0), RAJA::TileSize(tile1), RAJA::TileSize(tile2),
+      seg0, seg1, seg2, std::forward<Params>(params)...);
+}
+
+template<typename ExecPolicy,
+         typename Loop0,
+         typename Loop1,
+         typename Loop2,
+         typename Tile0,
+         typename Tile1,
+         typename Tile2,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename... Params>
+  requires detail::segment_like<Seg2>
+RAJA_INLINE auto fornest(
+    fornest_tiling_policy<
+        fornest_mapping_policy<ExecPolicy, Loop0, Loop1, Loop2>,
+        Tile0,
+        Tile1,
+        Tile2>,
+    RAJA::TileSize runtime_tile0,
+    RAJA::TileSize runtime_tile1,
+    RAJA::TileSize runtime_tile2,
+    Seg0 const& seg0,
+    Seg1 const& seg1,
+    Seg2 const& seg2,
+    Params&&... params)
+{
+  constexpr Platform platform =
+      detail::get_platform<camp::decay<ExecPolicy>>::value;
+
+  const detail::tile3 auto_tile =
+      detail::auto_tile_3d<ExecPolicy>(detail::segment_length_host(seg0),
+                                       detail::segment_length_host(seg1),
+                                       detail::segment_length_host(seg2));
+  const int tile0 =
+      detail::resolve_tile_size<Tile0>(auto_tile.x, runtime_tile0.size);
+  const int tile1 =
+      detail::resolve_tile_size<Tile1>(auto_tile.y, runtime_tile1.size);
+  const int tile2 =
+      detail::resolve_tile_size<Tile2>(auto_tile.z, runtime_tile2.size);
+  detail::validate_positive_tile(tile0);
+  detail::validate_positive_tile(tile1);
+  detail::validate_positive_tile(tile2);
+
+  auto&& user_body = expt::get_lambda(std::forward<Params>(params)...);
+  auto body_c      = camp::decay<decltype(user_body)>(
+      std::forward<decltype(user_body)>(user_body));
+
+  auto seg0_c = seg0;
+  auto seg1_c = seg1;
+  auto seg2_c = seg2;
+  auto args_tuple = camp::forward_as_tuple(std::forward<Params>(params)...);
+
+  if constexpr (platform == Platform::host)
+  {
+    using host_ctx   = RAJA::LaunchContextT<RAJA::LaunchContextHostPolicy>;
+    using launch_pol = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
+    using inner0     = RAJA::LoopPolicy<RAJA::seq_exec>;
+    using inner1     = RAJA::LoopPolicy<RAJA::seq_exec>;
+    using inner2     = RAJA::LoopPolicy<RAJA::seq_exec>;
+    auto launch_body =
+        detail::FornestTiledLaunchBody3D<host_ctx,
+                                         Loop0,
+                                         Loop1,
+                                         Loop2,
+                                         inner0,
+                                         inner1,
+                                         inner2,
+                                         decltype(seg0_c),
+                                         decltype(seg1_c),
+                                         decltype(seg2_c),
+                                         decltype(body_c)>(
+            tile0, tile1, tile2, seg0_c, seg1_c, seg2_c, std::move(body_c));
+    return detail::apply_without_last(
+        [&](auto&&... opt_args) {
+          return RAJA::launch<launch_pol>(
+              LaunchParams {}, std::forward<decltype(opt_args)>(opt_args)...,
+              launch_body);
+        },
+        std::move(args_tuple));
+  }
+#if defined(RAJA_GPU_ACTIVE)
+  else
+  {
+#if defined(RAJA_CUDA_ACTIVE) || defined(RAJA_HIP_ACTIVE) ||                  \
+    defined(RAJA_SYCL_ACTIVE)
+    constexpr int block_size = detail::exec_block_size_v<ExecPolicy>;
+    static_assert(block_size > 0,
+                  "RAJA::fornest tiling requires an execution policy with a "
+                  "fixed block size on GPU");
+    if (static_cast<std::size_t>(tile0) * static_cast<std::size_t>(tile1) *
+            static_cast<std::size_t>(tile2) >
+        static_cast<std::size_t>(block_size))
+    {
+      RAJA_ABORT_OR_THROW("RAJA::fornest tiling Threads exceed ExecPolicy "
+                          "block size");
+    }
+
+    const std::size_t n0 = detail::segment_length_host(seg0);
+    const std::size_t n1 = detail::segment_length_host(seg1);
+    const std::size_t n2 = detail::segment_length_host(seg2);
+    const LaunchParams launch_params(
+        Teams(static_cast<int>(
+                  detail::ceil_div<std::size_t>(n0, static_cast<std::size_t>(tile0))),
+              static_cast<int>(
+                  detail::ceil_div<std::size_t>(n1, static_cast<std::size_t>(tile1))),
+              static_cast<int>(
+                  detail::ceil_div<std::size_t>(n2, static_cast<std::size_t>(tile2)))),
+        Threads(tile0, tile1, tile2));
+
+    using launch_pol = detail::fornest_launch_policy_t<ExecPolicy>;
+    using tile_loop0 = detail::fornest_tile_loop_policy<
+        RAJA::seq_exec,
+        RAJA::device_block_x_direct>;
+    using tile_loop1 = detail::fornest_tile_loop_policy<
+        RAJA::seq_exec,
+        RAJA::device_block_y_direct>;
+    using tile_loop2 = detail::fornest_tile_loop_policy<
+        RAJA::seq_exec,
+        RAJA::device_block_z_direct>;
+    using inner0 = detail::fornest_tile_loop_policy<
+        RAJA::seq_exec,
+        RAJA::device_thread_x_direct>;
+    using inner1 = detail::fornest_tile_loop_policy<
+        RAJA::seq_exec,
+        RAJA::device_thread_y_direct>;
+    using inner2 = detail::fornest_tile_loop_policy<
+        RAJA::seq_exec,
+        RAJA::device_thread_z_direct>;
+    auto launch_body =
+        detail::FornestTiledLaunchBody3D<RAJA::LaunchContext,
+                                         tile_loop0,
+                                         tile_loop1,
+                                         tile_loop2,
+                                         inner0,
+                                         inner1,
+                                         inner2,
+                                         decltype(seg0_c),
+                                         decltype(seg1_c),
+                                         decltype(seg2_c),
+                                         decltype(body_c)>(
+            tile0, tile1, tile2, seg0_c, seg1_c, seg2_c, std::move(body_c));
+    return detail::apply_without_last(
+        [&](auto&&... opt_args) {
+          return RAJA::launch<launch_pol>(
+              launch_params, std::forward<decltype(opt_args)>(opt_args)...,
+              launch_body);
+        },
+        std::move(args_tuple));
+#else
+    return RAJA::fornest(
+        fornest_collapsed_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
+        seg2, std::forward<Params>(params)...);
+#endif
+  }
+#else
+  else
+  {
+    RAJA_ABORT_OR_THROW("RAJA::fornest: device execution requested but GPU is "
+                        "not enabled");
+  }
+#endif
+}
+
+template<typename ExecPolicy,
+         typename Tile0,
+         typename Tile1,
+         typename Tile2,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename... Params>
+  requires detail::segment_like<Seg2>
+RAJA_INLINE auto fornest(fornest_tiling_policy<ExecPolicy, Tile0, Tile1, Tile2>
+                             policy,
+                         Seg0 const& seg0,
+                         Seg1 const& seg1,
+                         Seg2 const& seg2,
+                         Params&&... params)
+{
+  using base_policy = RAJA::fornest_basic_seq_3d<ExecPolicy>;
+  return RAJA::fornest(
+      fornest_tiling_policy<base_policy, Tile0, Tile1, Tile2> {
+          RAJA::TileSize(policy.runtime_tile0),
+          RAJA::TileSize(policy.runtime_tile1),
+          RAJA::TileSize(policy.runtime_tile2)},
+      seg0, seg1,
+      seg2, std::forward<Params>(params)...);
+}
+
+template<typename ExecPolicy,
+         typename Tile0,
+         typename Tile1,
+         typename Tile2,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename... Params>
+  requires detail::segment_like<Seg2>
+RAJA_INLINE auto fornest(fornest_tiling_policy<ExecPolicy, Tile0, Tile1, Tile2>,
+                         RAJA::TileSize runtime_tile0,
+                         RAJA::TileSize runtime_tile1,
+                         RAJA::TileSize runtime_tile2,
+                         Seg0 const& seg0,
+                         Seg1 const& seg1,
+                         Seg2 const& seg2,
+                         Params&&... params)
+{
+  using base_policy = RAJA::fornest_basic_seq_3d<ExecPolicy>;
+  return RAJA::fornest(
+      fornest_tiling_policy<base_policy, Tile0, Tile1, Tile2> {}, runtime_tile0,
+      runtime_tile1, runtime_tile2, seg0, seg1, seg2,
+      std::forward<Params>(params)...);
+}
+
+#if defined(RAJA_ENABLE_OPENMP)
+//------------------------------------------------------------------------------
+// fornest: OpenMP collapse wrapper policy (2D/3D)
+//------------------------------------------------------------------------------
+template<typename ExecPolicy, typename Seg0, typename Seg1, typename... Params>
+  requires(!detail::first_arg_is_segment_like_v<Params...>)
+RAJA_INLINE auto fornest(fornest_omp_collapse_policy<ExecPolicy>,
+                         Seg0 const& seg0,
+                         Seg1 const& seg1,
+                         Params&&... params)
+{
+  auto&& user_body = expt::get_lambda(std::forward<Params>(params)...);
+  auto body_c      = camp::decay<decltype(user_body)>(
+      std::forward<decltype(user_body)>(user_body));
+  auto seg0_c = seg0;
+  auto seg1_c = seg1;
+  auto args_tuple = camp::forward_as_tuple(std::forward<Params>(params)...);
+
+  using host_ctx   = RAJA::LaunchContextT<RAJA::LaunchContextHostPolicy>;
+  using launch_pol = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
+  auto launch_body =
+      detail::FornestOmpCollapseLaunchBody2D<host_ctx,
+                                             decltype(seg0_c),
+                                             decltype(seg1_c),
+                                             decltype(body_c)>(
+          seg0_c, seg1_c, std::move(body_c));
+
+  return detail::apply_without_last(
+      [&](auto&&... opt_args) {
+        return RAJA::launch<launch_pol>(
+            LaunchParams {}, std::forward<decltype(opt_args)>(opt_args)...,
+            launch_body);
+      },
+      std::move(args_tuple));
+}
+
+template<typename ExecPolicy,
+         typename Seg0,
+         typename Seg1,
+         typename Seg2,
+         typename... Params>
+  requires detail::segment_like<Seg2>
+RAJA_INLINE auto fornest(fornest_omp_collapse_policy<ExecPolicy>,
+                         Seg0 const& seg0,
+                         Seg1 const& seg1,
+                         Seg2 const& seg2,
+                         Params&&... params)
+{
+  auto&& user_body = expt::get_lambda(std::forward<Params>(params)...);
+  auto body_c      = camp::decay<decltype(user_body)>(
+      std::forward<decltype(user_body)>(user_body));
+  auto seg0_c = seg0;
+  auto seg1_c = seg1;
+  auto seg2_c = seg2;
+  auto args_tuple = camp::forward_as_tuple(std::forward<Params>(params)...);
+
+  using host_ctx   = RAJA::LaunchContextT<RAJA::LaunchContextHostPolicy>;
+  using launch_pol = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
+  auto launch_body =
+      detail::FornestOmpCollapseLaunchBody3D<host_ctx,
+                                             decltype(seg0_c),
+                                             decltype(seg1_c),
+                                             decltype(seg2_c),
+                                             decltype(body_c)>(
+          seg0_c, seg1_c, seg2_c, std::move(body_c));
+
+  return detail::apply_without_last(
+      [&](auto&&... opt_args) {
+        return RAJA::launch<launch_pol>(
+            LaunchParams {}, std::forward<decltype(opt_args)>(opt_args)...,
+            launch_body);
+      },
+      std::move(args_tuple));
+}
+#endif
+
+//------------------------------------------------------------------------------
 // fornest: collapsed wrapper policy (2D)
 //------------------------------------------------------------------------------
 template<typename ExecPolicy,
@@ -2573,9 +3791,11 @@ RAJA_INLINE auto fornest(ExecPolicy,
         },
         std::move(args_tuple));
 #elif defined(RAJA_SYCL_ACTIVE)
-    // SYCL does not support the CUDA/HIP-style explicit mapping tags used for
-    // this launch path. Fall back to collapsed execution with index
-    // reconstruction, which is portable across device backends.
+    // This non-dimensional convenience overload uses unsized global direct
+    // launch tags for CUDA/HIP. SYCL does not provide those device aliases; use
+    // collapsed execution here, or use fornest_mapping_policy/tiling with
+    // device_block_* and device_thread_* aliases for explicit group/local
+    // mapping.
     return RAJA::fornest(
         fornest_collapsed_policy<ExecPolicy, RAJA::layout_right> {}, seg0, seg1,
         std::forward<Params>(params)...);
@@ -2999,6 +4219,25 @@ RAJA_INLINE resources::EventProxy<resources::Resource> fornest(
   if (pol > N - 1) RAJA_ABORT_OR_THROW("Policy value out of range");
   return detail::fornest_dynamic_helper<N - 1, POLICY_LIST>::invoke(
       r, pol, std::forward<Args>(args)...);
+}
+
+template<typename POLICY_LIST,
+         typename... Args,
+         std::enable_if_t<detail::is_camp_list_v<POLICY_LIST>, int> = 0>
+RAJA_INLINE void dynamic_fornest(const int pol, Args&&... args)
+{
+  RAJA::fornest<POLICY_LIST>(pol, std::forward<Args>(args)...);
+}
+
+template<typename POLICY_LIST,
+         typename... Args,
+         std::enable_if_t<detail::is_camp_list_v<POLICY_LIST>, int> = 0>
+RAJA_INLINE resources::EventProxy<resources::Resource> dynamic_fornest(
+    RAJA::resources::Resource r,
+    const int pol,
+    Args&&... args)
+{
+  return RAJA::fornest<POLICY_LIST>(r, pol, std::forward<Args>(args)...);
 }
 
 }  // namespace RAJA

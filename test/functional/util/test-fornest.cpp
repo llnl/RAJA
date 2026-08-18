@@ -209,3 +209,231 @@ TEST(fornest, mapping_policy_host)
     }
   }
 }
+
+TEST(fornest, basic_seq_policy_2d)
+{
+  using policy = RAJA::fornest_basic_seq_2d<RAJA::seq_exec>;
+
+  constexpr int n          = 5;
+  constexpr int batch_size = 7;
+
+  std::vector<int> values(n * batch_size, -1);
+  auto rows    = RAJA::RangeSegment(0, n);
+  auto batches = RAJA::RangeSegment(0, batch_size);
+
+  RAJA::fornest<policy>(rows, batches, [&](int r, int b) {
+    values[b + batch_size * r] = 100 * r + b;
+  });
+
+  for (int r = 0; r < n; ++r)
+  {
+    for (int b = 0; b < batch_size; ++b)
+    {
+      ASSERT_EQ(values[b + batch_size * r], 100 * r + b);
+    }
+  }
+}
+
+TEST(fornest, basic_seq_policy_3d)
+{
+  using policy = RAJA::fornest_basic_seq_3d<RAJA::seq_exec>;
+
+  constexpr int n          = 4;
+  constexpr int batch_size = 5;
+  constexpr int depth      = 3;
+
+  std::vector<int> values(n * batch_size * depth, -1);
+  auto rows    = RAJA::RangeSegment(0, n);
+  auto batches = RAJA::RangeSegment(0, batch_size);
+  auto depths  = RAJA::RangeSegment(0, depth);
+
+  RAJA::fornest<policy>(rows, batches, depths, [&](int r, int b, int d) {
+    values[d + depth * (b + batch_size * r)] = 100 * r + 10 * b + d;
+  });
+
+  for (int r = 0; r < n; ++r)
+  {
+    for (int b = 0; b < batch_size; ++b)
+    {
+      for (int d = 0; d < depth; ++d)
+      {
+        ASSERT_EQ(values[d + depth * (b + batch_size * r)],
+                  100 * r + 10 * b + d);
+      }
+    }
+  }
+}
+
+TEST(fornest, fixed_tiling_policy_2d)
+{
+  using policy = RAJA::fornest_tiling_policy<RAJA::seq_exec,
+                                             RAJA::fornest_tile_fixed<2>,
+                                             RAJA::fornest_tile_fixed<3>>;
+
+  constexpr int n          = 5;
+  constexpr int batch_size = 7;
+
+  std::vector<int> values(n * batch_size, -1);
+  auto rows    = RAJA::RangeSegment(0, n);
+  auto batches = RAJA::RangeSegment(0, batch_size);
+
+  RAJA::fornest<policy>(rows, batches, [&](int r, int b) {
+    values[b + batch_size * r] = 100 * r + b;
+  });
+
+  for (int r = 0; r < n; ++r)
+  {
+    for (int b = 0; b < batch_size; ++b)
+    {
+      ASSERT_EQ(values[b + batch_size * r], 100 * r + b);
+    }
+  }
+}
+
+TEST(fornest, runtime_tiling_policy_2d)
+{
+  using policy = RAJA::fornest_tiling_policy<RAJA::seq_exec,
+                                             RAJA::fornest_tile_runtime,
+                                             RAJA::fornest_tile_runtime>;
+
+  constexpr int n          = 5;
+  constexpr int batch_size = 7;
+
+  std::vector<int> values(n * batch_size, -1);
+  auto rows    = RAJA::RangeSegment(0, n);
+  auto batches = RAJA::RangeSegment(0, batch_size);
+
+  RAJA::fornest(policy {RAJA::TileSize(2), RAJA::TileSize(4)}, rows, batches,
+                [&](int r, int b) {
+                  values[b + batch_size * r] = 100 * r + b;
+                });
+
+  for (int r = 0; r < n; ++r)
+  {
+    for (int b = 0; b < batch_size; ++b)
+    {
+      ASSERT_EQ(values[b + batch_size * r], 100 * r + b);
+    }
+  }
+}
+
+TEST(fornest, auto_tiling_policy_3d)
+{
+  using policy = RAJA::fornest_tiling_policy<RAJA::seq_exec,
+                                             RAJA::fornest_tile_auto,
+                                             RAJA::fornest_tile_auto,
+                                             RAJA::fornest_tile_auto>;
+
+  constexpr int n          = 4;
+  constexpr int batch_size = 5;
+  constexpr int depth      = 3;
+
+  std::vector<int> values(n * batch_size * depth, -1);
+  auto rows    = RAJA::RangeSegment(0, n);
+  auto batches = RAJA::RangeSegment(0, batch_size);
+  auto depths  = RAJA::RangeSegment(0, depth);
+
+  RAJA::fornest<policy>(rows, batches, depths, [&](int r, int b, int d) {
+    values[d + depth * (b + batch_size * r)] = 100 * r + 10 * b + d;
+  });
+
+  for (int r = 0; r < n; ++r)
+  {
+    for (int b = 0; b < batch_size; ++b)
+    {
+      for (int d = 0; d < depth; ++d)
+      {
+        ASSERT_EQ(values[d + depth * (b + batch_size * r)],
+                  100 * r + 10 * b + d);
+      }
+    }
+  }
+}
+
+TEST(fornest, dynamic_fornest_switch)
+{
+  using policy_list =
+      camp::list<RAJA::fornest_basic_seq_2d<RAJA::seq_exec>,
+                 RAJA::fornest_tiling_policy<RAJA::seq_exec,
+                                             RAJA::fornest_tile_fixed<2>,
+                                             RAJA::fornest_tile_fixed<3>>>;
+
+  constexpr int n          = 5;
+  constexpr int batch_size = 7;
+
+  auto rows    = RAJA::RangeSegment(0, n);
+  auto batches = RAJA::RangeSegment(0, batch_size);
+
+  for (int pol = 0; pol < 2; ++pol)
+  {
+    std::vector<int> values(n * batch_size, -1);
+
+    RAJA::dynamic_fornest<policy_list>(pol, rows, batches, [&](int r, int b) {
+      values[b + batch_size * r] = 100 * r + b;
+    });
+
+    for (int r = 0; r < n; ++r)
+    {
+      for (int b = 0; b < batch_size; ++b)
+      {
+        ASSERT_EQ(values[b + batch_size * r], 100 * r + b);
+      }
+    }
+  }
+}
+
+#if defined(RAJA_ENABLE_OPENMP)
+TEST(fornest, basic_omp_outer_policy_2d)
+{
+  using policy = RAJA::fornest_basic_omp_outer_2d<RAJA::seq_exec>;
+
+  constexpr int n          = 5;
+  constexpr int batch_size = 7;
+
+  std::vector<int> values(n * batch_size, -1);
+  auto rows    = RAJA::RangeSegment(0, n);
+  auto batches = RAJA::RangeSegment(0, batch_size);
+
+  RAJA::fornest<policy>(rows, batches, [&](int r, int b) {
+    values[b + batch_size * r] = 100 * r + b;
+  });
+
+  for (int r = 0; r < n; ++r)
+  {
+    for (int b = 0; b < batch_size; ++b)
+    {
+      ASSERT_EQ(values[b + batch_size * r], 100 * r + b);
+    }
+  }
+}
+
+TEST(fornest, omp_collapse_policy_3d)
+{
+  using policy = RAJA::fornest_omp_collapse_policy<RAJA::seq_exec>;
+
+  constexpr int n          = 4;
+  constexpr int batch_size = 5;
+  constexpr int depth      = 3;
+
+  std::vector<int> values(n * batch_size * depth, -1);
+  auto rows    = RAJA::RangeSegment(0, n);
+  auto batches = RAJA::RangeSegment(0, batch_size);
+  auto depths  = RAJA::RangeSegment(0, depth);
+
+  RAJA::fornest<policy>(rows, batches, depths, [&](int r, int b, int d) {
+    values[d + depth * (b + batch_size * r)] = 100 * r + 10 * b + d;
+  });
+
+  for (int r = 0; r < n; ++r)
+  {
+    for (int b = 0; b < batch_size; ++b)
+    {
+      for (int d = 0; d < depth; ++d)
+      {
+        ASSERT_EQ(values[d + depth * (b + batch_size * r)],
+                  100 * r + 10 * b + d);
+      }
+    }
+  }
+}
+#endif

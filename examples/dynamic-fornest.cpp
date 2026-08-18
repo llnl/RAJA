@@ -27,58 +27,94 @@
 //------------------------------------------------------------------------------
 // Policies
 //------------------------------------------------------------------------------
-	using seq_nested = RAJA::seq_exec;
+/*
+ * Backend behavior (policy cheat sheet):
+ * - `RAJA::fornest<policy_list>(pol, ...)` picks the `pol`-th TYPE in
+ *   `policy_list` and calls `RAJA::fornest(selected_policy{}, ...)`.
+ */
+
+// `seq_nested = RAJA::seq_exec`:
+// host backend: `fornest(ExecPolicy, ...)` overload; currently a collapsed 1D
+// `forall(ni*nj)` with (i,j) reconstruction inside.
+using seq_nested = RAJA::seq_exec;
+
+// `seq_collapse = RAJA::fornest_collapsed_policy<RAJA::seq_exec>`:
+// host backend: always flatten to 1D + reconstruct, scheduled with `seq_exec`.
 using seq_collapse = RAJA::fornest_collapsed_policy<RAJA::seq_exec>;
 
-	using simd_nested = RAJA::simd_exec;
+// `simd_nested = RAJA::simd_exec`:
+// host backend: same as `seq_nested`, scheduled with SIMD `forall`.
+using simd_nested = RAJA::simd_exec;
+
+// `simd_collapse = RAJA::fornest_collapsed_policy<RAJA::simd_exec>`:
+// host backend: flattened 1D `forall`, scheduled with `simd_exec`.
 using simd_collapse = RAJA::fornest_collapsed_policy<RAJA::simd_exec>;
 
 #if defined(RAJA_ENABLE_OPENMP)
-	using omp_nested = RAJA::omp_parallel_for_exec;
+// `omp_nested = RAJA::omp_parallel_for_exec`:
+// host backend: same `fornest(ExecPolicy, ...)` path, OpenMP-parallel `forall`.
+using omp_nested = RAJA::omp_parallel_for_exec;
+
+// `omp_collapse = fornest_collapsed_policy<omp_parallel_for_exec>`:
+// host backend: flattened 1D `forall`, OpenMP-parallel.
 using omp_collapse =
     RAJA::fornest_collapsed_policy<RAJA::omp_parallel_for_exec>;
 #endif
 
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-	using dev256_nested = RAJA::device_exec<256>;
+// `dev256_nested = RAJA::device_exec<256>`:
+// device backend default mapping: choose (tx,ty) fitting 256 threads, launch
+// `Threads(tx,ty)`, `Teams(ceil(ni/tx), ceil(nj/ty))`, map `dim0->global_x`,
+// `dim1->global_y`.
+using dev256_nested = RAJA::device_exec<256>;
+
+// `dev256_collapse = fornest_collapsed_policy<device_exec<256>>`:
+// device backend: flattened 1D `forall` with 256-thread blocks, reconstruct
+// (i,j).
 using dev256_collapse = RAJA::fornest_collapsed_policy<dev256_nested>;
 
-// Perfectly nested loop structure: outer is global-parallel, inner is
-// sequential.
+// `dev256_perfect = fornest_mapping_policy<device_exec<256>, (global_x, seq)>`:
+// device backend: explicit `launch` mapping; outer dim is `global_x`, inner is
+// seq.
 using dev256_perfect = RAJA::fornest_mapping_policy<
     dev256_nested,
-    RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_global_x_direct>,
-    RAJA::LoopPolicy<RAJA::seq_exec, RAJA::seq_exec>>;
+    RAJA::LoopPolicy<RAJA::device_global_x_direct>,
+    RAJA::LoopPolicy<RAJA::seq_exec>>;
 
-// Block/thread mapping: outer maps to blocks, inner maps to threads (loop).
+// `dev256_block_thread =
+// fornest_mapping_policy<device_exec<256>, (block_x, thread_x_loop)>`:
+// device backend: explicit `launch` mapping; outer dim uses `blockIdx.x`, inner
+// uses `threadIdx.x` with looping/striding semantics.
 using dev256_block_thread = RAJA::fornest_mapping_policy<
     dev256_nested,
-    RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_block_x_direct>,
-    RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_thread_x_loop>>;
+    RAJA::LoopPolicy<RAJA::device_block_x_direct>,
+    RAJA::LoopPolicy<RAJA::device_thread_x_loop>>;
 
-	using dev512_nested = RAJA::device_exec<512>;
+// `dev512_nested`, `dev512_collapse`: same as the 256 variants but with
+// 512-thread blocks.
+using dev512_nested   = RAJA::device_exec<512>;
 using dev512_collapse = RAJA::fornest_collapsed_policy<dev512_nested>;
 #endif
 
-	using policy_list = camp::list<seq_nested,
-	                               seq_collapse,
-	                               simd_nested,
-	                               simd_collapse
+using policy_list = camp::list<seq_nested,
+                               seq_collapse,
+                               simd_nested,
+                               simd_collapse
 #if defined(RAJA_ENABLE_OPENMP)
-	                               ,
-	                               omp_nested,
-	                               omp_collapse
+                               ,
+                               omp_nested,
+                               omp_collapse
 #endif
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-	                               ,
-	                               dev256_nested,
-	                               dev256_collapse,
-	                               dev256_perfect,
-	                               dev256_block_thread,
-	                               dev512_nested,
-	                               dev512_collapse
+                               ,
+                               dev256_nested,
+                               dev256_collapse,
+                               dev256_perfect,
+                               dev256_block_thread,
+                               dev512_nested,
+                               dev512_collapse
 #endif
-	                               >;
+                               >;
 
 /*
  * Print the list of selectable policies and their numeric indices.
@@ -95,21 +131,21 @@ static void print_policy_menu()
     std::cout << "  " << idx++ << ": " << name << "\n";
   };
 
-	print("seq nested");
-	print("seq collapsed");
-	print("simd nested");
-	print("simd collapsed");
+  print("seq nested");
+  print("seq collapsed");
+  print("simd nested");
+  print("simd collapsed");
 #if defined(RAJA_ENABLE_OPENMP)
-	print("omp nested");
-	print("omp collapsed");
+  print("omp nested");
+  print("omp collapsed");
 #endif
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-	print("device_exec<256> nested (default device mapping)");
-	print("device_exec<256> collapsed");
-	print("device_exec<256> perfectly nested (global_x, seq)");
-	print("device_exec<256> block/thread (block_x, thread_x_loop)");
-	print("device_exec<512> nested (default device mapping)");
-	print("device_exec<512> collapsed");
+  print("device_exec<256> nested (default device mapping)");
+  print("device_exec<256> collapsed");
+  print("device_exec<256> perfectly nested (global_x, seq)");
+  print("device_exec<256> block/thread (block_x, thread_x_loop)");
+  print("device_exec<512> nested (default device mapping)");
+  print("device_exec<512> collapsed");
 #endif
 }
 
@@ -126,25 +162,25 @@ static const char* get_policy_name(int pol)
     return (pol == idx++) ? name : nullptr;
   };
 
-	if (auto n = match("seq nested")) return n;
-	if (auto n = match("seq collapsed")) return n;
-	if (auto n = match("simd nested")) return n;
-	if (auto n = match("simd collapsed")) return n;
+  if (auto n = match("seq nested")) return n;
+  if (auto n = match("seq collapsed")) return n;
+  if (auto n = match("simd nested")) return n;
+  if (auto n = match("simd collapsed")) return n;
 #if defined(RAJA_ENABLE_OPENMP)
-	if (auto n = match("omp nested")) return n;
-	if (auto n = match("omp collapsed")) return n;
+  if (auto n = match("omp nested")) return n;
+  if (auto n = match("omp collapsed")) return n;
 #endif
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-	if (auto n = match("device_exec<256> nested (default device mapping)"))
-		return n;
-	if (auto n = match("device_exec<256> collapsed")) return n;
-	if (auto n = match("device_exec<256> perfectly nested (global_x, seq)"))
-		return n;
-	if (auto n = match("device_exec<256> block/thread (block_x, thread_x_loop)"))
-		return n;
-	if (auto n = match("device_exec<512> nested (default device mapping)"))
-		return n;
-	if (auto n = match("device_exec<512> collapsed")) return n;
+  if (auto n = match("device_exec<256> nested (default device mapping)"))
+    return n;
+  if (auto n = match("device_exec<256> collapsed")) return n;
+  if (auto n = match("device_exec<256> perfectly nested (global_x, seq)"))
+    return n;
+  if (auto n = match("device_exec<256> block/thread (block_x, thread_x_loop)"))
+    return n;
+  if (auto n = match("device_exec<512> nested (default device mapping)"))
+    return n;
+  if (auto n = match("device_exec<512> collapsed")) return n;
 #endif
 
   return "<unknown>";
@@ -194,26 +230,26 @@ static bool parse_policy_arg(const char* arg, int& pol_out)
     return false;
   };
 
-	if (accept("seq", "seq_nested", "seq-nested")) return true;
-	if (accept("seq_collapse", "seq_collapsed", "seq-collapse")) return true;
-	if (accept("simd", "simd_nested", "simd-nested")) return true;
-	if (accept("simd_collapse", "simd_collapsed", "simd-collapse")) return true;
+  if (accept("seq", "seq_nested", "seq-nested")) return true;
+  if (accept("seq_collapse", "seq_collapsed", "seq-collapse")) return true;
+  if (accept("simd", "simd_nested", "simd-nested")) return true;
+  if (accept("simd_collapse", "simd_collapsed", "simd-collapse")) return true;
 #if defined(RAJA_ENABLE_OPENMP)
-	if (accept("omp", "omp_nested", "omp-nested")) return true;
-	if (accept("omp_collapse", "omp_collapsed", "omp-collapse")) return true;
+  if (accept("omp", "omp_nested", "omp-nested")) return true;
+  if (accept("omp_collapse", "omp_collapsed", "omp-collapse")) return true;
 #endif
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-	if (accept("dev256", "dev256_nested", "dev256-nested")) return true;
-	if (accept("dev256_collapse", "dev256_collapsed", "dev256-collapse"))
-		return true;
-	if (accept("dev256_perfect", "dev256_perfectly_nested", "dev256-perfect"))
-		return true;
-	if (accept("dev256_block_thread", "dev256_block-thread",
-	           "dev256-block-thread"))
-		return true;
-	if (accept("dev512", "dev512_nested", "dev512-nested")) return true;
-	if (accept("dev512_collapse", "dev512_collapsed", "dev512-collapse"))
-		return true;
+  if (accept("dev256", "dev256_nested", "dev256-nested")) return true;
+  if (accept("dev256_collapse", "dev256_collapsed", "dev256-collapse"))
+    return true;
+  if (accept("dev256_perfect", "dev256_perfectly_nested", "dev256-perfect"))
+    return true;
+  if (accept("dev256_block_thread", "dev256_block-thread",
+             "dev256-block-thread"))
+    return true;
+  if (accept("dev512", "dev512_nested", "dev512-nested")) return true;
+  if (accept("dev512_collapse", "dev512_collapsed", "dev512-collapse"))
+    return true;
 #endif
 
   return false;
@@ -251,15 +287,15 @@ int main(int argc, char* argv[])
     std::cerr << "Usage: ./dynamic-fornest POLICY\n";
     std::cerr << "Where POLICY is a numeric index or a name:\n";
     print_policy_menu();
-	std::cerr << "Names: seq, seq_collapse, simd, simd_collapse"
+    std::cerr << "Names: seq, seq_collapse, simd, simd_collapse"
 #if defined(RAJA_ENABLE_OPENMP)
-	          << ", omp, omp_collapse"
+              << ", omp, omp_collapse"
 #endif
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-	          << ", dev256, dev256_collapse, dev256_perfect, dev256_block_thread, "
-	             "dev512, dev512_collapse"
+              << ", dev256, dev256_collapse, dev256_perfect, "
+                 "dev256_block_thread, dev512, dev512_collapse"
 #endif
-	          << "\n";
+              << "\n";
     return 1;
   }
 
@@ -293,6 +329,9 @@ int main(int argc, char* argv[])
   int count       = 0;
   using COUNT_SUM = RAJA::expt::ValOp<int, RAJA::operators::plus>;
 
+  // `RAJA::fornest<policy_list>(pol, ...)` selects the `pol`-th policy type
+  // from `policy_list` and then invokes `RAJA::fornest(selected_policy{}, ...)`.
+  // This is runtime selection among a compile-time list of instantiations.
   RAJA::fornest<policy_list>(pol, iseg, jseg,
                              RAJA::expt::Reduce<RAJA::operators::plus>(&count),
                              RAJA::Name("RAJA dynamic fornest"),
