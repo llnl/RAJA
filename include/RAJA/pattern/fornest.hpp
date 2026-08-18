@@ -90,13 +90,18 @@ struct fornest_collapsed_policy
  * mapping one dimension to a work item/thread and another to a work
  * group/block.
  *
- * `LoopPolicies...` must be `RAJA::LoopPolicy<...>` types. A host policy may
- * be supplied by itself, or paired with a device policy when GPU support is
- * enabled. Device-only policies are also valid when the active execution
- * policy launches only the device backend. Examples:
+ * `LoopPolicies...` may be given either as `RAJA::LoopPolicy<...>` wrapper
+ * types or as raw mapping tags (e.g., `RAJA::device_global_x_direct`,
+ * `RAJA::seq_exec`). Raw tags are normalized internally to a `LoopPolicy`
+ * with a `RAJA::seq_exec` host fallback and the raw tag as the device policy
+ * when GPU support is enabled.
+ *
+ * Examples:
  * - `RAJA::LoopPolicy<RAJA::seq_exec>` (portable host-only nested loops)
- * - `RAJA::LoopPolicy<RAJA::device_block_x_direct>` (active device backend)
- * - `RAJA::LoopPolicy<RAJA::device_thread_x_loop>` (active device backend)
+ * - `RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_global_x_direct>` (host +
+ *   device mapping)
+ * - `RAJA::device_global_x_direct` (raw device mapping tag)
+ * - `RAJA::seq_exec` (raw sequential loop tag)
  *
  * \note The current implementation supports only 2- or 3-level loop nests.
  */
@@ -1166,7 +1171,8 @@ struct launch_context_type<
 template<typename ExecPolicy>
 struct exec_block_size
 {
-  static constexpr int value = 1;
+  static constexpr int value  = 1;
+  static constexpr bool fixed = true;
 };
 
 #if defined(RAJA_CUDA_ACTIVE)
@@ -1182,7 +1188,8 @@ struct exec_block_size<
                                              BlocksPerSM,
                                              Async>>
 {
-  static constexpr int value = IterationGetter::block_size;
+  static constexpr int value  = IterationGetter::block_size;
+  static constexpr bool fixed = true;
 };
 #endif
 
@@ -1195,7 +1202,8 @@ struct exec_block_size<
     ::RAJA::policy::hip::
         hip_exec<IterationMapping, IterationGetter, LaunchConcretizer, Async>>
 {
-  static constexpr int value = IterationGetter::block_size;
+  static constexpr int value  = IterationGetter::block_size;
+  static constexpr bool fixed = true;
 };
 #endif
 
@@ -1203,13 +1211,51 @@ struct exec_block_size<
 template<size_t BlockSize, bool Async>
 struct exec_block_size<::RAJA::policy::sycl::sycl_exec<BlockSize, Async>>
 {
-  static constexpr int value = static_cast<int>(BlockSize);
+  static constexpr int value  = static_cast<int>(BlockSize);
+  static constexpr bool fixed = true;
+};
+#endif
+
+#if defined(RAJA_CUDA_ACTIVE)
+template<bool Async, int num_threads, size_t BlocksPerSM>
+struct exec_block_size<
+    ::RAJA::policy::cuda::
+        cuda_launch_explicit_t<Async, num_threads, BlocksPerSM>>
+{
+  static constexpr bool fixed = (num_threads != RAJA::named_usage::unspecified);
+  static constexpr int value  = fixed ? num_threads : 0;
+};
+#endif
+
+#if defined(RAJA_HIP_ACTIVE)
+template<bool Async, int num_threads>
+struct exec_block_size<::RAJA::policy::hip::hip_launch_t<Async, num_threads>>
+{
+  static constexpr bool fixed = (num_threads != RAJA::named_usage::unspecified);
+  static constexpr int value  = fixed ? num_threads : 0;
+};
+#endif
+
+#if defined(RAJA_SYCL_ACTIVE)
+template<bool Async, int num_threads>
+struct exec_block_size<::RAJA::policy::sycl::sycl_launch_t<Async, num_threads>>
+{
+  // SYCL uses num_threads=0 for the LaunchExecute specialization that takes
+  // Threads/Teams from LaunchParams.
+  static constexpr bool fixed = (num_threads != 0);
+  static constexpr int value  = fixed ? num_threads : 0;
 };
 #endif
 
 template<typename ExecPolicy>
 inline constexpr int exec_block_size_v =
     exec_block_size<camp::decay<ExecPolicy>>::value;
+
+template<typename ExecPolicy>
+inline constexpr bool exec_block_size_fixed_v =
+    exec_block_size<camp::decay<ExecPolicy>>::fixed;
+
+inline constexpr int fornest_default_block_size = 256;
 
 template<typename ExecPolicy>
 RAJA_INLINE tile3 auto_tile_2d(std::size_t n0, std::size_t n1)
@@ -1224,9 +1270,9 @@ RAJA_INLINE tile3 auto_tile_2d(std::size_t n0, std::size_t n1)
   }
   else
   {
-    constexpr int block_size = exec_block_size_v<ExecPolicy>;
-    static_assert(block_size > 0,
-                  "RAJA::fornest auto tiling requires a fixed GPU block size");
+    constexpr int raw_block_size = exec_block_size_v<ExecPolicy>;
+    constexpr int block_size =
+        (raw_block_size > 0) ? raw_block_size : fornest_default_block_size;
     return choose_2d_tile(block_size, n0, n1);
   }
 }
@@ -1245,9 +1291,9 @@ RAJA_INLINE tile3 auto_tile_3d(std::size_t n0, std::size_t n1, std::size_t n2)
   }
   else
   {
-    constexpr int block_size = exec_block_size_v<ExecPolicy>;
-    static_assert(block_size > 0,
-                  "RAJA::fornest auto tiling requires a fixed GPU block size");
+    constexpr int raw_block_size = exec_block_size_v<ExecPolicy>;
+    constexpr int block_size =
+        (raw_block_size > 0) ? raw_block_size : fornest_default_block_size;
     return choose_3d_tile(block_size, n0, n1, n2);
   }
 }
@@ -1285,6 +1331,17 @@ struct fornest_launch_policy<
   using device_t = host_t;
   using type     = RAJA::LaunchPolicy<host_t>;
 };
+
+template<bool Async, int num_threads, size_t BlocksPerSM>
+struct fornest_launch_policy<
+    ::RAJA::policy::cuda::
+        cuda_launch_explicit_t<Async, num_threads, BlocksPerSM>>
+{
+  using host_t = ::RAJA::policy::cuda::
+      cuda_launch_explicit_t<Async, num_threads, BlocksPerSM>;
+  using device_t = host_t;
+  using type     = RAJA::LaunchPolicy<host_t>;
+};
 #endif
 
 #if defined(RAJA_HIP_ACTIVE)
@@ -1300,6 +1357,15 @@ struct fornest_launch_policy<
   using device_t = host_t;
   using type     = RAJA::LaunchPolicy<host_t>;
 };
+
+template<bool Async, int num_threads>
+struct fornest_launch_policy<
+    ::RAJA::policy::hip::hip_launch_t<Async, num_threads>>
+{
+  using host_t   = ::RAJA::policy::hip::hip_launch_t<Async, num_threads>;
+  using device_t = host_t;
+  using type     = RAJA::LaunchPolicy<host_t>;
+};
 #endif
 
 #if defined(RAJA_SYCL_ACTIVE)
@@ -1311,6 +1377,15 @@ struct fornest_launch_policy<::RAJA::policy::sycl::sycl_exec<BlockSize, Async>>
   using host_t   = RAJA::seq_launch_t;
   using device_t = RAJA::sycl_launch_t<Async, 0>;
   using type     = RAJA::LaunchPolicy<device_t>;
+};
+
+template<bool Async, int num_threads>
+struct fornest_launch_policy<
+    ::RAJA::policy::sycl::sycl_launch_t<Async, num_threads>>
+{
+  using host_t   = ::RAJA::policy::sycl::sycl_launch_t<Async, num_threads>;
+  using device_t = host_t;
+  using type     = RAJA::LaunchPolicy<host_t>;
 };
 #endif
 
@@ -1808,6 +1883,34 @@ template<typename ExecPolicy, typename LoopPolicy>
 using fornest_loop_policy_active_t_t =
     typename fornest_loop_policy_active_t<ExecPolicy, LoopPolicy>::type;
 
+template<typename T, typename = void>
+struct fornest_is_loop_policy_wrapper : std::false_type
+{};
+
+template<typename T>
+struct fornest_is_loop_policy_wrapper<
+    T,
+    std::void_t<typename camp::decay<T>::host_policy_t>> : std::true_type
+{};
+
+template<typename T>
+inline constexpr bool fornest_is_loop_policy_wrapper_v =
+    fornest_is_loop_policy_wrapper<T>::value;
+
+template<typename ExecPolicy, typename LoopLike>
+struct fornest_normalize_loop_policy
+{
+  using decayed = camp::decay<LoopLike>;
+  using type    = std::conditional_t<
+         fornest_is_loop_policy_wrapper_v<decayed>,
+         decayed,
+         fornest_loop_policy_for_exec_t<ExecPolicy, RAJA::seq_exec, decayed>>;
+};
+
+template<typename ExecPolicy, typename LoopLike>
+using fornest_normalize_loop_policy_t =
+    typename fornest_normalize_loop_policy<ExecPolicy, LoopLike>::type;
+
 template<typename ExecPolicy, typename LoopPolicy>
 inline constexpr fornest_map_spec fornest_loop_map_spec_v = fornest_map_traits<
     fornest_loop_policy_active_t_t<ExecPolicy, LoopPolicy>>::spec;
@@ -1831,9 +1934,11 @@ RAJA_INLINE void validate_loop_policy_supported()
 }
 
 template<typename ExecPolicy, typename Loop0, typename Loop1>
-RAJA_INLINE LaunchParams make_launch_params_for_mapping_2d(int block_size,
-                                                           std::size_t e0,
-                                                           std::size_t e1)
+RAJA_INLINE LaunchParams
+make_launch_params_for_mapping_2d(int block_size,
+                                  bool enforce_block_size,
+                                  std::size_t e0,
+                                  std::size_t e1)
 {
   validate_loop_policy_supported<ExecPolicy, Loop0>();
   validate_loop_policy_supported<ExecPolicy, Loop1>();
@@ -1942,6 +2047,10 @@ RAJA_INLINE LaunchParams make_launch_params_for_mapping_2d(int block_size,
                                  (requested_thread_z > 0);
 
   auto require_consistent_block_size = [&](int threads_product) {
+    if (!enforce_block_size)
+    {
+      return;
+    }
     if (threads_product != block_size)
     {
       RAJA_ABORT_OR_THROW(
@@ -1966,15 +2075,19 @@ RAJA_INLINE LaunchParams make_launch_params_for_mapping_2d(int block_size,
       else
       {
         const int fixed = (sx > 0) ? sx : sy;
-        if (fixed <= 0 || (block_size % fixed) != 0)
+        if (enforce_block_size && (fixed <= 0 || (block_size % fixed) != 0))
         {
           RAJA_ABORT_OR_THROW(
               "RAJA::fornest: sized mapping requires ExecPolicy block size to "
               "be divisible by the specified axis size");
         }
-        const int other = block_size / fixed;
-        tile.x          = (sx > 0) ? fixed : other;
-        tile.y          = (sy > 0) ? fixed : other;
+        int other = 1;
+        if (fixed > 0 && (block_size % fixed) == 0)
+        {
+          other = block_size / fixed;
+        }
+        tile.x = (sx > 0) ? fixed : other;
+        tile.y = (sy > 0) ? fixed : other;
       }
     }
     else
@@ -2124,10 +2237,12 @@ RAJA_INLINE LaunchParams make_launch_params_for_mapping_2d(int block_size,
 }
 
 template<typename ExecPolicy, typename Loop0, typename Loop1, typename Loop2>
-RAJA_INLINE LaunchParams make_launch_params_for_mapping_3d(int block_size,
-                                                           std::size_t e0,
-                                                           std::size_t e1,
-                                                           std::size_t e2)
+RAJA_INLINE LaunchParams
+make_launch_params_for_mapping_3d(int block_size,
+                                  bool enforce_block_size,
+                                  std::size_t e0,
+                                  std::size_t e1,
+                                  std::size_t e2)
 {
   validate_loop_policy_supported<ExecPolicy, Loop0>();
   validate_loop_policy_supported<ExecPolicy, Loop1>();
@@ -2249,6 +2364,10 @@ RAJA_INLINE LaunchParams make_launch_params_for_mapping_3d(int block_size,
                                  (requested_thread_z > 0);
 
   auto require_consistent_block_size = [&](int threads_product) {
+    if (!enforce_block_size)
+    {
+      return;
+    }
     if (threads_product != block_size)
     {
       RAJA_ABORT_OR_THROW(
@@ -2287,13 +2406,17 @@ RAJA_INLINE LaunchParams make_launch_params_for_mapping_3d(int block_size,
       else
         missing++;
 
-      if (product <= 0 || (block_size % product) != 0)
+      if (enforce_block_size && (product <= 0 || (block_size % product) != 0))
       {
         RAJA_ABORT_OR_THROW(
             "RAJA::fornest: sized mapping requires ExecPolicy block size to be "
             "divisible by the product of specified axis sizes");
       }
-      int remaining = block_size / product;
+      int remaining = 1;
+      if (product > 0)
+      {
+        remaining = block_size / product;
+      }
 
       if (missing == 0)
       {
@@ -2364,16 +2487,20 @@ RAJA_INLINE LaunchParams make_launch_params_for_mapping_3d(int block_size,
       else
       {
         const int fixed = (sx > 0) ? sx : sy;
-        if (fixed <= 0 || (block_size % fixed) != 0)
+        if (enforce_block_size && (fixed <= 0 || (block_size % fixed) != 0))
         {
           RAJA_ABORT_OR_THROW(
               "RAJA::fornest: sized mapping requires ExecPolicy block size to "
               "be divisible by the specified axis size");
         }
-        const int other = block_size / fixed;
-        tile.x          = (sx > 0) ? fixed : other;
-        tile.y          = (sy > 0) ? fixed : other;
-        tile.z          = 1;
+        int other = 1;
+        if (fixed > 0 && (block_size % fixed) == 0)
+        {
+          other = block_size / fixed;
+        }
+        tile.x = (sx > 0) ? fixed : other;
+        tile.y = (sy > 0) ? fixed : other;
+        tile.z = 1;
       }
     }
     else
@@ -2399,16 +2526,20 @@ RAJA_INLINE LaunchParams make_launch_params_for_mapping_3d(int block_size,
       else
       {
         const int fixed = (sx > 0) ? sx : sz;
-        if (fixed <= 0 || (block_size % fixed) != 0)
+        if (enforce_block_size && (fixed <= 0 || (block_size % fixed) != 0))
         {
           RAJA_ABORT_OR_THROW(
               "RAJA::fornest: sized mapping requires ExecPolicy block size to "
               "be divisible by the specified axis size");
         }
-        const int other = block_size / fixed;
-        tile.x          = (sx > 0) ? fixed : other;
-        tile.z          = (sz > 0) ? fixed : other;
-        tile.y          = 1;
+        int other = 1;
+        if (fixed > 0 && (block_size % fixed) == 0)
+        {
+          other = block_size / fixed;
+        }
+        tile.x = (sx > 0) ? fixed : other;
+        tile.z = (sz > 0) ? fixed : other;
+        tile.y = 1;
       }
     }
     else
@@ -2435,16 +2566,20 @@ RAJA_INLINE LaunchParams make_launch_params_for_mapping_3d(int block_size,
       else
       {
         const int fixed = (sy > 0) ? sy : sz;
-        if (fixed <= 0 || (block_size % fixed) != 0)
+        if (enforce_block_size && (fixed <= 0 || (block_size % fixed) != 0))
         {
           RAJA_ABORT_OR_THROW(
               "RAJA::fornest: sized mapping requires ExecPolicy block size to "
               "be divisible by the specified axis size");
         }
-        const int other = block_size / fixed;
-        tile.y          = (sy > 0) ? fixed : other;
-        tile.z          = (sz > 0) ? fixed : other;
-        tile.x          = 1;
+        int other = 1;
+        if (fixed > 0 && (block_size % fixed) == 0)
+        {
+          other = block_size / fixed;
+        }
+        tile.y = (sy > 0) ? fixed : other;
+        tile.z = (sz > 0) ? fixed : other;
+        tile.x = 1;
       }
     }
     else
@@ -2650,6 +2785,9 @@ RAJA_INLINE auto fornest(fornest_mapping_policy<ExecPolicy, Loop0, Loop1>,
                          Seg1 const& seg1,
                          Params&&... params)
 {
+  using loop0_norm = detail::fornest_normalize_loop_policy_t<ExecPolicy, Loop0>;
+  using loop1_norm = detail::fornest_normalize_loop_policy_t<ExecPolicy, Loop1>;
+
   constexpr Platform platform =
       detail::get_platform<camp::decay<ExecPolicy>>::value;
 
@@ -2667,9 +2805,10 @@ RAJA_INLINE auto fornest(fornest_mapping_policy<ExecPolicy, Loop0, Loop1>,
     using host_ctx   = RAJA::LaunchContextT<RAJA::LaunchContextHostPolicy>;
     using launch_pol = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
     auto launch_body =
-        detail::FornestLaunchBody2D<host_ctx, Loop0, Loop1, decltype(seg0_c),
-                                    decltype(seg1_c), decltype(body_c)>(
-            seg0_c, seg1_c, std::move(body_c));
+        detail::FornestLaunchBody2D<host_ctx, loop0_norm, loop1_norm,
+                                    decltype(seg0_c), decltype(seg1_c),
+                                    decltype(body_c)>(seg0_c, seg1_c,
+                                                      std::move(body_c));
     return detail::apply_without_last(
         [&](auto&&... opt_args) {
           return RAJA::launch<launch_pol>(
@@ -2684,18 +2823,21 @@ RAJA_INLINE auto fornest(fornest_mapping_policy<ExecPolicy, Loop0, Loop1>,
     const std::size_t e0 = detail::segment_length_host(seg0);
     const std::size_t e1 = detail::segment_length_host(seg1);
 
-    constexpr int block_size = detail::exec_block_size_v<ExecPolicy>;
-    static_assert(block_size > 0,
-                  "RAJA::fornest mapping requires an execution policy with a "
-                  "fixed block size on GPU");
+    constexpr int raw_block_size = detail::exec_block_size_v<ExecPolicy>;
+    constexpr bool enforce_block_size =
+        detail::exec_block_size_fixed_v<ExecPolicy>;
+    constexpr int block_size = (raw_block_size > 0)
+                                   ? raw_block_size
+                                   : detail::fornest_default_block_size;
 
     const LaunchParams launch_params =
-        detail::make_launch_params_for_mapping_2d<ExecPolicy, Loop0, Loop1>(
-            block_size, e0, e1);
+        detail::make_launch_params_for_mapping_2d<ExecPolicy, loop0_norm,
+                                                  loop1_norm>(
+            block_size, enforce_block_size, e0, e1);
 
     using launch_pol = detail::fornest_launch_policy_t<ExecPolicy>;
     auto launch_body =
-        detail::FornestLaunchBody2D<RAJA::LaunchContext, Loop0, Loop1,
+        detail::FornestLaunchBody2D<RAJA::LaunchContext, loop0_norm, loop1_norm,
                                     decltype(seg0_c), decltype(seg1_c),
                                     decltype(body_c)>(seg0_c, seg1_c,
                                                       std::move(body_c));
@@ -2729,6 +2871,9 @@ RAJA_INLINE auto fornest(
     Seg1 const& seg1,
     Params&&... params)
 {
+  using loop0_norm = detail::fornest_normalize_loop_policy_t<ExecPolicy, Loop0>;
+  using loop1_norm = detail::fornest_normalize_loop_policy_t<ExecPolicy, Loop1>;
+
   constexpr Platform platform =
       detail::get_platform<camp::decay<ExecPolicy>>::value;
 
@@ -2746,9 +2891,10 @@ RAJA_INLINE auto fornest(
     using host_ctx   = RAJA::LaunchContextT<RAJA::LaunchContextHostPolicy>;
     using launch_pol = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
     auto launch_body =
-        detail::FornestLaunchBody2D<host_ctx, Loop0, Loop1, decltype(seg0_c),
-                                    decltype(seg1_c), decltype(body_c)>(
-            seg0_c, seg1_c, std::move(body_c));
+        detail::FornestLaunchBody2D<host_ctx, loop0_norm, loop1_norm,
+                                    decltype(seg0_c), decltype(seg1_c),
+                                    decltype(body_c)>(seg0_c, seg1_c,
+                                                      std::move(body_c));
     return detail::apply_without_last(
         [&](auto&&... opt_args) {
           return RAJA::launch<launch_pol>(
@@ -2763,18 +2909,21 @@ RAJA_INLINE auto fornest(
     const std::size_t e0 = detail::segment_length_host(seg0);
     const std::size_t e1 = detail::segment_length_host(seg1);
 
-    constexpr int block_size = detail::exec_block_size_v<ExecPolicy>;
-    static_assert(block_size > 0,
-                  "RAJA::fornest mapping requires an execution policy with a "
-                  "fixed block size on GPU");
+    constexpr int raw_block_size = detail::exec_block_size_v<ExecPolicy>;
+    constexpr bool enforce_block_size =
+        detail::exec_block_size_fixed_v<ExecPolicy>;
+    constexpr int block_size = (raw_block_size > 0)
+                                   ? raw_block_size
+                                   : detail::fornest_default_block_size;
 
     const LaunchParams launch_params =
-        detail::make_launch_params_for_mapping_2d<ExecPolicy, Loop0, Loop1>(
-            block_size, e0, e1);
+        detail::make_launch_params_for_mapping_2d<ExecPolicy, loop0_norm,
+                                                  loop1_norm>(
+            block_size, enforce_block_size, e0, e1);
 
     using launch_pol = detail::fornest_launch_policy_t<ExecPolicy>;
     auto launch_body =
-        detail::FornestLaunchBody2D<RAJA::LaunchContext, Loop0, Loop1,
+        detail::FornestLaunchBody2D<RAJA::LaunchContext, loop0_norm, loop1_norm,
                                     decltype(seg0_c), decltype(seg1_c),
                                     decltype(body_c)>(seg0_c, seg1_c,
                                                       std::move(body_c));
@@ -2816,6 +2965,10 @@ RAJA_INLINE auto fornest(
     Args&&... args,
     Body&& body)
 {
+  using loop0_norm = detail::fornest_normalize_loop_policy_t<ExecPolicy, Loop0>;
+  using loop1_norm = detail::fornest_normalize_loop_policy_t<ExecPolicy, Loop1>;
+  using loop2_norm = detail::fornest_normalize_loop_policy_t<ExecPolicy, Loop2>;
+
   constexpr Platform platform =
       detail::get_platform<camp::decay<ExecPolicy>>::value;
 
@@ -2827,9 +2980,10 @@ RAJA_INLINE auto fornest(
     using launch_pol = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
     return RAJA::launch<launch_pol>(
         LaunchParams {}, std::forward<Args>(args)...,
-        detail::FornestLaunchBody3D<host_ctx, Loop0, Loop1, Loop2, Seg0, Seg1,
-                                    Seg2, decltype(body_c)>(seg0, seg1, seg2,
-                                                            std::move(body_c)));
+        detail::FornestLaunchBody3D<host_ctx, loop0_norm, loop1_norm,
+                                    loop2_norm, Seg0, Seg1, Seg2,
+                                    decltype(body_c)>(seg0, seg1, seg2,
+                                                      std::move(body_c)));
   }
 #if defined(RAJA_GPU_ACTIVE)
   else
@@ -2838,22 +2992,25 @@ RAJA_INLINE auto fornest(
     const std::size_t e1 = detail::segment_length_host(seg1);
     const std::size_t e2 = detail::segment_length_host(seg2);
 
-    constexpr int block_size = detail::exec_block_size_v<ExecPolicy>;
-    static_assert(block_size > 0,
-                  "RAJA::fornest mapping requires an execution policy with a "
-                  "fixed block size on GPU");
+    constexpr int raw_block_size = detail::exec_block_size_v<ExecPolicy>;
+    constexpr bool enforce_block_size =
+        detail::exec_block_size_fixed_v<ExecPolicy>;
+    constexpr int block_size = (raw_block_size > 0)
+                                   ? raw_block_size
+                                   : detail::fornest_default_block_size;
 
     const LaunchParams launch_params =
-        detail::make_launch_params_for_mapping_3d<ExecPolicy, Loop0, Loop1,
-                                                  Loop2>(block_size, e0, e1,
-                                                         e2);
+        detail::make_launch_params_for_mapping_3d<ExecPolicy, loop0_norm,
+                                                  loop1_norm, loop2_norm>(
+            block_size, enforce_block_size, e0, e1, e2);
 
     using launch_pol = detail::fornest_launch_policy_t<ExecPolicy>;
     return RAJA::launch<launch_pol>(
         launch_params, std::forward<Args>(args)...,
-        detail::FornestLaunchBody3D<RAJA::LaunchContext, Loop0, Loop1, Loop2,
-                                    Seg0, Seg1, Seg2, decltype(body_c)>(
-            seg0, seg1, seg2, std::move(body_c)));
+        detail::FornestLaunchBody3D<RAJA::LaunchContext, loop0_norm, loop1_norm,
+                                    loop2_norm, Seg0, Seg1, Seg2,
+                                    decltype(body_c)>(seg0, seg1, seg2,
+                                                      std::move(body_c)));
   }
 #else
   else
@@ -2883,6 +3040,10 @@ RAJA_INLINE auto fornest(
     Args&&... args,
     Body&& body)
 {
+  using loop0_norm = detail::fornest_normalize_loop_policy_t<ExecPolicy, Loop0>;
+  using loop1_norm = detail::fornest_normalize_loop_policy_t<ExecPolicy, Loop1>;
+  using loop2_norm = detail::fornest_normalize_loop_policy_t<ExecPolicy, Loop2>;
+
   constexpr Platform platform =
       detail::get_platform<camp::decay<ExecPolicy>>::value;
 
@@ -2894,9 +3055,10 @@ RAJA_INLINE auto fornest(
     using launch_pol = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
     return RAJA::launch<launch_pol>(
         r, LaunchParams {}, std::forward<Args>(args)...,
-        detail::FornestLaunchBody3D<host_ctx, Loop0, Loop1, Loop2, Seg0, Seg1,
-                                    Seg2, decltype(body_c)>(seg0, seg1, seg2,
-                                                            std::move(body_c)));
+        detail::FornestLaunchBody3D<host_ctx, loop0_norm, loop1_norm,
+                                    loop2_norm, Seg0, Seg1, Seg2,
+                                    decltype(body_c)>(seg0, seg1, seg2,
+                                                      std::move(body_c)));
   }
 #if defined(RAJA_GPU_ACTIVE)
   else
@@ -2905,22 +3067,25 @@ RAJA_INLINE auto fornest(
     const std::size_t e1 = detail::segment_length_host(seg1);
     const std::size_t e2 = detail::segment_length_host(seg2);
 
-    constexpr int block_size = detail::exec_block_size_v<ExecPolicy>;
-    static_assert(block_size > 0,
-                  "RAJA::fornest mapping requires an execution policy with a "
-                  "fixed block size on GPU");
+    constexpr int raw_block_size = detail::exec_block_size_v<ExecPolicy>;
+    constexpr bool enforce_block_size =
+        detail::exec_block_size_fixed_v<ExecPolicy>;
+    constexpr int block_size = (raw_block_size > 0)
+                                   ? raw_block_size
+                                   : detail::fornest_default_block_size;
 
     const LaunchParams launch_params =
-        detail::make_launch_params_for_mapping_3d<ExecPolicy, Loop0, Loop1,
-                                                  Loop2>(block_size, e0, e1,
-                                                         e2);
+        detail::make_launch_params_for_mapping_3d<ExecPolicy, loop0_norm,
+                                                  loop1_norm, loop2_norm>(
+            block_size, enforce_block_size, e0, e1, e2);
 
     using launch_pol = detail::fornest_launch_policy_t<ExecPolicy>;
     return RAJA::launch<launch_pol>(
         r, launch_params, std::forward<Args>(args)...,
-        detail::FornestLaunchBody3D<RAJA::LaunchContext, Loop0, Loop1, Loop2,
-                                    Seg0, Seg1, Seg2, decltype(body_c)>(
-            seg0, seg1, seg2, std::move(body_c)));
+        detail::FornestLaunchBody3D<RAJA::LaunchContext, loop0_norm, loop1_norm,
+                                    loop2_norm, Seg0, Seg1, Seg2,
+                                    decltype(body_c)>(seg0, seg1, seg2,
+                                                      std::move(body_c)));
   }
 #else
   else

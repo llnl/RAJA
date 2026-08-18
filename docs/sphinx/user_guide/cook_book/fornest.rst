@@ -32,10 +32,14 @@ The interface supports several policy families:
    ``RAJA::device_exec<256>``. RAJA performs the linear-to-logical index
    reconstruction internally.
  * ``RAJA::fornest_mapping_policy<ExecPolicy, LoopPolicies...>`` maps the logical
-   dimensions directly using one loop policy per dimension. Device builds can
-   use ``RAJA::device_*`` loop-policy aliases; on CUDA/HIP these aliases map to
-   CUDA/HIP global, block, and thread policies, and on SYCL they map to the
-   corresponding work-group and work-item policies where supported.
+   dimensions directly using one loop mapping tag per dimension. For mapping
+   policies, the ``ExecPolicy`` selects the launch backend (typically
+   ``RAJA::seq_launch_t`` on host and ``RAJA::device_launch_t<false>`` on GPU),
+   and RAJA derives ``LaunchParams(Teams, Threads)`` from the mapping tags and
+   segment extents. Device builds can use ``RAJA::device_*`` mapping tags; on
+   CUDA/HIP these map to CUDA/HIP global, block, and thread indices, and on SYCL
+   they map to the corresponding work-group and work-item indices where
+   supported.
  * ``RAJA::fornest_tiling_policy<...>`` adds per-dimension tiling on top of a
    loop nest. Tile sizes may be fixed, runtime-provided, or chosen by RAJA.
  * ``RAJA::fornest_omp_collapse_policy<...>`` requests OpenMP host collapse-style
@@ -81,7 +85,8 @@ thread/work-item mappings:
 
 The collapsed policy uses a forall-style execution policy such as
 ``RAJA::device_exec<block_size_1d>`` (when GPU is enabled). The mapping policy
-uses one loop policy per dimension.
+executes via ``RAJA::launch`` and typically uses a launch-style execution policy
+such as ``RAJA::device_launch_t<false>``, plus one loop mapping tag per dimension.
 
 Both mappings call the same logical body through one ``RAJA::fornest`` call:
 
@@ -107,15 +112,33 @@ the target backend::
 
   ./fornest-basic collapse
   ./fornest-basic map
+  ./fornest-basic map-global-sized
+  ./fornest-basic map-block-thread-sized
   ./fornest-basic nested-loops
   ./fornest-basic tile-fixed
   ./fornest-basic tile-runtime
   ./fornest-basic tile-auto
 
+The ``fornest-basic`` example also accepts numeric indices for these mappings
+(printed in its help/usage output).
+
+The ``map-*-sized`` variants demonstrate using compile-time sized mapping tags
+(e.g., ``device_global_size_x_direct<N>`` and ``device_thread_size_x_loop<N>``)
+to explicitly request ``Threads`` and/or ``Teams`` dimensions for the launch.
+
 On OpenMP builds::
 
   ./fornest-basic omp-outer
   ./fornest-basic omp-collapse
+
+Dynamic Policy Selection
+------------------------
+
+The ``dynamic-fornest`` example shows selecting among multiple fornest policies
+at runtime via ``RAJA::dynamic_fornest<camp::list<...>>(pol, ...)``. In addition
+to basic host/device variants, it includes CUDA/HIP launch-mapped variants that
+use unsized and sized mapping tags to control how ``Threads`` and ``Teams`` are
+chosen.
 
 Restrictions
 ------------

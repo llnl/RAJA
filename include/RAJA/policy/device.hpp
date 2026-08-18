@@ -157,6 +157,7 @@ template<bool Async, int num_threads = RAJA::named_usage::unspecified>
 using device_launch_t =
     RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(launch_t)<Async, num_threads>;
 
+
 // kernel (For) index mapping
 using device_global_x_direct =
     RAJA_INTERNAL_CUDA_HIP_POLICY_ALIAS(global_x_direct);
@@ -965,6 +966,7 @@ using device_multi_reduce_atomic_low_performance_low_overhead =
 // launch
 template<bool Async, int num_threads = RAJA::named_usage::unspecified>
 using device_launch_t = RAJA::sycl_launch_t<Async, num_threads>;
+
 
 // kernel (For) index mapping (x/y/z -> dim2/dim1/dim0)
 template<int nx_threads>

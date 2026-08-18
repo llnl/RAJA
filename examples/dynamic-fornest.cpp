@@ -73,22 +73,54 @@ using dev256_nested = RAJA::device_exec<256>;
 // (i,j).
 using dev256_collapse = RAJA::fornest_collapsed_policy<dev256_nested>;
 
-// `dev256_perfect = fornest_mapping_policy<device_exec<256>, (global_x, seq)>`:
+// `dev256_perfect = fornest_mapping_policy<device_launch_t<false>, (global_x, seq)>`:
 // device backend: explicit `launch` mapping; outer dim is `global_x`, inner is
 // seq.
+//
+// Launch configuration notes:
+// - `device_launch_t<false>` is a launch-style policy; RAJA computes
+//   `LaunchParams(Teams, Threads)` from the mapping tags and the segment extents.
+// - Here, `global_x_direct` is unsized, so RAJA chooses `Threads.x` using a
+//   default thread budget (currently 256) and the extent `ni`.
+// - The `seq` inner dimension runs serially inside each (global_x,global_y)
+//   location, so `Threads.y = 1` and `Teams.y = 1`.
 using dev256_perfect = RAJA::fornest_mapping_policy<
-    dev256_nested,
-    RAJA::LoopPolicy<RAJA::device_global_x_direct>,
-    RAJA::LoopPolicy<RAJA::seq_exec>>;
+    RAJA::device_launch_t<false>,
+    RAJA::device_global_x_direct,
+    RAJA::seq_exec>;
+
+// `dev256_global_sized =
+// fornest_mapping_policy<device_launch_t<false>, (global_size_x<32>, global_size_y<8>)>`:
+// device backend: explicit `launch` mapping that fully determines `Threads` via
+// compile-time sizes.
+//
+// This configures:
+// - Threads = (32, 8)
+// - Teams   = (ceil(ni/32), ceil(nj/8))
+using dev256_global_sized = RAJA::fornest_mapping_policy<
+    RAJA::device_launch_t<false>,
+    RAJA::device_global_size_x_direct<32>,
+    RAJA::device_global_size_y_direct<8>>;
 
 // `dev256_block_thread =
-// fornest_mapping_policy<device_exec<256>, (block_x, thread_x_loop)>`:
+// fornest_mapping_policy<device_launch_t<false>, (block_x, thread_x_loop)>`:
 // device backend: explicit `launch` mapping; outer dim uses `blockIdx.x`, inner
 // uses `threadIdx.x` with looping/striding semantics.
 using dev256_block_thread = RAJA::fornest_mapping_policy<
-    dev256_nested,
-    RAJA::LoopPolicy<RAJA::device_block_x_direct>,
-    RAJA::LoopPolicy<RAJA::device_thread_x_loop>>;
+    RAJA::device_launch_t<false>,
+    RAJA::device_block_x_direct,
+    RAJA::device_thread_x_loop>;
+
+// `dev256_block_thread_sized =
+// fornest_mapping_policy<device_launch_t<false>, (block_size_x<ni>, thread_size_x_loop<32>)>`:
+//
+// This configures:
+// - Teams.x   = ni (one block per i)
+// - Threads.x = 32 (threads stride j: j += blockDim.x)
+using dev256_block_thread_sized = RAJA::fornest_mapping_policy<
+    RAJA::device_launch_t<false>,
+    RAJA::device_block_size_x_direct<262144>,
+    RAJA::device_thread_size_x_loop<32>>;
 
 // `dev512_nested`, `dev512_collapse`: same as the 256 variants but with
 // 512-thread blocks.
@@ -110,7 +142,9 @@ using policy_list = camp::list<seq_nested,
                                dev256_nested,
                                dev256_collapse,
                                dev256_perfect,
+                               dev256_global_sized,
                                dev256_block_thread,
+                               dev256_block_thread_sized,
                                dev512_nested,
                                dev512_collapse
 #endif
@@ -142,8 +176,10 @@ static void print_policy_menu()
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
   print("device_exec<256> nested (default device mapping)");
   print("device_exec<256> collapsed");
-  print("device_exec<256> perfectly nested (global_x, seq)");
-  print("device_exec<256> block/thread (block_x, thread_x_loop)");
+  print("device_launch_t<false> perfectly nested (global_x, seq)");
+  print("device_launch_t<false> global sized (global_size_x<32>, global_size_y<8>)");
+  print("device_launch_t<false> block/thread (block_x, thread_x_loop)");
+  print("device_launch_t<false> block/thread sized (block_size_x<ni>, thread_size_x_loop<32>)");
   print("device_exec<512> nested (default device mapping)");
   print("device_exec<512> collapsed");
 #endif
@@ -174,9 +210,13 @@ static const char* get_policy_name(int pol)
   if (auto n = match("device_exec<256> nested (default device mapping)"))
     return n;
   if (auto n = match("device_exec<256> collapsed")) return n;
-  if (auto n = match("device_exec<256> perfectly nested (global_x, seq)"))
+  if (auto n = match("device_launch_t<false> perfectly nested (global_x, seq)"))
     return n;
-  if (auto n = match("device_exec<256> block/thread (block_x, thread_x_loop)"))
+  if (auto n = match("device_launch_t<false> global sized (global_size_x<32>, global_size_y<8>)"))
+    return n;
+  if (auto n = match("device_launch_t<false> block/thread (block_x, thread_x_loop)"))
+    return n;
+  if (auto n = match("device_launch_t<false> block/thread sized (block_size_x<ni>, thread_size_x_loop<32>)"))
     return n;
   if (auto n = match("device_exec<512> nested (default device mapping)"))
     return n;
@@ -244,8 +284,13 @@ static bool parse_policy_arg(const char* arg, int& pol_out)
     return true;
   if (accept("dev256_perfect", "dev256_perfectly_nested", "dev256-perfect"))
     return true;
+  if (accept("dev256_global_sized", "dev256_global-sized", "dev256-global-sized"))
+    return true;
   if (accept("dev256_block_thread", "dev256_block-thread",
              "dev256-block-thread"))
+    return true;
+  if (accept("dev256_block_thread_sized", "dev256_block-thread-sized",
+             "dev256-block-thread-sized"))
     return true;
   if (accept("dev512", "dev512_nested", "dev512-nested")) return true;
   if (accept("dev512_collapse", "dev512_collapsed", "dev512-collapse"))
@@ -292,8 +337,8 @@ int main(int argc, char* argv[])
               << ", omp, omp_collapse"
 #endif
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
-              << ", dev256, dev256_collapse, dev256_perfect, "
-                 "dev256_block_thread, dev512, dev512_collapse"
+              << ", dev256, dev256_collapse, dev256_perfect, dev256_global_sized, "
+                 "dev256_block_thread, dev256_block_thread_sized, dev512, dev512_collapse"
 #endif
               << "\n";
     return 1;
