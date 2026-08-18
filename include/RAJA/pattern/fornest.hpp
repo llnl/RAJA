@@ -164,7 +164,7 @@ struct fornest_omp_collapse_policy
 #endif
 
 #if defined(RAJA_GPU_ACTIVE)
-template<typename HostPolicy, typename DevicePolicy>
+template<typename HostPolicy, typename DevicePolicy = HostPolicy>
 using fornest_platform_loop_policy = RAJA::LoopPolicy<HostPolicy, DevicePolicy>;
 
 template<typename ExecPolicy,
@@ -1746,28 +1746,28 @@ struct fornest_map_traits<RAJA::device_block_size_z_loop<Z_SIZE>>
 
 #if defined(RAJA_SYCL_ACTIVE)
 template<int DIM>
-struct fornest_map_traits<::RAJA::policy::sycl::sycl_group_012_direct<DIM>>
+struct fornest_map_traits<::RAJA::sycl_group_012_direct<DIM>>
 {
   static constexpr fornest_map_spec spec {
       fornest_map_space::block, fornest_sycl_dim_axis<DIM>::value, false};
 };
 
 template<int DIM>
-struct fornest_map_traits<::RAJA::policy::sycl::sycl_group_012_loop<DIM>>
+struct fornest_map_traits<::RAJA::sycl_group_012_loop<DIM>>
 {
   static constexpr fornest_map_spec spec {
       fornest_map_space::block, fornest_sycl_dim_axis<DIM>::value, true};
 };
 
 template<int DIM>
-struct fornest_map_traits<::RAJA::policy::sycl::sycl_local_012_direct<DIM>>
+struct fornest_map_traits<::RAJA::sycl_local_012_direct<DIM>>
 {
   static constexpr fornest_map_spec spec {
       fornest_map_space::thread, fornest_sycl_dim_axis<DIM>::value, false};
 };
 
 template<int DIM>
-struct fornest_map_traits<::RAJA::policy::sycl::sycl_local_012_loop<DIM>>
+struct fornest_map_traits<::RAJA::sycl_local_012_loop<DIM>>
 {
   static constexpr fornest_map_spec spec {
       fornest_map_space::thread, fornest_sycl_dim_axis<DIM>::value, true};
