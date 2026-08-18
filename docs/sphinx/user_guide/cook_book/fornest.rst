@@ -19,6 +19,9 @@ between loop levels. The body is written in terms of logical indices such as
 ``(i,j)`` or ``(i,j,k)``; the policy can keep those dimensions as nested loops,
 collapse them to a 1-D iteration space (and reconstruct logical indices), map
 them onto device hierarchy, or tile them.
+The loop body is treated as a single kernel entity: one callable is invoked for
+each logical point, regardless of whether the policy results in nested loops, a
+collapsed 1-D traversal, or a device launch.
 
 .. note::
    ``RAJA::fornest`` is intended as a general loop-nest abstraction; the current
@@ -69,9 +72,9 @@ arithmetic. The explicit mapping can still win when the dimensions fit the block
 shape, when the body is very small and index reconstruction dominates, or when
 direct multi-dimensional mapping improves memory access or scheduling.
 
-----------------
+---------------
 Mapping Policies
-----------------
+---------------
 
 The minimal example source defines backend-specific policy aliases. CUDA/HIP can
 use unsized global device mapping tags for explicit mapping. CUDA/HIP/SYCL can
@@ -83,10 +86,87 @@ thread/work-item mappings:
    :end-before: // _fornest_policy_aliases_end
    :language: C++
 
+Direct (Non-collapsed) Mapping
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Both “standard nested loops” and “explicit mapping” are *direct* mappings: the
+logical loop dimensions are preserved (not flattened) and the body is invoked at
+each logical point ``(i,j)`` / ``(i,j,k)``.
+
+There are two common ways to express a direct mapping:
+
+- **Nested loops**: an alias such as ``RAJA::fornest_basic_seq_2d`` traverses the
+  logical dimensions as a nest of loops. On GPU builds this uses backend-aware
+  mapping under the hood.
+- **Explicit mapping**: a ``RAJA::fornest_mapping_policy`` executes via
+  ``RAJA::launch`` and uses one loop mapping tag per dimension (e.g.,
+  ``device_global_*``, ``device_block_*``, ``device_thread_*``). This makes the
+  device hierarchy mapping explicit and gives you direct control via mapping
+  tags.
+
+Collapsed
+~~~~~~~~~
+
 The collapsed policy uses a forall-style execution policy such as
-``RAJA::device_exec<block_size_1d>`` (when GPU is enabled). The mapping policy
-executes via ``RAJA::launch`` and typically uses a launch-style execution policy
-such as ``RAJA::device_launch_t<false>``, plus one loop mapping tag per dimension.
+``RAJA::device_exec<block_size_1d>`` (when GPU is enabled) and runs a flattened
+1D iteration space, reconstructing the logical indices internally.
+
+For CUDA/HIP, *unsized* mapping tags (for example, ``device_global_x_direct``)
+do not specify a compile-time thread/block shape. In that case RAJA chooses a
+thread shape from a thread budget (either fixed by the launch policy or a
+backend default) and the logical extents, then computes teams as
+``ceil(extent / threads)`` per mapped dimension. The ``map-*-sized`` variants in
+``fornest-basic`` demonstrate using *sized* mapping tags
+(``device_*_size_*``) to explicitly request ``Threads`` and/or ``Teams`` at
+compile time.
+
+Tiling
+~~~~~~
+
+Tiling wraps a base mapping and adds tile loops per dimension. In the
+``fornest-basic`` example, the tiling policies use a forall-style policy
+(``forall_exec_pol``) to provide a fixed GPU thread budget, then execute a
+launch where ``Threads`` are the tile sizes and ``Teams`` are computed as
+``ceil(extent / tile)`` per dimension.
+
+On GPU backends, this is largely a *mapping choice*: selecting a 2-D
+``Threads(tx,ty)`` shape and launching enough teams/blocks to cover the logical
+extents. In that sense, fixed tiling is equivalent to an explicit mapping that
+fully specifies the thread shape (for CUDA/HIP, sized global mapping tags such
+as ``device_global_size_x_direct<tx>`` and ``device_global_size_y_direct<ty>``),
+and auto-tiling is similar in spirit to unsized global mapping where RAJA
+chooses a reasonable 2-D thread shape.
+
+Conceptually, a 2-D tiled CUDA/HIP mapping is similar to::
+
+  // tile sizes tx, ty; extents rows, cols
+  dim3 threads(tx, ty, 1);
+  dim3 blocks(ceil(rows/tx), ceil(cols/ty), 1);
+
+  __global__ void kernel(...)
+  {
+    // one tile per block; one point in the tile per thread
+    int tile_i = blockIdx.x;
+    int tile_j = blockIdx.y;
+    int li = threadIdx.x;
+    int lj = threadIdx.y;
+    int i = tile_i * tx + li;  // == blockIdx.x * blockDim.x + threadIdx.x
+    int j = tile_j * ty + lj;  // == blockIdx.y * blockDim.y + threadIdx.y
+    if (i < rows && j < cols) body(i, j);
+  }
+
+  kernel<<<blocks, threads>>>(...);
+
+The example demonstrates:
+
+* ``tile-fixed``: compile-time tile sizes (e.g., ``fornest_tile_fixed<2>``)
+* ``tile-runtime``: tile sizes provided at runtime via ``RAJA::TileSize``
+* ``tile-auto``: RAJA chooses tile sizes from the iteration extents and thread
+  budget
+
+Unlike fixed/auto tiling, ``tile-runtime`` does not have a direct “mapping tag”
+equivalent because mapping tags are compile-time types; if you need to choose a
+CUDA/HIP block shape at runtime, use ``RAJA::launch`` directly.
 
 Both mappings call the same logical body through one ``RAJA::fornest`` call:
 
@@ -100,7 +180,11 @@ Runtime Policy Choice
 ----------------------
 
 The mapping can be selected at run time by choosing which policy object is
-passed to the common implementation:
+passed to the common implementation. Note that each mapping choice is still a
+distinct *compile-time* instantiation of ``RAJA::fornest``; the runtime switch
+selects among implementations that were compiled into the binary.
+For true runtime policy selection from a single call site, see the
+``dynamic-fornest`` example below (uses ``RAJA::dynamic_fornest``).
 
 .. literalinclude:: ../../../../examples/fornest-basic.cpp
    :start-after: // _fornest_runtime_select_start

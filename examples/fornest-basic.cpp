@@ -96,9 +96,15 @@ static void print_mapping_menu()
   print("map-block-thread-sized");
 #endif
   print("nested-loops");
+#if defined(RAJA_GPU_ACTIVE)
+  print("tile-fixed (GPU: similar to map-global-sized)");
+  print("tile-runtime (GPU: use RAJA::launch for runtime block shapes)");
+  print("tile-auto (GPU: similar to map)");
+#else
   print("tile-fixed");
   print("tile-runtime");
   print("tile-auto");
+#endif
 #if defined(RAJA_ENABLE_OPENMP)
   print("omp-outer");
   print("omp-collapse");
@@ -343,12 +349,12 @@ int main(int argc, char** argv)
     int* values_ptr = values.data();
 
 #if defined(RAJA_GPU_ACTIVE)
-	const bool use_device_memory = uses_device_memory(mapping);
-	auto device_res = RAJA::resources::get_default_resource<forall_exec_pol>();
-	int* values_d = nullptr;
-	if (use_device_memory)
-	{
-	  values_d   = device_res.allocate<int>(n_rows * n_cols);
+    const bool use_device_memory = uses_device_memory(mapping);
+    auto device_res = RAJA::resources::get_default_resource<forall_exec_pol>();
+    int* values_d = nullptr;
+    if (use_device_memory)
+    {
+      values_d   = device_res.allocate<int>(n_rows * n_cols);
       values_ptr = values_d;
     }
 #endif
@@ -406,14 +412,14 @@ int main(int argc, char** argv)
       run_fornest(tile_runtime_policy {RAJA::TileSize(2), RAJA::TileSize(2)},
                   rows, cols, "fornest_basic_tile_runtime", body);
       break;
-	case Mapping::TileAuto:
-	  run_fornest(tile_auto_policy {}, rows, cols, "fornest_basic_tile_auto",
-				  body);
-	  break;
+    case Mapping::TileAuto:
+      run_fornest(tile_auto_policy {}, rows, cols, "fornest_basic_tile_auto",
+                  body);
+      break;
 #if defined(RAJA_ENABLE_OPENMP)
-	case Mapping::OmpOuter:
-	  run_fornest(omp_outer_policy {}, rows, cols, "fornest_basic_omp_outer",
-				  body);
+    case Mapping::OmpOuter:
+      run_fornest(omp_outer_policy {}, rows, cols, "fornest_basic_omp_outer",
+                  body);
       break;
     case Mapping::OmpCollapse:
       run_fornest(omp_collapse_policy {}, rows, cols,
