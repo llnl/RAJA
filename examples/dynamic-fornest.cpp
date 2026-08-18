@@ -27,49 +27,51 @@
 //------------------------------------------------------------------------------
 // Policies
 //------------------------------------------------------------------------------
-/*
- * Backend behavior (policy cheat sheet):
- * - `RAJA::fornest<policy_list>(pol, ...)` picks the `pol`-th TYPE in
- *   `policy_list` and calls `RAJA::fornest(selected_policy{}, ...)`.
- */
+// `RAJA::dynamic_fornest<policy_list>(pol, ...)` selects the `pol`-th policy
+// type in `policy_list` at runtime and executes `RAJA::fornest` with it.
+//
+// Each entry in `policy_list` is still a distinct compile-time instantiation of
+// `RAJA::fornest` that was built into the binary; `dynamic_fornest` switches
+// between those instantiations by index.
 
 // `seq_nested = RAJA::seq_exec`:
-// host backend: `fornest(ExecPolicy, ...)` overload; currently a collapsed 1D
-// `forall(ni*nj)` with (i,j) reconstruction inside.
+// host backend: sequential mapping.
 using seq_nested = RAJA::seq_exec;
 
 // `seq_collapse = RAJA::fornest_collapsed_policy<RAJA::seq_exec>`:
-// host backend: always flatten to 1D + reconstruct, scheduled with `seq_exec`.
+// host backend: flatten to 1D + reconstruct (i,j), scheduled with `seq_exec`.
 using seq_collapse = RAJA::fornest_collapsed_policy<RAJA::seq_exec>;
 
 // `simd_nested = RAJA::simd_exec`:
-// host backend: same as `seq_nested`, scheduled with SIMD `forall`.
+// host backend: same mapping as `seq_nested`, but scheduled with SIMD `forall`.
 using simd_nested = RAJA::simd_exec;
 
 // `simd_collapse = RAJA::fornest_collapsed_policy<RAJA::simd_exec>`:
-// host backend: flattened 1D `forall`, scheduled with `simd_exec`.
+// host backend: flatten to 1D + reconstruct, scheduled with `simd_exec`.
 using simd_collapse = RAJA::fornest_collapsed_policy<RAJA::simd_exec>;
 
 #if defined(RAJA_ENABLE_OPENMP)
 // `omp_nested = RAJA::omp_parallel_for_exec`:
-// host backend: same `fornest(ExecPolicy, ...)` path, OpenMP-parallel `forall`.
+// host backend: OpenMP-parallel mapping.
 using omp_nested = RAJA::omp_parallel_for_exec;
 
 // `omp_collapse = fornest_collapsed_policy<omp_parallel_for_exec>`:
-// host backend: flattened 1D `forall`, OpenMP-parallel.
+// host backend: flatten to 1D + reconstruct, OpenMP-parallel.
 using omp_collapse =
     RAJA::fornest_collapsed_policy<RAJA::omp_parallel_for_exec>;
 #endif
 
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
 // `dev256_nested = RAJA::device_exec<256>`:
-// device backend default mapping: choose (tx,ty) fitting 256 threads, launch
-// `Threads(tx,ty)`, `Teams(ceil(ni/tx), ceil(nj/ty))`, map `dim0->global_x`,
-// `dim1->global_y`.
+// device backend default mapping: choose a 2-D thread shape (tx,ty) that fits
+// the 256-thread budget, then launch:
+//   Threads = (tx,ty)
+//   Teams   = (ceil(ni/tx), ceil(nj/ty))
+// and map dim0->global_x, dim1->global_y.
 using dev256_nested = RAJA::device_exec<256>;
 
 // `dev256_collapse = fornest_collapsed_policy<device_exec<256>>`:
-// device backend: flattened 1D `forall` with 256-thread blocks, reconstruct
+// device backend: flatten to 1D `forall` with 256-thread blocks, reconstruct
 // (i,j).
 using dev256_collapse = RAJA::fornest_collapsed_policy<dev256_nested>;
 
@@ -79,11 +81,10 @@ using dev256_collapse = RAJA::fornest_collapsed_policy<dev256_nested>;
 //
 // Launch configuration notes:
 // - `device_launch_t<false>` is a launch-style policy; RAJA computes
-//   `LaunchParams(Teams, Threads)` from the mapping tags and the segment extents.
-// - Here, `global_x_direct` is unsized, so RAJA chooses `Threads.x` using a
+//   `LaunchParams(Teams, Threads)` from the mapping tags and segment extents.
+// - `device_global_x_direct` is unsized, so RAJA chooses `Threads.x` using a
 //   default thread budget (currently 256) and the extent `ni`.
-// - The `seq` inner dimension runs serially inside each (global_x,global_y)
-//   location, so `Threads.y = 1` and `Teams.y = 1`.
+// - The inner `seq` dimension runs serially inside each launched instance.
 using dev256_perfect = RAJA::fornest_mapping_policy<
     RAJA::device_launch_t<false>,
     RAJA::device_global_x_direct,
@@ -94,7 +95,7 @@ using dev256_perfect = RAJA::fornest_mapping_policy<
 // device backend: explicit `launch` mapping that fully determines `Threads` via
 // compile-time sizes.
 //
-// This configures:
+// Sized global mapping:
 // - Threads = (32, 8)
 // - Teams   = (ceil(ni/32), ceil(nj/8))
 using dev256_global_sized = RAJA::fornest_mapping_policy<
@@ -114,9 +115,10 @@ using dev256_block_thread = RAJA::fornest_mapping_policy<
 // `dev256_block_thread_sized =
 // fornest_mapping_policy<device_launch_t<false>, (block_size_x<ni>, thread_size_x_loop<32>)>`:
 //
-// This configures:
-// - Teams.x   = ni (one block per i)
-// - Threads.x = 32 (threads stride j: j += blockDim.x)
+// Sized block/thread mapping:
+// - `block_size_x_direct<ni>` requests Teams.x = ni (one block per i)
+// - `thread_size_x_loop<32>` requests Threads.x = 32; threads stride j:
+//     j += blockDim.x
 using dev256_block_thread_sized = RAJA::fornest_mapping_policy<
     RAJA::device_launch_t<false>,
     RAJA::device_block_size_x_direct<262144>,

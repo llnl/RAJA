@@ -67,14 +67,7 @@ namespace RAJA
  * executes a single 1D `RAJA::forall` over that linear index.
  * The `LayoutTag` controls how the linear index is mapped back to `(i0,i1)`
  * or `(i0,i1,i2)` (e.g., `RAJA::layout_right` vs `RAJA::layout_left`).
- *
- * Notes:
- * - The provided segments must support random-access iteration since the
- *   implementation computes `*(seg.begin() + offset)` to recover the per-dim
- *   index values.
- * - Optional `forall` parameters (e.g., `RAJA::kernel_name`, reducers) are
- *   supported and forwarded to the underlying `RAJA::forall`.
- * - The current implementation supports only 2- or 3-level loop nests.
+ * The current implementation supports only 2- or 3-level loop nests.
  */
 template<typename ExecPolicy, typename LayoutTag = RAJA::layout_right>
 struct fornest_collapsed_policy
@@ -99,12 +92,12 @@ struct fornest_collapsed_policy
  * with a `RAJA::seq_exec` host fallback and the raw tag as the device policy
  * when GPU support is enabled.
  *
- * Examples:
- * - `RAJA::LoopPolicy<RAJA::seq_exec>` (portable host-only nested loops)
- * - `RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_global_x_direct>` (host +
- *   device mapping)
- * - `RAJA::device_global_x_direct` (raw device mapping tag)
- * - `RAJA::seq_exec` (raw sequential loop tag)
+ * Examples (equivalent ways to express a loop mapping):
+ * - `RAJA::LoopPolicy<RAJA::seq_exec>`: host-only sequential loop
+ * - `RAJA::seq_exec`: raw sequential loop tag (normalized internally)
+ * - `RAJA::device_global_x_direct`: raw device mapping tag (normalized)
+ * - `RAJA::LoopPolicy<RAJA::seq_exec, RAJA::device_global_x_direct>`: explicit
+ *   host/device mapping wrapper
  *
  * \note The current implementation supports only 2- or 3-level loop nests.
  */
@@ -595,10 +588,10 @@ make_linear_layout_3d(std::size_t n0, std::size_t n1, std::size_t n2)
 template<typename LayoutTag, typename Seg0, typename Seg1, typename Body>
 struct FornestFlattenedForallBody2D
 {
-  using seg0_type  = camp::decay<Seg0>;
-  using seg1_type  = camp::decay<Seg1>;
-  using body_type  = camp::decay<Body>;
-  using index_type = std::size_t;
+  using seg0_type   = camp::decay<Seg0>;
+  using seg1_type   = camp::decay<Seg1>;
+  using body_type   = camp::decay<Body>;
+  using index_type  = std::size_t;
   using layout_type = RAJA::Layout<2, index_type>;
 
   index_type n0 = 0;
@@ -649,11 +642,11 @@ template<typename LayoutTag,
          typename Body>
 struct FornestFlattenedForallBody3D
 {
-  using seg0_type  = camp::decay<Seg0>;
-  using seg1_type  = camp::decay<Seg1>;
-  using seg2_type  = camp::decay<Seg2>;
-  using body_type  = camp::decay<Body>;
-  using index_type = std::size_t;
+  using seg0_type   = camp::decay<Seg0>;
+  using seg1_type   = camp::decay<Seg1>;
+  using seg2_type   = camp::decay<Seg2>;
+  using body_type   = camp::decay<Body>;
+  using index_type  = std::size_t;
   using layout_type = RAJA::Layout<3, index_type>;
 
   index_type n0 = 0;

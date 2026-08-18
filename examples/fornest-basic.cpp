@@ -72,7 +72,7 @@ enum class Mapping
   Map,
   MapGlobalSized,
   MapBlockThreadSized,
-  Basic,
+  NestedLoops,
   TileFixed,
   TileRuntime,
   TileAuto,
@@ -145,7 +145,7 @@ static bool parse_mapping_arg(const char* arg, Mapping& out)
       if (accept(Mapping::MapGlobalSized)) return true;
       if (accept(Mapping::MapBlockThreadSized)) return true;
 #endif
-      if (accept(Mapping::Basic)) return true;
+      if (accept(Mapping::NestedLoops)) return true;
       if (accept(Mapping::TileFixed)) return true;
       if (accept(Mapping::TileRuntime)) return true;
       if (accept(Mapping::TileAuto)) return true;
@@ -179,7 +179,7 @@ static bool parse_mapping_arg(const char* arg, Mapping& out)
   }
   if (s == "nested-loops" || s == "basic")
   {
-    out = Mapping::Basic;
+    out = Mapping::NestedLoops;
     return true;
   }
   if (s == "tile-fixed")
@@ -400,7 +400,7 @@ int main(int argc, char** argv)
           "'map-block-thread-sized' requires a CUDA or HIP build");
 #endif
       break;
-    case Mapping::Basic:
+    case Mapping::NestedLoops:
       run_fornest(nested_loops_policy {}, rows, cols, "fornest_basic_alias",
                   body);
       break;
