@@ -33,7 +33,10 @@ The interface supports several policy families:
    of the logical dimensions to a 1-D iteration space. The ``ExecPolicy`` is a
    regular forall-style policy such as ``RAJA::seq_exec`` or
    ``RAJA::device_exec<256>``. RAJA performs the linear-to-logical index
-   reconstruction internally.
+   reconstruction internally. On host OpenMP builds, ``RAJA::fornest_omp_collapse_policy<...>``
+   is a related collapsed-style option that uses OpenMP collapse across the
+   logical dimensions (rather than flattening to a 1-D index and reconstructing
+   indices).
  * ``RAJA::fornest_mapping_policy<ExecPolicy, LoopPolicies...>`` maps the logical
    dimensions directly using one loop mapping tag per dimension. For mapping
    policies, the ``ExecPolicy`` selects the launch backend (typically
@@ -45,8 +48,6 @@ The interface supports several policy families:
    supported.
  * ``RAJA::fornest_tiling_policy<...>`` adds per-dimension tiling on top of a
    loop nest. Tile sizes may be fixed, runtime-provided, or chosen by RAJA.
- * ``RAJA::fornest_omp_collapse_policy<...>`` requests OpenMP host collapse-style
-   traversal (host OpenMP builds).
  * ``RAJA::dynamic_fornest<camp::list<...>>(pol, ...)`` selects a policy from a
    list at runtime.
 
@@ -110,6 +111,12 @@ Collapsed
 The collapsed policy uses a forall-style execution policy such as
 ``RAJA::device_exec<block_size_1d>`` (when GPU is enabled) and runs a flattened
 1D iteration space, reconstructing the logical indices internally.
+
+On host OpenMP builds, ``RAJA::fornest_omp_collapse_policy<...>`` is a related
+option that requests OpenMP collapse across the logical dimensions while keeping
+the indices explicit (no linear index reconstruction). This can be preferable
+when you want OpenMP's multi-loop collapse behavior without changing the loop
+body to use a linear index.
 
 For CUDA/HIP, *unsized* mapping tags (for example, ``device_global_x_direct``)
 do not specify a compile-time thread/block shape. In that case RAJA chooses a
@@ -179,12 +186,13 @@ Both mappings call the same logical body through one ``RAJA::fornest`` call:
 Runtime Policy Choice
 ----------------------
 
-The mapping can be selected at run time by choosing which policy object is
-passed to the common implementation. Note that each mapping choice is still a
-distinct *compile-time* instantiation of ``RAJA::fornest``; the runtime switch
-selects among implementations that were compiled into the binary.
-For true runtime policy selection from a single call site, see the
-``dynamic-fornest`` example below (uses ``RAJA::dynamic_fornest``).
+This example selects a mapping at run time by switching between policy objects
+that were *already instantiated at compile time* and compiled into the binary.
+So the “runtime choice” here is choosing among pre-built implementations.
+
+For true runtime policy selection from a single call site (choose a policy from
+a type list by integer index), see the ``dynamic-fornest`` example
+(``RAJA::dynamic_fornest``).
 
 .. literalinclude:: ../../../../examples/fornest-basic.cpp
    :start-after: // _fornest_runtime_select_start

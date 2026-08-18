@@ -21,6 +21,7 @@
 
 #include "RAJA/config.hpp"
 
+#include <array>
 #include <cstddef>
 #include <cmath>
 #include <iterator>
@@ -37,6 +38,8 @@
 #include "RAJA/pattern/forall.hpp"
 #include "RAJA/pattern/launch.hpp"
 
+#include "RAJA/util/Layout.hpp"
+#include "RAJA/util/PermutedLayout.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/resource.hpp"
 #include "RAJA/policy/device.hpp"
@@ -551,51 +554,41 @@ RAJA_INLINE tile3 choose_3d_tile(int block_size,
   return best;
 }
 
-template<typename LayoutTag>
-RAJA_HOST_DEVICE RAJA_INLINE void linear_to_2d(std::size_t lin,
-                                               std::size_t n0,
-                                               std::size_t n1,
-                                               std::size_t& i0,
-                                               std::size_t& i1)
+template<std::size_t... idx>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto make_reverse_perm(
+    std::index_sequence<idx...>)
 {
-  if constexpr (std::is_same<LayoutTag, RAJA::layout_left>::value)
+  return std::array<camp::idx_t, sizeof...(idx)> {
+      {static_cast<camp::idx_t>(sizeof...(idx) - 1U - idx)...}};
+}
+
+template<typename LayoutTag>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr RAJA::Layout<2, std::size_t>
+make_linear_layout_2d(std::size_t n0, std::size_t n1)
+{
+  if constexpr (std::is_same_v<LayoutTag, RAJA::layout_left>)
   {
-    i0 = lin % n0;
-    i1 = lin / n0;
-    RAJA_UNUSED_VAR(n1);
+    return RAJA::make_permuted_layout<2, std::size_t>(
+        {n0, n1}, make_reverse_perm(std::make_index_sequence<2> {}));
   }
   else
   {
-    i0 = lin / n1;
-    i1 = lin % n1;
-    RAJA_UNUSED_VAR(n0);
+    return RAJA::Layout<2, std::size_t>(n0, n1);
   }
 }
 
 template<typename LayoutTag>
-RAJA_HOST_DEVICE RAJA_INLINE void linear_to_3d(std::size_t lin,
-                                               std::size_t n0,
-                                               std::size_t n1,
-                                               std::size_t n2,
-                                               std::size_t& i0,
-                                               std::size_t& i1,
-                                               std::size_t& i2)
+RAJA_HOST_DEVICE RAJA_INLINE constexpr RAJA::Layout<3, std::size_t>
+make_linear_layout_3d(std::size_t n0, std::size_t n1, std::size_t n2)
 {
-  if constexpr (std::is_same<LayoutTag, RAJA::layout_left>::value)
+  if constexpr (std::is_same_v<LayoutTag, RAJA::layout_left>)
   {
-    i0 = lin % n0;
-    lin /= n0;
-    i1 = lin % n1;
-    i2 = lin / n1;
-    RAJA_UNUSED_VAR(n2);
+    return RAJA::make_permuted_layout<3, std::size_t>(
+        {n0, n1, n2}, make_reverse_perm(std::make_index_sequence<3> {}));
   }
   else
   {
-    i0 = lin / (n1 * n2);
-    lin -= i0 * (n1 * n2);
-    i1 = lin / n2;
-    i2 = lin % n2;
-    RAJA_UNUSED_VAR(n0);
+    return RAJA::Layout<3, std::size_t>(n0, n1, n2);
   }
 }
 
@@ -606,9 +599,11 @@ struct FornestFlattenedForallBody2D
   using seg1_type  = camp::decay<Seg1>;
   using body_type  = camp::decay<Body>;
   using index_type = std::size_t;
+  using layout_type = RAJA::Layout<2, index_type>;
 
   index_type n0 = 0;
   index_type n1 = 0;
+  layout_type layout;
   seg0_type seg0;
   seg1_type seg1;
   body_type body;
@@ -621,6 +616,7 @@ struct FornestFlattenedForallBody2D
                                            B&& body_)
       : n0(n0_),
         n1(n1_),
+        layout(detail::make_linear_layout_2d<LayoutTag>(n0_, n1_)),
         seg0(seg0_),
         seg1(seg1_),
         body(std::forward<B>(body_))
@@ -633,7 +629,7 @@ struct FornestFlattenedForallBody2D
   {
     index_type i0 = 0;
     index_type i1 = 0;
-    detail::linear_to_2d<LayoutTag>(lin, n0, n1, i0, i1);
+    layout.toIndices(lin, i0, i1);
 
     using It0 = decltype(seg0.begin());
     using It1 = decltype(seg1.begin());
@@ -658,10 +654,12 @@ struct FornestFlattenedForallBody3D
   using seg2_type  = camp::decay<Seg2>;
   using body_type  = camp::decay<Body>;
   using index_type = std::size_t;
+  using layout_type = RAJA::Layout<3, index_type>;
 
   index_type n0 = 0;
   index_type n1 = 0;
   index_type n2 = 0;
+  layout_type layout;
   seg0_type seg0;
   seg1_type seg1;
   seg2_type seg2;
@@ -678,6 +676,7 @@ struct FornestFlattenedForallBody3D
       : n0(n0_),
         n1(n1_),
         n2(n2_),
+        layout(detail::make_linear_layout_3d<LayoutTag>(n0_, n1_, n2_)),
         seg0(seg0_),
         seg1(seg1_),
         seg2(seg2_),
@@ -692,7 +691,7 @@ struct FornestFlattenedForallBody3D
     index_type i0 = 0;
     index_type i1 = 0;
     index_type i2 = 0;
-    detail::linear_to_3d<LayoutTag>(lin, n0, n1, n2, i0, i1, i2);
+    layout.toIndices(lin, i0, i1, i2);
 
     using It0 = decltype(seg0.begin());
     using It1 = decltype(seg1.begin());
@@ -1090,7 +1089,7 @@ struct FornestOmpCollapseLaunchBody2D
                                                Reducers&... reducers) const
   {
     camp::tuple<Reducers&...> reducer_refs {reducers...};
-    RAJA::expt::loop<RAJA::LoopPolicy<RAJA::omp_parallel_for_exec>>(
+    RAJA::expt::loop<RAJA::LoopPolicy<RAJA::omp_parallel_nested_for_exec>>(
         ctx, seg0, seg1, [&](auto i0, auto i1) {
           camp::apply(
               [&](auto&... rs) {
@@ -1144,7 +1143,7 @@ struct FornestOmpCollapseLaunchBody3D
                                                Reducers&... reducers) const
   {
     camp::tuple<Reducers&...> reducer_refs {reducers...};
-    RAJA::expt::loop<RAJA::LoopPolicy<RAJA::omp_parallel_for_exec>>(
+    RAJA::expt::loop<RAJA::LoopPolicy<RAJA::omp_parallel_nested_for_exec>>(
         ctx, seg0, seg1, seg2, [&](auto i0, auto i1, auto i2) {
           camp::apply(
               [&](auto&... rs) {
