@@ -137,6 +137,11 @@ pages linked below.
        ``seq_reduce``, ``omp_reduce``, ``cuda_reduce``, ``hip_reduce``, or
        ``sycl_reduce``
      - :ref:`Reduction Policies <reducepolicy-label>`
+   * - Multi-reduction
+     - Match runtime determined number of reduction operations in a kernel to kernel
+       back-end, such as ``seq_multi_reduce``, ``omp_multi_reduce``, ``cuda_multi_reduce``,
+       ``hip_multi_reduce``, or ``sycl_multireduce``
+     - :ref:`Multi Reduction Examples <feat-multi-reductions-label>`
    * - Atomic update
      - Match the atomic policy to the loop back-end, such as ``omp_atomic`` or
        ``cuda_atomic``
@@ -388,6 +393,10 @@ policy must support the loop policy used by the kernel:
 For complete examples with setup, memory management, and backend-specific build
 guards, see :ref:`tut-kernelexecpols-label`, :ref:`tut-launchexecpols-label`,
 and :ref:`feat-reductions-label`.
+
+.. note:: Reduction objects generally support sequential reduction in addition to the 
+          reduction for the parallel reduction back-end. Please see the reduction
+          policy table in :ref:`reducepolicy-label`.
 
 -----------------------------------------------------
 Detailed Policy Reference
