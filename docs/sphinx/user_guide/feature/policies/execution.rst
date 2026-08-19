@@ -13,8 +13,8 @@
 Execution Policy Reference
 ==========================
 
-This page contains execution policy reference material for kernel launches,
-index sets, GPU back-ends, OpenMP target offload, and device aliases:
+This page contains execution policy reference material for executing loop-based
+kernels using RAJA's CPU and GPU back-ends:
 
   * :ref:`feat-policies-cpu-label`
   * :ref:`feat-policies-openmp-cpu-label`
@@ -57,10 +57,12 @@ apply.
                                                       decorations (pragmas or
                                                       intrinsics) are used in
                                                       the RAJA implementation.
- simd_exec                              forall,       Try to force generation of
+ simd_exec                              forall,       Request generation of
                                         kernel (For), SIMD instructions via
-                                        scan          compiler hints in RAJA's
-                                                      internal implementation.
+                                        scan          compiler hints; actual
+                                                      vectorization remains
+                                                      at the discretion of the
+                                                      compiler.
  ====================================== ============= ==========================
 
 
@@ -141,7 +143,7 @@ a template argument as described above.
                                         kernel (For), existing parallel
                                         launch (loop) region, specifically
                                         scan          apply the OpenMP pragma
-                                                      'omp for schedule (auto)'
+                                                      'omp for schedule(auto)'
                                                       pragma.
  omp_for_static_exec<ChunkSize>         forall,       Same as applying
                                         kernel (For)  'omp for
@@ -271,7 +273,7 @@ A ``RAJA::TypedIndexSet`` is a container that can hold an arbitrary collection
 of segments to compose iteration patterns in a single kernel invocation. For
 example, one may have a kernel that contains stride-1 access patterns alongside
 irregular, non-unit stride accesses. All of these could be run in a single
-kernel lauch using appropriately defined segments assembled in an index set.
+kernel launch using appropriately defined segments assembled in an index set.
 
 When an IndexSet iteration space is used in RAJA by passing a ``RAJA::IndexSet``
 to a ``RAJA::forall`` method, an index set execution policy is
