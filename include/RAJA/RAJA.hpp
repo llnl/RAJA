@@ -158,6 +158,11 @@
 #include "RAJA/util/BitMask.hpp"
 
 //
+// Memory utility routines
+//
+#include "RAJA/util/memory.hpp"
+
+//
 // sort algorithms
 //
 #include "RAJA/util/sort.hpp"

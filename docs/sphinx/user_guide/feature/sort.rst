@@ -47,6 +47,12 @@ RAJA scan operations:
 
  * :ref:`tut-sort-label`
 
+Some backend sort implementations may use RAJA internal temporary storage.
+Please see the following section for guidance on releasing unused internal
+memory:
+
+ * :ref:`memory-release-internal-pool-label`.
+
 -----------------
 Sort Operations
 -----------------
