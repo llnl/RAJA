@@ -34,8 +34,8 @@ It is important to note the following constraint about RAJA reduction usage:
           and so on.
 
 .. note:: It is undefined behavior to use a reducer object with a loop execution
-          policy that does not match the ``RAJA::Policy`` enum argument used to
-          most recently setup the reducer object. ``RAJA::Policy::undefined``
+          policy that does not match the ``RAJA::Policy`` enum argument used
+          most recently to set up the reducer object. ``RAJA::Policy::undefined``
           may be used with any of the loop policies supported by the reduction
           policy. For example, if a reducer object with a CUDA reduction policy
           is setup with ``RAJA::Policy::cuda``, but used in a sequential loop,

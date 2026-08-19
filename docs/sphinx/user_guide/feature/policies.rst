@@ -22,7 +22,7 @@ loop kernel execution, scans, sorts, reductions, atomics, etc. Please
 see detailed examples in :ref:`tutorial-label` for a variety of use cases.
 
 As RAJA functionality evolves, new policies are added and some may
-be redefined and to work in new ways.
+be redefined to work in new ways.
 
 .. note:: * All RAJA policies are in the namespace ``RAJA``.
           * All RAJA policies have a prefix indicating the back-end
@@ -116,12 +116,12 @@ pages linked below.
    * - HIP ``forall`` loop
      - ``hip_exec<BLOCK_SIZE>``
      - :ref:`GPU Policies for CUDA and HIP <feat-policies-gpu-label>`
-   * - Portable GPU ``forall`` loop
-     - ``device_exec<BLOCK_SIZE>``
-     - :ref:`Device policy aliases <feat-policies-gpu-aliases-label>`
    * - SYCL ``forall`` loop
      - ``sycl_exec<WORK_GROUP_SIZE>``
      - :ref:`GPU Policies for SYCL <feat-policies-sycl-label>`
+   * - Portable GPU ``forall`` loop (works for CUDA, HIP, SYCL)
+     - ``device_exec<BLOCK_SIZE>``
+     - :ref:`Device policy aliases <feat-policies-gpu-aliases-label>`
    * - OpenMP target offload loop
      - ``omp_target_parallel_for_exec<#>``
      - :ref:`OpenMP Target Offload Policies <feat-policies-omp-target-label>`
@@ -238,7 +238,9 @@ Choose the RAJA interface first:
    * - ``RAJA::kernel``
      - A ``RAJA::KernelPolicy`` constructed as a sequence of statements. Each
        ``RAJA::statement::For`` chooses a loop execution policy for one loop
-       level.
+       level. Note that there are back-end specific policies such as ``RAJA::CudaKernel``
+       and ``RAJA::HipKernel`` for controlling how loop-level iterations are mapped
+       to processor resources. See :ref:`loop_elements-kernelpol-label`.
    * - ``RAJA::launch``
      - A launch policy such as ``seq_launch_t``, ``omp_launch_t``, or
        ``cuda_launch_t`` to create an execution region, plus loop policies
@@ -272,8 +274,8 @@ Next, choose the back-end:
        ``cuda_thread_x_loop`` or ``hip_block_x_direct`` when expressing a
        nested loop or launch mapping.
    * - Active GPU device back-end
-     - Use ``device_*`` aliases when code should follow the enabled CUDA, HIP,
-       or SYCL back-end without downstream preprocessor conditionals.
+     - Use ``device_*`` aliases when code can follow the enabled CUDA, HIP,
+       or SYCL back-end without preprocessor conditionals.
    * - SYCL
      - Use ``sycl_exec<WORK_GROUP_SIZE>`` for simple ``RAJA::forall`` loops.
        Pay attention to the SYCL dimension-ordering note below when using
@@ -290,7 +292,8 @@ Then choose specialized behavior when needed:
    * - Need
      - Policy choice
    * - OpenMP schedule control
-     - Use static, dynamic, guided, or runtime OpenMP policy variants.
+     - Use static, dynamic, guided, or runtime OpenMP policy variants. Nowait
+       variants are also available for static scheduling.
    * - Multiple loops in one OpenMP parallel region
      - Use ``RAJA::region`` with OpenMP inner policies such as
        ``omp_for_exec`` or ``omp_for_static_exec``.
@@ -298,10 +301,12 @@ Then choose specialized behavior when needed:
      - Use ``RAJA::kernel`` statements such as ``RAJA::statement::For`` and
        ``RAJA::statement::Collapse``.
    * - GPU tiled loop mapping
-     - Use GPU thread, block, or global mapping policies. Prefer ``*_loop``
-       until the direct mapping constraints are understood. The ``*_loop``
-       policies, while potentially less optimal, are most forgiving and do not
-       need the mapping constraints of other policies.
+     - Use GPU thread, block, or global mapping policies. Typically, users
+       will want to use a global direct policy for simple implicit tiling
+       or block direct unchecked and thread direct policies for explicit tiling.
+       The ``*_loop`` policies, while potentially less optimal, are most applicable
+       when the iteration space is not rectangular or when more work is mapped
+       to a tile than fits in a single pass.
    * - GPU reduction inside ``RAJA::forall``
      - Use the reduction-aware CUDA/HIP execution policy variants where
        appropriate, and match the reducer policy to the loop back-end.
@@ -453,7 +458,7 @@ on how the terms are used in RAJA policy names and descriptions.
 
    strided loop
      A loop pattern where one execution resource handles multiple loop iterates
-     separated by a fixed stride, often the number of available threads,
+     separated by a fixed stride, often the number of threads,
      blocks, work-items, or work-groups.
 
    thread
