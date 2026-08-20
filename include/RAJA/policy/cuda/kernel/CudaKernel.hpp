@@ -688,8 +688,9 @@ struct StatementExecutor<
         auto registered_function = registered_launch_t::get_func();
 
         auto cuda_data = RAJA::cuda::make_launch_body(
-            registered_function, launch_dims.dims.blocks,
-            launch_dims.dims.threads, shmem, res, registered_bodies);
+            func, launch_dims.dims.blocks, launch_dims.dims.threads, shmem, res,
+            data);
+
         //
         // Launch the kernel
         //

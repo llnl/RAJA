@@ -641,8 +641,14 @@ struct StatementExecutor<
         auto registered_function = registered_launch_t::get_func();
 
         auto hip_data = RAJA::hip::make_launch_body(
+<<<<<<< Updated upstream
             registered_function, launch_dims.dims.blocks, launch_dims.dims.threads, shmem, res,
             registered_bodies);
+=======
+            func, launch_dims.dims.blocks, launch_dims.dims.threads, shmem, res,
+            data);
+        
+>>>>>>> Stashed changes
         //
         // Launch the kernel
         //

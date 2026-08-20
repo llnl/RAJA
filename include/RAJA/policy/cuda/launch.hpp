@@ -127,6 +127,8 @@ struct LaunchExecute<
     if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
+
+
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::cuda::detail::cudaInfo launch_info;
       launch_info.gridDim      = gridSize;
@@ -236,6 +238,8 @@ struct LaunchExecute<
     if (gridSize.x > zero && gridSize.y > zero && gridSize.z > zero &&
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
+
+
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::cuda::detail::cudaInfo launch_info;
       launch_info.gridDim      = gridSize;
