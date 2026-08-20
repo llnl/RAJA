@@ -30,3 +30,7 @@ raja_add_test(
 raja_add_test(
   NAME test-indexlayout
   SOURCES test-indexlayout.cpp)
+
+raja_add_test(
+  NAME test-subview
+  SOURCES test-subview.cpp)

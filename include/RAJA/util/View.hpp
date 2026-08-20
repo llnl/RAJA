@@ -156,13 +156,16 @@ template<
                                  >>>>>
 struct MultiView
 {
-  using value_type      = ValueType;
-  using pointer_type    = PointerType;
-  using layout_type     = LayoutType;
-  using nc_value_type   = camp::decay<value_type>;
-  using nc_pointer_type = NonConstPointerType;
+  using value_type        = ValueType;
+  using pointer_type      = PointerType;
+  using layout_type       = LayoutType;
+  using linear_index_type = typename layout_type::IndexLinear;
+  using nc_value_type     = camp::decay<value_type>;
+  using nc_pointer_type   = NonConstPointerType;
   using NonConstView =
       MultiView<nc_value_type, layout_type, P2Pidx, nc_pointer_type>;
+
+  static constexpr size_t n_dims = layout_type::n_dims + 1;
 
   layout_type layout {};
   nc_pointer_type data = nullptr;
@@ -235,6 +238,38 @@ struct MultiView
     return layout;
   }
 
+  RAJA_HOST_DEVICE
+
+  RAJA_INLINE
+  constexpr linear_index_type size() const { return layout.size(); }
+
+  RAJA_HOST_DEVICE
+
+  RAJA_INLINE
+  constexpr linear_index_type size_noproj() const
+  {
+    return layout.size_noproj();
+  }
+
+  template<camp::idx_t DIM>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_stride()
+      const
+  {
+    return layout.template get_dim_stride<DIM>();
+  }
+
+  template<camp::idx_t DIM>
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr linear_index_type get_dim_size() const
+  {
+    return layout.template get_dim_size<DIM>();
+  }
+
+  template<camp::idx_t DIM>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_begin() const
+  {
+    return layout.template get_dim_begin<DIM>();
+  }
+
   RAJA_HOST_DEVICE RAJA_INLINE constexpr pointer_type get_data() const
   {
     return pointer_type(data);
@@ -285,6 +320,8 @@ struct AtomicViewWrapper
   using value_type   = typename base_type::value_type;
   using atomic_type  = RAJA::AtomicRef<value_type, AtomicPolicy>;
 
+  static constexpr size_t n_dims = base_type::n_dims;
+
   base_type base_;
 
   RAJA_HOST_DEVICE RAJA_INLINE constexpr explicit AtomicViewWrapper(
@@ -315,6 +352,8 @@ struct AtomicViewWrapper<ViewType, RAJA::seq_atomic>
   using pointer_type = typename base_type::pointer_type;
   using value_type   = typename base_type::value_type;
   using atomic_type  = RAJA::AtomicRef<value_type, RAJA::seq_atomic>;
+
+  static constexpr size_t n_dims = base_type::n_dims;
 
   base_type base_;
 

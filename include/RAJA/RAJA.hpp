@@ -126,7 +126,7 @@
 #include "RAJA/util/StaticLayout.hpp"
 #include "RAJA/util/IndexLayout.hpp"
 #include "RAJA/util/View.hpp"
-
+#include "RAJA/util/SubView.hpp"
 
 //
 // View for sequences of objects

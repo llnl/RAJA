@@ -149,6 +149,76 @@ position.
    :end-before: _multiview_example_2Daopindex_end
    :language: C++
 
+SubView
+^^^^^^^^^^^^^^^^
+
+``RAJA::SubView`` provides a way to create a sliced view into an
+existing ``RAJA::View``. This is useful when you want to work on a subset of
+a larger multi-dimensional data set.
+
+Common use cases include:
+
+* Updating only the interior of an array
+* Operating on a tile or block
+* Extracting a lower-rank view by fixing one or more indices (row/column of a
+  matrix, a plane of a 3D field, etc.)
+* Creating a strided subview to sample or process every ``k``-th element
+
+To construct a SubView, provide one slice specifier per parent dimension:
+
+* ``RAJA::RangeSlice<>{start, end}``            selects ``[start, end)``
+* ``RAJA::RangeStartSlice<>{start}``            selects ``[start, dim_end)``
+* ``RAJA::NoSlice<>{}``                         selects the full dimension
+* ``RAJA::FixedSlice<>{idx}``                   fixes an index (rank-reducing)
+* ``RAJA::StridedSlice<>{start, end, stride}``  selects ``[start, end)`` with a
+  stride
+
+Example: slice a 2D View to get a submatrix (rows ``[1,3)``, cols ``[1,4)``)::
+
+  #include "RAJA/util/SubView.hpp"
+
+  using ParentView = RAJA::View<double, RAJA::Layout<2>>;
+  ParentView A(data, N_r, N_c);
+
+  using Slices = camp::list<RAJA::RangeSlice<>, RAJA::RangeSlice<>>;
+  RAJA::SubView<ParentView, Slices> sub(A,
+                                        RAJA::RangeSlice<>{1, 3},
+                                        RAJA::RangeSlice<>{1, 4});
+
+  // sub(i,j) indexes into A(i+1, j+1)
+  sub(i, j) = 0.0;
+
+Example: fix a row to get a 1D view (rank reduction)::
+
+  using RowSlices = camp::list<RAJA::FixedSlice<>, RAJA::NoSlice<>>;
+  RAJA::SubView<ParentView, RowSlices> row(A,
+                                           RAJA::FixedSlice<>{r},
+                                           RAJA::NoSlice<>{});
+
+  // row(j) is equivalent to A(r, j)
+  val = row(j);
+
+.. note::
+   To construct a ``RAJA::View`` whose layout encodes the slicing (rather than
+   wrapping an existing View), ``RAJA::SubLayout`` can be used as the View's
+   layout type.
+
+Example: create a 2D View whose layout represents a sliced submatrix::
+
+  #include "RAJA/util/SubView.hpp"
+
+  using ParentLayout = RAJA::Layout<2>;
+  ParentLayout parent_layout(N_r, N_c);
+
+  using SubLayout = RAJA::SubLayout<
+      ParentLayout, camp::list<RAJA::RangeSlice<>, RAJA::RangeSlice<>>>;
+  SubLayout sub_layout(parent_layout,
+                       RAJA::RangeSlice<>{1, 3},
+                       RAJA::RangeSlice<>{1, 4});
+
+  RAJA::View<double, SubLayout> sub(data, sub_layout);
+  sub(i, j) = 0.0;
+
 
 ------------
 RAJA Layouts
