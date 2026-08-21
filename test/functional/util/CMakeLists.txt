@@ -30,3 +30,7 @@ raja_add_test(
 raja_add_test(
   NAME test-PermutedCombiningAdapter-3D
   SOURCES test-PermutedCombiningAdapter-3D.cpp)
+
+raja_add_test(
+  NAME test-fornest
+  SOURCES test-fornest.cpp)
