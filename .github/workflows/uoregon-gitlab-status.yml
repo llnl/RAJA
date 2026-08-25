@@ -2,7 +2,8 @@ name: GitLab UOregon CI
 
 on:
   push:
-    branches: [develop]
+    # TODO(CJB): remove balos1/add-uoregon-gitlab-ci from the list of branches before merging
+    branches: [develop, balos1/add-uoregon-gitlab-ci]
   pull_request_target:
     branches: [develop]
     types: [opened, synchronize, reopened]
@@ -25,7 +26,9 @@ jobs:
         shell: bash
         env:
           COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          # TODO(CJB): change this back to the commented outline before merging
+          # PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          PR_NUMBER: ${{ github.event.pull_request.number || (github.ref_name == 'balos1/add-uoregon-gitlab-ci' && '2080') || '' }}
 
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
