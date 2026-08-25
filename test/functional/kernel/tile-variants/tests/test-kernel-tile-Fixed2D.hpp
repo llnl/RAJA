@@ -25,13 +25,6 @@ struct val_t_impl<T> {
 
 template <typename T>
 using VAL_T = typename val_t_impl<T>::type;
-
-template<RAJA::concepts::IndexValued T>
-RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
-
-template<typename T>
-requires (!RAJA::concepts::IndexValued<T>)
-RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
 }
 
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename EXEC_POLICY>
@@ -78,16 +71,16 @@ void KernelTileFixed2DTestImpl(const INDEX_TYPE rows_t, const INDEX_TYPE cols_t)
   ViewType CheckTView( check_array_t, cols_t, rows_t );
 
   // initialize arrays
-  std::iota( test_array, test_array + get_val(array_length), 1 );
-  std::iota( test_array_t, test_array_t + get_val(array_length), 1 );
+  std::iota( test_array, test_array + RAJA::stripIndexType(array_length), 1 );
+  std::iota( test_array_t, test_array_t + RAJA::stripIndexType(array_length), 1 );
 
-  work_res.memcpy( work_array, test_array, sizeof(DATA_TYPE) * get_val(array_length) );
-  work_res.memcpy( work_array_t, test_array_t, sizeof(DATA_TYPE) * get_val(array_length) );
+  work_res.memcpy( work_array, test_array, sizeof(DATA_TYPE) * RAJA::stripIndexType(array_length) );
+  work_res.memcpy( work_array_t, test_array_t, sizeof(DATA_TYPE) * RAJA::stripIndexType(array_length) );
 
   // transpose test_array on CPU
-  for ( raw_index_type rr = 0; rr < get_val(rows_t); ++rr )
+  for ( raw_index_type rr = 0; rr < RAJA::stripIndexType(rows_t); ++rr )
   {
-    for ( raw_index_type cc = 0; cc < get_val(cols_t); ++cc )
+    for ( raw_index_type cc = 0; cc < RAJA::stripIndexType(cols_t); ++cc )
     {
       HostTView( INDEX_TYPE(cc), INDEX_TYPE(rr) ) = HostView( INDEX_TYPE(rr), INDEX_TYPE(cc) );
     }
@@ -102,11 +95,11 @@ void KernelTileFixed2DTestImpl(const INDEX_TYPE rows_t, const INDEX_TYPE cols_t)
       WorkTView( cc, rr ) = WorkView( rr, cc );
   });
 
-  work_res.memcpy( check_array_t, work_array_t, sizeof(DATA_TYPE) * get_val(array_length) );
+  work_res.memcpy( check_array_t, work_array_t, sizeof(DATA_TYPE) * RAJA::stripIndexType(array_length) );
 
-  for ( raw_index_type rr = 0; rr < get_val(rows_t); ++rr )
+  for ( raw_index_type rr = 0; rr < RAJA::stripIndexType(rows_t); ++rr )
   {
-    for ( raw_index_type cc = 0; cc < get_val(cols_t); ++cc )
+    for ( raw_index_type cc = 0; cc < RAJA::stripIndexType(cols_t); ++cc )
     {
       ASSERT_EQ(CheckTView(INDEX_TYPE(cc), INDEX_TYPE(rr)),
                 HostTView(INDEX_TYPE(cc), INDEX_TYPE(rr)));

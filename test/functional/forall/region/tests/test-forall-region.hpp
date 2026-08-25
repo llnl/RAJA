@@ -68,7 +68,7 @@ void ForallRegionTestImpl(INDEX_TYPE first, INDEX_TYPE last)
   working_res.memcpy(check_array, working_array,
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  for (INDEX_TYPE i = 0; i < N; i++) {
+  for (INDEX_TYPE i {0}; i < N; i++) {
     ASSERT_EQ(check_view(i), 3);
   }
 

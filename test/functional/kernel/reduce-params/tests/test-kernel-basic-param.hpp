@@ -10,29 +10,6 @@
 #ifndef __TEST_KERNEL_REDUCELOC_MAX2D_HPP__
 #define __TEST_KERNEL_REDUCELOC_MAX2D_HPP__
 
-namespace {
-template <typename T>
-struct val_t_impl {
-  using type = T;
-};
-
-template <RAJA::concepts::IndexValued T>
-struct val_t_impl<T> {
-  using type = typename T::value_type;
-};
-
-template <typename T>
-using VAL_T = typename val_t_impl<T>::type;
-
-template<RAJA::concepts::IndexValued T>
-typename T::value_type get_val(T index_val) { return *index_val; }
-
-template<typename T>
-requires (!RAJA::concepts::IndexValued<T>)
-auto get_val(T index_val) { return index_val; }
-
-}
-
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename FORALL_POLICY, typename EXEC_POLICY, typename REDUCE_POLICY>
 void KernelParamReduceTestImpl(const INDEX_TYPE xdim, const INDEX_TYPE ydim)
 {
@@ -65,7 +42,7 @@ void KernelParamReduceTestImpl(const INDEX_TYPE xdim, const INDEX_TYPE ydim)
   {
     for ( INDEX_TYPE xx (0); xx < xdim; ++xx )
     {
-      CheckView(zz, xx) = get_val(zz * xdim + xx ) % 100 + 1;
+      CheckView(zz, xx) = RAJA::stripIndexType(zz * xdim + xx ) % 100 + 1;
     }
     // Make a unique min
     CheckView(ydim - 1, xdim - 1) = 0;
@@ -73,7 +50,7 @@ void KernelParamReduceTestImpl(const INDEX_TYPE xdim, const INDEX_TYPE ydim)
     CheckView(ydim / 2, xdim / 2) = 101;
   });
 
-  work_res.memcpy(work_array, check_array, sizeof(DATA_TYPE) * get_val(array_length));
+  work_res.memcpy(work_array, check_array, sizeof(DATA_TYPE) * RAJA::stripIndexType(array_length));
 
   RAJA::TypedRangeSegment<INDEX_TYPE> colrange(0, xdim);
   RAJA::TypedRangeSegment<INDEX_TYPE> rowrange(0, ydim);
@@ -85,20 +62,20 @@ void KernelParamReduceTestImpl(const INDEX_TYPE xdim, const INDEX_TYPE ydim)
   using VALOPLOC_DATA_TYPE_MIN = RAJA::expt::ValLocOp<DATA_TYPE, Index2D<INDEX_TYPE>, RAJA::operators::minimum>;
   using VALOPLOC_DATA_TYPE_MAX = RAJA::expt::ValLocOp<DATA_TYPE, Index2D<INDEX_TYPE>, RAJA::operators::maximum>;
 
-  VALLOC_DATA_TYPE seq_minloc(std::numeric_limits<DATA_TYPE>::max(), Index2D<INDEX_TYPE>(-1,-1));
-  VALLOC_DATA_TYPE seq_maxloc(std::numeric_limits<DATA_TYPE>::min(), Index2D<INDEX_TYPE>(-1,-1));
-  Index2D<INDEX_TYPE> seq_minloc2(-1, -1);
-  Index2D<INDEX_TYPE> seq_maxloc2(-1, -1);
+  VALLOC_DATA_TYPE seq_minloc(std::numeric_limits<DATA_TYPE>::max(), Index2D<INDEX_TYPE>(INDEX_TYPE(-1), INDEX_TYPE(-1)));
+  VALLOC_DATA_TYPE seq_maxloc(std::numeric_limits<DATA_TYPE>::min(), Index2D<INDEX_TYPE>(INDEX_TYPE(-1), INDEX_TYPE(-1)));
+  Index2D<INDEX_TYPE> seq_minloc2(INDEX_TYPE(-1), INDEX_TYPE(-1));
+  Index2D<INDEX_TYPE> seq_maxloc2(INDEX_TYPE(-1), INDEX_TYPE(-1));
   DATA_TYPE seq_sum = 0;
   DATA_TYPE seq_min = std::numeric_limits<DATA_TYPE>::max();
   DATA_TYPE seq_max = std::numeric_limits<DATA_TYPE>::min();
   DATA_TYPE seq_min2 = std::numeric_limits<DATA_TYPE>::max();
   DATA_TYPE seq_max2 = std::numeric_limits<DATA_TYPE>::min();
 
-  VALLOC_DATA_TYPE minloc(std::numeric_limits<DATA_TYPE>::max(), Index2D<INDEX_TYPE>(-1,-1));
-  VALLOC_DATA_TYPE maxloc(std::numeric_limits<DATA_TYPE>::min(), Index2D<INDEX_TYPE>(-1,-1));
-  Index2D<INDEX_TYPE> minloc2(-1, -1);
-  Index2D<INDEX_TYPE> maxloc2(-1, -1);
+  VALLOC_DATA_TYPE minloc(std::numeric_limits<DATA_TYPE>::max(), Index2D<INDEX_TYPE>(INDEX_TYPE(-1), INDEX_TYPE(-1)));
+  VALLOC_DATA_TYPE maxloc(std::numeric_limits<DATA_TYPE>::min(), Index2D<INDEX_TYPE>(INDEX_TYPE(-1), INDEX_TYPE(-1)));
+  Index2D<INDEX_TYPE> minloc2(INDEX_TYPE(-1), INDEX_TYPE(-1));
+  Index2D<INDEX_TYPE> maxloc2(INDEX_TYPE(-1), INDEX_TYPE(-1));
   DATA_TYPE sum = 0;
   DATA_TYPE min2 = std::numeric_limits<DATA_TYPE>::max();
   DATA_TYPE max2 = std::numeric_limits<DATA_TYPE>::min();
@@ -222,10 +199,10 @@ TYPED_TEST_P(KernelReduceParamsTest, ParamReduceKernel)
   using EXEC_POLICY = typename camp::at<TypeParam, camp::num<4>>::type;
   using REDUCE_POLICY = typename camp::at<TypeParam, camp::num<5>>::type;
 
-  KernelParamReduceTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(10, 10);
-  KernelParamReduceTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(100, 100);
-  KernelParamReduceTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(151, 151);
-  KernelParamReduceTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(362, 362);
+  KernelParamReduceTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE{10}, INDEX_TYPE{10});
+  KernelParamReduceTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE{100}, INDEX_TYPE{100});
+  KernelParamReduceTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE{151}, INDEX_TYPE{151});
+  KernelParamReduceTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE{362}, INDEX_TYPE{362});
 }
 
 REGISTER_TYPED_TEST_SUITE_P(KernelReduceParamsTest,

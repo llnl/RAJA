@@ -39,7 +39,7 @@ void buildIndexSet(
   std::uniform_real_distribution<double> dist(0.0, 1.0);
 
   std::vector<INDEX_TYPE> lindices;
-  INDEX_TYPE idx = 0;
+  INDEX_TYPE idx = INDEX_TYPE(0);
   while (lindices.size() < 3000) {
     double dval = dist(gen);
     if (dval > 0.3) {
@@ -52,10 +52,10 @@ void buildIndexSet(
   // Construct a mix of Range, RangeStride, and List segments 
   // and add them to index set
   //
-  INDEX_TYPE rbeg = 0;
-  INDEX_TYPE rend = 0;
-  INDEX_TYPE stride = 0;
-  INDEX_TYPE last_idx = 0;
+  INDEX_TYPE rbeg = INDEX_TYPE(0);
+  INDEX_TYPE rend = INDEX_TYPE(0);
+  INDEX_TYPE stride = INDEX_TYPE(0);
+  INDEX_TYPE last_idx = INDEX_TYPE(0);
   INDEX_TYPE lseg_len = static_cast<INDEX_TYPE>( lindices.size() );
   std::vector<INDEX_TYPE> lseg(RAJA::stripIndexType(lseg_len));
   std::vector<INDEX_TYPE> lseg_vec(RAJA::stripIndexType(lseg_len));
@@ -78,7 +78,7 @@ void buildIndexSet(
   last_idx = rend;
 
   // Create List segment
-  for (INDEX_TYPE i = 0; i < lseg_len; ++i) {
+  for (INDEX_TYPE i = INDEX_TYPE(0); i < lseg_len; ++i) {
     auto ii = RAJA::stripIndexType(i);
     lseg[ii] = lindices[ii] + last_idx + 3;
     indices_out.push_back( lseg[ii] );
@@ -87,7 +87,7 @@ void buildIndexSet(
   last_idx = lseg[RAJA::stripIndexType(lseg_len - 1)];
 
   // Create List segment using alternate ctor
-  for (INDEX_TYPE i = 0; i < lseg_len; ++i) {
+  for (INDEX_TYPE i = INDEX_TYPE(0); i < lseg_len; ++i) {
     auto ii = RAJA::stripIndexType(i);
     lseg_vec[ii] = lindices[ii] + last_idx + 3;
     indices_out.push_back( lseg_vec[ii] );
@@ -117,7 +117,7 @@ void buildIndexSet(
   last_idx = rend;
 
   // Create List segment
-  for (INDEX_TYPE i = 0; i < lseg_len; ++i) {
+  for (INDEX_TYPE i = INDEX_TYPE(0); i < lseg_len; ++i) {
     auto ii = RAJA::stripIndexType(i);
     lseg[ii] = lindices[ii] + last_idx + 5;
     indices_out.push_back( lseg[ii] );
@@ -135,7 +135,7 @@ void buildIndexSet(
   last_idx = rend;
 
   // Create List segment using alternate ctor
-  for (INDEX_TYPE i = 0; i < lseg_len; ++i) {
+  for (INDEX_TYPE i = INDEX_TYPE(0); i < lseg_len; ++i) {
     auto ii = RAJA::stripIndexType(i);
     lseg_vec[ii] = lindices[ii] + last_idx + 7;
     indices_out.push_back( lseg_vec[ii] );

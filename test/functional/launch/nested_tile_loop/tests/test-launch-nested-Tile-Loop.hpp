@@ -31,9 +31,9 @@ void LaunchNestedTileLoopTestImpl(INDEX_TYPE M)
   constexpr int blocks_z = 6;
 
   // Use more than the number of teams and threads
-  RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, (2*blocks_x*threads_x+1)*M);
-  RAJA::TypedRangeSegment<INDEX_TYPE> r2(0, (2*blocks_y*threads_y+1)*M);
-  RAJA::TypedRangeSegment<INDEX_TYPE> r3(0, (2*blocks_z*threads_z+1)*M);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r1(INDEX_TYPE(0), (2*blocks_x*threads_x+1)*M);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r2(INDEX_TYPE(0), (2*blocks_y*threads_y+1)*M);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r3(INDEX_TYPE(0), (2*blocks_z*threads_z+1)*M);
 
   INDEX_TYPE N1 = static_cast<INDEX_TYPE>(r1.end() - r1.begin());
   INDEX_TYPE N2 = static_cast<INDEX_TYPE>(r2.end() - r2.begin());
@@ -59,7 +59,7 @@ void LaunchNestedTileLoopTestImpl(INDEX_TYPE M)
                                      &check_array,
                                      &test_array);
 
-  std::iota(test_array, test_array + data_len, 0);
+  std::iota(test_array, test_array + data_len, INDEX_TYPE(0));
   working_res.memset(working_array, 0, sizeof(INDEX_TYPE) * data_len);
 
   INDEX_TYPE view_len = N;
@@ -134,7 +134,7 @@ void LaunchNestedTileLoopTestImpl(INDEX_TYPE M)
 
   if (RAJA::stripIndexType(N) > 0) {
 
-    for (INDEX_TYPE i = INDEX_TYPE(0); i < N; i++) {
+    for (INDEX_TYPE i {0}; i < N; i++) {
       ASSERT_EQ(test_view(i), check_view(i));
     }
 

@@ -77,7 +77,7 @@ void ForallIndexSetViewTestImpl()
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
   // 
-  for (INDEX_TYPE i = 0; i < N; i++) {
+  for (INDEX_TYPE i {0}; i < N; i++) {
     ASSERT_EQ(test_view(i), check_view(i));
   }
 

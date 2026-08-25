@@ -24,13 +24,6 @@ struct val_t_impl<T> {
 template <typename T>
 using VAL_T = typename val_t_impl<T>::type;
 
-template<RAJA::concepts::IndexValued T>
-RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
-
-template<typename T>
-requires (!RAJA::concepts::IndexValued<T>)
-RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
-
 }
 
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename FORALL_POLICY, typename EXEC_POLICY, typename REDUCE_POLICY>
@@ -64,17 +57,17 @@ void KernelLocMin2DTestImpl(const INDEX_TYPE xdim, const INDEX_TYPE ydim)
   {
     for ( INDEX_TYPE xx(0); xx < xdim; ++xx )
     {
-      CheckView(zz, xx) = get_val(zz * xdim + xx) + 1;
+      CheckView(zz, xx) = RAJA::stripIndexType(zz * xdim + xx) + 1;
     }
     CheckView(ydim - 1, xdim - 1) = 0;
   });
 
-  work_res.memcpy(work_array, check_array, sizeof(DATA_TYPE) * get_val(array_length));
+  work_res.memcpy(work_array, check_array, sizeof(DATA_TYPE) * RAJA::stripIndexType(array_length));
 
   RAJA::TypedRangeSegment<INDEX_TYPE> colrange(0, xdim);
   RAJA::TypedRangeSegment<INDEX_TYPE> rowrange(0, ydim);
 
-  RAJA::ReduceMinLoc<REDUCE_POLICY, DATA_TYPE, Index2D<INDEX_TYPE>> minloc_reducer((DATA_TYPE)1024, Index2D<INDEX_TYPE>(0, 0));
+  RAJA::ReduceMinLoc<REDUCE_POLICY, DATA_TYPE, Index2D<INDEX_TYPE>> minloc_reducer((DATA_TYPE)1024, Index2D<INDEX_TYPE>(INDEX_TYPE{0}, INDEX_TYPE{0}));
 
   RAJA::kernel<EXEC_POLICY>(RAJA::make_tuple(colrange, rowrange),
                            [=] RAJA_HOST_DEVICE (INDEX_TYPE c, INDEX_TYPE r) {
@@ -82,7 +75,7 @@ void KernelLocMin2DTestImpl(const INDEX_TYPE xdim, const INDEX_TYPE ydim)
                            });
 
   // CPU answer
-  RAJA::ReduceMinLoc<RAJA::seq_reduce, DATA_TYPE, Index2D<INDEX_TYPE>> checkminloc_reducer((DATA_TYPE)1024, Index2D<INDEX_TYPE>(0, 0));
+  RAJA::ReduceMinLoc<RAJA::seq_reduce, DATA_TYPE, Index2D<INDEX_TYPE>> checkminloc_reducer((DATA_TYPE)1024, Index2D<INDEX_TYPE>(INDEX_TYPE{0}, INDEX_TYPE{0}));
 
   RAJA::forall<RAJA::seq_exec>(colrange, [=] (INDEX_TYPE c) {
     for (INDEX_TYPE r(0); r < ydim; ++r)
@@ -123,9 +116,9 @@ TYPED_TEST_P(KernelLocMin2DTest, LocMin2DKernel)
   using EXEC_POLICY = typename camp::at<TypeParam, camp::num<4>>::type;
   using REDUCE_POLICY = typename camp::at<TypeParam, camp::num<5>>::type;
 
-  KernelLocMin2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(10, 10);
-  KernelLocMin2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(151, 151);
-  KernelLocMin2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(362, 362);
+  KernelLocMin2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE{10}, INDEX_TYPE{10});
+  KernelLocMin2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE{151}, INDEX_TYPE{151});
+  KernelLocMin2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE{362}, INDEX_TYPE{362});
 }
 
 REGISTER_TYPED_TEST_SUITE_P(KernelLocMin2DTest,

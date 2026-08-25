@@ -24,7 +24,6 @@
 
 #include <string>
 
-// #include "RAJA/util/concepts.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 
@@ -503,7 +502,7 @@ using make_signed_t =
     using parent::operator--;                                                  \
     using IndexValueType = TYPE;                                               \
     RAJA_HOST_DEVICE RAJA_INLINE TYPE() : parent::IndexValue() {}              \
-    RAJA_HOST_DEVICE RAJA_INLINE TYPE(::RAJA::Index_type v)                    \
+    RAJA_HOST_DEVICE RAJA_INLINE explicit TYPE(::RAJA::Index_type v)           \
         : parent::IndexValue(v)                                                \
     {}                                                                         \
     static inline std::string getName() { return NAME; }                       \
@@ -527,7 +526,7 @@ using make_signed_t =
     RAJA_HOST_DEVICE RAJA_INLINE TYPE()                                        \
         : RAJA::IndexValue<TYPE, IDXT>::IndexValue()                           \
     {}                                                                         \
-    RAJA_HOST_DEVICE RAJA_INLINE TYPE(IDXT v)                                  \
+    RAJA_HOST_DEVICE RAJA_INLINE explicit TYPE(IDXT v)                         \
         : RAJA::IndexValue<TYPE, IDXT>::IndexValue(v)                          \
     {}                                                                         \
     static inline std::string getName() { return NAME; }                       \

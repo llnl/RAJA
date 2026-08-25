@@ -18,7 +18,7 @@ void ForallRangeStrideSegmentViewTestImpl(INDEX_TYPE first, INDEX_TYPE last,
   RAJA::TypedRangeStrideSegment<INDEX_TYPE> r1(RAJA::stripIndexType(first),
                                                RAJA::stripIndexType(last),
                                                stride);
-  INDEX_TYPE N = r1.size();
+  INDEX_TYPE N = INDEX_TYPE(r1.size());
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
   INDEX_TYPE* working_array;
@@ -45,7 +45,7 @@ void ForallRangeStrideSegmentViewTestImpl(INDEX_TYPE first, INDEX_TYPE last,
   view_type work_view(working_array, N);
   view_type check_view(check_array, N);
 
-  for (INDEX_TYPE i = 0; i < N; ++i) {
+  for (INDEX_TYPE i {0}; i < N; ++i) {
     test_view( (index-first)/stride ) = index;
     index += stride;
   }
@@ -57,7 +57,7 @@ void ForallRangeStrideSegmentViewTestImpl(INDEX_TYPE first, INDEX_TYPE last,
   working_res.memcpy(check_array, working_array,
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  for (INDEX_TYPE i = 0; i < N; i++) {
+  for (INDEX_TYPE i {0}; i < N; i++) {
     ASSERT_EQ(test_view(i), check_view(i));
   }
 

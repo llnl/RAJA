@@ -23,13 +23,6 @@ struct val_t_impl<T> {
 
 template <typename T>
 using VAL_T = typename val_t_impl<T>::type;
-
-template <RAJA::concepts::IndexValued T>
-RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
-
-template <typename T>
-requires (!RAJA::concepts::IndexValued<T>)
-RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
 }
 
 template <typename IDX_TYPE, typename WORKING_RES, typename EXEC_POLICY>
@@ -57,7 +50,7 @@ void KernelPermutedView2DTestImpl(std::array<IDX_TYPE, 2> dim,
   working_res.memcpy(working_array, test_array, sizeof(IDX_TYPE) * N);
 
   using raw_idx_type = VAL_T<IDX_TYPE>;
-  raw_idx_type mod_val = get_val(dim.at( perm.at(1) ));
+  raw_idx_type mod_val = RAJA::stripIndexType(dim.at( perm.at(1) ));
   for (RAJA::idx_t ii = 0; ii < N; ++ii) {
     test_array[ii] = static_cast<IDX_TYPE>(ii % mod_val);
   }
@@ -68,7 +61,7 @@ void KernelPermutedView2DTestImpl(std::array<IDX_TYPE, 2> dim,
     RAJA::make_tuple( RAJA::TypedRangeSegment<IDX_TYPE>(0, IDX_TYPE(dim_strip.at(0))),
                       RAJA::TypedRangeSegment<IDX_TYPE>(0, IDX_TYPE(dim_strip.at(1))) ),
     [=] RAJA_HOST_DEVICE(IDX_TYPE i, IDX_TYPE j) {
-      auto linear = RAJA::stripIndexType(layout(get_val(i), get_val(j)));
+      auto linear = RAJA::stripIndexType(layout(RAJA::stripIndexType(i), RAJA::stripIndexType(j)));
       working_array[linear] = static_cast<IDX_TYPE>(linear % mod_val);
     }
   );

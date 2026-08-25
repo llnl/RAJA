@@ -23,13 +23,6 @@ struct val_t_impl<T> {
 
 template <typename T>
 using VAL_T = typename val_t_impl<T>::type;
-
-template <RAJA::concepts::IndexValued T>
-RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
-
-template <typename T>
-requires (!RAJA::concepts::IndexValued<T>)
-RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
 }
 
 template <typename IDX_TYPE, typename WORKING_RES, typename EXEC_POLICY>
@@ -145,9 +138,9 @@ void KernelPermutedOffsetView3DTestImpl(std::array<RAJA::idx_t, 3> dim,
   RAJA::kernel<EXEC_POLICY>(
     RAJA::make_tuple( iseg, jseg, kseg ),
     [=] RAJA_HOST_DEVICE(IDX_TYPE i, IDX_TYPE j, IDX_TYPE k) {
-      auto ii = raw_idx_type(get_val(i));
-      auto jj = raw_idx_type(get_val(j));
-      auto kk = raw_idx_type(get_val(k));
+      auto ii = raw_idx_type(RAJA::stripIndexType(i));
+      auto jj = raw_idx_type(RAJA::stripIndexType(j));
+      auto kk = raw_idx_type(RAJA::stripIndexType(k));
       auto a_idx = RAJA::stripIndexType(A_layout(ii, jj, kk));
       A_work_array[a_idx] =
           B_work_array[RAJA::stripIndexType(B_layout(ii, jj, kk))] +

@@ -18,13 +18,13 @@ template <typename INDEX_TYPE, typename WORKING_RES, typename LAUNCH_POLICY,
 void LaunchNestedDirectTestImpl(INDEX_TYPE M)
 {
 
-  RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, 2*M);
-  RAJA::TypedRangeSegment<INDEX_TYPE> r2(0, 3*M);
-  RAJA::TypedRangeSegment<INDEX_TYPE> r3(0, 4*M);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r1(INDEX_TYPE(0), 2*M);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r2(INDEX_TYPE(0), 3*M);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r3(INDEX_TYPE(0), 4*M);
 
-  RAJA::TypedRangeSegment<INDEX_TYPE> r4(0, 4*M);
-  RAJA::TypedRangeSegment<INDEX_TYPE> r5(0, 5*M);
-  RAJA::TypedRangeSegment<INDEX_TYPE> r6(0, 6*M);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r4(INDEX_TYPE(0), 4*M);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r5(INDEX_TYPE(0), 5*M);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r6(INDEX_TYPE(0), 6*M);
 
   INDEX_TYPE N1 = static_cast<INDEX_TYPE>(r1.end() - r1.begin());
   INDEX_TYPE N2 = static_cast<INDEX_TYPE>(r2.end() - r2.begin());
@@ -54,7 +54,7 @@ void LaunchNestedDirectTestImpl(INDEX_TYPE M)
                                      &check_array,
                                      &test_array);
 
-  std::iota(test_array, test_array + data_len, 0);
+  std::iota(test_array, test_array + data_len, INDEX_TYPE(0));
   working_res.memset(working_array, 0, sizeof(INDEX_TYPE) * data_len);
 
   INDEX_TYPE view_len = N;
@@ -140,7 +140,7 @@ void LaunchNestedDirectTestImpl(INDEX_TYPE M)
 
   if (RAJA::stripIndexType(N) > 0) {
     
-    for (INDEX_TYPE i = INDEX_TYPE(0); i < N; i++) {
+    for (INDEX_TYPE i {0}; i < N; i++) {
       ASSERT_EQ(test_view(i), check_view(i));
     }
     

@@ -51,9 +51,9 @@ void ForallCombiningAdapter3DTestImpl(INDEX_TYPE first0, INDEX_TYPE last0,
 
   {
 
-    for (INDEX_TYPE i0 = INDEX_TYPE(0); i0 < N0; i0++) {
-      for (INDEX_TYPE i1 = INDEX_TYPE(0); i1 < N1; i1++) {
-        for (INDEX_TYPE i2 = INDEX_TYPE(0); i2 < N2; i2++) {
+    for (INDEX_TYPE i0 {0}; i0 < N0; i0++) {
+      for (INDEX_TYPE i1 {0}; i1 < N1; i1++) {
+        for (INDEX_TYPE i2 {0}; i2 < N2; i2++) {
           test_view(i0 * N1 * N2 + i1 * N2 + i2) =
               i0 * N1 * N2 + i1 * N2 + i2;
         }
@@ -85,7 +85,7 @@ void ForallCombiningAdapter3DTestImpl(INDEX_TYPE first0, INDEX_TYPE last0,
 
   working_res.memcpy(check_array, working_array, sizeof(INDEX_TYPE) * data_len);
 
-  for (INDEX_TYPE i = INDEX_TYPE(0); i <= N; i++) {
+  for (INDEX_TYPE i {0}; i <= N; i++) {
     ASSERT_EQ(test_view(i), check_view(i));
   }
 

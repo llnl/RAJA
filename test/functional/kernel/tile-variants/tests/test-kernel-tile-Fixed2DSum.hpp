@@ -27,13 +27,6 @@ struct val_t_impl<T> {
 
 template <typename T>
 using VAL_T = typename val_t_impl<T>::type;
-
-template<RAJA::concepts::IndexValued T>
-RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
-
-template<typename T>
-requires (!RAJA::concepts::IndexValued<T>)
-RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
 }
 
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename EXEC_POLICY, typename REDUCE_POLICY>
@@ -51,8 +44,8 @@ void KernelTileFixed2DSumTestImpl(const INDEX_TYPE rowsin, const INDEX_TYPE cols
   }
   else
   {
-    rows = get_val(rowsin);
-    cols = get_val(colsin);
+    rows = RAJA::stripIndexType(rowsin);
+    cols = RAJA::stripIndexType(colsin);
   }
 
   camp::resources::Resource work_res{WORKING_RES::get_default()};
@@ -90,7 +83,7 @@ void KernelTileFixed2DSumTestImpl(const INDEX_TYPE rowsin, const INDEX_TYPE cols
   // sum on target platform
   RAJA::kernel<EXEC_POLICY> ( RAJA::make_tuple( colrange, rowrange ),
     [=] RAJA_HOST_DEVICE ( INDEX_TYPE cc, INDEX_TYPE rr ) {
-      worksum += (DATA_TYPE)(get_val(rr) * 1.1 + get_val(cc));
+      worksum += (DATA_TYPE)(RAJA::stripIndexType(rr) * 1.1 + RAJA::stripIndexType(cc));
   });
 
   ASSERT_FLOAT_EQ(hostsum, (DATA_TYPE)worksum.get());

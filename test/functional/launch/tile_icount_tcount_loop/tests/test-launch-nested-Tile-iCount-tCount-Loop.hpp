@@ -24,7 +24,7 @@ void LaunchNestedTileLoopTestImpl(INDEX_TYPE M)
   constexpr int threads_x = 3;
   constexpr int blocks_x  = 1;
 
-  RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, M * tile_size_idx + 1);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r1(INDEX_TYPE(0), M * tile_size_idx + 1);
 
   INDEX_TYPE N1 = static_cast<INDEX_TYPE>(r1.end() - r1.begin());
 
@@ -58,8 +58,8 @@ void LaunchNestedTileLoopTestImpl(INDEX_TYPE M)
                                      &check_iloop_array,
                                      &test_iloop_array);
 
-  std::iota(test_ttile_array, test_ttile_array + data_len, 0);
-  std::iota(test_iloop_array, test_iloop_array + data_len, 0);
+  std::iota(test_ttile_array, test_ttile_array + data_len, INDEX_TYPE(0));
+  std::iota(test_iloop_array, test_iloop_array + data_len, INDEX_TYPE(0));
   working_res.memset(working_ttile_array, 0, sizeof(INDEX_TYPE) * data_len);
   working_res.memset(working_iloop_array, 0, sizeof(INDEX_TYPE) * data_len);
 
@@ -124,9 +124,9 @@ void LaunchNestedTileLoopTestImpl(INDEX_TYPE M)
 
   if (RAJA::stripIndexType(N) > 0) {
 
-    INDEX_TYPE idx = 0;
-    for (INDEX_TYPE bx = INDEX_TYPE(0); bx < no_tiles; ++bx) {
-      for (INDEX_TYPE tx = INDEX_TYPE(0); tx < tile_size_idx; ++tx) {
+    INDEX_TYPE idx {0};
+    for (INDEX_TYPE bx {0}; bx < no_tiles; ++bx) {
+      for (INDEX_TYPE tx {0}; tx < tile_size_idx; ++tx) {
 
         if(idx >= N1) break;
 

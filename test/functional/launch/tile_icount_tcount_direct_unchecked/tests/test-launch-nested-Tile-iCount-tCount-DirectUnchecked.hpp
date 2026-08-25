@@ -22,7 +22,7 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
   INDEX_TYPE threads_x_idx(threads_x);
   INDEX_TYPE blocks_x_idx(blocks_x);
 
-  RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, threads_x_idx * blocks_x_idx);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r1(INDEX_TYPE(0), threads_x_idx * blocks_x_idx);
 
   INDEX_TYPE N = static_cast<INDEX_TYPE>(r1.end() - r1.begin());
 
@@ -50,8 +50,8 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
                                      &test_iloop_array);
 
   if ( data_len > 0 ) {
-    std::iota(test_ttile_array, test_ttile_array + data_len, 0);
-    std::iota(test_iloop_array, test_iloop_array + data_len, 0);
+    std::iota(test_ttile_array, test_ttile_array + data_len, INDEX_TYPE(0));
+    std::iota(test_iloop_array, test_iloop_array + data_len, INDEX_TYPE(0));
     working_res.memset(working_ttile_array, 0, sizeof(INDEX_TYPE) * data_len);
     working_res.memset(working_iloop_array, 0, sizeof(INDEX_TYPE) * data_len);
   }
@@ -89,9 +89,9 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
   }
   working_res.wait();
 
-  INDEX_TYPE idx = 0;
-  for (INDEX_TYPE bx = INDEX_TYPE(0); bx < blocks_x_idx; ++bx) {
-    for (INDEX_TYPE tx = INDEX_TYPE(0); tx < threads_x_idx; ++tx) {
+  INDEX_TYPE idx {0};
+  for (INDEX_TYPE bx {0}; bx < blocks_x_idx; ++bx) {
+    for (INDEX_TYPE tx {0}; tx < threads_x_idx; ++tx) {
 
       ASSERT_EQ(check_ttile_view(idx), bx);
       ASSERT_EQ(check_iloop_view(idx), tx);

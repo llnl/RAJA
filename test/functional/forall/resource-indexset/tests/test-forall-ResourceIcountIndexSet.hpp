@@ -65,20 +65,20 @@ void ForallResourceIcountIndexSetTestImpl()
   view_type work_view(working_array, N);
   view_type check_view(check_array, N);
 
-  INDEX_TYPE ticount = 0;
+  INDEX_TYPE ticount {0};
   for (size_t i = 0; i < is_indices.size(); ++i) {
     test_view(ticount++) = is_indices[i];
   }
 
   RAJA::forall_Icount<EXEC_POLICY>(working_res, iset,
-    [=] RAJA_HOST_DEVICE(INDEX_TYPE icount, INDEX_TYPE idx) {
-    work_view(icount) = idx;
+    [=] RAJA_HOST_DEVICE(auto icount, INDEX_TYPE idx) {
+    work_view(INDEX_TYPE(icount)) = idx;
   });
 
   working_res.memcpy(check_array, working_array,
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  for (INDEX_TYPE i = 0; i < N; i++) {
+  for (INDEX_TYPE i {0}; i < N; i++) {
     ASSERT_EQ(test_view(i), check_view(i));
   }
 

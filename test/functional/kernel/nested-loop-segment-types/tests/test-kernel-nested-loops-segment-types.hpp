@@ -31,13 +31,6 @@ struct val_t_impl<T> {
 
 template <typename T>
 using VAL_T = typename val_t_impl<T>::type;
-
-template <RAJA::concepts::IndexValued T>
-RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
-
-template <typename T>
-requires (!RAJA::concepts::IndexValued<T>)
-RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
 }
 
 template <typename IDX_TYPE, typename DATA_TYPE, typename EXEC_POLICY>
@@ -60,9 +53,9 @@ void KernelNestedLoopsSegmentTypesTestImpl(
     zero_legth_segment = true;
   }
 
-  IDX_TYPE dim1 = 1;
-  IDX_TYPE dim2 = 1;
-  IDX_TYPE dim3 = 1;
+  IDX_TYPE dim1 {1};
+  IDX_TYPE dim2 {1};
+  IDX_TYPE dim3 {1};
 
   if ( !zero_legth_segment ) {
     dim1 = s1_idx[s1_idx.size() - 1] + 1;
@@ -89,18 +82,18 @@ void KernelNestedLoopsSegmentTypesTestImpl(
   ViewType test_view(test_array, dim1, dim2, dim3);
 
   memset( static_cast<void*>(test_array), 0, 
-          sizeof(DATA_TYPE) * get_val(data_len) );
+          sizeof(DATA_TYPE) * RAJA::stripIndexType(data_len) );
 
   working_res.memcpy(work_array, test_array, 
-                     sizeof(DATA_TYPE) * get_val(data_len));
+                     sizeof(DATA_TYPE) * RAJA::stripIndexType(data_len));
 
   if ( !zero_legth_segment ) {
-    for (IDX_TYPE i1 = 0; i1 < idx1_len; ++i1) {
-      for (IDX_TYPE i2 = 0; i2 < idx2_len; ++i2) {
-        for (IDX_TYPE i3 = 0; i3 < idx3_len; ++i3) {
-          auto ii1 = get_val(i1);
-          auto ii2 = get_val(i2);
-          auto ii3 = get_val(i3);
+    for (IDX_TYPE i1 {0}; i1 < idx1_len; ++i1) {
+      for (IDX_TYPE i2 {0}; i2 < idx2_len; ++i2) {
+        for (IDX_TYPE i3 {0}; i3 < idx3_len; ++i3) {
+          auto ii1 = RAJA::stripIndexType(i1);
+          auto ii2 = RAJA::stripIndexType(i2);
+          auto ii3 = RAJA::stripIndexType(i3);
           test_view( s1_idx[ii1], s2_idx[ii2], s3_idx[ii3] ) = 
             static_cast<DATA_TYPE>( RAJA::stripIndexType(
                                     s1_idx[ii1] + s2_idx[ii2] + s3_idx[ii3]) );
@@ -137,9 +130,9 @@ void KernelNestedLoopsSegmentTypesTestImpl(
   } 
 
   working_res.memcpy(check_array, work_array, 
-                     sizeof(DATA_TYPE) * get_val(data_len));
+                     sizeof(DATA_TYPE) * RAJA::stripIndexType(data_len));
 
-  for (IDX_TYPE i = 0; i < data_len; ++i) {
+  for (IDX_TYPE i {0}; i < data_len; ++i) {
     auto ii = RAJA::stripIndexType(i);
     ASSERT_EQ( test_array[ii], check_array[ii] );
   }
@@ -179,9 +172,9 @@ TYPED_TEST_P(KernelNestedLoopsSegmentTypesTest, NestedLoopsSegmentTypesKernel)
   RAJA::TypedRangeStrideSegment<IDX_TYPE> s2( raw_idx_type(3), raw_idx_type(188), raw_idx_type(2) );
   RAJA::getIndices(s2_idx, s2);
 
-  IDX_TYPE last = IDX_TYPE(427);
+  IDX_TYPE last {427};
   srand( time(NULL) );
-  for (IDX_TYPE i = IDX_TYPE(0); i < last; ++i) {
+  for (IDX_TYPE i {0}; i < last; ++i) {
     IDX_TYPE randval = IDX_TYPE( rand() % RAJA::stripIndexType(last) );
     if ( i < randval ) {
       s3_idx.push_back(i);

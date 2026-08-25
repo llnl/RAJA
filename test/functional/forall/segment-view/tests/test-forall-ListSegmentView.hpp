@@ -27,7 +27,7 @@ void ForallListSegmentViewTestImpl(INDEX_TYPE N)
 
   srand ( time(NULL) );
 
-  for (INDEX_TYPE i = 0; i < N; ++i) {
+  for (INDEX_TYPE i {0}; i < N; ++i) {
     INDEX_TYPE randval = INDEX_TYPE(rand() % RAJA::stripIndexType(N));
     if ( i < randval ) {
       idx_array.push_back(i);
@@ -93,7 +93,7 @@ void ForallListSegmentViewTestImpl(INDEX_TYPE N)
   working_res.memcpy(check_array, working_array,
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  for (INDEX_TYPE i = 0; i < N; i++) {
+  for (INDEX_TYPE i {0}; i < N; i++) {
     ASSERT_EQ(test_view(i), check_view(i));
   }
 
@@ -112,7 +112,7 @@ void ForallListSegmentOffsetViewTestImpl(INDEX_TYPE N, INDEX_TYPE offset)
 
   srand ( time(NULL) );
 
-  for (INDEX_TYPE i = 0; i < N; ++i) {
+  for (INDEX_TYPE i {0}; i < N; ++i) {
     INDEX_TYPE randval = INDEX_TYPE(rand() % RAJA::stripIndexType(N));
     if ( i < randval ) {
       idx_array.push_back(i+offset);
@@ -186,13 +186,19 @@ TYPED_TEST_P(ForallListSegmentViewTest, ListSegmentForallView)
   using WORKING_RESOURCE = typename camp::at<TypeParam, camp::num<1>>::type;
   using EXEC_POLICY      = typename camp::at<TypeParam, camp::num<2>>::type;
 
-  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(13);
-  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(2047);
-  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(32000);
+  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(13));
+  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(2047));
+  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(32000));
 
-  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(13, 1);
-  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(2047, 2);
-  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(32000, 3);
+  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(13), INDEX_TYPE(1));
+  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(2047), INDEX_TYPE(2));
+  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(32000), INDEX_TYPE(3));
 }
 
 REGISTER_TYPED_TEST_SUITE_P(ForallListSegmentViewTest,

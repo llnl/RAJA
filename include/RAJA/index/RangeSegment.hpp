@@ -106,6 +106,8 @@ struct TypedRangeSegment
   //
   static_assert(std::is_signed_v<DiffT>,
                 "TypedRangeSegment DiffT requires signed type.");
+  static_assert(!std::is_floating_point_v<StorageT>,
+                "TypedRangeSegment Type must be non floating point.");
 
   //@{
   //!   @name Types used in implementation based on template parameters.

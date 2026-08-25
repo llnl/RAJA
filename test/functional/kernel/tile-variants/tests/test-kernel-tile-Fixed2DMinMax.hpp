@@ -26,13 +26,6 @@ struct val_t_impl<T> {
 
 template <typename T>
 using VAL_T = typename val_t_impl<T>::type;
-
-template<RAJA::concepts::IndexValued T>
-RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
-
-template<typename T>
-requires (!RAJA::concepts::IndexValued<T>)
-RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
 }
 
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename EXEC_POLICY, typename REDUCE_POLICY>
@@ -57,18 +50,18 @@ void KernelTileFixed2DMinMaxTestImpl(const INDEX_TYPE rows_t, const INDEX_TYPE c
                                     );
 
   // initialize arrays
-  std::iota( test_array, test_array + get_val(array_length), 1 );
+  std::iota( test_array, test_array + RAJA::stripIndexType(array_length), 1 );
 
   // set min and max of the array
   test_array[4] = -1;
-  test_array[8] = static_cast<DATA_TYPE>(get_val(array_length) + 2);
+  test_array[8] = static_cast<DATA_TYPE>(RAJA::stripIndexType(array_length) + 2);
 
   using LayoutType =
       RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE>>;
   using ViewType = RAJA::View<DATA_TYPE, LayoutType>;
   ViewType WorkView( work_array, rows_t, cols_t );
 
-  work_res.memcpy( work_array, test_array, sizeof(DATA_TYPE) * get_val(array_length) );
+  work_res.memcpy( work_array, test_array, sizeof(DATA_TYPE) * RAJA::stripIndexType(array_length) );
 
   RAJA::ReduceMin<REDUCE_POLICY, DATA_TYPE> workmin( DATA_TYPE(99999) ); 
   RAJA::ReduceMax<REDUCE_POLICY, DATA_TYPE> workmax( DATA_TYPE(-1) ); 
@@ -77,7 +70,7 @@ void KernelTileFixed2DMinMaxTestImpl(const INDEX_TYPE rows_t, const INDEX_TYPE c
   RAJA::TypedRangeSegment<INDEX_TYPE> rowrange( 0, rows_t );
 
   std::vector<INDEX_TYPE> colidx;
-  for (raw_index_type ii = 0; ii < get_val(cols_t); ++ii)
+  for (raw_index_type ii = 0; ii < RAJA::stripIndexType(cols_t); ++ii)
   {
     colidx.push_back(INDEX_TYPE(ii));
   }
@@ -92,7 +85,7 @@ void KernelTileFixed2DMinMaxTestImpl(const INDEX_TYPE rows_t, const INDEX_TYPE c
   });
 
   ASSERT_EQ(static_cast<DATA_TYPE>(-1), static_cast<DATA_TYPE>(workmin.get()));
-  ASSERT_EQ(static_cast<DATA_TYPE>(get_val(array_length) + 2), static_cast<DATA_TYPE>(workmax.get()));
+  ASSERT_EQ(static_cast<DATA_TYPE>(RAJA::stripIndexType(array_length) + 2), static_cast<DATA_TYPE>(workmax.get()));
 
   deallocateForallTestData<DATA_TYPE> ( work_res,
                                         work_array,

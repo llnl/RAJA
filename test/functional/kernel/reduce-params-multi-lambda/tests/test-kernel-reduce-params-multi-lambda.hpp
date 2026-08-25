@@ -23,13 +23,6 @@ struct val_t_impl<T> {
 
 template <typename T>
 using VAL_T = typename val_t_impl<T>::type;
-
-template<RAJA::concepts::IndexValued T>
-RAJA_HOST_DEVICE typename T::value_type get_val(T index_val) { return *index_val; }
-
-template<typename T>
-requires (!RAJA::concepts::IndexValued<T>)
-RAJA_HOST_DEVICE auto get_val(T index_val) { return index_val; }
 }
 
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename FORALL_POLICY, typename EXEC_POLICY>
@@ -62,10 +55,10 @@ void KernelParamReduceMultiLambda(const INDEX_TYPE xdim_t, const INDEX_TYPE ydim
   // initializing  values
   for (INDEX_TYPE row(0); row < ydim_t; ++row)
   {
-    for ( raw_index_type col = 0; col < get_val(xdim_t); ++col )
+    for ( raw_index_type col = 0; col < RAJA::stripIndexType(xdim_t); ++col )
     {
       CheckView(row, INDEX_TYPE(col)) =
-          (get_val(row) * get_val(xdim_t) + col) % 100 + 1;
+          (RAJA::stripIndexType(row) * RAJA::stripIndexType(xdim_t) + col) % 100 + 1;
     }
     // Make a unique min
     CheckView(ydim_t - INDEX_TYPE(1), xdim_t - INDEX_TYPE(1)) = 0;
@@ -73,7 +66,7 @@ void KernelParamReduceMultiLambda(const INDEX_TYPE xdim_t, const INDEX_TYPE ydim
     CheckView(ydim_t / INDEX_TYPE(2), xdim_t / INDEX_TYPE(2)) = 101;
   }
 
-  work_res.memcpy(work_array, check_array, sizeof(DATA_TYPE) * get_val(array_length));
+  work_res.memcpy(work_array, check_array, sizeof(DATA_TYPE) * RAJA::stripIndexType(array_length));
 
   RAJA::TypedRangeSegment<INDEX_TYPE> colrange(0, xdim_t);
   RAJA::TypedRangeSegment<INDEX_TYPE> rowrange(0, ydim_t);
@@ -150,7 +143,7 @@ void KernelParamReduceMultiLambda(const INDEX_TYPE xdim_t, const INDEX_TYPE ydim
          VALOP_DATA_TYPE_MIN &_min,
          VALOP_DATA_TYPE_MAX &_max
     ) {
-    for (raw_index_type c = 0; c < get_val(xdim_t); ++c)
+    for (raw_index_type c = 0; c < RAJA::stripIndexType(xdim_t); ++c)
     {
       auto c_idx = INDEX_TYPE(c);
       _sum += CheckView(r, c_idx);

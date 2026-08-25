@@ -31,9 +31,9 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
   const int blocks_z = 6 * RAJA::stripIndexType(M);
 
   // Use exactly the number of teams and threads
-  RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, threads_x*blocks_x);
-  RAJA::TypedRangeSegment<INDEX_TYPE> r2(0, threads_y*blocks_y);
-  RAJA::TypedRangeSegment<INDEX_TYPE> r3(0, threads_z*blocks_z);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r1(INDEX_TYPE(0), threads_x*blocks_x);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r2(INDEX_TYPE(0), threads_y*blocks_y);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r3(INDEX_TYPE(0), threads_z*blocks_z);
 
   INDEX_TYPE N1 = static_cast<INDEX_TYPE>(r1.end() - r1.begin());
   INDEX_TYPE N2 = static_cast<INDEX_TYPE>(r2.end() - r2.begin());
@@ -56,7 +56,7 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
                                      &check_array,
                                      &test_array);
 
-  std::iota(test_array, test_array + data_len, 0);
+  std::iota(test_array, test_array + data_len, INDEX_TYPE(0));
   if ( data_len > 0 ) {
     working_res.memset(working_array, 0, sizeof(INDEX_TYPE) * data_len);
   }
@@ -101,7 +101,7 @@ void LaunchNestedTileDirectUncheckedTestImpl(INDEX_TYPE M)
   }
   working_res.wait();
 
-  for (INDEX_TYPE i = INDEX_TYPE(0); i < N; i++) {
+  for (INDEX_TYPE i {0}; i < N; i++) {
     ASSERT_EQ(test_view(i), check_view(i));
   }
 
