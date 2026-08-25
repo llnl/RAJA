@@ -53,6 +53,7 @@ stages:
     when: always
     paths:
       - build/junit.xml
+      - build/Testing/
     reports:
       junit: build/junit.xml
 
@@ -69,7 +70,7 @@ NVIDIA-RTX5080:
       -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
       -C ${CI_PROJECT_DIR}/host-configs/uoregon/nvidia_rtx5080.cmake
     - cmake --build build
-    - ctest --test-dir build --output-on-failure --output-junit junit.xml
+    - ctest --test-dir build --output-on-failure --output-junit junit.xml -T test
 
 NVIDIA-GH200:
   extends: [.common-setup, .junit-artifacts]
@@ -84,7 +85,7 @@ NVIDIA-GH200:
       -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
       -C ${CI_PROJECT_DIR}/host-configs/uoregon/nvidia_gh200.cmake
     - cmake --build build
-    - ctest --test-dir build --output-on-failure --output-junit junit.xml
+    - ctest --test-dir build --output-on-failure --output-junit junit.xml -T test
 
 NVIDIA-GRACE-GRACE:
   extends: [.common-setup, .junit-artifacts]
@@ -99,7 +100,7 @@ NVIDIA-GRACE-GRACE:
       -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
       -C ${CI_PROJECT_DIR}/host-configs/uoregon/nvidia_grace_grace.cmake
     - cmake --build build
-    - ctest --test-dir build --output-on-failure --output-junit junit.xml
+    - ctest --test-dir build --output-on-failure --output-junit junit.xml -T test
 
 NVIDIA-DGX-SPARK:
   extends: [.common-setup, .junit-artifacts]
@@ -114,7 +115,7 @@ NVIDIA-DGX-SPARK:
       -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
       -C ${CI_PROJECT_DIR}/host-configs/uoregon/nvidia_dgx_spark.cmake
     - cmake --build build --verbose
-    - ctest --test-dir build --output-on-failure --output-junit junit.xml
+    - ctest --test-dir build --output-on-failure --output-junit junit.xml -T test
 
 INTEL-DATA-CENTER-MAX-1100:
   extends: [.common-setup, .junit-artifacts]
@@ -132,7 +133,7 @@ INTEL-DATA-CENTER-MAX-1100:
       -C ${CI_PROJECT_DIR}/host-configs/uoregon/intel_pvc.cmake
     - cmake --build build
     - >-
-      ctest --test-dir build --output-on-failure --output-junit junit.xml
+      ctest --test-dir build --output-on-failure --output-junit junit.xml -T test
       --exclude-regex 'test-forall-basic-msg-Sycl|test-tensor-register-double-Subtract'
 
 AMD-MI300A:
@@ -151,4 +152,4 @@ AMD-MI300A:
       -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
       -C ${CI_PROJECT_DIR}/host-configs/uoregon/amd_mi300a.cmake
     - cmake --build build
-    - ctest --test-dir build --output-on-failure --output-junit junit.xml
+    - ctest --test-dir build --output-on-failure --output-junit junit.xml -T test
