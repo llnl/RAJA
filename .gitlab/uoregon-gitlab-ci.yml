@@ -33,7 +33,18 @@ stages:
 .common-setup:
   stage: build-and-test
   rules:
-    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "balos1/add-uoregon-gitlab-ci"'
+    # Direct pushes to the mirrored develop branch.
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "develop"'
+      when: always
+    # GitHub PRs mirrored as branches named pr<number>_<branch>.
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH =~ /^pr[0-9]+(_.*)?$/'
+      when: always
+    # Native GitLab or externally integrated GitHub PR pipelines targeting develop.
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "external_pull_request_event" && $CI_EXTERNAL_PULL_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      when: always
+    - when: never
   variables:
     OMP_NUM_THREADS: "8"
     OMP_PLACES: "cores"
