@@ -26,9 +26,8 @@ jobs:
         shell: bash
         env:
           COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          # TODO(CJB): change this back to the commented outline before merging
-          # PR_NUMBER: ${{ github.event.pull_request.number || '' }}
-          PR_NUMBER: ${{ github.event.pull_request.number || (github.ref_name == 'balos1/add-uoregon-gitlab-ci' && '2080') || '' }}
+          GITHUB_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
 
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -161,7 +160,7 @@ jobs:
               )
 
               # The develop ref is exact and can be filtered server-side.
-              if [[ -z "${PR_NUMBER}" ]]; then
+              if [[ "${GITHUB_BRANCH}" == "develop" ]]; then
                 query_args+=(--data-urlencode "ref=develop")
               fi
 
@@ -178,6 +177,7 @@ jobs:
                 jq -c \
                   --arg sha "${COMMIT_SHA}" \
                   --arg source "${GITLAB_PIPELINE_SOURCE}" \
+                  --arg branch "${GITHUB_BRANCH}" \
                   --arg prefix "${ref_prefix}" '
                     if type != "array" then
                       error("GitLab pipelines response is not an array")
@@ -188,11 +188,12 @@ jobs:
                             .sha == $sha
                             and .source == $source
                           )
-                        | if $prefix == "" then
+                        | if $branch == "develop" then
                             select(.ref == "develop")
                           else
                             select(
-                              ((.ref // "") | startswith($prefix))
+                              .ref == $branch
+                              or ((.ref // "") | startswith($prefix))
                             )
                           end
                       ]

@@ -36,6 +36,10 @@ stages:
     # Direct pushes to the mirrored develop branch.
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "develop"'
       when: always
+    # Temporary exception while validating the GitHub status bridge in PR #2080.
+    # Remove this rule after the bridge is merged and validated.
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "balos1/add-uoregon-gitlab-ci"'
+      when: always
     # GitHub PRs mirrored as branches named pr<number>_<branch>.
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH =~ /^pr[0-9]+(_.*)?$/'
       when: always
