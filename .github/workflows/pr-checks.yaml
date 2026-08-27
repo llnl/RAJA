@@ -1,0 +1,19 @@
+name: Run PR Checks
+
+on:
+  pull_request:
+    branches:
+      - develop # Branch to run checks on
+
+jobs:
+  # Verify that release notes have been updated.   PRs should include summary of
+  # what has changed in the release notes.
+  check_release_notes:
+    runs-on: ubuntu-latest
+    name: Verify RELEASE_NOTES.md has been updated
+    steps:
+      - name: Verify RELEASE_NOTES.md updated
+        uses: takanuva15/verify-file-updated@v1
+        with:
+          filename_to_check: RELEASE_NOTES.md # Check the RELEASE_NOTES.md for change
+          excused_label: "no release notes check" # Optional: add this label to PRs to skip the check
