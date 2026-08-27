@@ -18,8 +18,8 @@ concurrency:
 jobs:
   gitlab-pipeline:
     runs-on: ubuntu-latest
-
-    timeout-minutes: 190
+    environment: delayed-90-minutes 
+    timeout-minutes: 130
 
     steps:
       - name: Wait for GitLab pipeline
@@ -37,7 +37,7 @@ jobs:
           GITLAB_PIPELINE_SOURCE: push
 
           STATUS_CONTEXT: gitlab/uoregon
-          POLL_TIMEOUT_SECONDS: "10800"
+          POLL_TIMEOUT_SECONDS: "7200"
           POLL_INTERVAL_SECONDS: "30"
 
         run: |
