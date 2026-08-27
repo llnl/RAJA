@@ -2,7 +2,7 @@ name: GitLab UOregon CI
 
 on:
   push:
-    # TODO(CJB): remove balos1/add-uoregon-gitlab-ci from the list of branches before merging
+    # TODO(CJB): remove balos1/add-uoregon-gitlab-ci from the list of branches after merging
     branches: [develop, balos1/add-uoregon-gitlab-ci]
   pull_request_target:
     branches: [develop]
