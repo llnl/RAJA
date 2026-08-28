@@ -1,9 +1,9 @@
 on: push
 name: Build
 
-# Cancel jobs in progress when a new commit is made to the same branch
-# to help with CI throughput.  Exclude develop and main branches so all
-# PR merge jobs are completed.
+# Cancel jobs in progress when a new commit is made to the same feature/bugfix branch
+# to help with CI throughput.  Exclude develop and main branches from cancelations
+# so PR merge checks are always completed.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/main' }}
