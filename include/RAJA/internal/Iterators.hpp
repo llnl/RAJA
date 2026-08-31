@@ -228,6 +228,12 @@ public:
     return val + rhs.val;
   }
 
+  RAJA_HOST_DEVICE inline stripped_value_type operator*(
+      const numeric_iterator& rhs) const
+  {
+    return val * rhs.val;
+  }
+
   RAJA_HOST_DEVICE inline stripped_value_type operator-(
       const numeric_iterator& rhs) const
   {

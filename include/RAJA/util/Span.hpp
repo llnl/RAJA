@@ -20,6 +20,7 @@
 #ifndef RAJA_SPAN_HPP
 #define RAJA_SPAN_HPP
 
+#include "RAJA/index/IndexValue.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA/pattern/concepts.hpp"
@@ -164,12 +165,12 @@ struct Span
 
   constexpr RAJA_HOST_DEVICE RAJA_INLINE bool empty() const
   {
-    return size() == static_cast<size_type>(0);
+    return size() == size_type {0};
   }
 
   constexpr RAJA_HOST_DEVICE RAJA_INLINE Span first(size_type count) const
   {
-    return slice(0, count);
+    return slice(size_type {0}, count);
   }
 
   constexpr RAJA_HOST_DEVICE RAJA_INLINE Span last(size_type count) const

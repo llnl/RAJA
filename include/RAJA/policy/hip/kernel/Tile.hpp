@@ -210,6 +210,7 @@ struct HipStatementExecutor<
     // Get original segment
     auto& segment   = camp::get<ArgumentId>(private_data.segment_tuple);
     using segment_t = camp::decay<decltype(segment)>;
+
     // restrict to first tile
     segment = segment.slice(typename segment_t::size_type {0},
                             typename segment_t::size_type {chunk_size});
@@ -310,7 +311,6 @@ struct HipStatementExecutor<
 
     // Get original segment
     auto& segment       = camp::get<ArgumentId>(private_data.segment_tuple);
-    using segment_t     = camp::decay<decltype(segment)>;
     using segment_idx_t = typename camp::decay<decltype(segment)>::size_type;
     // restrict to first tile
     segment = segment.slice(segment_idx_t {0}, segment_idx_t {chunk_size});
