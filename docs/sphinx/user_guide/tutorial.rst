@@ -314,6 +314,11 @@ to execute simple loop kernels; i.e., non-nested loops. It also describes
 iteration spaces, reductions, atomic operations, scans, sorts, and RAJA
 data views.
 
+Reference material for the concepts used in these examples is available in
+:ref:`loop_elements-label`, :ref:`feat-policies-label`,
+:ref:`feat-index-label`, :ref:`feat-reductions-label`,
+:ref:`feat-atomics-label`, and :ref:`feat-view-label`.
+
 .. toctree::
    :maxdepth: 1
 
@@ -338,6 +343,10 @@ RAJA provides two APIs for writing complex kernels involving nested
 loops: ``RAJA::kernel`` that has been available for several years and
 ``RAJA::launch``, which is more recent. We briefly introduce both interfaces
 here. The tutorial sections that follow provide much more detailed descriptions.
+
+For the corresponding API and policy reference, see
+:ref:`loop_elements-kernel-label`, :ref:`loop_elements-kernelpol-label`, and
+:ref:`feat-policies-kernel-reference-label`.
 
 ``RAJA::kernel`` is analogous to ``RAJA::forall`` in that it involves
 kernel execution templates, execution policies, iteration spaces, and lambda
