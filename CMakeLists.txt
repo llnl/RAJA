@@ -17,9 +17,9 @@ endif()
 include(CMakeDependentOption)
 
 # Set version number
-set(RAJA_VERSION_MAJOR 2025)
-set(RAJA_VERSION_MINOR 12)
-set(RAJA_VERSION_PATCHLEVEL 2)
+set(RAJA_VERSION_MAJOR 2026)
+set(RAJA_VERSION_MINOR 07)
+set(RAJA_VERSION_PATCHLEVEL 0)
 
 if (RAJA_LOADED AND (NOT RAJA_LOADED STREQUAL "${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}"))
   message(FATAL_ERROR "You are mixing RAJA versions. Loaded is ${RAJA_LOADED}, expected ${RAJA_VERSION_MAJOR}.${RAJA_VERSION_MINOR}.${RAJA_VERSION_PATCHLEVEL}")
@@ -136,6 +136,7 @@ set (raja_sources
   src/AlignedRangeIndexSetBuilders.cpp
   src/DepGraphNode.cpp
   src/LockFreeIndexSetBuilders.cpp
+  src/Memory.cpp
   src/MemUtils_CUDA.cpp
   src/MemUtils_HIP.cpp
   src/PluginStrategy.cpp)

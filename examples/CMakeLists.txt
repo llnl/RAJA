@@ -24,6 +24,10 @@ raja_add_executable(
   SOURCES raja-ranges.cpp)
 
 raja_add_executable(
+  NAME messages-forall
+  SOURCES messages-forall.cpp)
+
+raja_add_executable(
   NAME dynamic-forall
   SOURCES dynamic-forall.cpp)
 

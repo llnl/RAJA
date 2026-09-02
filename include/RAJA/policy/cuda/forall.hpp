@@ -361,6 +361,14 @@ struct ForallDimensionCalculator<
 //////////////////////////////////////////////////////////////////////
 //
 
+/*
+ * __launch_bounds__ block size constraint does not change the
+ * intended behavior because the requires > 0 constraint prevents the
+ * overload from being selected for zero. It only ensures that NVCC or
+ * Clang CUDA cannot encounter an invalid attribute argument of zero while
+ * substituting or processing a discarded candidate.
+ */
+
 /*!
  ******************************************************************************
  *
@@ -368,7 +376,6 @@ struct ForallDimensionCalculator<
  *
  ******************************************************************************
  */
-
 template<typename EXEC_POL,
          size_t BlocksPerSM,
          typename Iterator,
@@ -381,7 +388,7 @@ template<typename EXEC_POL,
                                           IterationMapping>::value &&
                               (IterationGetter::block_size > 0),
                           size_t> BlockSize = IterationGetter::block_size>
-__launch_bounds__(BlockSize, BlocksPerSM) __global__
+__launch_bounds__(BlockSize > 0 ? BlockSize : 1, BlocksPerSM) __global__
     RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
         const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
         const RAJA_CUDA_GRID_CONSTANT Iterator idx,
@@ -449,7 +456,7 @@ template<
                                          IterationMapping>::value &&
                          (IterationGetter::block_size > 0),
                      size_t> BlockSize = IterationGetter::block_size>
-__launch_bounds__(BlockSize, BlocksPerSM) __global__
+__launch_bounds__(BlockSize > 0 ? BlockSize : 1, BlocksPerSM) __global__
     RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
         const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
         const RAJA_CUDA_GRID_CONSTANT Iterator idx,
