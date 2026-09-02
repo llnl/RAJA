@@ -10,25 +10,10 @@
 #ifndef __TEST_KERNEL_REDUCELOC_MAX2D_HPP__
 #define __TEST_KERNEL_REDUCELOC_MAX2D_HPP__
 
-namespace {
-template <typename T>
-struct val_t_impl {
-  using type = T;
-};
-
-template <RAJA::concepts::IndexValued T>
-struct val_t_impl<T> {
-  using type = typename T::value_type;
-};
-
-template <typename T>
-using VAL_T = typename val_t_impl<T>::type;
-}
-
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename FORALL_POLICY, typename EXEC_POLICY>
 void KernelParamReduceMultiLambda(const INDEX_TYPE xdim_t, const INDEX_TYPE ydim_t)
 {
-  using raw_index_type = VAL_T<INDEX_TYPE>;
+  using raw_index_type = RAJA::strip_index_type_t<INDEX_TYPE>;
 
   camp::resources::Resource work_res{WORKING_RES::get_default()};
 

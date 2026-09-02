@@ -10,21 +10,6 @@
 #ifndef __TEST_KERNEL_NESTEDLOOP_PERMUTEDVIEW2D_HPP__
 #define __TEST_KERNEL_NESTEDLOOP_PERMUTEDVIEW2D_HPP__
 
-namespace {
-template <typename T>
-struct val_t_impl {
-  using type = T;
-};
-
-template <RAJA::concepts::IndexValued T>
-struct val_t_impl<T> {
-  using type = typename T::value_type;
-};
-
-template <typename T>
-using VAL_T = typename val_t_impl<T>::type;
-}
-
 template <typename IDX_TYPE, typename WORKING_RES, typename EXEC_POLICY>
 void KernelPermutedView2DTestImpl(std::array<IDX_TYPE, 2> dim,
                                   std::array<RAJA::idx_t, 2> perm)
@@ -49,7 +34,7 @@ void KernelPermutedView2DTestImpl(std::array<IDX_TYPE, 2> dim,
 
   working_res.memcpy(working_array, test_array, sizeof(IDX_TYPE) * N);
 
-  using raw_idx_type = VAL_T<IDX_TYPE>;
+  using raw_idx_type = RAJA::strip_index_type_t<IDX_TYPE>;
   raw_idx_type mod_val = RAJA::stripIndexType(dim.at( perm.at(1) ));
   for (RAJA::idx_t ii = 0; ii < N; ++ii) {
     test_array[ii] = static_cast<IDX_TYPE>(ii % mod_val);

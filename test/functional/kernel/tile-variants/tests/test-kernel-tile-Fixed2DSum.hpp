@@ -14,26 +14,11 @@
 #include <vector>
 #include <type_traits>
 
-namespace {
-template <typename T>
-struct val_t_impl {
-  using type = T;
-};
-
-template <RAJA::concepts::IndexValued T>
-struct val_t_impl<T> {
-  using type = typename T::value_type;
-};
-
-template <typename T>
-using VAL_T = typename val_t_impl<T>::type;
-}
-
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename EXEC_POLICY, typename REDUCE_POLICY>
 void KernelTileFixed2DSumTestImpl(const INDEX_TYPE rowsin, const INDEX_TYPE colsin)
 {
   // This test reduces sums with tiling.
-  using raw_index_type = VAL_T<INDEX_TYPE>;
+  using raw_index_type = RAJA::strip_index_type_t<INDEX_TYPE>;
 
   raw_index_type rows, cols;
   if ( std::is_same<DATA_TYPE, float>::value )

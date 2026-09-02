@@ -10,26 +10,11 @@
 #ifndef __TEST_KERNEL_NESTEDLOOP_PERMUTEDOFFSETVIEW2D_HPP__
 #define __TEST_KERNEL_NESTEDLOOP_PERMUTEDOFFSETVIEW2D_HPP__
 
-namespace {
-template <typename T>
-struct val_t_impl {
-  using type = T;
-};
-
-template <RAJA::concepts::IndexValued T>
-struct val_t_impl<T> {
-  using type = typename T::value_type;
-};
-
-template <typename T>
-using VAL_T = typename val_t_impl<T>::type;
-}
-
 template <typename IDX_TYPE, typename WORKING_RES, typename EXEC_POLICY>
 void KernelPermutedOffsetView2DTestImpl(std::array<RAJA::idx_t, 2> dim,
                                         std::array<RAJA::idx_t, 2> perm)
 {
-  using raw_idx_type = VAL_T<IDX_TYPE>;
+  using raw_idx_type = RAJA::strip_index_type_t<IDX_TYPE>;
   camp::resources::Resource working_res{WORKING_RES::get_default()};
   IDX_TYPE* A_work_array;
   IDX_TYPE* A_check_array;

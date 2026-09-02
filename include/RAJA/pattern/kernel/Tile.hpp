@@ -47,8 +47,6 @@ struct TileSize
   constexpr TileSize(camp::idx_t size_) : size {size_} {}
 };
 
-
-
 namespace statement
 {
 
@@ -157,9 +155,9 @@ struct IterableTiler
     RAJA_INLINE
     value_type operator*()
     {
-      auto start = slice_type {
-          block_id *
-          static_cast<block_type>(RAJA::stripIndexType(itiler.block_size))};
+      auto start =
+          slice_type {block_id * static_cast<block_type>(
+                                     RAJA::stripIndexType(itiler.block_size))};
       return iterate {itiler.it.slice(start, itiler.block_size), block_id};
     }
 
@@ -173,16 +171,15 @@ struct IterableTiler
     RAJA_HOST_DEVICE
     RAJA_INLINE iterator operator-(const difference_type& rhs) const
     {
-      return iterator(
-          itiler,
-          static_cast<block_type>(static_cast<difference_type>(block_id) - rhs));
+      return iterator(itiler,
+                      static_cast<block_type>(
+                          static_cast<difference_type>(block_id) - rhs));
     }
 
     RAJA_HOST_DEVICE
     RAJA_INLINE iterator operator+(const difference_type& rhs) const
     {
-      const difference_type next =
-          static_cast<difference_type>(block_id) + rhs;
+      const difference_type next = static_cast<difference_type>(block_id) + rhs;
       return iterator(itiler,
                       next >= static_cast<difference_type>(itiler.num_blocks)
                           ? itiler.num_blocks
@@ -208,8 +205,8 @@ struct IterableTiler
     }
   };
 
-  RAJA_HOST_DEVICE RAJA_INLINE
-  IterableTiler(const Iterable& it_, BlockSizeT block_size_)
+  RAJA_HOST_DEVICE RAJA_INLINE IterableTiler(const Iterable& it_,
+                                             BlockSizeT block_size_)
       : it {it_},
         block_size {block_size_}
   {
@@ -266,9 +263,9 @@ struct StatementExecutor<
 
     // Get the tiling policies chunk size
     constexpr auto chunk_size = tile_fixed<ChunkSize>::chunk_size;
-    using segment_t = decltype(segment);
-    using slice_t = typename std::decay_t<segment_t>::size_type;
-    using slice_value_t = RAJA::strip_index_type_t<slice_t>;
+    using segment_t           = decltype(segment);
+    using slice_t             = typename std::decay_t<segment_t>::size_type;
+    using slice_value_t       = RAJA::strip_index_type_t<slice_t>;
 
     // Create a tile iterator, needs to survive until the forall is
     // done executing.
@@ -304,8 +301,8 @@ struct StatementExecutor<
     // Get the segment we are going to tile
     auto const& segment = camp::get<ArgumentId>(data.segment_tuple);
 
-    using segment_t = decltype(segment);
-    using slice_t = typename std::decay_t<segment_t>::size_type;
+    using segment_t     = decltype(segment);
+    using slice_t       = typename std::decay_t<segment_t>::size_type;
     using slice_value_t = RAJA::strip_index_type_t<slice_t>;
     // Get the tiling policies chunk size
     auto chunk_size = camp::get<ArgumentId>(data.param_tuple);
@@ -316,8 +313,8 @@ struct StatementExecutor<
 
     // Create a tile iterator
     IterableTiler<segment_t, slice_t> tiled_iterable(
-        segment,
-        slice_t {static_cast<slice_value_t>(RAJA::stripIndexType(chunk_size.size))});
+        segment, slice_t {static_cast<slice_value_t>(
+                     RAJA::stripIndexType(chunk_size.size))});
 
     // Wrap in case forall_impl needs to thread_privatize
     TileWrapper<ArgumentId, Data, Types, EnclosedStmts...> tile_wrapper(data);

@@ -13,21 +13,6 @@
 #include <numeric>
 #include <type_traits>
 
-namespace {
-template <typename T>
-struct val_t_impl {
-  using type = T;
-};
-
-template <RAJA::concepts::IndexValued T>
-struct val_t_impl<T> {
-  using type = typename T::value_type;
-};
-
-template <typename T>
-using VAL_T = typename val_t_impl<T>::type;
-}
-
 template <typename INDEX_TYPE, typename DATA_TYPE, typename EXEC_POLICY, typename REDUCE_POLICY, typename USE_PARAM_REDUCER>
 std::enable_if_t<USE_PARAM_REDUCER::value>
 CallKernel(DATA_TYPE& trip_count,

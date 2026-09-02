@@ -117,8 +117,8 @@ struct StatementExecutor<
   {
     // Get the segment we are going to tile
     auto const& segment = camp::get<ArgumentId>(data.segment_tuple);
-    using segment_t = decltype(segment);
-    using slice_t = typename std::decay_t<segment_t>::size_type;
+    using segment_t     = decltype(segment);
+    using slice_t       = typename std::decay_t<segment_t>::size_type;
     using slice_value_t = RAJA::strip_index_type_t<slice_t>;
     // Get the tiling policies chunk size
     constexpr auto chunk_size = TPol::chunk_size;

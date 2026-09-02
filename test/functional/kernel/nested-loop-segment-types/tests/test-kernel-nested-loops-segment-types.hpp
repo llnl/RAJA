@@ -18,21 +18,6 @@
 #include <numeric>
 #include <vector>
 
-namespace {
-template <typename T>
-struct val_t_impl {
-  using type = T;
-};
-
-template <RAJA::concepts::IndexValued T>
-struct val_t_impl<T> {
-  using type = typename T::value_type;
-};
-
-template <typename T>
-using VAL_T = typename val_t_impl<T>::type;
-}
-
 template <typename IDX_TYPE, typename DATA_TYPE, typename EXEC_POLICY>
 void KernelNestedLoopsSegmentTypesTestImpl(
   const RAJA::TypedRangeSegment<IDX_TYPE>& s1, 
@@ -155,7 +140,7 @@ TYPED_TEST_P(KernelNestedLoopsSegmentTypesTest, NestedLoopsSegmentTypesKernel)
   using IDX_TYPE    = typename camp::at<TypeParam, camp::num<0>>::type;
   using WORKING_RES = typename camp::at<TypeParam, camp::num<1>>::type;
   using EXEC_POLICY = typename camp::at<TypeParam, camp::num<2>>::type;
-  using raw_idx_type = VAL_T<IDX_TYPE>;
+  using raw_idx_type = RAJA::strip_index_type_t<IDX_TYPE>;
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
 

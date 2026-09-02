@@ -12,26 +12,11 @@
 
 #include <numeric>
 
-namespace {
-template <typename T>
-struct val_t_impl {
-  using type = T;
-};
-
-template <RAJA::concepts::IndexValued T>
-struct val_t_impl<T> {
-  using type = typename T::value_type;
-};
-
-template <typename T>
-using VAL_T = typename val_t_impl<T>::type;
-}
-
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename EXEC_POLICY>
 void KernelTileFixed2DTestImpl(const INDEX_TYPE rows_t, const INDEX_TYPE cols_t)
 {
   // This test emulates matrix transposition with tiling.
-  using raw_index_type = VAL_T<INDEX_TYPE>;
+  using raw_index_type = RAJA::strip_index_type_t<INDEX_TYPE>;
 
   camp::resources::Resource work_res{WORKING_RES::get_default()};
 

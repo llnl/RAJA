@@ -29,7 +29,6 @@ void KernelParamReduceTestImpl(const INDEX_TYPE xdim, const INDEX_TYPE ydim)
                                       &test_array
                                     );
 
-  // using index_setup_type = VAL_T<INDEX_TYPE>;
   // set rows to point to check and work _arrays
   RAJA::TypedRangeSegment<INDEX_TYPE> seg(0, ydim);
   using LayoutType = RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE>>;

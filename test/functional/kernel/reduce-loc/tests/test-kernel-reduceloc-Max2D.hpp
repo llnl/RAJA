@@ -10,22 +10,6 @@
 #ifndef __TEST_KERNEL_REDUCELOC_MAX2D_HPP__
 #define __TEST_KERNEL_REDUCELOC_MAX2D_HPP__
 
-namespace {
-template <typename T>
-struct val_t_impl {
-  using type = T;
-};
-
-template <RAJA::concepts::IndexValued T>
-struct val_t_impl<T> {
-  using type = typename T::value_type;
-};
-
-template <typename T>
-using VAL_T = typename val_t_impl<T>::type;
-
-}
-
 template <typename INDEX_TYPE, typename DATA_TYPE, typename WORKING_RES, typename FORALL_POLICY, typename EXEC_POLICY, typename REDUCE_POLICY>
 void KernelLocMax2DTestImpl(const INDEX_TYPE xdim, const INDEX_TYPE ydim)
 {
