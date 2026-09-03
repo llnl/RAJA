@@ -49,7 +49,7 @@ spack_debug=${SPACK_DEBUG:-false}
 debug_mode=${DEBUG_MODE:-false}
 push_to_registry=${PUSH_TO_REGISTRY:-true}
 
-camp_version=${UPDATE_CAMP:-""}
+camp_reference=${CAMP_REFERENCE:-""}
 
 # Map CPU core allocations
 declare -A core_counts=(["dane"]=28 ["matrix"]=28 ["corona"]=32 ["rzansel"]=48 ["tioga"]=32 ["tuolumne"]=48)
@@ -279,9 +279,9 @@ then
 
     extra_deps=""
 
-    if [[ -n ${camp_version} ]]
+    if [[ -n ${camp_reference} ]]
     then
-        extra_deps="${extra_deps} ^camp@git.${camp_version}=main"
+        extra_deps="${extra_deps} ^camp@git.${camp_reference}=main"
     fi
 
     [[ -n ${extra_deps} ]] && spec="${spec} ${extra_deps}"
