@@ -34,7 +34,7 @@ camp::resources::Resource host_res{camp::resources::Host::get_default()};
 TYPED_TEST(ListSegmentUnitTest, Constructors)
 {
   std::vector<TypeParam> idx;
-  for (TypeParam i = 0; i < 5; ++i){
+  for (TypeParam i {0}; i < 5; ++i){
     idx.push_back(i);
   }
 
@@ -59,7 +59,7 @@ TYPED_TEST(ListSegmentUnitTest, Swaps)
 {
   std::vector<TypeParam> idx1;
   std::vector<TypeParam> idx2;
-  for (TypeParam i = 0; i < 5; ++i){
+  for (TypeParam i {0}; i < 5; ++i){
     idx1.push_back(i);
     idx2.push_back(i+5);
   }
@@ -104,4 +104,3 @@ TYPED_TEST(ListSegmentUnitTest, Iterators)
 
   ASSERT_EQ(4, list.size());
 }
-

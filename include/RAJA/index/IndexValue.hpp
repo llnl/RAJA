@@ -58,12 +58,6 @@ struct IndexValue : public IndexValueBase
   RAJA_INLINE IndexValue& operator=(IndexValue const&) = default;
   RAJA_INLINE IndexValue& operator=(IndexValue&&)      = default;
 
-  RAJA_INLINE IndexValue& operator=(const value_type& v)
-  {
-    value = v;
-    return *this;
-  }
-
   /*!
    * \brief Explicit constructor.
    * \param v   Initial value

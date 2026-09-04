@@ -20,15 +20,15 @@
 #include <random>
 
 //
-// Utility routine to construct index set with mix of Range, RangeStride, 
+// Utility routine to construct index set with mix of Range, RangeStride,
 // and List segments to use in various tests.
 //
 template <typename INDEX_TYPE,
           typename RANGE_TYPE,
           typename RANGESTRIDE_TYPE,
           typename LIST_TYPE>
-void buildIndexSet( 
-  RAJA::TypedIndexSet< RANGE_TYPE, RANGESTRIDE_TYPE, LIST_TYPE >& iset, 
+void buildIndexSet(
+  RAJA::TypedIndexSet< RANGE_TYPE, RANGESTRIDE_TYPE, LIST_TYPE >& iset,
   std::vector<INDEX_TYPE>& indices_out,
   camp::resources::Resource working_res )
 {
@@ -49,7 +49,7 @@ void buildIndexSet(
   }
 
   //
-  // Construct a mix of Range, RangeStride, and List segments 
+  // Construct a mix of Range, RangeStride, and List segments
   // and add them to index set
   //
   INDEX_TYPE rbeg = INDEX_TYPE(0);
@@ -60,20 +60,20 @@ void buildIndexSet(
   std::vector<INDEX_TYPE> lseg(RAJA::stripIndexType(lseg_len));
   std::vector<INDEX_TYPE> lseg_vec(RAJA::stripIndexType(lseg_len));
 
-  indices_out.clear(); 
+  indices_out.clear();
 
   // Create empty Range segment
-  rbeg = 1;
-  rend = 1;
+  rbeg = INDEX_TYPE(1);
+  rend = INDEX_TYPE(1);
   iset.push_back(RANGE_TYPE(rbeg, rend));
   last_idx = rend;
 
   // Create Range segment
-  rbeg = 1;
-  rend = 1578;
+  rbeg = INDEX_TYPE(1);
+  rend = INDEX_TYPE(1578);
   iset.push_back(RANGE_TYPE(rbeg, rend));
-  for (INDEX_TYPE i = rbeg; i < rend; ++i) { 
-    indices_out.push_back( i ); 
+  for (INDEX_TYPE i = rbeg; i < rend; ++i) {
+    indices_out.push_back( i );
   }
   last_idx = rend;
 
@@ -98,12 +98,12 @@ void buildIndexSet(
   // Create Range-stride segment
   rbeg = last_idx + 16;
   rend = rbeg + 2040;
-  stride = 3;
+  stride = INDEX_TYPE {3};
   iset.push_back(RANGESTRIDE_TYPE(RAJA::stripIndexType(rbeg),
                                   RAJA::stripIndexType(rend),
                                   RAJA::stripIndexType(stride)));
-  for (INDEX_TYPE i = rbeg; i < rend; i += stride) { 
-    indices_out.push_back( i ); 
+  for (INDEX_TYPE i = rbeg; i < rend; i += stride) {
+    indices_out.push_back( i );
   }
   last_idx = rend;
 
@@ -111,8 +111,8 @@ void buildIndexSet(
   rbeg = last_idx + 4;
   rend = rbeg + 2759;
   iset.push_back(RANGE_TYPE(rbeg, rend));
-  for (INDEX_TYPE i = rbeg; i < rend; ++i) { 
-    indices_out.push_back( i ); 
+  for (INDEX_TYPE i = rbeg; i < rend; ++i) {
+    indices_out.push_back( i );
   }
   last_idx = rend;
 
@@ -129,8 +129,8 @@ void buildIndexSet(
   rbeg = last_idx + 1;
   rend = rbeg + 320;
   iset.push_back(RANGE_TYPE(rbeg, rend));
-  for (INDEX_TYPE i = rbeg; i < rend; ++i) { 
-    indices_out.push_back( i ); 
+  for (INDEX_TYPE i = rbeg; i < rend; ++i) {
+    indices_out.push_back( i );
   }
   last_idx = rend;
 
