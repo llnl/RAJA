@@ -281,6 +281,8 @@ represent kernel bodies with RAJA. We describe them here.
 
    <br />
 
+.. _tutorial-examples-label:
+
 ===========================
 RAJA Examples and Exercises
 ===========================

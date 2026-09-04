@@ -32,6 +32,10 @@ raja_add_test(
   SOURCES test-math.cpp)
 
 raja_add_test(
+  NAME test-basic-mempool
+  SOURCES test-basic-mempool.cpp)
+
+raja_add_test(
   NAME test-device-policy-aliases
   SOURCES test-device-policy-aliases.cpp)
 
