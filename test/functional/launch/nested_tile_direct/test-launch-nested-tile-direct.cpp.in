@@ -29,7 +29,7 @@
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@LaunchNestedTypes =
-  Test< camp::cartesian_product<IdxTypeList,
+  Test< camp::cartesian_product<LaunchIdxTypeList,
                                 @BACKEND@ResourceList,
                                 @BACKEND@_launch_policies>>::Types;
 

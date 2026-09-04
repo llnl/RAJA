@@ -19,8 +19,8 @@
 template <typename ValueType, typename IndexType>
 void testSpanConstructTypes()
 {
-  constexpr IndexType len = 4;
-  ValueType* ptr = new ValueType[len];
+  IndexType len {4};
+  ValueType* ptr = new ValueType[RAJA::stripIndexType(len)];
 
   {
     const RAJA::Span<ValueType*, IndexType> span(ptr, len);
@@ -30,7 +30,8 @@ void testSpanConstructTypes()
   }
 
   {
-    const RAJA::Span<ValueType*, IndexType> span(ptr, ptr+len);
+    const RAJA::Span<ValueType*, IndexType> span(ptr,
+                                                 ptr + RAJA::stripIndexType(len));
 
     ASSERT_EQ(ptr, span.data());
     ASSERT_EQ(len, span.size());
@@ -42,8 +43,8 @@ void testSpanConstructTypes()
 template <typename ValueType, typename IndexType>
 void testSpanAssignTypes()
 {
-  constexpr IndexType len = 4;
-  ValueType* ptr = new ValueType[len];
+  IndexType len {4};
+  ValueType* ptr = new ValueType[RAJA::stripIndexType(len)];
 
   {
     RAJA::Span<ValueType*, IndexType> span(ptr, len);
@@ -56,7 +57,7 @@ void testSpanAssignTypes()
 
   {
     ValueType* ptr2 = ptr + 1;
-    constexpr IndexType len2 = 1;
+    IndexType len2 {1};
     RAJA::Span<ValueType*, IndexType> span(ptr, len);
     const RAJA::Span<ValueType*, IndexType> span2(ptr2, len2);
     span = span2;
@@ -74,14 +75,15 @@ void testSpanIteratorTypes()
   using span_type = RAJA::Span<ValueType*, IndexType>;
   using iterator = typename span_type::iterator;
   using const_iterator = typename span_type::const_iterator;
-  constexpr IndexType len = 4;
-  ValueType* ptr = new ValueType[len];
+  IndexType len {4};
+  ValueType* ptr = new ValueType[RAJA::stripIndexType(len)];
 
   // XL cannot handle initialization list with new
-  // e.g. new ValueType[len]{0,1,2,3} produces error
-  for ( IndexType ii = 0; ii < len; ++ii )
+  // e.g. new ValueType[RAJA::stripIndexType(len)]{0,1,2,3} produces error
+  for ( IndexType ii {0}; ii < len; ++ii )
   {
-    ptr[ii] = static_cast<ValueType>(ii);
+    ptr[RAJA::stripIndexType(ii)] =
+        static_cast<ValueType>(RAJA::stripIndexType(ii));
   }
 
   {
@@ -90,7 +92,7 @@ void testSpanIteratorTypes()
     iterator begin = span.begin();
     iterator end = span.end();
     ASSERT_EQ(ptr, begin);
-    ASSERT_EQ(ptr+len, end);
+    ASSERT_EQ(ptr + RAJA::stripIndexType(len), end);
 
     ValueType* ptr_chk = ptr;
 
@@ -102,7 +104,7 @@ void testSpanIteratorTypes()
     const_iterator cbegin = span.cbegin();
     const_iterator cend = span.cend();
     ASSERT_EQ(ptr, cbegin);
-    ASSERT_EQ(ptr+len, cend);
+    ASSERT_EQ(ptr + RAJA::stripIndexType(len), cend);
 
     ptr_chk = ptr;
 
@@ -118,14 +120,15 @@ void testSpanIteratorTypes()
 template <typename ValueType, typename IndexType>
 void testSpanElementAccessTypes()
 {
-  constexpr IndexType len = 4;
-  ValueType* ptr = new ValueType[len];
+  IndexType len {4};
+  ValueType* ptr = new ValueType[RAJA::stripIndexType(len)];
 
   // XL cannot handle initialization list with new
-  // e.g. new ValueType[len]{0,1,2,3} produces error
-  for ( IndexType ii = 0; ii < len; ++ii )
+  // e.g. new ValueType[RAJA::stripIndexType(len)]{0,1,2,3} produces error
+  for ( IndexType ii {0}; ii < len; ++ii )
   {
-    ptr[ii] = static_cast<ValueType>(ii);
+    ptr[RAJA::stripIndexType(ii)] =
+        static_cast<ValueType>(RAJA::stripIndexType(ii));
   }
 
   {
@@ -133,10 +136,10 @@ void testSpanElementAccessTypes()
 
     ASSERT_EQ(ptr, span.data());
     ASSERT_EQ(*ptr, span.front());
-    ASSERT_EQ(*(ptr+len-1), span.back());
+    ASSERT_EQ(*(ptr + RAJA::stripIndexType(len) - 1), span.back());
 
-    for (IndexType i = 0; i < len; ++i) {
-      ASSERT_EQ(ptr[i], span[i]);
+    for (IndexType i {0}; i < len; ++i) {
+      ASSERT_EQ(ptr[RAJA::stripIndexType(i)], span[i]);
     }
   }
 
@@ -146,14 +149,15 @@ void testSpanElementAccessTypes()
 template <typename ValueType, typename IndexType>
 void testSpanObserveTypes()
 {
-  constexpr IndexType len = 4;
-  ValueType* ptr = new ValueType[len];
+  IndexType len {4};
+  ValueType* ptr = new ValueType[RAJA::stripIndexType(len)];
 
   // XL cannot handle initialization list with new
-  // e.g. new ValueType[len]{0,1,2,3} produces error
-  for ( IndexType ii = 0; ii < len; ++ii )
+  // e.g. new ValueType[RAJA::stripIndexType(len)]{0,1,2,3} produces error
+  for ( IndexType ii {0}; ii < len; ++ii )
   {
-    ptr[ii] = static_cast<ValueType>(ii);
+    ptr[RAJA::stripIndexType(ii)] =
+        static_cast<ValueType>(RAJA::stripIndexType(ii));
   }
 
   {
@@ -164,9 +168,9 @@ void testSpanObserveTypes()
   }
 
   {
-    const RAJA::Span<ValueType*, IndexType> span(ptr, len-len);
+    const RAJA::Span<ValueType*, IndexType> span(ptr, len - len);
 
-    ASSERT_EQ(0, span.size());
+    ASSERT_EQ(IndexType {0}, span.size());
     ASSERT_TRUE(span.empty());
   }
 
@@ -176,18 +180,19 @@ void testSpanObserveTypes()
 template <typename ValueType, typename IndexType>
 void testSpanSubViewTypes()
 {
-  constexpr IndexType len = 4;
-  ValueType* ptr = new ValueType[len];
+  IndexType len {4};
+  ValueType* ptr = new ValueType[RAJA::stripIndexType(len)];
 
   // XL cannot handle initialization list with new
-  // e.g. new ValueType[len]{0,1,2,3} produces error
-  for ( IndexType ii = 0; ii < len; ++ii )
+  // e.g. new ValueType[RAJA::stripIndexType(len)]{0,1,2,3} produces error
+  for ( IndexType ii {0}; ii < len; ++ii )
   {
-    ptr[ii] = static_cast<ValueType>(ii);
+    ptr[RAJA::stripIndexType(ii)] =
+        static_cast<ValueType>(RAJA::stripIndexType(ii));
   }
 
   {
-    constexpr IndexType count = 3;
+    IndexType count {3};
     const RAJA::Span<ValueType*, IndexType> span(ptr, len);
     const RAJA::Span<ValueType*, IndexType> subspan = span.first(count);
 
@@ -196,32 +201,33 @@ void testSpanSubViewTypes()
   }
 
   {
-    constexpr IndexType count = 3;
+    IndexType count {3};
     const RAJA::Span<ValueType*, IndexType> span(ptr, len);
     const RAJA::Span<ValueType*, IndexType> subspan = span.last(count);
 
     ASSERT_EQ(count, subspan.size());
-    ASSERT_EQ(ptr+len-count, subspan.data());
+    ASSERT_EQ(ptr + RAJA::stripIndexType(len) - RAJA::stripIndexType(count),
+              subspan.data());
   }
 
   {
-    constexpr IndexType begin = 1;
-    constexpr IndexType count = 2;
+    IndexType begin {1};
+    IndexType count {2};
     const RAJA::Span<ValueType*, IndexType> span(ptr, len);
     const RAJA::Span<ValueType*, IndexType> subspan = span.subspan(begin, count);
 
     ASSERT_EQ(count, subspan.size());
-    ASSERT_EQ(ptr+begin, subspan.data());
+    ASSERT_EQ(ptr + RAJA::stripIndexType(begin), subspan.data());
   }
 
   {
-    constexpr IndexType begin = 1;
-    constexpr IndexType count = 2;
+    IndexType begin {1};
+    IndexType count {2};
     const RAJA::Span<ValueType*, IndexType> span(ptr, len);
     const RAJA::Span<ValueType*, IndexType> subspan = span.slice(begin, count);
 
     ASSERT_EQ(count, subspan.size());
-    ASSERT_EQ(ptr+begin, subspan.data());
+    ASSERT_EQ(ptr + RAJA::stripIndexType(begin), subspan.data());
   }
 
   delete[] ptr;
@@ -230,8 +236,8 @@ void testSpanSubViewTypes()
 template <typename ValueType, typename IndexType>
 void testSpanMakeSpanTypes()
 {
-  constexpr IndexType len = 4;
-  ValueType* ptr = new ValueType[len];
+  IndexType len {4};
+  ValueType* ptr = new ValueType[RAJA::stripIndexType(len)];
 
   {
     const RAJA::Span<ValueType*, IndexType> span = RAJA::make_span(ptr, len);

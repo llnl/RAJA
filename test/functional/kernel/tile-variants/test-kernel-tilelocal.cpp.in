@@ -109,7 +109,7 @@ using CudaKernelTileExecPols =
               >,
 
               RAJA::statement::CudaSyncThreads,
-  
+
               RAJA::statement::ForICount<0, RAJA::statement::Param<1>, RAJA::cuda_thread_x_loop,
                 RAJA::statement::ForICount<1, RAJA::statement::Param<0>, RAJA::cuda_thread_y_direct,
                   RAJA::statement::Lambda<1>
@@ -146,7 +146,7 @@ using HipKernelTileExecPols =
               >,
 
               RAJA::statement::HipSyncThreads,
-  
+
               RAJA::statement::ForICount<0, RAJA::statement::Param<1>, RAJA::hip_thread_x_loop,
                 RAJA::statement::ForICount<1, RAJA::statement::Param<0>, RAJA::hip_thread_y_direct,
                   RAJA::statement::Lambda<1>
@@ -205,7 +205,7 @@ using HipKernelTileExecPols =
 // Cartesian product of types used in parameterized tests
 //
 using @TILE_BACKEND@KernelTileTypes =
-  Test< camp::cartesian_product<IdxTypeList,
+  Test< camp::cartesian_product<StrongIdxTypeList,
                                 ReduceDataTypeList,
                                 @TILE_BACKEND@ResourceList,
                                 @TILE_BACKEND@KernelTileExecPols>>::Types;

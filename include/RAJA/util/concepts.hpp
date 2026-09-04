@@ -97,6 +97,7 @@ template<class Function, class Return, class Arg1 = Return>
 inline constexpr bool is_unary_function_v =
     is_unary_function<Function, Return, Arg1>::value;
 
+
 using namespace camp::type_traits;
 }  // namespace type_traits
 

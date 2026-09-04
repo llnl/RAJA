@@ -1070,8 +1070,8 @@ struct CopyFunctorOneRange
 };
 
 template<typename DestIter, typename SrcIter>
-CopyFunctorOneRange(DestIter, SrcIter)
-    -> CopyFunctorOneRange<DestIter, SrcIter>;
+CopyFunctorOneRange(DestIter,
+                    SrcIter) -> CopyFunctorOneRange<DestIter, SrcIter>;
 
 /*!
  * \brief Functor that copies src1 to dst1 and src2 to dst2.
