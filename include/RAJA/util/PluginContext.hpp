@@ -14,6 +14,7 @@
 
 #include "RAJA/policy/PolicyBase.hpp"
 #include "RAJA/internal/get_platform.hpp"
+#include "RAJA/util/resource.hpp"
 
 namespace RAJA
 {
@@ -25,13 +26,17 @@ class KokkosPluginLoader;
 struct PluginContext
 {
 public:
-  PluginContext(const Platform p, std::string&& name)
+  PluginContext(const Platform p,
+                std::string&& name,
+                resources::Resource res = resources::Resource {})
       : platform(p),
-        kernel_name(std::move(name))
+        kernel_name(std::move(name)),
+        resource(std::move(res))
   {}
 
   Platform platform;
   std::string kernel_name;
+  resources::Resource resource;
 
 private:
   mutable uint64_t kID;
@@ -39,10 +44,18 @@ private:
   friend class KokkosPluginLoader;
 };
 
+template<typename Policy, typename Resource>
+PluginContext make_context(std::string&& name, Resource resource)
+{
+  return PluginContext {detail::get_platform<Policy>::value, std::move(name),
+                        std::move(resource)};
+}
+
 template<typename Policy>
 PluginContext make_context(std::string&& name)
 {
-  return PluginContext {detail::get_platform<Policy>::value, std::move(name)};
+  using Resource = typename resources::get_resource<Policy>::type;
+  return make_context<Policy>(std::move(name), Resource::get_default());
 }
 
 }  // namespace util

@@ -108,6 +108,12 @@ The following list summarizes the virtual methods in the
 * ``void finalize() override {}`` is called on all plugins when a user calls 
   ``finalize_plugins``. This will also unload all currently loaded plugins.
 
+The ``PluginContext`` passed to the pre/post methods contains the execution
+``platform``, optional ``kernel_name``, and the type-erased ``resource`` used
+for the operation. A plugin can retrieve a backend resource, including its
+stream or queue, from the context. For example, a CUDA plugin can use
+``p.resource.get<RAJA::resources::Cuda>().get_stream()``.
+
 .. note:: The pre/post methods above are automatically called
           before and after executing a kernel with ``RAJA::forall`` or 
           ``RAJA::kernel`` kernel execution methods.
@@ -229,4 +235,3 @@ CPU memory to GPU memory, making it available for access in the RAJA kernel.
 The data is printed in the second kernel which runs on the CPU (indicated by the
 RAJA sequential execution policy). So CHAI copies the data back to the host CPU.
 All necessary data copies are done transparently on demand for each kernel.
-
