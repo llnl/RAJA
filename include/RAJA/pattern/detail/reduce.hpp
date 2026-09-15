@@ -23,6 +23,8 @@
 #include "RAJA/util/Operators.hpp"
 #include "RAJA/util/types.hpp"
 
+// This defines specialization of Reducers that are the first layer of the user
+// facing Reduction API
 #define RAJA_DECLARE_REDUCER(OP, POL, COMBINER)                                \
   template<typename T>                                                         \
   class Reduce##OP<POL, T>                                                     \
@@ -33,6 +35,8 @@
     using Base::Base;                                                          \
   };
 
+// This defines specialization of loc Reducers that are the first layer of the
+// user facing Reduction API
 #define RAJA_DECLARE_INDEX_REDUCER(OP, POL, COMBINER)                          \
   template<typename T, typename IndexType>                                     \
   class Reduce##OP<POL, T, IndexType>                                          \
@@ -211,6 +215,7 @@ namespace reduce
 namespace detail
 {
 
+// This is a Reducer and the last layer of the user facing Reduction API
 template<typename T,
          template<typename> class Reduce_,
          template<typename, typename> class Combiner_>
@@ -228,13 +233,31 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  BaseReduce() : c {T(), Reduce::identity()} {}
+  BaseReduce()
+      : BaseReduce(Policy::all_supported,
+                   Reduce::identity(),
+                   Reduce::identity())
+  {}
 
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  BaseReduce(T init_val, T identity_ = Reduce::identity())
-      : c {init_val, identity_}
+  explicit BaseReduce(Policy p)
+      : BaseReduce(p, Reduce::identity(), Reduce::identity())
+  {}
+
+  RAJA_SUPPRESS_HD_WARN
+
+  RAJA_HOST_DEVICE
+  explicit BaseReduce(T init_val, T identity_ = Reduce::identity())
+      : BaseReduce(Policy::all_supported, init_val, identity_)
+  {}
+
+  RAJA_SUPPRESS_HD_WARN
+
+  RAJA_HOST_DEVICE
+  BaseReduce(Policy p, T init_val, T identity_ = Reduce::identity())
+      : c {p, init_val, identity_}
   {}
 
   RAJA_SUPPRESS_HD_WARN
@@ -244,6 +267,15 @@ public:
   {
     operator T();  // automatic get() before reset
     c.reset(val, identity_);
+  }
+
+  RAJA_SUPPRESS_HD_WARN
+
+  RAJA_HOST_DEVICE
+  void reset(Policy p, T val, T identity_ = Reduce::identity())
+  {
+    operator T();  // automatic get() before reset
+    c.reset(p, val, identity_);
   }
 
   //! prohibit compiler-generated copy assignment
@@ -279,6 +311,8 @@ public:
   T get() const { return c.get(); }
 };
 
+// This is a Combinable and is the last layer of that implementation detail used
+// in Reducers
 template<typename T, typename Reduce, typename Derived>
 class BaseCombinable
 {
@@ -288,15 +322,12 @@ protected:
   T mutable my_data;
 
 public:
-  RAJA_SUPPRESS_HD_WARN
-
-  RAJA_HOST_DEVICE
-  constexpr BaseCombinable() : identity {T()}, my_data {T()} {}
+  BaseCombinable() = delete;
 
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  constexpr BaseCombinable(T init_val, T identity_ = T())
+  constexpr BaseCombinable(T init_val, T identity_)
       : identity {identity_},
         my_data {init_val}
   {}
@@ -304,7 +335,7 @@ public:
   RAJA_SUPPRESS_HD_WARN
 
   RAJA_HOST_DEVICE
-  void reset(T init_val, T identity_)
+  constexpr void reset(T init_val, T identity_)
   {
     my_data  = init_val;
     identity = identity_;
@@ -362,6 +393,8 @@ private:
  *
  * \brief  Min reducer class template.
  *
+ * This is a Reducer and the second layer of the user facing Reduction API
+ *
  ******************************************************************************
  */
 template<typename T, template<typename, typename> class Combiner>
@@ -385,6 +418,8 @@ public:
  *
  * \brief  MinLoc reducer class template.
  *
+ * This is a Reducer and the second layer of the user facing Reduction API
+ *
  **************************************************************************
  */
 template<typename T,
@@ -399,14 +434,24 @@ public:
   using reduce_type = typename Base::reduce_type;
   using Base::Base;
 
-  constexpr BaseReduceMinLoc() : Base(value_type(T(), IndexType())) {}
-
   constexpr BaseReduceMinLoc(
       T init_val,
       IndexType init_idx,
       T identity_val_         = reduce_type::identity(),
       IndexType identity_loc_ = DefaultLoc<IndexType>().value())
-      : Base(value_type(init_val, init_idx),
+      : Base(Policy::all_supported,
+             value_type(init_val, init_idx),
+             value_type(identity_val_, identity_loc_))
+  {}
+
+  constexpr BaseReduceMinLoc(
+      Policy p,
+      T init_val,
+      IndexType init_idx,
+      T identity_val_         = reduce_type::identity(),
+      IndexType identity_loc_ = DefaultLoc<IndexType>().value())
+      : Base(p,
+             value_type(init_val, init_idx),
              value_type(identity_val_, identity_loc_))
   {}
 
@@ -417,6 +462,17 @@ public:
   {
     operator T();  // automatic get() before reset
     Base::reset(value_type(init_val, init_idx),
+                value_type(identity_val_, identity_loc_));
+  }
+
+  void reset(Policy p,
+             T init_val,
+             IndexType init_idx,
+             T identity_val_         = reduce_type::identity(),
+             IndexType identity_loc_ = DefaultLoc<IndexType>().value())
+  {
+    operator T();  // automatic get() before reset
+    Base::reset(p, value_type(init_val, init_idx),
                 value_type(identity_val_, identity_loc_));
   }
 
@@ -440,6 +496,8 @@ public:
  *
  * \brief  Max reducer class template.
  *
+ * This is a Reducer and the second layer of the user facing Reduction API
+ *
  **************************************************************************
  */
 template<typename T, template<typename, typename> class Combiner>
@@ -462,6 +520,8 @@ public:
  **************************************************************************
  *
  * \brief  Sum reducer class template.
+ *
+ * This is a Reducer and the second layer of the user facing Reduction API
  *
  **************************************************************************
  */
@@ -488,6 +548,8 @@ public:
  *
  * \brief  Bitwise OR reducer class template.
  *
+ * This is a Reducer and the second layer of the user facing Reduction API
+ *
  **************************************************************************
  */
 template<typename T, template<typename, typename> class Combiner>
@@ -512,6 +574,8 @@ public:
  **************************************************************************
  *
  * \brief  Bitwise AND reducer class template.
+ *
+ * This is a Reducer and the second layer of the user facing Reduction API
  *
  **************************************************************************
  */
@@ -538,6 +602,8 @@ public:
  *
  * \brief  MaxLoc reducer class template.
  *
+ * This is a Reducer and the second layer of the user facing Reduction API
+ *
  **************************************************************************
  */
 template<typename T,
@@ -554,14 +620,24 @@ public:
   using reduce_type = typename Base::reduce_type;
   using Base::Base;
 
-  constexpr BaseReduceMaxLoc() : Base(value_type(T(), IndexType())) {}
-
   constexpr BaseReduceMaxLoc(
       T init_val,
       IndexType init_idx,
       T identity_val_         = reduce_type::identity(),
       IndexType identity_loc_ = DefaultLoc<IndexType>().value())
-      : Base(value_type(init_val, init_idx),
+      : Base(Policy::all_supported,
+             value_type(init_val, init_idx),
+             value_type(identity_val_, identity_loc_))
+  {}
+
+  constexpr BaseReduceMaxLoc(
+      Policy p,
+      T init_val,
+      IndexType init_idx,
+      T identity_val_         = reduce_type::identity(),
+      IndexType identity_loc_ = DefaultLoc<IndexType>().value())
+      : Base(p,
+             value_type(init_val, init_idx),
              value_type(identity_val_, identity_loc_))
   {}
 
@@ -572,6 +648,17 @@ public:
   {
     operator T();  // automatic get() before reset
     Base::reset(value_type(init_val, init_idx),
+                value_type(identity_val_, identity_loc_));
+  }
+
+  void reset(Policy p,
+             T init_val,
+             IndexType init_idx,
+             T identity_val_         = reduce_type::identity(),
+             IndexType identity_loc_ = DefaultLoc<IndexType>().value())
+  {
+    operator T();  // automatic get() before reset
+    Base::reset(p, value_type(init_val, init_idx),
                 value_type(identity_val_, identity_loc_));
   }
 

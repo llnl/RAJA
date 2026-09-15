@@ -29,13 +29,13 @@
 namespace RAJA
 {
 template<>
-RAJA_HOST_DEVICE RAJA_INLINE int get_max_threads(seq_thread)
+RAJA_INLINE int get_max_threads(seq_thread)
 {
   return 1;
 }
 
 template<>
-RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(seq_thread)
+RAJA_INLINE int get_thread_num(seq_thread)
 {
   return 0;
 }

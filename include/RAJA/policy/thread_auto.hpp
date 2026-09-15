@@ -52,11 +52,11 @@ using active_auto_thread = RAJA::seq_thread;
 }  // namespace detail
 
 template<typename AtomicPolicy>
-RAJA_HOST_DEVICE RAJA_INLINE int get_max_threads(AtomicPolicy);
+RAJA_INLINE int get_max_threads(AtomicPolicy);
 
 template<typename AtomicPolicy>
-RAJA_HOST_DEVICE RAJA_INLINE int get_thread_num(AtomicPolicy);
+RAJA_INLINE int get_thread_num(AtomicPolicy);
 
 }  // namespace RAJA
 
-#endif
+#endif  // header file include guard

@@ -15,12 +15,47 @@ This release contains ...
 Notable changes include:
 
   * New features / API changes:
-    * Added `RAJA::atomicGeneric` to enable user-defined atomic
-      operations implemented using a compare-and-swap loop.
 
   * Build changes/improvements:
 
   * Bug fixes/improvements:
+
+
+Version 2026.07.0 -- Release date 2026-08-04
+============================================
+
+This release contains new code features, bug fixes, and user documentation improvements. It also contains a lot of internal code restructuring that was enabled by moving to C++20, such as replacing SFINAE with Concepts. 
+
+**IMPORTANT: This RAJA release requires C++20.** 
+
+Notable changes include:
+
+  * New features / API changes:
+    * Added support for improved error handling in device code. Specifically, it allows for host callback methods to process message information generated in device code. Please see the "Messages" feature section of the RAJA User Guide for more information.
+    * Added policy enum argument to RAJA reducer and multi-reducer constructors and reset methods to allow them to optimize resource usage based on the back-end that they are actually used with when invoked. The usage syntax is described in the RAJA User Guide.
+    * Reduction types have been changed, as needed, to use the reduction identity value (zero for sum, max value for min, etc.) when default initialized (i.e., without a user-supplied initial value). **This may be a breaking behavior change** for users that relied on (incorrect/inconsistent) default initialization. **Default initialization of RAJA reductions is considered deprecated.** In the next release, users will be required to provide an initialization value for all RAJA reductions.
+    * Added generic device execution policies. These are actually aliases to pre-existing RAJA policies. They resolve automatically to the active RAJA GPU back-end without specifying the back-end explicitly. They also handle convention mismatches between CUDA/HIP thread/block dimension ordering and SYCL work-group/item dimension ordering. Please see the policy section of the RAJA User Guide for more information.
+    * Added Python-like range helpers for common loop iteration patterns. They mirror the Python "range" feature and can be used with RAJA kernel execution interfaces. Please see the RAJA User Guide for a description and examples.
+    * Added support for non-arithmetic types, generic comparison operators, and non-pointer iterators in RAJA::sort and RAJA::sort_pairs for CUDA and HIP. The sorts now use the CUB and ROCprim merge sort implementations that were unavailable previously.  
+    * Added `RAJA::atomicGeneric` to enable user-defined atomic operations implemented using a compare-and-swap loop. The `RAJA::atomicGeneric` operation can also take a predicate that is used to determine if the CAS loop can be exited early.
+    * Added `RAJA::mask` type for use with `RAJA::launch`. This is a per-team helper intended to run kernel setup within a single thread before a team sync call.
+    * Code cleanup and consistency improvements in Camp required some cosmetic changes to method signatures that may be visible to RAJA user code. For example, the Camp event `wait_for()` method now takes a reference instead of a pointer.
+    * Introduced JIT compilation with Proteus. Currently, this is only supported as a compile time configuration option. Please see the RAJA User Guide for more information.
+
+  * Build changes/improvements:
+    * C++20 is now required to build RAJA. 
+    * Updated Camp submodule to v2026.07.1 Camp release.
+    * Updated BLT submodule to v0.7.2 BLT release.
+    * Support for CUDA 13 was added. RAJA can be built with CUDA 12 or CUDA 13 versions. However, CUDA versions earlier than 12 are no longer supported due to the C++20 requirement. 
+
+  * Bug fixes/improvements:
+    * Fixed an issue in `RAJA::forall_Icount` related to the number of template parameters that are supported.
+    * Fixed MSVC compatibility issues in RAJA vectorization support.
+    * Fixed indexing/layout issue for column matrix subtraction in RAJA vectorization support.
+    * Fixed ambiguous naming issue in RAJA sort support related to C++ standard library header inclusions.
+    * Fixed potential vectorization bug caused by internal binary operator traits implementation.
+    * Fixed issues related to accumulation variable type consistency in RAJA scan support. Prior to the fix, different back-end implementations used different variable types to accumulate intermediate values. Now everything is consistent across RAJA back-ends.
+    * Fixed issue where invalid launch bounds (e.g., blocksize zero) could be passed to compiler. This causes issues in some versions of compilers for GPU code.
 
 
 Version 2025.12.2 -- Release date 2026-03-04

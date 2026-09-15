@@ -130,7 +130,7 @@ RAJA_INLINE resources::EventProxy<resources::Sycl> forall_impl(
   sycl_dim_t blockSize {BlockSize};
   sycl_dim_t gridSize = impl::getGridDim(static_cast<size_t>(len), BlockSize);
 
-  ::sycl::queue* q  = sycl_res.get_queue();
+  ::sycl::queue& q  = sycl_res.get_queue();
   LOOP_BODY* lbody  = nullptr;
   Iterator* d_begin = nullptr;
 
@@ -145,11 +145,11 @@ RAJA_INLINE resources::EventProxy<resources::Sycl> forall_impl(
     // Kernel body is nontrivially copyable, create space on device and copy to
     // Workaround until "is_device_copyable" is supported
     //
-    lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LoopBody), *q);
-    q->memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
+    lbody = (LOOP_BODY*)::sycl::malloc_device(sizeof(LoopBody), q);
+    q.memcpy(lbody, &loop_body, sizeof(LOOP_BODY)).wait();
 
-    d_begin = (Iterator*)::sycl::malloc_device(sizeof(Iterator), *q);
-    q->memcpy(d_begin, &begin, sizeof(Iterator)).wait();
+    d_begin = (Iterator*)::sycl::malloc_device(sizeof(Iterator), q);
+    q.memcpy(d_begin, &begin, sizeof(Iterator)).wait();
   }
 
   // Both the parallel_for call, combinations, and resolution are all
@@ -161,11 +161,11 @@ RAJA_INLINE resources::EventProxy<resources::Sycl> forall_impl(
       return x;
     };
 
-    ForallParam* res = ::sycl::malloc_shared<ForallParam>(1, *q);
+    ForallParam* res = ::sycl::malloc_shared<ForallParam>(1, q);
     RAJA::expt::ParamMultiplexer::parampack_init(pol, *res);
     auto reduction = ::sycl::reduction(res, f_params, combiner);
 
-    q->submit([&](::sycl::handler& h) {
+    q.submit([&](::sycl::handler& h) {
       h.parallel_for(::sycl::range<1>(len), reduction,
                      [=](::sycl::item<1> it, auto& red) {
                        ForallParam fp;
@@ -186,15 +186,15 @@ RAJA_INLINE resources::EventProxy<resources::Sycl> forall_impl(
                      });
     });
 
-    q->wait();
+    q.wait();
     RAJA::expt::ParamMultiplexer::parampack_combine(pol, f_params, *res);
-    ::sycl::free(res, *q);
+    ::sycl::free(res, q);
     RAJA::expt::ParamMultiplexer::parampack_resolve(pol, f_params);
   }
   // Note: separate branches
   else
   {
-    q->submit([&](::sycl::handler& h) {
+    q.submit([&](::sycl::handler& h) {
       h.parallel_for(::sycl::nd_range<1> {gridSize, blockSize},
                      [=](::sycl::nd_item<1> it) {
                        IndexType ii = it.get_global_id(0);
@@ -214,7 +214,7 @@ RAJA_INLINE resources::EventProxy<resources::Sycl> forall_impl(
 
     if (!Async)
     {
-      q->wait();
+      q.wait();
     }
   }
 
@@ -222,8 +222,8 @@ RAJA_INLINE resources::EventProxy<resources::Sycl> forall_impl(
   // If we had to allocate device memory, free it
   if constexpr (!is_lbody_trivially_copyable)
   {
-    ::sycl::free(lbody, *q);
-    ::sycl::free(d_begin, *q);
+    ::sycl::free(lbody, q);
+    ::sycl::free(d_begin, q);
   }
 
 
@@ -267,8 +267,8 @@ RAJA_INLINE resources::EventProxy<resources::Sycl> forall_impl(
 
   if (!Async)
   {
-    ::sycl::queue* q = r.get_queue();
-    q->wait();
+    ::sycl::queue& q = r.get_queue();
+    q.wait();
   }
 
   return resources::EventProxy<resources::Sycl>(r);

@@ -88,6 +88,18 @@ struct LaunchExecute<RAJA::seq_launch_t>
   }
 };
 
+template<>
+struct MaskExecute<seq_exec>
+{
+  template<typename LaunchContextPolicy, typename BODY>
+  static RAJA_INLINE RAJA_HOST_DEVICE void exec(
+      LaunchContextT<LaunchContextPolicy> const RAJA_UNUSED_ARG(&ctx),
+      BODY const& body)
+  {
+    body();
+  }
+};
+
 template<typename SEGMENT>
 struct LoopExecute<seq_exec, SEGMENT>
 {

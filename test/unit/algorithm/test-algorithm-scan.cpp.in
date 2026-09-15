@@ -1,0 +1,29 @@
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
+//
+// SPDX-License-Identifier: (BSD-3-Clause)
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+//
+// test/include headers
+//
+#include "RAJA_test-base.hpp"
+#include "RAJA_test-camp.hpp"
+
+//
+// Header for tests in ./tests directory
+//
+// Note: CMake adds ./tests as an include dir for these tests.
+//
+#include "test-algorithm-scan.hpp"
+
+using @SCAN_BACKEND@ScanTypes =
+  Test< camp::cartesian_product<@SCAN_BACKEND@ScanExecPolicies,
+                                @SCAN_BACKEND@ResourceList > >::Types;
+
+INSTANTIATE_TYPED_TEST_SUITE_P( @SCAN_BACKEND@Test,
+                                ScanUnitTest,
+                                @SCAN_BACKEND@ScanTypes );

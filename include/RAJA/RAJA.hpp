@@ -97,6 +97,8 @@
 #include "RAJA/policy/desul.hpp"
 #endif
 
+#include "RAJA/policy/device.hpp"
+
 #include "RAJA/index/IndexSet.hpp"
 
 //
@@ -156,6 +158,11 @@
 #include "RAJA/util/BitMask.hpp"
 
 //
+// Memory utility routines
+//
+#include "RAJA/util/memory.hpp"
+
+//
 // sort algorithms
 //
 #include "RAJA/util/sort.hpp"
@@ -182,6 +189,11 @@
 // Synchronization
 //
 #include "RAJA/pattern/synchronize.hpp"
+
+//
+// Message handler to pass messages between host and device
+//
+#include "RAJA/pattern/messages.hpp"
 
 //
 //////////////////////////////////////////////////////////////////////

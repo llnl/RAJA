@@ -56,7 +56,7 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
         }
       );
 
-      def_cuda_res.wait_for(&e);
+      def_cuda_res.wait_for(e);
     }
   );
 

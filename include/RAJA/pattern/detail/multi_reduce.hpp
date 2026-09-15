@@ -27,7 +27,8 @@
 #include "RAJA/util/types.hpp"
 #include "RAJA/util/RepeatView.hpp"
 
-
+// This defines specialization of Reducers that are the first layer of the user
+// facing Reduction API
 #define RAJA_DECLARE_MULTI_REDUCER(OP_NAME, OP, POL, DATA)                     \
   template<typename tuning, typename T>                                        \
   struct MultiReduce##OP_NAME<POL<tuning>, T>                                  \
@@ -46,6 +47,8 @@
     reference operator[](size_t bin) const { return reference(*this, bin); }   \
   };
 
+// This defines specialization of loc Reducers that are the first layer of the
+// user facing Reduction API
 #define RAJA_DECLARE_ALL_MULTI_REDUCERS(POL, DATA)                             \
   RAJA_DECLARE_MULTI_REDUCER(Sum, sum, POL, DATA)                              \
   RAJA_DECLARE_MULTI_REDUCER(Min, min, POL, DATA)                              \
@@ -73,10 +76,24 @@ struct BaseMultiReduce
       : BaseMultiReduce {RepeatView<value_type>(MultiReduceOp::identity(), 0)}
   {}
 
+  explicit BaseMultiReduce(Policy p)
+      : BaseMultiReduce {p,
+                         RepeatView<value_type>(MultiReduceOp::identity(), 0)}
+  {}
+
   explicit BaseMultiReduce(size_t num_bins,
                            value_type init_val = MultiReduceOp::identity(),
                            value_type identity = MultiReduceOp::identity())
-      : BaseMultiReduce {RepeatView<value_type>(init_val, num_bins), identity}
+      : BaseMultiReduce {Policy::all_supported,
+                         RepeatView<value_type>(init_val, num_bins), identity}
+  {}
+
+  explicit BaseMultiReduce(Policy p,
+                           size_t num_bins,
+                           value_type init_val = MultiReduceOp::identity(),
+                           value_type identity = MultiReduceOp::identity())
+      : BaseMultiReduce {p, RepeatView<value_type>(init_val, num_bins),
+                         identity}
   {}
 
   template<typename Container,
@@ -87,7 +104,19 @@ struct BaseMultiReduce
                nullptr>
   explicit BaseMultiReduce(Container const& container,
                            value_type identity = MultiReduceOp::identity())
-      : data {container, identity}
+      : BaseMultiReduce {Policy::all_supported, container, identity}
+  {}
+
+  template<typename Container,
+           concepts::enable_if_t<
+               type_traits::is_range<Container>,
+               concepts::negate<std::is_convertible<Container, size_t>>,
+               concepts::negate<std::is_base_of<BaseMultiReduce, Container>>>* =
+               nullptr>
+  explicit BaseMultiReduce(Policy p,
+                           Container const& container,
+                           value_type identity = MultiReduceOp::identity())
+      : data {p, container, identity}
   {}
 
   RAJA_SUPPRESS_HD_WARN
@@ -104,11 +133,24 @@ struct BaseMultiReduce
     reset(RepeatView<value_type>(MultiReduceOp::identity(), size()));
   }
 
+  void reset(Policy p)
+  {
+    reset(p, RepeatView<value_type>(MultiReduceOp::identity(), size()));
+  }
+
   void reset(size_t num_bins,
              value_type init_val = MultiReduceOp::identity(),
              value_type identity = MultiReduceOp::identity())
   {
     reset(RepeatView<value_type>(init_val, num_bins), identity);
+  }
+
+  void reset(Policy p,
+             size_t num_bins,
+             value_type init_val = MultiReduceOp::identity(),
+             value_type identity = MultiReduceOp::identity())
+  {
+    reset(p, RepeatView<value_type>(init_val, num_bins), identity);
   }
 
   template<typename Container,
@@ -121,6 +163,19 @@ struct BaseMultiReduce
       RAJA_UNUSED_VAR(get(bin));  // automatic get() before reset
     }
     data.reset(container, identity);
+  }
+
+  template<typename Container,
+           concepts::enable_if_t<type_traits::is_range<Container>>* = nullptr>
+  void reset(Policy p,
+             Container const& container,
+             value_type identity = MultiReduceOp::identity())
+  {
+    for (size_t bin = 0; bin < data.num_bins(); ++bin)
+    {
+      RAJA_UNUSED_VAR(get(bin));  // automatic get() before reset
+    }
+    data.reset(p, container, identity);
   }
 
   RAJA_SUPPRESS_HD_WARN

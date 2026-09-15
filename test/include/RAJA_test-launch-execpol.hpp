@@ -43,11 +43,11 @@ using OpenMP_launch_policies = camp::list<
 
 using cuda_policies = camp::list<
   RAJA::LaunchPolicy<RAJA::cuda_launch_t<true>>,
-  RAJA::LoopPolicy<RAJA::cuda_global_thread_x>>;
+  RAJA::LoopPolicy<RAJA::cuda_global_x_direct>>;
 
 using cuda_explicit_policies = camp::list<
   RAJA::LaunchPolicy<RAJA::policy::cuda::cuda_launch_explicit_t<true, 0, 0>>,
-  RAJA::LoopPolicy<RAJA::cuda_global_thread_x>>;
+  RAJA::LoopPolicy<RAJA::cuda_global_x_direct>>;
 
 using Cuda_launch_policies = camp::list<
         cuda_policies,
@@ -59,7 +59,7 @@ using Cuda_launch_policies = camp::list<
 
 using hip_policies = camp::list<
   RAJA::LaunchPolicy<RAJA::hip_launch_t<true>>,
-  RAJA::LoopPolicy<RAJA::hip_global_thread_x>>;
+  RAJA::LoopPolicy<RAJA::hip_global_x_direct>>;
 
 using Hip_launch_policies = camp::list<
       hip_policies

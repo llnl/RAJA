@@ -84,7 +84,10 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr T next_pow2(T n) noexcept
 template<typename T, std::enable_if_t<std::is_integral<T>::value>* = nullptr>
 RAJA_HOST_DEVICE RAJA_INLINE constexpr T prev_pow2(T n) noexcept
 {
-  if (n < 0) return 0;
+  if constexpr (std::is_signed_v<T>)
+  {
+    if (n < 0) return 0;
+  }
   for (size_t s = 1; s < CHAR_BIT * sizeof(T); s *= 2)
   {
     n |= n >> s;

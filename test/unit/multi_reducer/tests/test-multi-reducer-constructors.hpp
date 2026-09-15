@@ -15,6 +15,7 @@
 #define __TEST_MULTI_REDUCER_CONSTRUCTOR__
 
 #include "RAJA/internal/MemUtils_CPU.hpp"
+#include "RAJA_test-reducer-api.hpp"
 
 #include "../test-multi-reducer.hpp"
 
@@ -23,238 +24,247 @@
 #include <set>
 
 template <typename T>
-class MultiReducerBasicConstructorUnitTest : public ::testing::Test
+class MultiReducerConstructorUnitTest : public ::testing::Test
 {
 };
 
-template <typename T>
-class MultiReducerSingleInitConstructorUnitTest : public ::testing::Test
+TYPED_TEST_SUITE_P(MultiReducerConstructorUnitTest);
+
+
+template <typename MultiReducePolicy,
+          typename NumericType>
+struct TestBasicMultiReducerConstructor
 {
+  const size_t num_bins;
+
+  template < typename Api >
+  void test_core(Api api)
+  {
+    auto multi_reduce_sum =
+        api.template make<RAJA::MultiReduceSum<MultiReducePolicy, NumericType>>(
+            num_bins);
+    auto multi_reduce_min =
+        api.template make<RAJA::MultiReduceMin<MultiReducePolicy, NumericType>>(
+            num_bins);
+    auto multi_reduce_max =
+        api.template make<RAJA::MultiReduceMax<MultiReducePolicy, NumericType>>(
+            num_bins);
+
+    ASSERT_EQ(multi_reduce_sum.size(), num_bins);
+    ASSERT_EQ(multi_reduce_min.size(), num_bins);
+    ASSERT_EQ(multi_reduce_max.size(), num_bins);
+
+    for (size_t bin = 0; bin < num_bins; ++bin) {
+      ASSERT_EQ(multi_reduce_sum.get(bin), get_op_identity(multi_reduce_sum));
+      ASSERT_EQ(multi_reduce_min.get(bin), get_op_identity(multi_reduce_min));
+      ASSERT_EQ(multi_reduce_max.get(bin), get_op_identity(multi_reduce_max));
+
+      ASSERT_EQ((NumericType)multi_reduce_sum[bin].get(), get_op_identity(multi_reduce_sum));
+      ASSERT_EQ((NumericType)multi_reduce_min[bin].get(), get_op_identity(multi_reduce_min));
+      ASSERT_EQ((NumericType)multi_reduce_max[bin].get(), get_op_identity(multi_reduce_max));
+    }
+  }
+
+  template < typename Api >
+  void test_bitwise(Api api)
+  {
+    auto multi_reduce_or =
+        api.template make<RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType>>(
+            num_bins);
+    auto multi_reduce_and =
+        api.template make<RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType>>(
+            num_bins);
+
+    ASSERT_EQ(multi_reduce_or.size(), num_bins);
+    ASSERT_EQ(multi_reduce_and.size(), num_bins);
+
+    for (size_t bin = 0; bin < num_bins; ++bin) {
+      ASSERT_EQ(multi_reduce_or.get(bin), get_op_identity(multi_reduce_or));
+      ASSERT_EQ(multi_reduce_and.get(bin), get_op_identity(multi_reduce_and));
+
+      ASSERT_EQ((NumericType)multi_reduce_or[bin].get(), get_op_identity(multi_reduce_or));
+      ASSERT_EQ((NumericType)multi_reduce_and[bin].get(), get_op_identity(multi_reduce_and));
+    }
+  }
 };
 
-template <typename T>
-class MultiReducerContainerInitConstructorUnitTest : public ::testing::Test
+template <typename MultiReducePolicy,
+          typename NumericType>
+struct TestMultiReducerSingleInitConstructor
 {
+  const size_t num_bins;
+  const NumericType initVal;
+
+  template < typename Api >
+  void test_core(Api api)
+  {
+    auto multi_reduce_sum =
+        api.template make<RAJA::MultiReduceSum<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
+    auto multi_reduce_min =
+        api.template make<RAJA::MultiReduceMin<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
+    auto multi_reduce_max =
+        api.template make<RAJA::MultiReduceMax<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
+
+    ASSERT_EQ(multi_reduce_sum.size(), num_bins);
+    ASSERT_EQ(multi_reduce_min.size(), num_bins);
+    ASSERT_EQ(multi_reduce_max.size(), num_bins);
+
+    for (size_t bin = 0; bin < num_bins; ++bin) {
+      ASSERT_EQ(multi_reduce_sum.get(bin), initVal);
+      ASSERT_EQ(multi_reduce_min.get(bin), initVal);
+      ASSERT_EQ(multi_reduce_max.get(bin), initVal);
+
+      ASSERT_EQ((NumericType)multi_reduce_sum[bin].get(), initVal);
+      ASSERT_EQ((NumericType)multi_reduce_min[bin].get(), initVal);
+      ASSERT_EQ((NumericType)multi_reduce_max[bin].get(), initVal);
+    }
+  }
+
+  template < typename Api >
+  void test_bitwise(Api api)
+  {
+    auto multi_reduce_or =
+        api.template make<RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
+    auto multi_reduce_and =
+        api.template make<RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType>>(
+            num_bins, initVal);
+
+    ASSERT_EQ(multi_reduce_or.size(), num_bins);
+    ASSERT_EQ(multi_reduce_and.size(), num_bins);
+
+    for (size_t bin = 0; bin < num_bins; ++bin) {
+      ASSERT_EQ(multi_reduce_or.get(bin), initVal);
+      ASSERT_EQ(multi_reduce_and.get(bin), initVal);
+
+      ASSERT_EQ((NumericType)multi_reduce_or[bin].get(), initVal);
+      ASSERT_EQ((NumericType)multi_reduce_and[bin].get(), initVal);
+    }
+  }
 };
-
-TYPED_TEST_SUITE_P(MultiReducerBasicConstructorUnitTest);
-TYPED_TEST_SUITE_P(MultiReducerSingleInitConstructorUnitTest);
-TYPED_TEST_SUITE_P(MultiReducerContainerInitConstructorUnitTest);
-
-
-template <typename MultiReducePolicy,
-          typename NumericType>
-void testBasicMultiReducerConstructorRegular(size_t num_bins)
-{
-  RAJA::MultiReduceSum<MultiReducePolicy, NumericType> multi_reduce_sum(num_bins);
-  RAJA::MultiReduceMin<MultiReducePolicy, NumericType> multi_reduce_min(num_bins);
-  RAJA::MultiReduceMax<MultiReducePolicy, NumericType> multi_reduce_max(num_bins);
-
-  ASSERT_EQ(multi_reduce_sum.size(), num_bins);
-  ASSERT_EQ(multi_reduce_min.size(), num_bins);
-  ASSERT_EQ(multi_reduce_max.size(), num_bins);
-
-  for (size_t bin = 0; bin < num_bins; ++bin) {
-    ASSERT_EQ(multi_reduce_sum.get(bin), get_op_identity(multi_reduce_sum));
-    ASSERT_EQ(multi_reduce_min.get(bin), get_op_identity(multi_reduce_min));
-    ASSERT_EQ(multi_reduce_max.get(bin), get_op_identity(multi_reduce_max));
-
-    ASSERT_EQ((NumericType)multi_reduce_sum[bin].get(), get_op_identity(multi_reduce_sum));
-    ASSERT_EQ((NumericType)multi_reduce_min[bin].get(), get_op_identity(multi_reduce_min));
-    ASSERT_EQ((NumericType)multi_reduce_max[bin].get(), get_op_identity(multi_reduce_max));
-  }
-}
-
-template <typename MultiReducePolicy,
-          typename NumericType>
-void testBasicMultiReducerConstructorBitwise(size_t num_bins)
-{
-  RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType> multi_reduce_or(num_bins);
-  RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType> multi_reduce_and(num_bins);
-
-  ASSERT_EQ(multi_reduce_or.size(), num_bins);
-  ASSERT_EQ(multi_reduce_and.size(), num_bins);
-
-  for (size_t bin = 0; bin < num_bins; ++bin) {
-    ASSERT_EQ(multi_reduce_or.get(bin), get_op_identity(multi_reduce_or));
-    ASSERT_EQ(multi_reduce_and.get(bin), get_op_identity(multi_reduce_and));
-
-    ASSERT_EQ((NumericType)multi_reduce_or[bin].get(), get_op_identity(multi_reduce_or));
-    ASSERT_EQ((NumericType)multi_reduce_and[bin].get(), get_op_identity(multi_reduce_and));
-  }
-}
-
-template <typename MultiReducePolicy,
-          typename NumericType,
-          std::enable_if_t<std::is_integral<NumericType>::value>* = nullptr>
-void testBasicMultiReducerConstructor(size_t num_bins)
-{
-  testBasicMultiReducerConstructorRegular< MultiReducePolicy, NumericType >(num_bins);
-  testBasicMultiReducerConstructorBitwise< MultiReducePolicy, NumericType >(num_bins);
-}
-///
-template <typename MultiReducePolicy,
-          typename NumericType,
-          std::enable_if_t<!std::is_integral<NumericType>::value>* = nullptr>
-void testBasicMultiReducerConstructor(size_t num_bins)
-{
-  testBasicMultiReducerConstructorRegular< MultiReducePolicy, NumericType >(num_bins);
-}
-
-TYPED_TEST_P(MultiReducerBasicConstructorUnitTest, MultiReducerConstructor)
-{
-  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
-  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
-
-  testBasicMultiReducerConstructor< MultiReducePolicy, NumericType >(0);
-  testBasicMultiReducerConstructor< MultiReducePolicy, NumericType >(1);
-  testBasicMultiReducerConstructor< MultiReducePolicy, NumericType >(2);
-  testBasicMultiReducerConstructor< MultiReducePolicy, NumericType >(10);
-}
-
-
-template <typename MultiReducePolicy,
-          typename NumericType>
-void testMultiReducerSingleInitConstructorRegular(size_t num_bins, NumericType initVal)
-{
-  RAJA::MultiReduceSum<MultiReducePolicy, NumericType> multi_reduce_sum(num_bins, initVal);
-  RAJA::MultiReduceMin<MultiReducePolicy, NumericType> multi_reduce_min(num_bins, initVal);
-  RAJA::MultiReduceMax<MultiReducePolicy, NumericType> multi_reduce_max(num_bins, initVal);
-
-  ASSERT_EQ(multi_reduce_sum.size(), num_bins);
-  ASSERT_EQ(multi_reduce_min.size(), num_bins);
-  ASSERT_EQ(multi_reduce_max.size(), num_bins);
-
-  for (size_t bin = 0; bin < num_bins; ++bin) {
-    ASSERT_EQ(multi_reduce_sum.get(bin), initVal);
-    ASSERT_EQ(multi_reduce_min.get(bin), initVal);
-    ASSERT_EQ(multi_reduce_max.get(bin), initVal);
-
-    ASSERT_EQ((NumericType)multi_reduce_sum[bin].get(), initVal);
-    ASSERT_EQ((NumericType)multi_reduce_min[bin].get(), initVal);
-    ASSERT_EQ((NumericType)multi_reduce_max[bin].get(), initVal);
-  }
-}
-
-template <typename MultiReducePolicy,
-          typename NumericType>
-void testMultiReducerSingleInitConstructorBitwise(size_t num_bins, NumericType initVal)
-{
-  RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType> multi_reduce_or(num_bins, initVal);
-  RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType> multi_reduce_and(num_bins, initVal);
-
-  ASSERT_EQ(multi_reduce_or.size(), num_bins);
-  ASSERT_EQ(multi_reduce_and.size(), num_bins);
-
-  for (size_t bin = 0; bin < num_bins; ++bin) {
-    ASSERT_EQ(multi_reduce_or.get(bin), initVal);
-    ASSERT_EQ(multi_reduce_and.get(bin), initVal);
-
-    ASSERT_EQ((NumericType)multi_reduce_or[bin].get(), initVal);
-    ASSERT_EQ((NumericType)multi_reduce_and[bin].get(), initVal);
-  }
-}
-
-template <typename MultiReducePolicy,
-          typename NumericType,
-          std::enable_if_t<std::is_integral<NumericType>::value>* = nullptr >
-void testMultiReducerSingleInitConstructor(size_t num_bins, NumericType initVal)
-{
-  testMultiReducerSingleInitConstructorRegular< MultiReducePolicy, NumericType >(num_bins, initVal);
-  testMultiReducerSingleInitConstructorBitwise< MultiReducePolicy, NumericType >(num_bins, initVal);
-}
-///
-template <typename MultiReducePolicy,
-          typename NumericType,
-          std::enable_if_t<!std::is_integral<NumericType>::value>* = nullptr >
-void testMultiReducerSingleInitConstructor(size_t num_bins, NumericType initVal)
-{
-  testMultiReducerSingleInitConstructorRegular< MultiReducePolicy, NumericType >(num_bins, initVal);
-}
-
-TYPED_TEST_P(MultiReducerSingleInitConstructorUnitTest, MultiReducerConstructor)
-{
-  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
-  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
-
-  testMultiReducerSingleInitConstructor< MultiReducePolicy, NumericType >(0, NumericType(2));
-  testMultiReducerSingleInitConstructor< MultiReducePolicy, NumericType >(1, NumericType(4));
-  testMultiReducerSingleInitConstructor< MultiReducePolicy, NumericType >(2, NumericType(0));
-  testMultiReducerSingleInitConstructor< MultiReducePolicy, NumericType >(10, NumericType(9));
-}
-
 
 template <typename MultiReducePolicy,
           typename NumericType,
           typename Container>
-void testMultiReducerContainerInitConstructorRegular(Container const& container)
+struct TestMultiReducerContainerInitConstructor
 {
-  RAJA::MultiReduceSum<MultiReducePolicy, NumericType> multi_reduce_sum(container);
-  RAJA::MultiReduceMin<MultiReducePolicy, NumericType> multi_reduce_min(container);
-  RAJA::MultiReduceMax<MultiReducePolicy, NumericType> multi_reduce_max(container);
+  Container const& container;
 
-  ASSERT_EQ(multi_reduce_sum.size(), container.size());
-  ASSERT_EQ(multi_reduce_min.size(), container.size());
-  ASSERT_EQ(multi_reduce_max.size(), container.size());
+  template < typename Api >
+  void test_core(Api api)
+  {
+    auto multi_reduce_sum =
+        api.template make<RAJA::MultiReduceSum<MultiReducePolicy, NumericType>>(
+            container);
+    auto multi_reduce_min =
+        api.template make<RAJA::MultiReduceMin<MultiReducePolicy, NumericType>>(
+            container);
+    auto multi_reduce_max =
+        api.template make<RAJA::MultiReduceMax<MultiReducePolicy, NumericType>>(
+            container);
 
-  size_t bin = 0;
-  for (NumericType val : container) {
-    ASSERT_EQ(multi_reduce_sum.get(bin), val);
-    ASSERT_EQ(multi_reduce_min.get(bin), val);
-    ASSERT_EQ(multi_reduce_max.get(bin), val);
+    ASSERT_EQ(multi_reduce_sum.size(), container.size());
+    ASSERT_EQ(multi_reduce_min.size(), container.size());
+    ASSERT_EQ(multi_reduce_max.size(), container.size());
 
-    ASSERT_EQ((NumericType)multi_reduce_sum[bin].get(), val);
-    ASSERT_EQ((NumericType)multi_reduce_min[bin].get(), val);
-    ASSERT_EQ((NumericType)multi_reduce_max[bin].get(), val);
-    ++bin;
+    size_t bin = 0;
+    for (NumericType val : container) {
+      ASSERT_EQ(multi_reduce_sum.get(bin), val);
+      ASSERT_EQ(multi_reduce_min.get(bin), val);
+      ASSERT_EQ(multi_reduce_max.get(bin), val);
+
+      ASSERT_EQ((NumericType)multi_reduce_sum[bin].get(), val);
+      ASSERT_EQ((NumericType)multi_reduce_min[bin].get(), val);
+      ASSERT_EQ((NumericType)multi_reduce_max[bin].get(), val);
+      ++bin;
+    }
   }
-}
 
-template <typename MultiReducePolicy,
-          typename NumericType,
-          typename Container>
-void testMultiReducerContainerInitConstructorBitwise(Container const& container)
-{
-  RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType> multi_reduce_and(container);
-  RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType> multi_reduce_or(container);
+  template < typename Api >
+  void test_bitwise(Api api)
+  {
+    auto multi_reduce_and =
+        api.template make<RAJA::MultiReduceBitAnd<MultiReducePolicy, NumericType>>(
+            container);
+    auto multi_reduce_or =
+        api.template make<RAJA::MultiReduceBitOr<MultiReducePolicy, NumericType>>(
+            container);
 
-  ASSERT_EQ(multi_reduce_and.size(), container.size());
-  ASSERT_EQ(multi_reduce_or.size(), container.size());
+    ASSERT_EQ(multi_reduce_and.size(), container.size());
+    ASSERT_EQ(multi_reduce_or.size(), container.size());
 
-  size_t bin = 0;
-  for (NumericType val : container) {
-    ASSERT_EQ(multi_reduce_and.get(bin), val);
-    ASSERT_EQ(multi_reduce_or.get(bin), val);
+    size_t bin = 0;
+    for (NumericType val : container) {
+      ASSERT_EQ(multi_reduce_and.get(bin), val);
+      ASSERT_EQ(multi_reduce_or.get(bin), val);
 
-    ASSERT_EQ((NumericType)multi_reduce_and[bin].get(), val);
-    ASSERT_EQ((NumericType)multi_reduce_or[bin].get(), val);
-    ++bin;
+      ASSERT_EQ((NumericType)multi_reduce_and[bin].get(), val);
+      ASSERT_EQ((NumericType)multi_reduce_or[bin].get(), val);
+      ++bin;
+    }
   }
-}
+};
 
-template <typename MultiReducePolicy,
-          typename NumericType,
-          typename Container,
-          std::enable_if_t<std::is_integral<NumericType>::value>* = nullptr>
-void testMultiReducerContainerInitConstructor(Container const& container)
-{
-  testMultiReducerContainerInitConstructorRegular< MultiReducePolicy, NumericType >(container);
-  testMultiReducerContainerInitConstructorBitwise< MultiReducePolicy, NumericType >(container);
-}
-///
-template <typename MultiReducePolicy,
-          typename NumericType,
-          typename Container,
-          std::enable_if_t<!std::is_integral<NumericType>::value>* = nullptr>
-void testMultiReducerContainerInitConstructor(Container const& container)
-{
-  testMultiReducerContainerInitConstructorRegular< MultiReducePolicy, NumericType >(container);
-}
 
-TYPED_TEST_P(MultiReducerContainerInitConstructorUnitTest, MultiReducerConstructor)
+TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerBasicConstructor)
 {
   using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
   using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
+  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value>> runtime_api{};
+
+  auto tester = [](size_t num_bins)
+  {
+    TestBasicMultiReducerConstructor< MultiReducePolicy, NumericType > test{num_bins};
+
+    test.test_core(legacy_api);
+    test.test_core(runtime_api);
+    if constexpr (std::is_integral_v<NumericType>) {
+      test.test_bitwise(legacy_api);
+      test.test_bitwise(runtime_api);
+    }
+  };
+
+  tester(0);
+  tester(1);
+  tester(2);
+  tester(10);
+}
+
+TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerSingleInitConstructor)
+{
+  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
+  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
+  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value>> runtime_api{};
+
+  auto tester = [](size_t num_bins, NumericType initVal)
+  {
+    TestMultiReducerSingleInitConstructor< MultiReducePolicy, NumericType > test{num_bins, initVal};
+
+    test.test_core(legacy_api);
+    test.test_core(runtime_api);
+    if constexpr (std::is_integral_v<NumericType>) {
+      test.test_bitwise(legacy_api);
+      test.test_bitwise(runtime_api);
+    }
+  };
+
+  tester(0, NumericType(2));
+  tester(1, NumericType(4));
+  tester(2, NumericType(0));
+  tester(10, NumericType(9));
+}
+
+TYPED_TEST_P(MultiReducerConstructorUnitTest, MultiReducerContainerInitConstructor)
+{
+  using MultiReducePolicy = typename camp::at<TypeParam, camp::num<0>>::type;
+  using NumericType = typename camp::at<TypeParam, camp::num<1>>::type;
+  static constexpr ReducerApi<RAJA::PolicyList<>> legacy_api{};
+  static constexpr ReducerApi<RAJA::PolicyList<RAJA::policy_of<MultiReducePolicy>::value>> runtime_api{};
 
   std::vector<NumericType> c0(0);
   std::vector<NumericType> c1(1, 3);
@@ -265,20 +275,29 @@ TYPED_TEST_P(MultiReducerContainerInitConstructorUnitTest, MultiReducerConstruct
   for (size_t bin = 0; bin < size_t(10); ++bin) {
     c10.emplace_front(NumericType(bin));
   }
-  testMultiReducerContainerInitConstructor< MultiReducePolicy, NumericType >(c0);
-  testMultiReducerContainerInitConstructor< MultiReducePolicy, NumericType >(c1);
-  testMultiReducerContainerInitConstructor< MultiReducePolicy, NumericType >(c2);
-  testMultiReducerContainerInitConstructor< MultiReducePolicy, NumericType >(c10);
+
+  auto tester = [&](auto const& c)
+  {
+    TestMultiReducerContainerInitConstructor< MultiReducePolicy, NumericType, std::decay_t<decltype(c)> > test{c};
+
+    test.test_core(legacy_api);
+    test.test_core(runtime_api);
+    if constexpr (std::is_integral_v<NumericType>) {
+      test.test_bitwise(legacy_api);
+      test.test_bitwise(runtime_api);
+    }
+  };
+
+  tester(c0);
+  tester(c1);
+  tester(c2);
+  tester(c10);
 }
 
 
-REGISTER_TYPED_TEST_SUITE_P(MultiReducerBasicConstructorUnitTest,
-                            MultiReducerConstructor);
-
-REGISTER_TYPED_TEST_SUITE_P(MultiReducerSingleInitConstructorUnitTest,
-                            MultiReducerConstructor);
-
-REGISTER_TYPED_TEST_SUITE_P(MultiReducerContainerInitConstructorUnitTest,
-                            MultiReducerConstructor);
+REGISTER_TYPED_TEST_SUITE_P(MultiReducerConstructorUnitTest,
+                            MultiReducerBasicConstructor,
+                            MultiReducerSingleInitConstructor,
+                            MultiReducerContainerInitConstructor);
 
 #endif  //__TEST_MULTI_REDUCER_CONSTRUCTOR__

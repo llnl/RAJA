@@ -28,6 +28,7 @@
 
 namespace RAJA
 {
+
 /*!
  * \file
  * Thread operation functions in the namespace RAJA::thread
@@ -74,7 +75,7 @@ namespace RAJA
  * @return Maximum number of threads
  */
 template<typename Policy>
-RAJA_INLINE RAJA_HOST_DEVICE int get_max_threads()
+RAJA_INLINE int get_max_threads()
 {
   return RAJA::get_max_threads(Policy {});
 }
@@ -87,7 +88,7 @@ RAJA_INLINE RAJA_HOST_DEVICE int get_max_threads()
  * @return Current thread number
  */
 template<typename Policy>
-RAJA_INLINE RAJA_HOST_DEVICE int get_thread_num()
+RAJA_INLINE int get_thread_num()
 {
   return RAJA::get_thread_num(Policy {});
 }

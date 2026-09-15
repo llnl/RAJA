@@ -22,6 +22,7 @@
 
 #include "RAJA/config.hpp"
 
+#include <concepts>
 #include <utility>
 
 #include "RAJA/policy/atomic_auto.hpp"
@@ -301,6 +302,28 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(T* acc, Operation&& operation)
 {
   return RAJA::atomicGeneric(Policy {}, acc,
                              std::forward<Operation>(operation));
+}
+
+/*!
+ * @brief Generic atomic operation implemented using a CAS loop,
+ *        with optional early exit.
+ * @param acc Pointer to the location to update atomically.
+ * @param operation Callable used to compute the candidate new value
+ *                  from the current value.
+ * @param stop Predicate that returns true when no further update is needed.
+ * @return The old value observed before the successful update or early exit.
+ */
+RAJA_SUPPRESS_HD_WARN
+template<typename Policy,
+         typename T,
+         typename Operation,
+         std::predicate<T> StopPredicate>
+RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(T* acc,
+                                             Operation&& operation,
+                                             StopPredicate&& stop)
+{
+  return RAJA::atomicGeneric(Policy {}, acc, std::forward<Operation>(operation),
+                             std::forward<StopPredicate>(stop));
 }
 
 /*!

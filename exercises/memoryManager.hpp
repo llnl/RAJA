@@ -77,8 +77,8 @@ void deallocate(T *&ptr)
 #elif defined(RAJA_ENABLE_HIP)
     CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, (void **)&ptr, sizeof(T) * size);
 #elif defined(RAJA_ENABLE_SYCL)
-      auto qu = sycl_res->get<camp::resources::Sycl>().get_queue();
-      ptr = ::sycl::malloc_device<T>(size, *qu);
+      auto& qu = sycl_res->get<camp::resources::Sycl>().get_queue();
+      ptr = ::sycl::malloc_device<T>(size, qu);
 #endif
     return ptr;
   }

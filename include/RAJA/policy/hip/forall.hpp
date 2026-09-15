@@ -363,6 +363,13 @@ struct ForallDimensionCalculator<
 //////////////////////////////////////////////////////////////////////
 //
 
+/*
+ * __launch_bounds__ block size constraint does not change the
+ * intended behavior because the requires > 0 constraint prevents the
+ * overload from being selected for zero. It only ensures that NVCC or
+ * Clang CUDA cannot encounter an invalid attribute argument of zero while
+ * substituting or processing a discarded candidate.
+ */
 
 template<typename EXEC_POL,
          typename Iterator,
@@ -372,7 +379,9 @@ template<typename EXEC_POL,
          typename IterationGetter = typename EXEC_POL::IterationGetter>
   requires concepts::DirectBasePolicy<EXEC_POL> &&
            (IterationGetter::block_size > 0)
-__launch_bounds__(IterationGetter::block_size, 1) __global__
+__launch_bounds__(IterationGetter::block_size > 0 ? IterationGetter::block_size
+                                                  : 1,
+                  1) __global__
     RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(const LOOP_BODY loop_body,
                                                      const Iterator idx,
                                                      const IndexType length,
@@ -426,7 +435,9 @@ template<typename EXEC_POL,
   requires concepts::StridedLoopPolicy<EXEC_POL> &&
            concepts::UnsizedLoopPolicy<EXEC_POL> &&
            (IterationGetter::block_size > 0)
-__launch_bounds__(IterationGetter::block_size, 1) __global__
+__launch_bounds__(IterationGetter::block_size > 0 ? IterationGetter::block_size
+                                                  : 1,
+                  1) __global__
     RAJA_JIT_COMPILE_ARGS(3) void forallp_hip_kernel(const LOOP_BODY loop_body,
                                                      const Iterator idx,
                                                      const IndexType length,

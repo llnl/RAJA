@@ -63,7 +63,7 @@ template <typename ExecPolicy,
 void ForallAtomicBasicTestImpl( IdxType seglimit )
 {
   // initialize an array
-  const int len = 13;
+  const int len = 14;
 
   camp::resources::Resource work_res{WorkingRes::get_default()};
 
@@ -94,6 +94,7 @@ void ForallAtomicBasicTestImpl( IdxType seglimit )
   test_array[10] = static_cast<T>(0);
   test_array[11] = static_cast<T>(0);
   test_array[12] = static_cast<T>(1);
+  test_array[13] = static_cast<T>(0);
 
   work_res.memcpy(work_array, test_array, sizeof(T) * len);
 
@@ -126,6 +127,16 @@ void ForallAtomicBasicTestImpl( IdxType seglimit )
                                         }
                                         return old;
                                       });
+
+    // Exercise the stop-aware atomicGeneric overload with a saturating update.
+    constexpr T stop_value = static_cast<T>(7);
+    RAJA::atomicGeneric<AtomicPolicy>(work_array + 13,
+                                      [] (T old) {
+                                        return old + static_cast<T>(1);
+                                      },
+                                      [=] (T current) {
+                                        return current >= stop_value;
+                                      });
   });
 
   work_res.memcpy( check_array, work_array, sizeof(T) * len );
@@ -146,6 +157,7 @@ void ForallAtomicBasicTestImpl( IdxType seglimit )
   EXPECT_EQ(static_cast<T>(4), check_array[10]);
   EXPECT_EQ(static_cast<T>(13), check_array[11]);
   EXPECT_EQ(static_cast<T>(3628800), check_array[12]);
+  EXPECT_EQ(static_cast<T>(7), check_array[13]);
 
   deallocateForallTestData<T>(work_res,
                               work_array,

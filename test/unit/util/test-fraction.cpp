@@ -32,7 +32,7 @@ void testFractionMultiplyTypesValues()
             IntegerType(double(numerator) / double(denominator) * double(101)));
 
   // Test where naive algorithm causes overflow, when within precision of double
-  if /*constexpr*/ (sizeof(IntegerType) < sizeof(double)) {
+  if constexpr (sizeof(IntegerType) < sizeof(double)) {
 
     static constexpr IntegerType max = std::numeric_limits<IntegerType>::max();
     static constexpr IntegerType val = (numerator > denominator) ?

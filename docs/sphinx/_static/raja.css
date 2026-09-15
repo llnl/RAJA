@@ -1,0 +1,8 @@
+/* Use the available browser width for wide reference tables. */
+.wy-nav-content {
+  max-width: none;
+}
+
+.rst-content table.docutils {
+  width: 100%;
+}

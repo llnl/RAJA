@@ -45,19 +45,33 @@ namespace RAJA
 namespace detail
 {
 template<typename T, typename Reduce>
-class ReduceOMP
+class ReduceOMP  // This is a Combinable and is the first layer of that
+                 // implementation detail used in Reducers
     : public reduce::detail::BaseCombinable<T, Reduce, ReduceOMP<T, Reduce>>
 {
   using Base = reduce::detail::BaseCombinable<T, Reduce, ReduceOMP>;
 
 public:
   using Base::Base;
-  //! prohibit compiler-generated default ctor
-  ReduceOMP() = delete;
+  using Base::reset;
+
+  ReduceOMP(Policy p, T init_val, T identity_) : Base(init_val, identity_)
+  {
+    policy_matches_or_throw(
+        "OpenMPReduce", reduction_supported_policies_t<Policy::openmp> {}, p);
+  }
+
+  void reset(Policy p, T init_val, T identity_)
+  {
+    policy_matches_or_throw("OpenMPReduce::reset",
+                            reduction_supported_policies_t<Policy::openmp> {},
+                            p);
+    Base::reset(init_val, identity_);
+  }
 
   ~ReduceOMP()
   {
-    if (Base::parent)
+    if (Base::parent && Base::my_data != Base::identity)
     {
 #pragma omp critical(ompReduceCritical)
       Reduce()(Base::parent->local(), Base::my_data);
@@ -79,7 +93,8 @@ RAJA_DECLARE_ALL_REDUCERS(omp_reduce, detail::ReduceOMP)
 namespace detail
 {
 template<typename T, typename Reduce>
-class ReduceOMPOrdered
+class ReduceOMPOrdered  // This is a Combinable and is the first layer of that
+                        // implementation detail used in Reducers
     : public reduce::detail::
           BaseCombinable<T, Reduce, ReduceOMPOrdered<T, Reduce>>
 {
@@ -87,19 +102,34 @@ class ReduceOMPOrdered
   std::shared_ptr<std::vector<T>> data;
 
 public:
-  ReduceOMPOrdered() { reset(T(), T()); }
-
-  //! constructor requires a default value for the reducer
-  explicit ReduceOMPOrdered(T init_val, T identity_)
+  ReduceOMPOrdered(Policy p, T init_val, T identity_)
+      : ReduceOMPOrdered(init_val, identity_)
   {
-    reset(init_val, identity_);
+    policy_matches_or_throw("OpenMPReduceOrdered",
+                            reduction_supported_policies_t<Policy::openmp> {},
+                            p);
   }
+
+  ReduceOMPOrdered(T init_val, T identity_)
+      : Base(init_val, identity_),
+        data(std::make_shared<std::vector<T>>(omp_get_max_threads(), identity_))
+  {}
 
   void reset(T init_val, T identity_)
   {
     Base::reset(init_val, identity_);
-    data = std::shared_ptr<std::vector<T>>(
-        std::make_shared<std::vector<T>>(omp_get_max_threads(), identity_));
+    for (T& data_i : *data)
+    {
+      data_i = Base::identity;
+    }
+  }
+
+  void reset(Policy p, T init_val, T identity_)
+  {
+    policy_matches_or_throw("OpenMPReduceOrdered::reset",
+                            reduction_supported_policies_t<Policy::openmp> {},
+                            p);
+    reset(init_val, identity_);
   }
 
   ~ReduceOMPOrdered()
@@ -117,9 +147,9 @@ public:
     }
 
     T res = Base::identity;
-    for (size_t i = 0; i < data->size(); ++i)
+    for (T const& data_i : *data)
     {
-      Reduce {}(res, (*data)[i]);
+      Reduce {}(res, data_i);
     }
     return res;
   }

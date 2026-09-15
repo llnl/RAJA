@@ -28,14 +28,7 @@
 #include <type_traits>
 #include <utility>
 
-#if __CUDA__ARCH__ >= 600 && __CUDACC_VER_MAJOR__ >= 11 &&                     \
-    __CUDACC_VER_MINOR__ >= 6
-#define RAJA_ENABLE_CUDA_ATOMIC_REF
-#endif
-
-#if defined(RAJA_ENABLE_CUDA_ATOMIC_REF)
 #include <cuda/atomic>
-#endif
 
 #include "camp/list.hpp"
 
@@ -181,51 +174,24 @@ RAJA_INLINE __device__ T cuda_atomicExchange(T* acc, T value)
 }
 
 /*!
- * Atomic load and store
+ * Atomic load
  */
-#if defined(RAJA_ENABLE_CUDA_ATOMIC_REF)
-
 template<typename T>
 RAJA_INLINE __device__ T cuda_atomicLoad(T* acc)
 {
-  return cuda::atomic_ref<T, cuda::thread_scope_device>(*acc).load(
-      cuda::memory_order_relaxed {});
+  return ::cuda::atomic_ref<T, ::cuda::thread_scope_device>(*acc).load(
+      ::cuda::memory_order_relaxed);
 }
 
-template<typename T>
-RAJA_INLINE __device__ void cuda_atomicStore(T* acc, T value)
-{
-  cuda::atomic_ref<T, cuda::thread_scope_device>(*acc).store(
-      value, cuda::memory_order_relaxed {});
-}
-
-#else
-
-template<typename T,
-         std::enable_if_t<cuda_useBuiltinCommon<T>::value, bool> = true>
-RAJA_INLINE __device__ T cuda_atomicLoad(T* acc)
-{
-  return cuda_atomicOr(acc, static_cast<T>(0));
-}
-
-template<typename T,
-         std::enable_if_t<cuda_useReinterpretCommon<T>::value, bool> = true>
-RAJA_INLINE __device__ T cuda_atomicLoad(T* acc)
-{
-  using R = cuda_useReinterpretCommon_t<T>;
-
-  return RAJA::util::reinterp_A_as_B<R, T>(
-      cuda_atomicLoad(reinterpret_cast<R*>(acc)));
-}
-
+/*!
+ * Atomic store
+ */
 template<typename T>
 RAJA_INLINE __device__ void cuda_atomicStore(T* acc, T value)
 {
-  cuda_atomicExchange(acc, value);
+  ::cuda::atomic_ref<T, ::cuda::thread_scope_device>(*acc).store(
+      value, ::cuda::memory_order_relaxed);
 }
-
-#endif
-
 
 /*!
  * Atomic compare and swap
@@ -848,6 +814,26 @@ RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(cuda_atomic_explicit<host_policy>,
 #else
   return RAJA::atomicGeneric(host_policy {}, acc,
                              std::forward<Operation>(operation));
+#endif
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename T,
+         typename Operation,
+         std::predicate<T> StopPredicate,
+         typename host_policy>
+RAJA_INLINE RAJA_HOST_DEVICE T atomicGeneric(cuda_atomic_explicit<host_policy>,
+                                             T* acc,
+                                             Operation&& operation,
+                                             StopPredicate&& stop)
+{
+#ifdef __CUDA_ARCH__
+  return detail::cuda_atomicCAS_loop(acc, std::forward<Operation>(operation),
+                                     std::forward<StopPredicate>(stop));
+#else
+  return RAJA::atomicGeneric(host_policy {}, acc,
+                             std::forward<Operation>(operation),
+                             std::forward<StopPredicate>(stop));
 #endif
 }
 

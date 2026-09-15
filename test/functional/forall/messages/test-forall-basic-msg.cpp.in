@@ -1,0 +1,55 @@
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
+//
+// SPDX-License-Identifier: (BSD-3-Clause)
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+//
+// test/include headers
+//
+#include "RAJA_test-base.hpp"
+#include "RAJA_test-camp.hpp"
+#include "RAJA_test-index-types.hpp"
+
+#include "RAJA_test-forall-data.hpp"
+#include "RAJA_test-forall-execpol.hpp"
+
+
+//
+// Header for tests in ./tests directory
+//
+// Note: CMake adds ./tests as an include dir for these tests.
+//
+#include "test-forall-basic-msg.hpp"
+
+//
+// Data types for core reduction basic tests
+//
+using CoreMsgDataTypeList = camp::list< int,
+                                        float,
+                                        double >;
+
+//
+// These tests exercise only one index type. We parameterize here to 
+// make it easier to expand types in the future if needed.
+//
+using TestIdxTypeList = camp::list< RAJA::Index_type >;
+
+//
+// Cartesian product of types used in parameterized tests
+//
+using @BACKEND@ForallMsgBasicTypes =
+  Test< camp::cartesian_product<TestIdxTypeList,
+                                @DATATYPES@,
+                                @BACKEND@ResourceList,
+                                @BACKEND@ForallMsgExecPols>>::Types;
+
+//
+// Instantiate parameterized test
+//
+INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@,
+                               ForallMsgBasicTest,
+                               @BACKEND@ForallMsgBasicTypes);

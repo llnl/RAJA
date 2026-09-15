@@ -15,18 +15,39 @@
 
 #include "RAJA_unit-test-types.hpp"
 
+#include <concepts>
+#include <utility>
+
+RAJA_INDEX_VALUE(RangeStrongIndex, "RangeStrongIndex");
+RAJA_INDEX_VALUE(AnotherRangeStrongIndex, "AnotherRangeStrongIndex");
+
+template<typename... Args>
+concept RangeCallable = requires {
+  RAJA::range(std::declval<Args>()...);
+};
+
+template<typename StorageT, typename... Args>
+concept TypedRangeCallable = requires {
+  RAJA::range<StorageT>(std::declval<Args>()...);
+};
+
+template<typename... Args>
+concept MakeStridedRangeCallable = requires {
+  RAJA::make_strided_range(std::declval<Args>()...);
+};
+
 template<typename T>
 class RangeSegmentUnitTest : public ::testing::Test {};
 
 TYPED_TEST_SUITE(RangeSegmentUnitTest, UnitIndexTypes);
 
 
-template< typename T, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
+template<std::unsigned_integral T>
 void NegativeRangeSegConstructorsTest()
 {
 }
 
-template< typename T, typename std::enable_if<std::is_signed<T>::value>::type* = nullptr>
+template<std::signed_integral T>
 void NegativeRangeSegConstructorsTest()
 {
   RAJA::TypedRangeSegment<T> r1(-10, 7);
@@ -76,12 +97,12 @@ TYPED_TEST(RangeSegmentUnitTest, Swaps)
   ASSERT_EQ(r2, r3);
 }
 
-template< typename T, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
+template<std::unsigned_integral T>
 void NegativeRangeSegIteratorsTest()
 {
 }
 
-template< typename T, typename std::enable_if<std::is_signed<T>::value>::type* = nullptr>
+template<std::signed_integral T>
 void NegativeRangeSegIteratorsTest()
 {
   RAJA::TypedRangeSegment<T> r3(-2, 100);
@@ -101,14 +122,14 @@ TYPED_TEST(RangeSegmentUnitTest, Iterators)
   NegativeRangeSegIteratorsTest<TypeParam>();
 }
 
-template <typename IDX_TYPE,
-  typename std::enable_if<std::is_unsigned<RAJA::strip_index_type_t<IDX_TYPE>>::value>::type* = nullptr>
+template<typename IDX_TYPE>
+requires std::unsigned_integral<RAJA::strip_index_type_t<IDX_TYPE>>
 void runNegativeIndexSliceTests()
 {
 }
 
-template <typename IDX_TYPE,
-  typename std::enable_if<std::is_signed<RAJA::strip_index_type_t<IDX_TYPE>>::value>::type* = nullptr>
+template<typename IDX_TYPE>
+requires std::signed_integral<RAJA::strip_index_type_t<IDX_TYPE>>
 void runNegativeIndexSliceTests()
 {
   auto r1 = RAJA::TypedRangeSegment<IDX_TYPE>(-4, 4);
@@ -165,4 +186,284 @@ TYPED_TEST(RangeSegmentUnitTest, Equality)
   auto r3 = RAJA::TypedRangeSegment<TypeParam>(10,15);
 
   ASSERT_NE(r1, r3);
+}
+
+TEST(RangeSegmentUnitTest, RangeEnd)
+{
+  auto r = RAJA::range(RAJA::Index_type(17));
+
+  ASSERT_EQ(RAJA::RangeSegment(RAJA::Index_type(0), RAJA::Index_type(17)), r);
+  ASSERT_EQ(RAJA::Index_type(0), *r.begin());
+  ASSERT_EQ(RAJA::Index_type(17), r.size());
+}
+
+TEST(RangeSegmentUnitTest, LongRangeEnd)
+{
+  auto r = RAJA::range(10L);
+
+  static_assert(std::is_same_v<decltype(r), RAJA::TypedRangeSegment<long>>,
+                "range(long) should deduce the segment storage type.");
+  ASSERT_EQ((RAJA::TypedRangeSegment<long>(0, 10)), r);
+  ASSERT_EQ(0, *r.begin());
+  ASSERT_EQ(10, r.size());
+}
+
+TEST(RangeSegmentUnitTest, LongRangeEndLValue)
+{
+  const long end = 10;
+  auto r         = RAJA::range(end);
+
+  static_assert(std::is_same_v<decltype(r), RAJA::TypedRangeSegment<long>>,
+                "range(const long&) should decay the deduced storage type.");
+  ASSERT_EQ((RAJA::TypedRangeSegment<long>(0, 10)), r);
+  ASSERT_EQ(0, *r.begin());
+  ASSERT_EQ(10, r.size());
+}
+
+TEST(RangeSegmentUnitTest, TypedRangeEnd)
+{
+  auto r = RAJA::range<RangeStrongIndex>(RangeStrongIndex(17));
+
+  ASSERT_EQ((RAJA::TypedRangeSegment<RangeStrongIndex>(0, 17)), r);
+  ASSERT_EQ(RangeStrongIndex(0), *r.begin());
+  ASSERT_EQ(RAJA::Index_type(17), r.size());
+}
+
+TEST(RangeSegmentUnitTest, DeducedStrongRangeEnd)
+{
+  auto r = RAJA::range(RangeStrongIndex(17));
+
+  static_assert(
+      std::is_same_v<decltype(r), RAJA::TypedRangeSegment<RangeStrongIndex>>,
+      "range(StrongIndex) should deduce the segment storage type.");
+  ASSERT_EQ((RAJA::TypedRangeSegment<RangeStrongIndex>(0, 17)), r);
+  ASSERT_EQ(RangeStrongIndex(0), *r.begin());
+  ASSERT_EQ(RAJA::Index_type(17), r.size());
+}
+
+TEST(RangeSegmentUnitTest, ExplicitTypedRangeEnd)
+{
+  auto r = RAJA::range<long>(10);
+
+  static_assert(std::is_same_v<decltype(r), RAJA::TypedRangeSegment<long>>,
+                "range<T>(end) should use the explicit storage type.");
+  ASSERT_EQ((RAJA::TypedRangeSegment<long>(0, 10)), r);
+  ASSERT_EQ(0, *r.begin());
+  ASSERT_EQ(10, r.size());
+}
+
+TEST(RangeSegmentUnitTest, RangeBeginEnd)
+{
+  auto r = RAJA::range(3, 17);
+
+  ASSERT_EQ((RAJA::TypedRangeSegment<int>(3, 17)), r);
+  ASSERT_EQ(3, *r.begin());
+  ASSERT_EQ(14, r.size());
+}
+
+TEST(RangeSegmentUnitTest, StrongRangeBeginEnd)
+{
+  RangeStrongIndex begin(3);
+  RangeStrongIndex end(17);
+  auto r = RAJA::range(begin, end);
+
+  static_assert(
+      std::is_same_v<decltype(r), RAJA::TypedRangeSegment<RangeStrongIndex>>,
+      "range(StrongIndex, StrongIndex) should deduce the strong storage type.");
+  ASSERT_EQ((RAJA::TypedRangeSegment<RangeStrongIndex>(3, 17)), r);
+  ASSERT_EQ(RangeStrongIndex(3), *r.begin());
+  ASSERT_EQ(RAJA::Index_type(14), r.size());
+}
+
+// Public construction concepts should report the accepted strong-index
+// combinations independently of the RAJA::range helper overloads.
+static_assert(RAJA::concepts::RangeConstructible<RangeStrongIndex,
+                                                 RangeStrongIndex>);
+static_assert(!RAJA::concepts::RangeConstructible<RangeStrongIndex, int>);
+static_assert(!RAJA::concepts::RangeConstructible<RangeStrongIndex, long>);
+static_assert(!RAJA::concepts::RangeConstructible<long, RangeStrongIndex>);
+
+// RAJA::range has its own overload constraints, including explicit storage
+// type selection, so keep separate callability checks for the helper itself.
+static_assert(!RangeCallable<int, RangeStrongIndex>);
+static_assert(!RangeCallable<RangeStrongIndex, int>);
+static_assert(
+    TypedRangeCallable<RangeStrongIndex, RangeStrongIndex, RangeStrongIndex>);
+static_assert(!TypedRangeCallable<int, RangeStrongIndex, int>);
+static_assert(!TypedRangeCallable<RangeStrongIndex, RangeStrongIndex, int>);
+static_assert(
+    !TypedRangeCallable<RangeStrongIndex, AnotherRangeStrongIndex, int>);
+
+// Public strided construction concept coverage.
+static_assert(RAJA::concepts::RangeStrideConstructible<RangeStrongIndex,
+                                                       RangeStrongIndex,
+                                                       RangeStrongIndex>);
+static_assert(!RAJA::concepts::RangeStrideConstructible<RangeStrongIndex,
+                                                        int,
+                                                        int>);
+static_assert(!RAJA::concepts::RangeStrideConstructible<RangeStrongIndex,
+                                                        long,
+                                                        int>);
+static_assert(!RAJA::concepts::RangeStrideConstructible<long,
+                                                        RangeStrongIndex,
+                                                        int>);
+static_assert(!RAJA::concepts::RangeStrideConstructible<int,
+                                                        int,
+                                                        RangeStrongIndex>);
+static_assert(RAJA::concepts::RangeStrideConstructible<int, int, long>);
+static_assert(!RAJA::concepts::RangeStrideConstructible<int, int, unsigned>);
+
+// RAJA::range(begin, end, stride) overload coverage, including explicit storage
+// and the stronger compatibility rules for a strong stride argument.
+static_assert(!TypedRangeCallable<int, RangeStrongIndex, int, int>);
+static_assert(TypedRangeCallable<int, int, int, int>);
+static_assert(TypedRangeCallable<int, int, int, short>);
+static_assert(TypedRangeCallable<int, int, int, long>);
+static_assert(!TypedRangeCallable<int, int, int, unsigned>);
+static_assert(!TypedRangeCallable<int, int, int, RangeStrongIndex>);
+static_assert(TypedRangeCallable<RangeStrongIndex, int, int, int>);
+static_assert(
+    TypedRangeCallable<RangeStrongIndex, RangeStrongIndex, int, int>);
+static_assert(
+    !TypedRangeCallable<RangeStrongIndex, AnotherRangeStrongIndex, int, int>);
+static_assert(
+    !TypedRangeCallable<RangeStrongIndex, int, int, AnotherRangeStrongIndex>);
+static_assert(TypedRangeCallable<RangeStrongIndex,
+                                 RangeStrongIndex,
+                                 RangeStrongIndex,
+                                 RangeStrongIndex>);
+static_assert(TypedRangeCallable<RangeStrongIndex,
+                                 RangeStrongIndex,
+                                 RangeStrongIndex,
+                                 int>);
+static_assert(!RangeCallable<int, RangeStrongIndex, int>);
+static_assert(!RangeCallable<int, int, RangeStrongIndex>);
+static_assert(!RangeCallable<int, int, unsigned>);
+static_assert(
+    RangeCallable<RangeStrongIndex, RangeStrongIndex, int>);
+static_assert(!RangeCallable<RangeStrongIndex, int, int>);
+
+TEST(RangeSegmentUnitTest, RangeBeginEndStridePositive)
+{
+  auto r = RAJA::range(2, 11, 3);
+
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(2, 11, 3)), r);
+  ASSERT_EQ(3, r.size());
+  ASSERT_EQ(2, *r.begin());
+}
+
+TEST(RangeSegmentUnitTest, StrongRangeBeginEndStridePlainStride)
+{
+  auto r = RAJA::range(RangeStrongIndex(2), RangeStrongIndex(11), 3);
+
+  static_assert(
+      std::is_same_v<decltype(r),
+                     RAJA::TypedRangeStrideSegment<RangeStrongIndex>>,
+      "range(StrongIndex, StrongIndex, stride) should deduce the strong storage "
+      "type.");
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<RangeStrongIndex>(2, 11, 3)), r);
+  ASSERT_EQ(RAJA::Index_type(3), r.size());
+  ASSERT_EQ(RangeStrongIndex(2), *r.begin());
+}
+
+TEST(RangeSegmentUnitTest, ExplicitTypedRangeBeginEndStride)
+{
+  auto r_int   = RAJA::range<int>(3, 17, 1);
+  auto r_short = RAJA::range<int>(3, 17, static_cast<short>(1));
+  auto r_long  = RAJA::range<int>(3, 17, static_cast<long>(1));
+
+  static_assert(
+      std::is_same_v<decltype(r_int), RAJA::TypedRangeStrideSegment<int>>,
+      "range<int>(begin, end, int stride) should use int storage.");
+  static_assert(
+      std::is_same_v<decltype(r_short), RAJA::TypedRangeStrideSegment<int>>,
+      "range<int>(begin, end, short stride) should use int storage.");
+  static_assert(
+      std::is_same_v<typename decltype(r_long)::value_type, int>,
+      "range<int>(begin, end, long stride) should use int storage.");
+
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(3, 17, 1)), r_int);
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(3, 17, 1)), r_short);
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<int, long>(3, 17, 1)), r_long);
+}
+
+TEST(RangeSegmentUnitTest, ExplicitStrongRangeBeginEndStride)
+{
+  auto r_int =
+      RAJA::range<RangeStrongIndex>(3, 17, 1);
+  auto r_strong_bounds = RAJA::range<RangeStrongIndex>(
+      RangeStrongIndex(3), RangeStrongIndex(17), 1);
+  auto r_strong_stride = RAJA::range<RangeStrongIndex>(
+      RangeStrongIndex(3), RangeStrongIndex(17), RangeStrongIndex(1));
+
+  static_assert(
+      std::is_same_v<decltype(r_int),
+                     RAJA::TypedRangeStrideSegment<RangeStrongIndex>>,
+      "range<StrongIndex>(begin, end, stride) should use strong storage.");
+  static_assert(
+      std::is_same_v<decltype(r_strong_bounds),
+                     RAJA::TypedRangeStrideSegment<RangeStrongIndex>>,
+      "range<StrongIndex>(StrongIndex, StrongIndex, stride) should use strong "
+      "storage.");
+  static_assert(
+      std::is_same_v<decltype(r_strong_stride),
+                     RAJA::TypedRangeStrideSegment<RangeStrongIndex>>,
+      "range<StrongIndex>(StrongIndex, StrongIndex, StrongIndex) should use "
+      "strong storage.");
+
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<RangeStrongIndex>(3, 17, 1)),
+            r_int);
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<RangeStrongIndex>(3, 17, 1)),
+            r_strong_bounds);
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<RangeStrongIndex>(3, 17, 1)),
+            r_strong_stride);
+}
+
+TEST(RangeSegmentUnitTest, RangeBeginEndStrideNegative)
+{
+  auto r = RAJA::range(10, -1, -2);
+
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<int>(10, -1, -2)), r);
+  ASSERT_EQ(6, r.size());
+  ASSERT_EQ(10, *r.begin());
+}
+
+TEST(RangeSegmentUnitTest, RangeBeginEndStrideDeducesFromStride)
+{
+  auto r = RAJA::range(2, 11, 3L);
+
+  static_assert(
+      std::is_same_v<decltype(r), RAJA::TypedRangeStrideSegment<long>>,
+      "range(begin, end, stride) should include stride in the storage type.");
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<long>(2, 11, 3)), r);
+  ASSERT_EQ(3, r.size());
+  ASSERT_EQ(2, *r.begin());
+}
+
+TEST(RangeSegmentUnitTest, RangeBeginEndStrideDeducesCommonType)
+{
+  auto r = RAJA::range(3, 17, static_cast<long>(1));
+
+  static_assert(
+      std::is_same_v<decltype(r), RAJA::TypedRangeStrideSegment<long>>,
+      "range(begin, end, stride) should use the common storage type.");
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<long>(3, 17, 1)), r);
+  ASSERT_EQ(14, r.size());
+  ASSERT_EQ(3, *r.begin());
+}
+
+static_assert(!MakeStridedRangeCallable<int, int, unsigned>);
+static_assert(!MakeStridedRangeCallable<int, int, RangeStrongIndex>);
+
+TEST(RangeSegmentUnitTest, MakeStridedRangeDeducesFromStride)
+{
+  auto r = RAJA::make_strided_range(2, 11, 3L);
+
+  static_assert(
+      std::is_same_v<decltype(r), RAJA::TypedRangeStrideSegment<long>>,
+      "make_strided_range(begin, end, stride) should include stride in the "
+      "storage type.");
+  ASSERT_EQ((RAJA::TypedRangeStrideSegment<long>(2, 11, 3)), r);
+  ASSERT_EQ(3, r.size());
+  ASSERT_EQ(2, *r.begin());
 }

@@ -10,3 +10,7 @@
 raja_add_test(
   NAME test-pattern-concepts
   SOURCES test-pattern-concepts.cpp)
+
+raja_add_test(
+  NAME test-launch-teams-threads-order
+  SOURCES test-launch-teams-threads-order.cpp)

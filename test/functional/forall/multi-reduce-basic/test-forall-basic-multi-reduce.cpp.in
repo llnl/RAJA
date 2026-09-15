@@ -15,7 +15,7 @@
 #include "RAJA_test-index-types.hpp"
 
 #include "RAJA_test-forall-data.hpp"
-#include "RAJA_test-forall-execpol.hpp"
+#include "RAJA_test-supported-reduce-execpol.hpp"
 #include "RAJA_test-multi-reducepol.hpp"
 #include "RAJA_test-multi-reduce-abstractor.hpp"
 
@@ -44,17 +44,17 @@ using TestIdxTypeList = camp::list< RAJA::Index_type >;
 //
 // Cartesian product of types used in parameterized tests
 //
-using @BACKEND@ForallMultiReduceBasicTypes =
+using @REDUCE_BACKEND@ForallMultiReduceBasicTypes =
   Test< camp::cartesian_product<TestIdxTypeList,
                                 ReductionDataTypeList,
-                                @BACKEND@ResourceList,
-                                @BACKEND@ForallReduceExecPols,
-                                @BACKEND@MultiReducePols,
-                                Reduce@REDUCETYPE@Abstractors>>::Types;
+                                @REDUCE_BACKEND@ReduceSupportedForallExecPols,
+                                @REDUCE_BACKEND@MultiReducePols,
+                                Reduce@REDUCETYPE@Abstractors,
+                                @TESTTYPE@ReducerApiList>>::Types;
 
 //
 // Instantiate parameterized test
 //
-INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@,
+INSTANTIATE_TYPED_TEST_SUITE_P(@REDUCE_BACKEND@,
                                ForallMultiReduceBasicTest,
-                               @BACKEND@ForallMultiReduceBasicTypes);
+                               @REDUCE_BACKEND@ForallMultiReduceBasicTypes);

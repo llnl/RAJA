@@ -15,6 +15,12 @@
 namespace RAJA
 {
 
+template<>
+struct reduction_supported_policies<Policy::target_openmp>
+{
+  using type = PolicyList<Policy::sequential, Policy::target_openmp>;
+};
+
 namespace policy
 {
 namespace omp

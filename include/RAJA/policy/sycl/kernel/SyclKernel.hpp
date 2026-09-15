@@ -213,7 +213,7 @@ struct StatementExecutor<
                                       LaunchConfig, stmt_list_t, data_t, Types>;
 
     camp::resources::Sycl res = data.get_resource();
-    ::sycl::queue* q          = res.get_queue();
+    ::sycl::queue& q          = res.get_queue();
     ;
 
     //
@@ -226,7 +226,7 @@ struct StatementExecutor<
     //
     // Launch the kernels
     //
-    launch_t::launch(std::move(data), launch_dims, shmem, q);
+    launch_t::launch(std::move(data), launch_dims, shmem, &q);
   }
 };
 

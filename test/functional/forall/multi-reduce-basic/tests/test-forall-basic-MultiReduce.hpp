@@ -17,8 +17,10 @@
 #include <random>
 #include <type_traits>
 
-template <typename EXEC_POLICY, typename REDUCE_POLICY, typename ABSTRACTION,
-          typename DATA_TYPE, typename IDX_TYPE,
+#include "RAJA_test-reducer-api.hpp"
+
+template <typename EXEC_POLICY, typename REDUCE_POLICY, typename API_TAG,
+          typename ABSTRACTION, typename DATA_TYPE, typename IDX_TYPE,
           typename SEG_TYPE, typename Container,
           typename RandomGenerator>
 // use enable_if in return type to appease nvcc 11.2
@@ -31,8 +33,8 @@ ForallMultiReduceBasicTestImpl(const SEG_TYPE&,
                                RandomGenerator&)
 { return false; }
 ///
-template <typename EXEC_POLICY, typename REDUCE_POLICY, typename ABSTRACTION,
-          typename DATA_TYPE, typename IDX_TYPE,
+template <typename EXEC_POLICY, typename REDUCE_POLICY, typename API_TAG,
+          typename ABSTRACTION, typename DATA_TYPE, typename IDX_TYPE,
           typename SEG_TYPE, typename Container,
           typename RandomGenerator>
 // use enable_if in return type to appease nvcc 11.2
@@ -44,6 +46,7 @@ ForallMultiReduceBasicTestImpl(const SEG_TYPE& seg,
                                RandomGenerator& rngen)
 {
   using MULTIREDUCER = typename ABSTRACTION::template multi_reducer<REDUCE_POLICY, DATA_TYPE>;
+  using API = typename API_TAG::template type<EXEC_POLICY>;
 
   const IDX_TYPE idx_range = seg_idx[seg_idx.size() - 1] + 1;
   const IDX_TYPE idx_len = static_cast<IDX_TYPE>( seg_idx.size() );
@@ -118,8 +121,8 @@ ForallMultiReduceBasicTestImpl(const SEG_TYPE& seg,
   working_res.memcpy(working_bins, test_bins, sizeof(IDX_TYPE) * data_len);
 
 
-  MULTIREDUCER red(num_bins);
-  MULTIREDUCER red2(multi_init);
+  MULTIREDUCER red = API::template make<MULTIREDUCER>(num_bins);
+  MULTIREDUCER red2 = API::template make<MULTIREDUCER>(multi_init);
 
   // basic test with two multi reducers in the same loop
   {
@@ -145,7 +148,7 @@ ForallMultiReduceBasicTestImpl(const SEG_TYPE& seg,
   }
 
 
-  red.reset();
+  API::reset(red);
 
   // basic multiple use test, ensure same reducer can combine values from multiple loops
   {
@@ -193,7 +196,7 @@ ForallMultiReduceBasicTestImpl(const SEG_TYPE& seg,
 
     const int nloops = 2;
     for (int j = 0; j < nloops; ++j) {
-      red.reset();
+      API::reset(red);
 
       RAJA::forall<EXEC_POLICY>(seg, [=] RAJA_HOST_DEVICE(IDX_TYPE ii) {
         for (IDX_TYPE idx = working_range[ii]; idx < working_range[ii+1]; ++idx) {
@@ -239,10 +242,11 @@ TYPED_TEST_P(ForallMultiReduceBasicTest, MultiReduceBasicForall)
 {
   using IDX_TYPE      = typename camp::at<TypeParam, camp::num<0>>::type;
   using DATA_TYPE     = typename camp::at<TypeParam, camp::num<1>>::type;
-  using WORKING_RES   = typename camp::at<TypeParam, camp::num<2>>::type;
-  using EXEC_POLICY   = typename camp::at<TypeParam, camp::num<3>>::type;
-  using REDUCE_POLICY = typename camp::at<TypeParam, camp::num<4>>::type;
-  using ABSTRACTION   = typename camp::at<TypeParam, camp::num<5>>::type;
+  using EXEC_POLICY   = typename camp::at<TypeParam, camp::num<2>>::type;
+  using REDUCE_POLICY = typename camp::at<TypeParam, camp::num<3>>::type;
+  using ABSTRACTION   = typename camp::at<TypeParam, camp::num<4>>::type;
+  using API_TAG       = typename camp::at<TypeParam, camp::num<5>>::type;
+  using WORKING_RES   = typename RAJA::resources::get_resource<EXEC_POLICY>::type;
 
   // for setting random values in arrays
   auto random_seed = std::random_device{}();
@@ -267,20 +271,20 @@ TYPED_TEST_P(ForallMultiReduceBasicTest, MultiReduceBasicForall)
     // Range segment tests
     RAJA::TypedRangeSegment<IDX_TYPE> r1( 0, 28 );
     RAJA::getIndices(seg_idx, r1);
-    ForallMultiReduceBasicTestImpl<EXEC_POLICY, REDUCE_POLICY, ABSTRACTION, DATA_TYPE>(
+    ForallMultiReduceBasicTestImpl<EXEC_POLICY, REDUCE_POLICY, API_TAG, ABSTRACTION, DATA_TYPE>(
                                    r1, container, seg_idx, working_res, rngen);
 
     seg_idx.clear();
     RAJA::TypedRangeSegment<IDX_TYPE> r3( 3, 2060 );
     RAJA::getIndices(seg_idx, r3);
-    ForallMultiReduceBasicTestImpl<EXEC_POLICY, REDUCE_POLICY, ABSTRACTION, DATA_TYPE>(
+    ForallMultiReduceBasicTestImpl<EXEC_POLICY, REDUCE_POLICY, API_TAG, ABSTRACTION, DATA_TYPE>(
                                    r3, container, seg_idx, working_res, rngen);
 
     // Range-stride segment test
     seg_idx.clear();
     RAJA::TypedRangeStrideSegment<IDX_TYPE> r5( 3, 1029, 3 );
     RAJA::getIndices(seg_idx, r5);
-    ForallMultiReduceBasicTestImpl<EXEC_POLICY, REDUCE_POLICY, ABSTRACTION, DATA_TYPE>(
+    ForallMultiReduceBasicTestImpl<EXEC_POLICY, REDUCE_POLICY, API_TAG, ABSTRACTION, DATA_TYPE>(
                                    r5, container, seg_idx, working_res, rngen);
 
     // List segment test
@@ -295,7 +299,7 @@ TYPED_TEST_P(ForallMultiReduceBasicTest, MultiReduceBasicForall)
     }
     RAJA::TypedListSegment<IDX_TYPE> l1( &seg_idx[0], seg_idx.size(),
                                          working_res );
-    ForallMultiReduceBasicTestImpl<EXEC_POLICY, REDUCE_POLICY, ABSTRACTION, DATA_TYPE>(
+    ForallMultiReduceBasicTestImpl<EXEC_POLICY, REDUCE_POLICY, API_TAG, ABSTRACTION, DATA_TYPE>(
                                    l1, container, seg_idx, working_res, rngen);
   }
 }

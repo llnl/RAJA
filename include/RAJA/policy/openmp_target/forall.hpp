@@ -18,7 +18,7 @@
 
 #include "RAJA/util/types.hpp"
 
-#include "RAJA/policy/openmp/policy.hpp"
+#include "RAJA/policy/openmp_target/policy.hpp"
 
 #include "RAJA/pattern/params/forall.hpp"
 
