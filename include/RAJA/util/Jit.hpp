@@ -14,7 +14,7 @@ namespace jit
 {
 
 template<typename Lambda>
-inline auto register_lambda(Lambda&& lambda)
+[[nodiscard]] inline auto register_lambda(Lambda&& lambda)
 {
 #if defined RAJA_ENABLE_JIT
   return proteus::register_lambda(std::forward<Lambda>(lambda));
