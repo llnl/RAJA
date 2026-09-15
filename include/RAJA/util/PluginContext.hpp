@@ -28,7 +28,7 @@ struct PluginContext
 public:
   PluginContext(const Platform p,
                 std::string&& name,
-                resources::Resource res = resources::Resource {})
+                resources::Resource res)
       : platform(p),
         kernel_name(std::move(name)),
         resource(std::move(res))
