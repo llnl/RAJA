@@ -26,6 +26,7 @@
 
 #include "RAJA/config.hpp"
 
+#include "RAJA/util/builtin_compat.hpp"
 #include "RAJA/util/macros.hpp"
 
 #include "camp/array.hpp"
@@ -53,7 +54,7 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr B reinterp_A_as_B(A const& a)
   // TODO: Consider requiring A and B to be trivially copyable
 
   B b;
-  std::memcpy(&b, &a, sizeof(A));
+  RAJA_BUILTIN_MEMCPY(&b, &a, sizeof(A));
   return b;
 }
 

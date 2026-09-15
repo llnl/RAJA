@@ -522,7 +522,7 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
   if (len > 0)
   {
     auto func = reinterpret_cast<const void*>(
-        &impl::forallp_hip_kernel<EXEC_POL, Iterator, RegisteredLambdaType, IndexType,
+        &impl::forallp_hip_kernel<EXEC_POL, Iterator, LOOP_BODY, IndexType,
                                   camp::decay<ForallParam>>);
 
     //
@@ -550,7 +550,7 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
       //
       auto body = RAJA::hip::make_launch_body(
           func, dims.blocks, dims.threads, shmem, hip_res,
-          std::forward<RegisteredLambdaType>(registered_body));
+          std::forward<LoopBody>(loop_body));
 
       //
       // Launch the kernels
@@ -608,7 +608,7 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
         r, isi, detail::CallForall(),
         ::RAJA::policy::hip::hip_exec<IterationMapping, IterationGetter,
                                       Concretizer, true>(),
-        reg_lambda);
+        loop_body);
   }  // iterate over segments of index set
 
   if (!Async) RAJA::hip::synchronize(r);

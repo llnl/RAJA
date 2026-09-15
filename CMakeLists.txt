@@ -333,11 +333,6 @@ install(FILES
   ${PROJECT_BINARY_DIR}/include/RAJA/config.hpp
   DESTINATION "include/RAJA/")
 
-install(FILES
-  ${PROJECT_BINARY_DIR}/include/RAJA/policy/device.hpp
-  DESTINATION "include/RAJA/policy/")
-
-
 # Setup internal RAJA configuration options
 include(cmake/SetupRajaConfig.cmake)
 
