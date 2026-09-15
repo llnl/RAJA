@@ -1,5 +1,4 @@
 #include "RAJA/config.hpp"
-#include "RAJA/pattern/launch/launch_context_policy.hpp"
 #if defined(RAJA_ENABLE_JIT)
 #include "proteus/JitInterface.h"
 #endif

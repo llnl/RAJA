@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 
   auto Seg = RAJA::RangeSegment(0, N);
 
-  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg), [=](int i) {
+  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg), [=](int i) RAJA_HOST_DEVICE {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
         A(i, row, col) = 0;
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
   proteus::disable();
   aot_timer.start();
 
-  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg), [=](int i) {
+  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg), [=](int i) RAJA_HOST_DEVICE {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
         A(i, row, col) = i % row;
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     }
   });
 
-  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg), [=](int i) {
+  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg), [=](int i) RAJA_HOST_DEVICE {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
         if (!accum) {
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
   RAJA::kernel<kernel_policy>(
       RAJA::make_tuple(Seg),
       RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b)](int i)
-          RAJA_JIT_COMPILE {
+          RAJA_JIT_COMPILE RAJA_HOST_DEVICE {
             for (int row = 0; row < a; ++row) {
               for (int col = 0; col < b; ++col) {
                 A(i, row, col) = i % row;
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
   RAJA::kernel<kernel_policy>(
       RAJA::make_tuple(Seg),
       RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
-       accum = RAJA_JIT_VARIABLE(accum)](int i) RAJA_JIT_COMPILE {
+       accum = RAJA_JIT_VARIABLE(accum)](int i) RAJA_JIT_COMPILE RAJA_HOST_DEVICE {
         for (int row = 0; row < a; ++row) {
           for (int col = 0; col < b; ++col) {
             if (!accum) {
