@@ -559,7 +559,7 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
       //
       // Privatize the loop_body, using make_launch_body to setup reductions
       //
-      auto body = RAJA::hip::make_launch_body(
+      LOOP_BODY body = RAJA::hip::make_launch_body(
           func, dims.blocks, dims.threads, shmem, hip_res,
           std::forward<LoopBody>(loop_body));
 

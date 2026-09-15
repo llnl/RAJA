@@ -614,6 +614,7 @@ struct StatementExecutor<
       }
 
       {
+        auto func = launch_t::get_func();
         // The exact policy here does not affect the reduction operation, but
         // we do need to accurately pass a resource and launch dimensions to
         // perform initialization and resolution of reduction parameters.
@@ -635,20 +636,15 @@ struct StatementExecutor<
         // of the launch_dims and potential changes to shmem here that is
         // currently an unresolved issue.
         //
-        auto registered_bodies = RAJA::internal::jit::register_loop_bodies(data);
-        using registered_data_t = std::decay_t<decltype(registered_bodies)>;
-        using registered_launch_t = HipLaunchHelper<LaunchConfig, stmt_list_t, registered_data_t, Types>;
-        auto registered_function = registered_launch_t::get_func();
-
         auto hip_data = RAJA::hip::make_launch_body(
-            registered_function, launch_dims.dims.blocks, launch_dims.dims.threads, shmem, res,
-            registered_bodies);
+            func, launch_dims.dims.blocks, launch_dims.dims.threads, shmem, res,
+            data);
 
         //
         // Launch the kernel
         //
         void* args[] = {(void*)&hip_data};
-        RAJA::hip::launch(registered_function, launch_dims.dims.blocks,
+        RAJA::hip::launch(func, launch_dims.dims.blocks,
                           launch_dims.dims.threads, args, shmem, res,
                           launch_t::async);
         RAJA::expt::detail::resolve_params<EXEC_POL>(data.param_tuple,

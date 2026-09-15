@@ -26,7 +26,6 @@
 
 #include "RAJA/config.hpp"
 
-#include "RAJA/util/builtin_compat.hpp"
 #include "RAJA/util/macros.hpp"
 
 #include "camp/array.hpp"

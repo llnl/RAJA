@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
 
   RAJA::kernel<kernel_policy>(
       RAJA::make_tuple(Seg),
-      [=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b)](int i)
+      RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b)](int i)
           RAJA_JIT_COMPILE {
             for (int row = 0; row < a; ++row) {
               for (int col = 0; col < b; ++col) {
@@ -125,11 +125,11 @@ int main(int argc, char **argv) {
                 C(i, row, col) = i % col;
               }
             }
-          });
+          }));
 
   RAJA::kernel<kernel_policy>(
       RAJA::make_tuple(Seg),
-      [=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
+      RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
        accum = RAJA_JIT_VARIABLE(accum)](int i) RAJA_JIT_COMPILE {
         for (int row = 0; row < a; ++row) {
           for (int col = 0; col < b; ++col) {
@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
             }
           }
         }
-      });
+      }));
 
   jit_timer.stop();
 

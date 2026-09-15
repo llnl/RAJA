@@ -45,7 +45,7 @@ int main()
   proteus::enable();
   RAJA::forall<policy>(
       RAJA::RangeSegment(0, N),
-      [=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
+      RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
        accum = RAJA_JIT_VARIABLE(accum)](int i) RAJA_JIT_COMPILE {
         for (int row = 0; row < a; ++row) {
           for (int col = 0; col < b; ++col) {
@@ -57,7 +57,7 @@ int main()
             }
           }
         }
-      });
+      }));
 
   res.wait();
   double host_result = -1.0;

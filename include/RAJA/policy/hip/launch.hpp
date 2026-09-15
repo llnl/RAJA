@@ -126,7 +126,6 @@ struct LaunchExecute<
         blockSize.x > zero && blockSize.y > zero && blockSize.z > zero)
     {
 
-
       size_t shared_mem_size = launch_params.shared_mem_size;
       RAJA::hip::detail::hipInfo launch_info;
       launch_info.gridDim      = gridSize;

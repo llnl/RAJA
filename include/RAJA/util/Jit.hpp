@@ -9,8 +9,6 @@
 
 namespace RAJA
 {
-namespace internal
-{
 namespace jit
 {
 
@@ -25,20 +23,6 @@ inline auto register_lambda(Lambda&& lambda)
 }
 
 }  // namespace jit
-}  // namespace internal
-
-#if defined(RAJA_ENABLE_JIT)
-namespace detail
-{
-
-template<std::uint64_t FunctorID, typename Lambda>
-struct launch_context_type<proteus::detail::LambdaFunctorWrapper<FunctorID,
-                                                                  Lambda>>
-    : launch_context_type<Lambda>
-{};
-
-}  // namespace detail
-#endif
 }  // namespace RAJA
 
 #endif

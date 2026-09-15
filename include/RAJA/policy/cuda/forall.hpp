@@ -597,7 +597,7 @@ forall_impl(resources::Cuda cuda_res,
       //
       LOOP_BODY body = RAJA::cuda::make_launch_body(
           func, dims.blocks, dims.threads, shmem, cuda_res,
-          std::forward<LoopBody>(registered_body));
+          std::forward<LoopBody>(loop_body));
 
       //
       // Launch the kernels
@@ -660,7 +660,7 @@ RAJA_INLINE resources::EventProxy<resources::Cuda> forall_impl(
         ::RAJA::policy::cuda::cuda_exec_explicit<IterationMapping,
                                                  IterationGetter, Concretizer,
                                                  BlocksPerSM, true>(),
-        reg_lambda);
+        loop_body);
   }  // iterate over segments of index set
 
   if (!Async) RAJA::cuda::synchronize(r);
