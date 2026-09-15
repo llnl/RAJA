@@ -44,7 +44,7 @@ int main()
   proteus::enable();
   RAJA::kernel<kernel_policy>(
       RAJA::make_tuple(RAJA::RangeSegment(0, 1)),
-      RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
+      RAJA_JIT_REGISTER_LAMBDA([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
        accum = RAJA_JIT_VARIABLE(accum)](int i) RAJA_JIT_COMPILE RAJA_HOST_DEVICE {
         out_ptr[i] = accum ? (a + b + i) : (a - b);
       }));

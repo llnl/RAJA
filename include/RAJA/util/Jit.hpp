@@ -8,11 +8,13 @@
 
 namespace RAJA
 {
+namespace internal
+{
 namespace jit
 {
 
 template<typename Lambda>
-inline auto register_lambda(Lambda&& lambda)
+[[nodiscard]] inline auto register_lambda(Lambda&& lambda)
 {
 #if defined RAJA_ENABLE_JIT
   return proteus::register_lambda(std::forward<Lambda>(lambda));
@@ -22,6 +24,7 @@ inline auto register_lambda(Lambda&& lambda)
 }
 
 }  // namespace jit
+}  // namespace internal
 }  // namespace RAJA
 
 #endif

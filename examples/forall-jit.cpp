@@ -15,8 +15,8 @@
 //                  a^ b^ matrix dims       ^ problem size (N)  ^ branch conditions
 // This kernel performs N-many matrix multiplications (1 per thread).  Each multiplication
 // is [a x b] [b x a].  The result is either set or added into the output memory C, depending
-// on the boolean flag the user provides.  By forcing each thread to perform serialized 
-// arithmetic with a simple branch condition, we show how JIT compilation can improve both 
+// on the boolean flag the user provides.  By forcing each thread to perform serialized
+// arithmetic with a simple branch condition, we show how JIT compilation can improve both
 // serial loop scheduling (per-thread) and branch elmination.
 //
 // Example output with ROCM 6.4.2, gfx90a, and storage cache (run executable twice)
@@ -125,7 +125,7 @@ int main (int argc, char** argv) {
   });
 
   // _raja_jit_mark_start
-  RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=,
+  RAJA::forall<policy>(RAJA::RangeSegment(0, N), RAJA_JIT_REGISTER_LAMBDA([=,
     a =     RAJA_JIT_VARIABLE(a),
     b =     RAJA_JIT_VARIABLE(b),
     accum = RAJA_JIT_VARIABLE(accum)
@@ -140,7 +140,7 @@ int main (int argc, char** argv) {
         }
       }
     }
-  });
+  }));
   // _raja_jit_mark_end
   jit_timer.stop();
 
