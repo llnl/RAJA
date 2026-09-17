@@ -131,7 +131,7 @@ compute grid.
   body is executed by every OpenMP thread. To distribute work, use
   ``RAJA::loop<RAJA::omp_for_exec>(...)`` (or another OpenMP *inner* policy)
   inside the launch body. If you use a sequential loop policy inside an OpenMP
-  launch, each OpenMP thread will execute the loop independently.
+  launch, each OpenMP thread will execute the **entire** loop independently.
 
 The first RAJA-based kernel for parallel GPU execution using the RAJA CUDA
 back-end we introduce is:
