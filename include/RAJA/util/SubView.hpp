@@ -1,3 +1,15 @@
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// Camp Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to Camp.
+//
+// SPDX-License-Identifier: (BSD-3-Clause)
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+#ifndef RAJA_SUBVIEW_HPP
+#define RAJA_SUBVIEW_HPP
+
 /*!
  ******************************************************************************
  *
@@ -7,16 +19,6 @@
  *
  ******************************************************************************
  */
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/LICENSE file for details.
-//
-// SPDX-License-Identifier: (BSD-3-Clause)
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
-#ifndef RAJA_SUBVIEW_HPP
-#define RAJA_SUBVIEW_HPP
 
 #include "RAJA/util/for_each.hpp"
 #include "RAJA/util/macros.hpp"
