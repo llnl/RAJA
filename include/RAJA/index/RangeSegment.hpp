@@ -829,7 +829,7 @@ inline constexpr bool range_stride_storage_compatible_v =
  */
 template<typename StorageT = void, typename EndT>
   requires detail::range_storage_compatible_v<StorageT, EndT, EndT>
-RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(EndT&& end) noexcept
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(EndT end) noexcept
 {
   using Common =
       detail::selected_range_storage_t<StorageT, detail::common_type_t<EndT>>;
@@ -850,8 +850,8 @@ RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(EndT&& end) noexcept
  */
 template<typename StorageT = void, typename BeginT, typename EndT>
   requires detail::range_storage_compatible_v<StorageT, BeginT, EndT>
-RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(BeginT&& begin,
-                                                  EndT&& end) noexcept
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto range(BeginT begin,
+                                                  EndT end) noexcept
 {
   using Common = detail::selected_range_storage_t<
       StorageT, detail::deduced_range_storage_type_t<BeginT, EndT>>;
@@ -877,9 +877,9 @@ template<typename StorageT = void,
          typename StrideT>
   requires detail::
       range_stride_storage_compatible_v<StorageT, BeginT, EndT, StrideT>
-    RAJA_HOST_DEVICE RAJA_INLINE auto range(BeginT&& begin,
-                                            EndT&& end,
-                                            StrideT&& stride)
+    RAJA_HOST_DEVICE RAJA_INLINE auto range(BeginT begin,
+                                            EndT end,
+                                            StrideT stride)
 {
   using Common = detail::selected_range_storage_t<
       StorageT,
@@ -910,7 +910,7 @@ template<typename StorageT = void,
  */
 template<typename BeginT, typename EndT>
   requires detail::deduced_range_storage_compatible_v<BeginT, EndT>
-RAJA_HOST_DEVICE auto make_range(BeginT&& begin, EndT&& end)
+RAJA_HOST_DEVICE auto make_range(BeginT begin, EndT end)
 {
   using Common      = detail::deduced_range_storage_type_t<BeginT, EndT>;
   using StripCommon = strip_index_type_t<Common>;
@@ -931,9 +931,9 @@ RAJA_HOST_DEVICE auto make_range(BeginT&& begin, EndT&& end)
 template<typename BeginT, typename EndT, typename StrideT>
   requires detail::
       deduced_range_stride_storage_compatible_v<BeginT, EndT, StrideT>
-    RAJA_HOST_DEVICE auto make_strided_range(BeginT&& begin,
-                                             EndT&& end,
-                                             StrideT&& stride)
+    RAJA_HOST_DEVICE auto make_strided_range(BeginT begin,
+                                             EndT end,
+                                             StrideT stride)
 {
   using Common =
       detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>;
