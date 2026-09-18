@@ -50,8 +50,10 @@ struct RangeSlice
         m_end(end)
   {}
 
+  template<size_t RAJA_UNUSED_ARG(ParentDim), typename ParentType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
-      IndexType idx) const
+      IndexType idx,
+      const ParentType&) const
   {
     return m_start + idx;
   }
@@ -69,8 +71,7 @@ private:
 };
 
 /*!
- * \brief Select parent indices in [start, extent) without reducing the
- * dimension.
+ * \brief Select parent indices from start to the end of the parent dimension.
  */
 template<typename IndexType = Index_type>
 struct RangeStartSlice
@@ -82,8 +83,10 @@ struct RangeStartSlice
       : m_start(start)
   {}
 
+  template<size_t RAJA_UNUSED_ARG(ParentDim), typename ParentType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
-      IndexType idx) const
+      IndexType idx,
+      const ParentType&) const
   {
     return m_start + idx;
   }
@@ -92,7 +95,8 @@ struct RangeStartSlice
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(
       const LayoutType& layout) const
   {
-    return (layout.template get_dim_size<ParentDim>() - m_start);
+    return (layout.template get_dim_begin<ParentDim>() +
+            layout.template get_dim_size<ParentDim>() - m_start);
   }
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const { return 1; }
@@ -113,7 +117,9 @@ struct FixedSlice
       : m_idx(idx)
   {}
 
-  RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index() const
+  template<size_t RAJA_UNUSED_ARG(ParentDim), typename ParentType>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
+      const ParentType&) const
   {
     return m_idx;
   }
@@ -138,10 +144,12 @@ struct NoSlice
 {
   static constexpr bool reduces_dimension = false;
 
+  template<size_t ParentDim, typename ParentType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
-      IndexType idx) const
+      IndexType idx,
+      const ParentType& parent) const
   {
-    return idx;
+    return parent.template get_dim_begin<ParentDim>() + idx;
   }
 
   template<size_t ParentDim, typename LayoutType>
@@ -176,8 +184,10 @@ struct StridedSlice
         m_stride(stride)
   {}
 
+  template<size_t RAJA_UNUSED_ARG(ParentDim), typename ParentType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
-      IndexType idx) const
+      IndexType idx,
+      const ParentType&) const
   {
     return m_start + m_stride * idx;
   }
@@ -349,6 +359,13 @@ struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
            camp::get<parent_dim>(m_slices).stride();
   }
 
+  template<size_t SubregionDim>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_begin() const
+  {
+    static_assert(SubregionDim < n_dims, "Dimension out of bounds");
+    return IndexLinear(0);
+  }
+
   /*!
    * \brief Access the parent using indices mapped from the subregion index
    * space.
@@ -365,12 +382,13 @@ struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
     for_each_tuple_index(m_slices, [&](auto slice, auto parent_dim) {
       if constexpr (decltype(slice)::reduces_dimension)
       {
-        parent_indices[parent_dim] = slice.map_index();
+        parent_indices[parent_dim] =
+            slice.template map_index<parent_dim>(m_parent);
       }
       else
       {
-        parent_indices[parent_dim] = slice.map_index(
-            subregion_indices[s_parent_to_subregion_dim[parent_dim]]);
+        parent_indices[parent_dim] = slice.template map_index<parent_dim>(
+            subregion_indices[s_parent_to_subregion_dim[parent_dim]], m_parent);
       }
     });
 
