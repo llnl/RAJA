@@ -412,7 +412,7 @@ private:
 };
 
 template<typename ParentType, typename... Slices>
-SlicingAdapter(ParentType, Slices...)
+RAJA_HOST_DEVICE SlicingAdapter(ParentType, Slices...)
     -> SlicingAdapter<ParentType, camp::list<Slices...>>;
 
 /*!
