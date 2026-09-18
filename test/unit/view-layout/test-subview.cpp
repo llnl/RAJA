@@ -162,6 +162,48 @@ TYPED_TEST(SubViewTest, RangeStartSubView1D)
   EXPECT_EQ(sr.size(), 3);
 }
 
+TYPED_TEST(SubViewTest, OffsetLayoutSubView1D)
+{
+  Index_type a[] = {1, 2, 3};
+  auto layout    = make_offset_layout<1>(std::array<Index_type, 1> {{-1}},
+                                         std::array<Index_type, 1> {{2}});
+  View<Index_type, OffsetLayout<1>> view(a, layout);
+
+  auto full_view = TypeParam {}(view, NoSlice {});
+  EXPECT_EQ(full_view.size(), 3);
+  EXPECT_EQ(full_view.template get_dim_begin<0>(), 0);
+  EXPECT_EQ(full_view(0), 1);
+  EXPECT_EQ(full_view(1), 2);
+  EXPECT_EQ(full_view(2), 3);
+
+  auto tail_view = TypeParam {}(view, RangeStartSlice<> {0});
+  EXPECT_EQ(tail_view.size(), 2);
+  EXPECT_EQ(tail_view(0), 2);
+  EXPECT_EQ(tail_view(1), 3);
+
+  auto range_view = TypeParam {}(view, RangeSlice<> {-1, 1});
+  EXPECT_EQ(range_view.size(), 2);
+  EXPECT_EQ(range_view(0), 1);
+  EXPECT_EQ(range_view(1), 2);
+}
+
+TYPED_TEST(SubViewTest, IndexLayoutSubView1D)
+{
+  Index_type a[]       = {1, 2, 3};
+  Index_type indices[] = {2, 0, 1};
+  auto index_tuple     = make_index_tuple(IndexList<> {indices});
+  auto layout          = make_index_layout(index_tuple, 3);
+  auto view            = make_index_view(a, layout);
+
+  EXPECT_EQ(view.template get_dim_begin<0>(), 0);
+
+  auto full_view = TypeParam {}(view, NoSlice {});
+  EXPECT_EQ(full_view.size(), 3);
+  EXPECT_EQ(full_view(0), 3);
+  EXPECT_EQ(full_view(1), 1);
+  EXPECT_EQ(full_view(2), 2);
+}
+
 TYPED_TEST(SubViewTest, StridedSubView1D)
 {
 
@@ -170,13 +212,13 @@ TYPED_TEST(SubViewTest, StridedSubView1D)
   View<Index_type, Layout<1>> view(&a[0], Layout<1>(5));
 
   // sv = View[0:4:2]
-  auto sv = make_subview(view, StridedSlice<> {0, 4, 2});
+  auto sv = TypeParam {}(view, StridedSlice<> {0, 4, 2});
 
   // sv_neg_stride = View[4:0:2]
-  auto sv_neg_stride = make_subview(view, StridedSlice<> {4, 0, -2});
+  auto sv_neg_stride = TypeParam {}(view, StridedSlice<> {4, 0, -2});
 
   // sv_odd_stride = View[0:4:3]
-  auto sv_odd_stride = make_subview(view, StridedSlice<> {0, 4, 3});
+  auto sv_odd_stride = TypeParam {}(view, StridedSlice<> {0, 4, 3});
 
   EXPECT_EQ(sv(0), 1);
   EXPECT_EQ(sv(1), 3);
@@ -195,6 +237,30 @@ TYPED_TEST(SubViewTest, StridedSubView1D)
 
   auto& sr_odd_stride = TypeParam::get_subregion(sv_odd_stride);
   EXPECT_EQ(sr_odd_stride.size(), 2);
+}
+
+TYPED_TEST(SubViewTest, EmptySlices1D)
+{
+  Index_type a[] = {1, 2, 3, 4, 5};
+  View<Index_type, Layout<1>> view(a, Layout<1>(5));
+
+  auto range          = TypeParam {}(view, RangeSlice<> {2, 2});
+  auto& range_adapter = TypeParam::get_subregion(range);
+  EXPECT_EQ(range_adapter.template get_dim_size<0>(), 0);
+  EXPECT_EQ(range_adapter.size(), 1);
+  EXPECT_EQ(range_adapter.size_noproj(), 0);
+
+  auto positive_stride          = TypeParam {}(view, StridedSlice<> {3, 1, 1});
+  auto& positive_stride_adapter = TypeParam::get_subregion(positive_stride);
+  EXPECT_EQ(positive_stride_adapter.template get_dim_size<0>(), 0);
+  EXPECT_EQ(positive_stride_adapter.size(), 1);
+  EXPECT_EQ(positive_stride_adapter.size_noproj(), 0);
+
+  auto negative_stride          = TypeParam {}(view, StridedSlice<> {1, 3, -1});
+  auto& negative_stride_adapter = TypeParam::get_subregion(negative_stride);
+  EXPECT_EQ(negative_stride_adapter.template get_dim_size<0>(), 0);
+  EXPECT_EQ(negative_stride_adapter.size(), 1);
+  EXPECT_EQ(negative_stride_adapter.size_noproj(), 0);
 }
 
 TYPED_TEST(SubViewTest, FixedSubView1D)
