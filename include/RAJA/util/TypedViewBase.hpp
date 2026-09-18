@@ -118,6 +118,12 @@ struct count_num_tensor_args
 #endif
 };
 
+template<>
+struct count_num_tensor_args<>
+{
+  static constexpr camp::idx_t value = 0;
+};
+
 #if defined(RAJA_ENABLE_VECTORIZATION)
 /*
  * Returns which argument has a vector index
@@ -592,6 +598,8 @@ public:
   using shifted_layout_type = typename add_offset<layout_type>::type;
   using ShiftedView = ViewBase<value_type, pointer_type, shifted_layout_type>;
 
+  static constexpr size_t n_dims = layout_type::n_dims;
+
 protected:
   pointer_type m_data;
   layout_type const m_layout;
@@ -632,10 +640,8 @@ public:
 
 #endif
 
-  RAJA_HOST_DEVICE
-
-  RAJA_INLINE
-  constexpr ViewBase(pointer_type data, layout_type&& layout)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr ViewBase(pointer_type data,
+                                                  layout_type&& layout)
       : m_data(data),
         m_layout(layout)
   {}
@@ -674,10 +680,28 @@ public:
     return m_layout.size();
   }
 
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr linear_index_type size_noproj() const
+  {
+    return m_layout.size_noproj();
+  }
+
+  template<camp::idx_t DIM>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_stride()
+      const
+  {
+    return m_layout.template get_dim_stride<DIM>();
+  }
+
   template<camp::idx_t DIM>
   RAJA_HOST_DEVICE RAJA_INLINE constexpr linear_index_type get_dim_size() const
   {
     return m_layout.template get_dim_size<DIM>();
+  }
+
+  template<camp::idx_t DIM>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr linear_index_type get_dim_begin() const
+  {
+    return m_layout.template get_dim_begin<DIM>();
   }
 
   template<typename... Args>
