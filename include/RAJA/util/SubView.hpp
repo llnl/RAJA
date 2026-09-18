@@ -218,33 +218,35 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subregion_to_parent_dim_map()
   return map;
 }
 
+template<typename ParentType,
+         typename SliceTypes,
+         typename IndexType = Index_type>
+struct SlicingAdapter;
+
+/* SubLayout is a semantic alias for a SlicingAdapter whose parent is a
+ * layout */
 template<typename LayoutType,
          typename SliceTypes,
          typename IndexType = Index_type>
-struct SubRegion;
+using SubLayout = SlicingAdapter<LayoutType, SliceTypes, IndexType>;
 
-/* SubLayout is a semantic alias for a SubRegion whose parent is a layout */
-template<typename LayoutType,
+/* SubView is a semantic alias for a SlicingAdapter whose parent is a view */
+template<typename ViewType,
          typename SliceTypes,
          typename IndexType = Index_type>
-using SubLayout = SubRegion<LayoutType, SliceTypes, IndexType>;
+using SubView = SlicingAdapter<ViewType, SliceTypes, IndexType>;
 
-/* SubView is a semantic alias for a SubRegion whose parent is a view */
-template<typename LayoutType,
-         typename SliceTypes,
-         typename IndexType = Index_type>
-using SubView = SubRegion<LayoutType, SliceTypes, IndexType>;
-
-template<typename LayoutType, typename IndexType, typename... Slices>
-struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
+template<typename ParentType, typename IndexType, typename... Slices>
+struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
 {
   using IndexLinear = IndexType;
 
   static inline constexpr size_t n_dims =
       ((!Slices::reduces_dimension ? 1 : 0) + ...);
 
-  RAJA_INLINE RAJA_HOST_DEVICE constexpr SubRegion(const LayoutType& parent,
-                                                   Slices... slices)
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr SlicingAdapter(
+      const ParentType& parent,
+      Slices... slices)
       : m_parent(parent),
         m_slices(slices...)
   {}
@@ -333,7 +335,7 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
 
 private:
   static inline constexpr size_t s_num_slices = sizeof...(Slices);
-  static_assert(s_num_slices == LayoutType::n_dims, "Wrong number of slices");
+  static_assert(s_num_slices == ParentType::n_dims, "Wrong number of slices");
 
   static inline constexpr camp::array<size_t, s_num_slices>
       s_parent_to_subregion_dim = make_parent_to_subregion_dim_map<Slices...>();
@@ -341,13 +343,13 @@ private:
   static inline constexpr camp::array<size_t, n_dims>
       s_subregion_to_parent_dim = make_subregion_to_parent_dim_map<Slices...>();
 
-  const LayoutType m_parent;
+  const ParentType m_parent;
   camp::tuple<Slices...> m_slices;
 };
 
-template<typename LayoutType, typename... Slices>
-SubRegion(LayoutType, Slices...)
-    -> SubRegion<LayoutType, camp::list<Slices...>>;
+template<typename ParentType, typename... Slices>
+SlicingAdapter(ParentType, Slices...)
+    -> SlicingAdapter<ParentType, camp::list<Slices...>>;
 
 }  // namespace RAJA
 
