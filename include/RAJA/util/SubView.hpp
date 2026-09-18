@@ -42,7 +42,7 @@ struct RangeSlice
     return m_start + idx;
   }
 
-  template<IndexType RAJA_UNUSED_ARG(DIM), typename LayoutType>
+  template<size_t RAJA_UNUSED_ARG(DIM), typename LayoutType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const
   {
     return (m_end - m_start);
@@ -64,7 +64,7 @@ struct RangeStartSlice
     return m_start + idx;
   }
 
-  template<IndexType DIM, typename LayoutType>
+  template<size_t DIM, typename LayoutType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(
       const LayoutType& layout) const
   {
@@ -86,7 +86,7 @@ struct FixedSlice
     return m_idx;
   }
 
-  template<IndexType DIM, typename LayoutType>
+  template<size_t DIM, typename LayoutType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const
   {
     return 1;
@@ -106,7 +106,7 @@ struct NoSlice
     return idx;
   }
 
-  template<IndexType DIM, typename LayoutType>
+  template<size_t DIM, typename LayoutType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(
       const LayoutType& layout) const
   {
@@ -129,7 +129,7 @@ struct StridedSlice
     return m_start + m_stride * idx;
   }
 
-  template<IndexType DIM, typename LayoutType>
+  template<size_t DIM, typename LayoutType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const
   {
     if (m_stride == 0)
