@@ -15,7 +15,6 @@
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
 #include "RAJA_test-base.hpp"
-#include "RAJA_unit-test-forone.hpp"
 
 using namespace RAJA;
 
@@ -497,89 +496,3 @@ TEST(SubLayoutMultiViewTest, MultiViewWithSubLayout2D)
   EXPECT_EQ(fixed_view(0), 4);
   EXPECT_EQ(fixed_view(1), 8);
 }
-
-#if defined(RAJA_ENABLE_HIP)
-GPU_TEST(SubViewGPUTest, SubView2D_HIP)
-{
-  constexpr Index_type rows = 3;
-  constexpr Index_type cols = 6;
-  constexpr Index_type N    = rows * cols;
-
-  std::array<Index_type, static_cast<size_t>(N)> host_data {};
-  for (Index_type r = 0; r < rows; ++r)
-  {
-    for (Index_type c = 0; c < cols; ++c)
-    {
-      host_data[static_cast<size_t>(r * cols + c)] =
-          Index_type(1) + r * cols + c;
-    }
-  }
-
-  Index_type* data = nullptr;
-  CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, &data, sizeof(Index_type) * N);
-  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, data, host_data.data(),
-                                sizeof(Index_type) * N, hipMemcpyHostToDevice);
-
-  std::array<Index_type, 14> host_out {};
-  Index_type* out = nullptr;
-  CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, &out,
-                                sizeof(Index_type) * host_out.size());
-  for (size_t i = 0; i < host_out.size(); ++i)
-  {
-    host_out[i] = Index_type(-1);
-  }
-  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, out, host_out.data(),
-                                sizeof(Index_type) * host_out.size(),
-                                hipMemcpyHostToDevice);
-
-  View<Index_type, Layout<2>> view(data, Layout<2>(rows, cols));
-
-  forone<test_hip>([=] RAJA_DEVICE() {
-    // sv = View[1:3,1:6:2]
-    auto sv_with_sublayout =
-        make_subview(view, RangeSlice<> {1, 3}, StridedSlice<> {1, 6, 2});
-    auto sv_with_layout =
-        SlicingAdapter(view, RangeSlice<> {1, 3}, StridedSlice<> {1, 6, 2});
-
-    out[0] = sv_with_sublayout(0, 0);
-    out[1] = sv_with_sublayout(0, 1);
-    out[2] = sv_with_sublayout(0, 2);
-    out[3] = sv_with_sublayout(1, 0);
-    out[4] = sv_with_sublayout(1, 1);
-    out[5] = sv_with_sublayout(1, 2);
-
-    auto const& sr1 = sv_with_sublayout.get_layout();
-    out[6]          = sr1.template get_dim_stride<0>();
-    out[7]          = sr1.template get_dim_stride<1>();
-
-    out[8]  = sv_with_layout(0, 0);
-    out[9]  = sv_with_layout(0, 1);
-    out[10] = sv_with_layout(0, 2);
-    out[11] = sv_with_layout(1, 0);
-    out[12] = sv_with_layout(1, 1);
-    out[13] = sv_with_layout(1, 2);
-  });
-
-  CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, host_out.data(), out,
-                                sizeof(Index_type) * host_out.size(),
-                                hipMemcpyDeviceToHost);
-
-  EXPECT_EQ(host_out[0], 8);
-  EXPECT_EQ(host_out[1], 10);
-  EXPECT_EQ(host_out[2], 12);
-  EXPECT_EQ(host_out[3], 14);
-  EXPECT_EQ(host_out[4], 16);
-  EXPECT_EQ(host_out[5], 18);
-  EXPECT_EQ(host_out[6], 6);
-  EXPECT_EQ(host_out[7], 2);
-  EXPECT_EQ(host_out[8], 8);
-  EXPECT_EQ(host_out[9], 10);
-  EXPECT_EQ(host_out[10], 12);
-  EXPECT_EQ(host_out[11], 14);
-  EXPECT_EQ(host_out[12], 16);
-  EXPECT_EQ(host_out[13], 18);
-
-  CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, out);
-  CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, data);
-}
-#endif

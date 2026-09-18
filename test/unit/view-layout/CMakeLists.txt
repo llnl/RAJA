@@ -34,3 +34,37 @@ raja_add_test(
 raja_add_test(
   NAME test-subview
   SOURCES test-subview.cpp)
+
+set(SUBVIEW_BACKENDS Sequential)
+
+if(RAJA_ENABLE_OPENMP)
+  list(APPEND SUBVIEW_BACKENDS OpenMP)
+endif()
+
+if(RAJA_ENABLE_TARGET_OPENMP)
+  list(APPEND SUBVIEW_BACKENDS OpenMPTarget)
+endif()
+
+if(RAJA_ENABLE_CUDA)
+  list(APPEND SUBVIEW_BACKENDS Cuda)
+endif()
+
+if(RAJA_ENABLE_HIP)
+  list(APPEND SUBVIEW_BACKENDS Hip)
+endif()
+
+if(RAJA_ENABLE_SYCL)
+  list(APPEND SUBVIEW_BACKENDS Sycl)
+endif()
+
+foreach(SUBVIEW_BACKEND ${SUBVIEW_BACKENDS})
+  configure_file(test-subview-backend.cpp.in
+                 test-subview-backend-${SUBVIEW_BACKEND}.cpp)
+  raja_add_test(
+    NAME test-subview-backend-${SUBVIEW_BACKEND}
+    SOURCES ${CMAKE_CURRENT_BINARY_DIR}/test-subview-backend-${SUBVIEW_BACKEND}.cpp)
+  target_include_directories(test-subview-backend-${SUBVIEW_BACKEND}.exe
+                             PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+endforeach()
+
+unset(SUBVIEW_BACKENDS)
