@@ -32,9 +32,13 @@ namespace RAJA
 template<typename IndexType = Index_type>
 struct RangeSlice
 {
-  IndexType m_start, m_end;
-
   static constexpr bool reduces_dimension = false;
+
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr RangeSlice(IndexType start,
+                                                    IndexType end)
+      : m_start(start),
+        m_end(end)
+  {}
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
       IndexType idx) const
@@ -49,14 +53,20 @@ struct RangeSlice
   }
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const { return 1; }
+
+private:
+  IndexType m_start, m_end;
 };
 
 template<typename IndexType = Index_type>
 struct RangeStartSlice
 {
-  IndexType m_start;
-
   static constexpr bool reduces_dimension = false;
+
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr explicit RangeStartSlice(
+      IndexType start)
+      : m_start(start)
+  {}
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
       IndexType idx) const
@@ -72,14 +82,19 @@ struct RangeStartSlice
   }
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const { return 1; }
+
+private:
+  IndexType m_start;
 };
 
 template<typename IndexType = Index_type>
 struct FixedSlice
 {
-  IndexType m_idx;
-
   static constexpr bool reduces_dimension = true;
+
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr explicit FixedSlice(IndexType idx)
+      : m_idx(idx)
+  {}
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index() const
   {
@@ -93,6 +108,9 @@ struct FixedSlice
   }
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const { return 1; }
+
+private:
+  IndexType m_idx;
 };
 
 template<typename IndexType = Index_type>
@@ -119,9 +137,15 @@ struct NoSlice
 template<typename IndexType = Index_type>
 struct StridedSlice
 {
-  IndexType m_start, m_end, m_stride;
-
   static constexpr bool reduces_dimension = false;
+
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr StridedSlice(IndexType start,
+                                                      IndexType end,
+                                                      IndexType stride)
+      : m_start(start),
+        m_end(end),
+        m_stride(stride)
+  {}
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
       IndexType idx) const
@@ -158,6 +182,9 @@ struct StridedSlice
   {
     return m_stride;
   }
+
+private:
+  IndexType m_start, m_end, m_stride;
 };
 
 template<typename... Slices>
@@ -177,15 +204,15 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subregion_to_parent_dim_map()
   size_t parent_dim       = 0;
   camp::array<size_t, n_dims> map {};
 
-  auto process_slice = [&](auto slice_type) constexpr {
-    if constexpr (!decltype(slice_type)::reduces_dimension)
+  auto process_slice = [&](bool reduces_dimension) constexpr {
+    if (!reduces_dimension)
     {
       map[subregion_dim++] = parent_dim;
     }
     parent_dim++;
   };
 
-  (process_slice(Slices {}), ...);
+  (process_slice(Slices::reduces_dimension), ...);
 
   return map;
 }
