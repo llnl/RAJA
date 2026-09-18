@@ -15,7 +15,7 @@
  *
  * \file
  *
- * \brief   RAJA header file defining the SubView class
+ * \brief   RAJA header file defining subview slicing utilities
  *
  ******************************************************************************
  */
@@ -35,6 +35,10 @@ template<typename ValueType, typename PointerType, typename LayoutType>
 class ViewBase;
 }
 
+/*!
+ * \brief Select a half-open range of parent indices without reducing the
+ * dimension.
+ */
 template<typename IndexType = Index_type>
 struct RangeSlice
 {
@@ -64,6 +68,10 @@ private:
   IndexType m_start, m_end;
 };
 
+/*!
+ * \brief Select parent indices in [start, extent) without reducing the
+ * dimension.
+ */
 template<typename IndexType = Index_type>
 struct RangeStartSlice
 {
@@ -93,6 +101,9 @@ private:
   IndexType m_start;
 };
 
+/*!
+ * \brief Select one parent index and remove that dimension from the result.
+ */
 template<typename IndexType = Index_type>
 struct FixedSlice
 {
@@ -119,6 +130,9 @@ private:
   IndexType m_idx;
 };
 
+/*!
+ * \brief Select an entire parent dimension.
+ */
 template<typename IndexType = Index_type>
 struct NoSlice
 {
@@ -140,6 +154,10 @@ struct NoSlice
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const { return 1; }
 };
 
+/*!
+ * \brief Select a strided half-open range of parent indices without reducing
+ * the dimension.
+ */
 template<typename IndexType = Index_type>
 struct StridedSlice
 {
@@ -224,13 +242,17 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subregion_to_parent_dim_map()
   return map;
 }
 
+/*!
+ * \brief Adapt a parent layout or view by applying a slice to each dimension.
+ */
 template<typename ParentType,
          typename SliceTypes,
          typename IndexType = Index_type>
 struct SlicingAdapter;
 
-/* SubLayout is a semantic alias for a SlicingAdapter whose parent is a
- * layout */
+/*!
+ * \brief A SlicingAdapter whose parent is a layout.
+ */
 template<typename LayoutType,
          typename SliceTypes,
          typename IndexType = Index_type>
@@ -244,6 +266,10 @@ struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
   static inline constexpr size_t n_dims =
       ((!Slices::reduces_dimension ? 1 : 0) + ...);
 
+  /*!
+   * \brief Construct an adapter from a parent and one slice per parent
+   * dimension.
+   */
   RAJA_INLINE RAJA_HOST_DEVICE constexpr SlicingAdapter(
       const ParentType& parent,
       Slices... slices)
@@ -267,6 +293,10 @@ struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
     return camp::get<ParentDim>(m_slices);
   }
 
+  /*!
+   * \brief Return the product of dimension sizes, treating zero-sized
+   * dimensions as projected dimensions of size one.
+   */
   RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size() const
   {
     IndexType prod_dims = 1;
@@ -281,6 +311,10 @@ struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
     return prod_dims;
   }
 
+  /*!
+   * \brief Return the product of dimension sizes, including zero-sized
+   * dimensions.
+   */
   RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size_noproj() const
   {
     IndexType prod_dims = 1;
@@ -310,6 +344,10 @@ struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
            camp::get<parent_dim>(m_slices).stride();
   }
 
+  /*!
+   * \brief Access the parent using indices mapped from the subregion index
+   * space.
+   */
   template<typename... Idxs>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr auto operator()(Idxs... idxs) const
   {
