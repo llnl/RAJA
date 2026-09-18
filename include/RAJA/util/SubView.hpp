@@ -212,6 +212,9 @@ private:
   IndexType m_start, m_end, m_stride;
 };
 
+namespace detail
+{
+
 template<typename... Slices>
 RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_subregion_dim_map()
 {
@@ -241,6 +244,8 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subregion_to_parent_dim_map()
 
   return map;
 }
+
+}  // namespace detail
 
 /*!
  * \brief Adapt a parent layout or view by applying a slice to each dimension.
@@ -376,10 +381,12 @@ private:
   static_assert(s_num_slices == ParentType::n_dims, "Wrong number of slices");
 
   static inline constexpr camp::array<size_t, s_num_slices>
-      s_parent_to_subregion_dim = make_parent_to_subregion_dim_map<Slices...>();
+      s_parent_to_subregion_dim =
+          detail::make_parent_to_subregion_dim_map<Slices...>();
 
   static inline constexpr camp::array<size_t, n_dims>
-      s_subregion_to_parent_dim = make_subregion_to_parent_dim_map<Slices...>();
+      s_subregion_to_parent_dim =
+          detail::make_subregion_to_parent_dim_map<Slices...>();
 
   const ParentType m_parent;
   camp::tuple<Slices...> m_slices;
