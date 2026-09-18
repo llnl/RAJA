@@ -139,6 +139,11 @@ struct StridedSlice
 {
   static constexpr bool reduces_dimension = false;
 
+  /*!
+   * \brief Construct a slice over [start, end) using the given stride.
+   *
+   * \pre stride must be nonzero.
+   */
   RAJA_INLINE RAJA_HOST_DEVICE constexpr StridedSlice(IndexType start,
                                                       IndexType end,
                                                       IndexType stride)
@@ -156,11 +161,7 @@ struct StridedSlice
   template<size_t RAJA_UNUSED_ARG(ParentDim), typename LayoutType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const
   {
-    if (m_stride == 0)
-    {
-      return 0;
-    }
-    else if (m_stride > 0)
+    if (m_stride > 0)
     {
       if (m_start >= m_end)
       {
