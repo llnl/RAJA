@@ -354,7 +354,8 @@ struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
    * space.
    */
   template<typename... Idxs>
-  RAJA_INLINE RAJA_HOST_DEVICE constexpr auto operator()(Idxs... idxs) const
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr decltype(auto) operator()(
+      Idxs... idxs) const
   {
     static_assert(sizeof...(idxs) == n_dims, "Wrong number of indices");
 
