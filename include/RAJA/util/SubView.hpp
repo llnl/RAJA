@@ -172,7 +172,6 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_subregion_dim_map()
 template<typename... Slices>
 RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subregion_to_parent_dim_map()
 {
-
   constexpr size_t n_dims = (!Slices::reduces_dimension + ...);
   size_t subregion_dim    = 0;
   size_t parent_dim       = 0;
@@ -240,7 +239,6 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size() const
   {
-
     IndexType prod_dims = 1;
     for_each_tuple_index(m_slices, [&](auto slice, auto parent_dim) {
       const IndexType dim_size =
@@ -255,7 +253,6 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size_noproj() const
   {
-
     IndexType prod_dims = 1;
     for_each_tuple_index(m_slices, [&](auto slice, auto parent_dim) {
       prod_dims *= decltype(slice)::reduces_dimension
