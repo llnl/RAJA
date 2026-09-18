@@ -118,6 +118,12 @@ struct count_num_tensor_args
 #endif
 };
 
+template<>
+struct count_num_tensor_args<>
+{
+  static constexpr camp::idx_t value = 0;
+};
+
 #if defined(RAJA_ENABLE_VECTORIZATION)
 /*
  * Returns which argument has a vector index
