@@ -634,10 +634,8 @@ public:
 
 #endif
 
-  RAJA_HOST_DEVICE
-
-  RAJA_INLINE
-  constexpr ViewBase(pointer_type data, layout_type&& layout)
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr ViewBase(pointer_type data,
+                                                  layout_type&& layout)
       : m_data(data),
         m_layout(layout)
   {}
@@ -676,10 +674,7 @@ public:
     return m_layout.size();
   }
 
-  RAJA_HOST_DEVICE
-
-  RAJA_INLINE
-  constexpr linear_index_type size_noproj() const
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr linear_index_type size_noproj() const
   {
     return m_layout.size_noproj();
   }

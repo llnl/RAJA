@@ -238,15 +238,12 @@ struct MultiView
     return layout;
   }
 
-  RAJA_HOST_DEVICE
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr linear_index_type size() const
+  {
+    return layout.size();
+  }
 
-  RAJA_INLINE
-  constexpr linear_index_type size() const { return layout.size(); }
-
-  RAJA_HOST_DEVICE
-
-  RAJA_INLINE
-  constexpr linear_index_type size_noproj() const
+  RAJA_HOST_DEVICE RAJA_INLINE constexpr linear_index_type size_noproj() const
   {
     return layout.size_noproj();
   }
