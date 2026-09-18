@@ -129,6 +129,9 @@ TYPED_TEST(SubViewTest, RangeSubView1D)
   EXPECT_EQ(sv(1), 3);
   EXPECT_EQ(sv(2), 4);
 
+  sv(1) = 30;
+  EXPECT_EQ(a[2], 30);
+
   auto& sr = TypeParam::get_subregion(sv);
   EXPECT_EQ(sr.size(), 3);
 }
