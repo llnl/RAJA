@@ -42,7 +42,7 @@ struct RangeSlice
     return m_start + idx;
   }
 
-  template<size_t RAJA_UNUSED_ARG(DIM), typename LayoutType>
+  template<size_t RAJA_UNUSED_ARG(ParentDim), typename LayoutType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const
   {
     return (m_end - m_start);
@@ -64,11 +64,11 @@ struct RangeStartSlice
     return m_start + idx;
   }
 
-  template<size_t DIM, typename LayoutType>
+  template<size_t ParentDim, typename LayoutType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(
       const LayoutType& layout) const
   {
-    return (layout.template get_dim_size<DIM>() - m_start);
+    return (layout.template get_dim_size<ParentDim>() - m_start);
   }
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const { return 1; }
@@ -86,7 +86,7 @@ struct FixedSlice
     return m_idx;
   }
 
-  template<size_t DIM, typename LayoutType>
+  template<size_t RAJA_UNUSED_ARG(ParentDim), typename LayoutType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const
   {
     return 1;
@@ -106,11 +106,11 @@ struct NoSlice
     return idx;
   }
 
-  template<size_t DIM, typename LayoutType>
+  template<size_t ParentDim, typename LayoutType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(
       const LayoutType& layout) const
   {
-    return layout.template get_dim_size<DIM>();
+    return layout.template get_dim_size<ParentDim>();
   }
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType stride() const { return 1; }
@@ -129,7 +129,7 @@ struct StridedSlice
     return m_start + m_stride * idx;
   }
 
-  template<size_t DIM, typename LayoutType>
+  template<size_t RAJA_UNUSED_ARG(ParentDim), typename LayoutType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType size(const LayoutType&) const
   {
     if (m_stride == 0)
@@ -161,29 +161,29 @@ struct StridedSlice
 };
 
 template<typename... Slices>
-RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_slice_to_parent_index_map()
+RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_subregion_dim_map()
 {
-  size_t sub_idx = 0;
+  size_t subregion_dim = 0;
   camp::array<size_t, sizeof...(Slices)> map {
-      {(Slices::reduces_dimension ? size_t(0) : sub_idx++)...}};
+      {(Slices::reduces_dimension ? size_t(0) : subregion_dim++)...}};
   return map;
 }
 
 template<typename... Slices>
-RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_slice_index_map()
+RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subregion_to_parent_dim_map()
 {
 
   constexpr size_t n_dims = (!Slices::reduces_dimension + ...);
-  size_t sub_idx          = 0;
-  size_t i                = 0;
+  size_t subregion_dim    = 0;
+  size_t parent_dim       = 0;
   camp::array<size_t, n_dims> map {};
 
   auto process_slice = [&](auto slice_type) constexpr {
     if constexpr (!decltype(slice_type)::reduces_dimension)
     {
-      map[sub_idx++] = i;
+      map[subregion_dim++] = parent_dim;
     }
-    i++;
+    parent_dim++;
   };
 
   (process_slice(Slices {}), ...);
@@ -232,20 +232,21 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
     return m_slices;
   }
 
-  template<size_t Index>
+  template<size_t ParentDim>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr const auto& get_slice() const
   {
-    return camp::get<Index>(m_slices);
+    return camp::get<ParentDim>(m_slices);
   }
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr auto size() const
   {
 
     IndexType prod_dims = 1;
-    for_each_tuple_index(m_slices, [&](auto slice, auto index) {
-      const IndexType dim_size = decltype(slice)::reduces_dimension
-                                     ? IndexType(1)
-                                     : slice.template size<index>(m_parent);
+    for_each_tuple_index(m_slices, [&](auto slice, auto parent_dim) {
+      const IndexType dim_size =
+          decltype(slice)::reduces_dimension
+              ? IndexType(1)
+              : slice.template size<parent_dim>(m_parent);
       prod_dims *= (dim_size == IndexType(0)) ? IndexType(1) : dim_size;
     });
 
@@ -256,44 +257,44 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
   {
 
     IndexType prod_dims = 1;
-    for_each_tuple_index(m_slices, [&](auto slice, auto index) {
+    for_each_tuple_index(m_slices, [&](auto slice, auto parent_dim) {
       prod_dims *= decltype(slice)::reduces_dimension
                        ? IndexType(1)
-                       : slice.template size<index>(m_parent);
+                       : slice.template size<parent_dim>(m_parent);
     });
 
     return prod_dims;
   }
 
-  template<size_t DIM>
+  template<size_t SubregionDim>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_size() const
   {
-    static_assert(DIM < n_dims, "DIM out of bounds");
-    constexpr auto SliceDim = s_parent_to_slice_map[DIM];
-    return camp::get<SliceDim>(m_slices).template size<SliceDim>(m_parent);
+    static_assert(SubregionDim < n_dims, "Dimension out of bounds");
+    constexpr auto parent_dim = s_subregion_to_parent_dim[SubregionDim];
+    return camp::get<parent_dim>(m_slices).template size<parent_dim>(m_parent);
   }
 
-  template<size_t DIM>
+  template<size_t SubregionDim>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_stride() const
   {
-    static_assert(DIM < n_dims, "DIM out of bounds");
+    static_assert(SubregionDim < n_dims, "Dimension out of bounds");
     IndexLinear stride = 1;
-    for_each_index<n_dims>([&](auto dim_c) constexpr {
-      if constexpr (decltype(dim_c)::value > DIM)
+    for_each_index<n_dims>([&](auto subregion_dim) constexpr {
+      if constexpr (decltype(subregion_dim)::value > SubregionDim)
       {
-        stride *= this->template get_dim_size<decltype(dim_c)::value>();
+        stride *= this->template get_dim_size<decltype(subregion_dim)::value>();
       }
     });
     return stride;
   }
 
-  template<size_t DIM>
+  template<size_t SubregionDim>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_parent_dim_stride() const
   {
-    static_assert(DIM < n_dims, "DIM out of bounds");
-    constexpr auto SliceDim = s_parent_to_slice_map[DIM];
-    return m_parent.template get_dim_stride<SliceDim>() *
-           camp::get<SliceDim>(m_slices).stride();
+    static_assert(SubregionDim < n_dims, "Dimension out of bounds");
+    constexpr auto parent_dim = s_subregion_to_parent_dim[SubregionDim];
+    return m_parent.template get_dim_stride<parent_dim>() *
+           camp::get<parent_dim>(m_slices).stride();
   }
 
   template<typename... Idxs>
@@ -301,18 +302,18 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
   {
     static_assert(sizeof...(idxs) == n_dims, "Wrong number of indices");
 
-    camp::array<IndexType, n_dims> arr {idxs...};
+    camp::array<IndexType, n_dims> subregion_indices {idxs...};
     camp::array<IndexType, s_num_slices> parent_indices {};
 
-    for_each_tuple_index(m_slices, [&](auto slice, auto index) {
+    for_each_tuple_index(m_slices, [&](auto slice, auto parent_dim) {
       if constexpr (decltype(slice)::reduces_dimension)
       {
-        parent_indices[index] = slice.map_index();
+        parent_indices[parent_dim] = slice.map_index();
       }
       else
       {
-        parent_indices[index] =
-            slice.map_index(arr[s_slice_to_parent_map[index]]);
+        parent_indices[parent_dim] = slice.map_index(
+            subregion_indices[s_parent_to_subregion_dim[parent_dim]]);
       }
     });
 
@@ -324,10 +325,10 @@ private:
   static_assert(s_num_slices == LayoutType::n_dims, "Wrong number of slices");
 
   static inline constexpr camp::array<size_t, s_num_slices>
-      s_slice_to_parent_map = make_slice_to_parent_index_map<Slices...>();
+      s_parent_to_subregion_dim = make_parent_to_subregion_dim_map<Slices...>();
 
-  static inline constexpr camp::array<size_t, n_dims> s_parent_to_slice_map =
-      make_parent_to_slice_index_map<Slices...>();
+  static inline constexpr camp::array<size_t, n_dims>
+      s_subregion_to_parent_dim = make_subregion_to_parent_dim_map<Slices...>();
 
   const LayoutType m_parent;
   camp::tuple<Slices...> m_slices;
