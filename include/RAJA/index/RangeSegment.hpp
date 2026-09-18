@@ -929,11 +929,10 @@ RAJA_HOST_DEVICE auto make_range(BeginT begin, EndT end)
  *          type, then a compiler error will be produced.
  */
 template<typename BeginT, typename EndT, typename StrideT>
-  requires detail::
-      deduced_range_stride_storage_compatible_v<BeginT, EndT, StrideT>
-    RAJA_HOST_DEVICE auto make_strided_range(BeginT begin,
-                                             EndT end,
-                                             StrideT stride)
+  requires detail::deduced_range_stride_storage_compatible_v<BeginT,
+                                                             EndT,
+                                                             StrideT>
+RAJA_HOST_DEVICE auto make_strided_range(BeginT begin, EndT end, StrideT stride)
 {
   using Common =
       detail::deduced_range_stride_storage_type_t<BeginT, EndT, StrideT>;
