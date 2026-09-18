@@ -181,12 +181,9 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_slice_index_map()
   auto process_slice = [&](auto slice_type) constexpr {
     if constexpr (!decltype(slice_type)::reduces_dimension)
     {
-      map[sub_idx++] = i++;
+      map[sub_idx++] = i;
     }
-    else
-    {
-      i++;
-    }
+    i++;
   };
 
   (process_slice(Slices {}), ...);
