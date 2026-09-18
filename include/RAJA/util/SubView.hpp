@@ -211,23 +211,10 @@ using SubView = SubRegion<LayoutType, SliceTypes, IndexType>;
 template<typename LayoutType, typename IndexType, typename... Slices>
 struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
 {
-
   using IndexLinear = IndexType;
-
-  static inline constexpr size_t s_num_slices = sizeof...(Slices);
-  static_assert(s_num_slices == LayoutType::n_dims, "Wrong number of slices");
 
   static inline constexpr size_t n_dims =
       ((!Slices::reduces_dimension ? 1 : 0) + ...);
-
-  static inline constexpr camp::array<size_t, s_num_slices>
-      s_slice_to_parent_map = make_slice_to_parent_index_map<Slices...>();
-
-  static inline constexpr camp::array<size_t, n_dims> s_parent_to_slice_map =
-      make_parent_to_slice_index_map<Slices...>();
-
-  const LayoutType m_parent;
-  camp::tuple<Slices...> m_slices;
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr SubRegion(const LayoutType& parent,
                                                    Slices... slices)
@@ -331,6 +318,19 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
 
     return camp::apply(m_parent, parent_indices);
   }
+
+private:
+  static inline constexpr size_t s_num_slices = sizeof...(Slices);
+  static_assert(s_num_slices == LayoutType::n_dims, "Wrong number of slices");
+
+  static inline constexpr camp::array<size_t, s_num_slices>
+      s_slice_to_parent_map = make_slice_to_parent_index_map<Slices...>();
+
+  static inline constexpr camp::array<size_t, n_dims> s_parent_to_slice_map =
+      make_parent_to_slice_index_map<Slices...>();
+
+  const LayoutType m_parent;
+  camp::tuple<Slices...> m_slices;
 };
 
 template<typename LayoutType, typename... Slices>
