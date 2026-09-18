@@ -9,6 +9,7 @@
 
 #include <gtest/gtest.h>
 #include <array>
+#include <type_traits>
 #include "RAJA/policy/PolicyBase.hpp"
 #include "RAJA/util/SubView.hpp"
 #include "RAJA/util/macros.hpp"
@@ -67,6 +68,52 @@ class SubViewTest : public ::testing::Test
 using FactoryTypes =
     ::testing::Types<UseMakeSubview, UseSlicingAdapterOverView>;
 TYPED_TEST_SUITE(SubViewTest, FactoryTypes);
+
+TEST(SlicingAdapterTest, GetLayoutParent)
+{
+  Index_type data[12] {};
+  Layout<2> layout(3, 4);
+  View<Index_type, Layout<2>> view(data, layout);
+
+  auto subview =
+      make_subview(view, RangeSlice<> {1, 3}, StridedSlice<> {0, 4, 2});
+  auto const& parent = subview.get_layout().get_parent();
+
+  static_assert(
+      std::is_same<decltype(parent), Layout<2> const&>::value,
+      "get_parent must return a const reference to the parent layout");
+  EXPECT_EQ(parent.template get_dim_size<0>(),
+            layout.template get_dim_size<0>());
+  EXPECT_EQ(parent.template get_dim_size<1>(),
+            layout.template get_dim_size<1>());
+  EXPECT_EQ(parent.template get_dim_stride<0>(),
+            layout.template get_dim_stride<0>());
+  EXPECT_EQ(parent.template get_dim_stride<1>(),
+            layout.template get_dim_stride<1>());
+}
+
+TEST(SlicingAdapterTest, GetViewParent)
+{
+  Index_type data[12] {};
+  Layout<2> layout(3, 4);
+  View<Index_type, Layout<2>> view(data, layout);
+
+  auto adapter =
+      SlicingAdapter(view, RangeSlice<> {1, 3}, StridedSlice<> {0, 4, 2});
+  auto const& parent = adapter.get_parent();
+
+  static_assert(std::is_same<decltype(parent), decltype(view) const&>::value,
+                "get_parent must return a const reference to the parent view");
+  EXPECT_EQ(parent.get_data(), view.get_data());
+  EXPECT_EQ(parent.get_layout().template get_dim_size<0>(),
+            layout.template get_dim_size<0>());
+  EXPECT_EQ(parent.get_layout().template get_dim_size<1>(),
+            layout.template get_dim_size<1>());
+  EXPECT_EQ(parent.get_layout().template get_dim_stride<0>(),
+            layout.template get_dim_stride<0>());
+  EXPECT_EQ(parent.get_layout().template get_dim_stride<1>(),
+            layout.template get_dim_stride<1>());
+}
 
 TYPED_TEST(SubViewTest, RangeSubView1D)
 {
