@@ -275,20 +275,6 @@ struct SubRegion<LayoutType, camp::list<Slices...>, IndexType>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_stride() const
   {
     static_assert(SubregionDim < n_dims, "Dimension out of bounds");
-    IndexLinear stride = 1;
-    for_each_index<n_dims>([&](auto subregion_dim) constexpr {
-      if constexpr (decltype(subregion_dim)::value > SubregionDim)
-      {
-        stride *= this->template get_dim_size<decltype(subregion_dim)::value>();
-      }
-    });
-    return stride;
-  }
-
-  template<size_t SubregionDim>
-  RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_parent_dim_stride() const
-  {
-    static_assert(SubregionDim < n_dims, "Dimension out of bounds");
     constexpr auto parent_dim = s_subregion_to_parent_dim[SubregionDim];
     return m_parent.template get_dim_stride<parent_dim>() *
            camp::get<parent_dim>(m_slices).stride();
