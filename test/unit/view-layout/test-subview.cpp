@@ -273,6 +273,10 @@ TYPED_TEST(SubViewTest, FixedSubView1D)
   // sv = View[1]
   auto sv = TypeParam {}(view, FixedSlice<> {1});
 
+  EXPECT_EQ(sv(), 2);
+  sv() = 20;
+  EXPECT_EQ(a[1], 20);
+
   auto& sr = TypeParam::get_subregion(sv);
   EXPECT_EQ(sr.size(), 1);
   EXPECT_EQ(sr.size_noproj(), 1);
