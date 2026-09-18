@@ -192,9 +192,7 @@ TYPED_TEST(SubViewTest, RangeSubView2D)
   EXPECT_EQ(sr.size(), 4);
   EXPECT_EQ(sr.template get_dim_size<0>(), 2);
   EXPECT_EQ(sr.template get_dim_size<1>(), 2);
-  EXPECT_EQ(sr.template get_parent_dim_stride<0>(), 3);
-  EXPECT_EQ(sr.template get_parent_dim_stride<1>(), 1);
-  EXPECT_EQ(sr.template get_dim_stride<0>(), 2);
+  EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
   EXPECT_EQ(sr.template get_dim_stride<1>(), 1);
 }
 
@@ -230,8 +228,7 @@ TYPED_TEST(SubViewTest, RangeFixedSubView2D)
   auto& sr = TypeParam::get_subregion(sv);
   EXPECT_EQ(sr.size(), 2);
   EXPECT_EQ(sr.template get_dim_size<0>(), 2);
-  EXPECT_EQ(sr.template get_parent_dim_stride<0>(), 3);
-  EXPECT_EQ(sr.template get_dim_stride<0>(), 1);
+  EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
 }
 
 TYPED_TEST(SubViewTest, FixedFirstDimSubView2D)
@@ -251,7 +248,7 @@ TYPED_TEST(SubViewTest, FixedFirstDimSubView2D)
   auto& sr = TypeParam::get_subregion(sv);
   EXPECT_EQ(sr.size(), 3);
   EXPECT_EQ(sr.template get_dim_size<0>(), 3);
-  EXPECT_EQ(sr.template get_parent_dim_stride<0>(), 1);
+  EXPECT_EQ(sr.template get_dim_stride<0>(), 1);
 }
 
 TYPED_TEST(SubViewTest, RangeFirstDimSubView2D)
@@ -276,8 +273,6 @@ TYPED_TEST(SubViewTest, RangeFirstDimSubView2D)
   EXPECT_EQ(sr.size(), 6);
   EXPECT_EQ(sr.template get_dim_size<0>(), 2);
   EXPECT_EQ(sr.template get_dim_size<1>(), 3);
-  EXPECT_EQ(sr.template get_parent_dim_stride<0>(), 3);
-  EXPECT_EQ(sr.template get_parent_dim_stride<1>(), 1);
   EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
   EXPECT_EQ(sr.template get_dim_stride<1>(), 1);
 }
@@ -305,10 +300,8 @@ TYPED_TEST(SubViewTest, RangeFirstDimStridedSecondDimSubView2D)
   EXPECT_EQ(sr.size(), 6);
   EXPECT_EQ(sr.template get_dim_size<0>(), 2);
   EXPECT_EQ(sr.template get_dim_size<1>(), 3);
-  EXPECT_EQ(sr.template get_parent_dim_stride<0>(), 6);
-  EXPECT_EQ(sr.template get_parent_dim_stride<1>(), 2);
-  EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
-  EXPECT_EQ(sr.template get_dim_stride<1>(), 1);
+  EXPECT_EQ(sr.template get_dim_stride<0>(), 6);
+  EXPECT_EQ(sr.template get_dim_stride<1>(), 2);
 }
 
 TYPED_TEST(SubViewTest, SubViewOfSubView2D)
@@ -429,9 +422,10 @@ GPU_TEST(SubViewGPUTest, SubView2D_HIP)
   CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, data, host_data.data(),
                                 sizeof(Index_type) * N, hipMemcpyHostToDevice);
 
-  std::array<Index_type, 16> host_out {};
+  std::array<Index_type, 14> host_out {};
   Index_type* out = nullptr;
-  CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, &out, sizeof(Index_type) * 16);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMalloc, &out,
+                                sizeof(Index_type) * host_out.size());
   for (size_t i = 0; i < host_out.size(); ++i)
   {
     host_out[i] = Index_type(-1);
@@ -457,17 +451,15 @@ GPU_TEST(SubViewGPUTest, SubView2D_HIP)
     out[5] = sv_with_sublayout(1, 2);
 
     auto const& sr1 = sv_with_sublayout.get_layout();
-    out[6]          = sr1.template get_parent_dim_stride<0>();
-    out[7]          = sr1.template get_parent_dim_stride<1>();
-    out[8]          = sr1.template get_dim_stride<0>();
-    out[9]          = sr1.template get_dim_stride<1>();
+    out[6]          = sr1.template get_dim_stride<0>();
+    out[7]          = sr1.template get_dim_stride<1>();
 
-    out[10] = sv_with_layout(0, 0);
-    out[11] = sv_with_layout(0, 1);
-    out[12] = sv_with_layout(0, 2);
-    out[13] = sv_with_layout(1, 0);
-    out[14] = sv_with_layout(1, 1);
-    out[15] = sv_with_layout(1, 2);
+    out[8]  = sv_with_layout(0, 0);
+    out[9]  = sv_with_layout(0, 1);
+    out[10] = sv_with_layout(0, 2);
+    out[11] = sv_with_layout(1, 0);
+    out[12] = sv_with_layout(1, 1);
+    out[13] = sv_with_layout(1, 2);
   });
 
   CAMP_HIP_API_INVOKE_AND_CHECK(hipMemcpy, host_out.data(), out,
@@ -482,14 +474,12 @@ GPU_TEST(SubViewGPUTest, SubView2D_HIP)
   EXPECT_EQ(host_out[5], 18);
   EXPECT_EQ(host_out[6], 6);
   EXPECT_EQ(host_out[7], 2);
-  EXPECT_EQ(host_out[8], 3);
-  EXPECT_EQ(host_out[9], 1);
-  EXPECT_EQ(host_out[10], 8);
-  EXPECT_EQ(host_out[11], 10);
-  EXPECT_EQ(host_out[12], 12);
-  EXPECT_EQ(host_out[13], 14);
-  EXPECT_EQ(host_out[14], 16);
-  EXPECT_EQ(host_out[15], 18);
+  EXPECT_EQ(host_out[8], 8);
+  EXPECT_EQ(host_out[9], 10);
+  EXPECT_EQ(host_out[10], 12);
+  EXPECT_EQ(host_out[11], 14);
+  EXPECT_EQ(host_out[12], 16);
+  EXPECT_EQ(host_out[13], 18);
 
   CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, out);
   CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, data);
