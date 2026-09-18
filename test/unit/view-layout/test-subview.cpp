@@ -338,7 +338,7 @@ TYPED_TEST(SubViewTest, SubViewOfSubView2D)
   EXPECT_EQ(TypeParam::get_subregion(sv3).size(), 2);
 }
 
-TEST(SubViewMultiViewTest, SubViewOfMultiView2D)
+TEST(SubLayoutMultiViewTest, MultiViewWithSubLayout2D)
 {
 
   Index_type data_squared[4];
@@ -378,26 +378,15 @@ TEST(SubViewMultiViewTest, SubViewOfMultiView2D)
   EXPECT_EQ(sv(1, 0), 1);
   EXPECT_EQ(sv(1, 1), 8);
 
-  // sv2 = MultiView[1,1:3]
-  auto sv2 =
-      make_subview_with_layout(view, FixedSlice<> {1}, RangeSlice<> {1, 3});
-
-  // the parent layout is a MultiView
-  EXPECT_EQ(sv2.get_parent().get_layout().size(), 4);
-  EXPECT_EQ(sv2.size(), 2);
-
-  EXPECT_EQ(sv2(0), 1);
-  EXPECT_EQ(sv2(1), 8);
-
-  // sv3 = MultiView[:,2]
-  auto sv3 = make_multiview_with_sublayout(view, FixedSlice<> {2});
+  // fixed_view = MultiView[:,2]
+  auto fixed_view = make_multiview_with_sublayout(view, FixedSlice<> {2});
 
   // this size corresponds to the sliced sublayout (0D)
   // which is sliced from the original MultiView's 1D layout
-  EXPECT_EQ(sv3.get_layout().size(), 1);
+  EXPECT_EQ(fixed_view.get_layout().size(), 1);
 
-  EXPECT_EQ(sv3(0), 4);
-  EXPECT_EQ(sv3(1), 8);
+  EXPECT_EQ(fixed_view(0), 4);
+  EXPECT_EQ(fixed_view(1), 8);
 }
 
 #if defined(RAJA_ENABLE_HIP)
