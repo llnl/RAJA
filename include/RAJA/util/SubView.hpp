@@ -37,7 +37,7 @@ struct RangeSlice
   static constexpr bool reduces_dimension = false;
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
-      const IndexType& idx) const
+      IndexType idx) const
   {
     return m_start + idx;
   }
@@ -59,7 +59,7 @@ struct RangeStartSlice
   static constexpr bool reduces_dimension = false;
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
-      const IndexType& idx) const
+      IndexType idx) const
   {
     return m_start + idx;
   }
@@ -101,7 +101,7 @@ struct NoSlice
   static constexpr bool reduces_dimension = false;
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
-      const IndexType& idx) const
+      IndexType idx) const
   {
     return idx;
   }
@@ -124,7 +124,7 @@ struct StridedSlice
   static constexpr bool reduces_dimension = false;
 
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexType map_index(
-      const IndexType& idx) const
+      IndexType idx) const
   {
     return m_start + m_stride * idx;
   }
