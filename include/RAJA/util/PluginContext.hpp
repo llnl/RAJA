@@ -54,8 +54,8 @@ PluginContext make_context(std::string&& name, Resource resource)
 template<typename Policy>
 PluginContext make_context(std::string&& name)
 {
-  using Resource = typename resources::get_resource<Policy>::type;
-  return make_context<Policy>(std::move(name), Resource::get_default());
+  return make_context<Policy>(std::move(name),
+                              resources::get_default_resource<Policy>());
 }
 
 }  // namespace util
