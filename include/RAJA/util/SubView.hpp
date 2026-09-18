@@ -29,6 +29,12 @@
 namespace RAJA
 {
 
+namespace internal
+{
+template<typename ValueType, typename PointerType, typename LayoutType>
+class ViewBase;
+}
+
 template<typename IndexType = Index_type>
 struct RangeSlice
 {
@@ -230,12 +236,6 @@ template<typename LayoutType,
          typename IndexType = Index_type>
 using SubLayout = SlicingAdapter<LayoutType, SliceTypes, IndexType>;
 
-/* SubView is a semantic alias for a SlicingAdapter whose parent is a view */
-template<typename ViewType,
-         typename SliceTypes,
-         typename IndexType = Index_type>
-using SubView = SlicingAdapter<ViewType, SliceTypes, IndexType>;
-
 template<typename ParentType, typename IndexType, typename... Slices>
 struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
 {
@@ -350,6 +350,29 @@ private:
 template<typename ParentType, typename... Slices>
 SlicingAdapter(ParentType, Slices...)
     -> SlicingAdapter<ParentType, camp::list<Slices...>>;
+
+/*!
+ * \brief Create a sliced view whose layout maps indices into a parent view.
+ *
+ * One slice must be provided for each dimension of the parent view.
+ *
+ * \param view Parent view to slice.
+ * \param slices Slice specification for each parent dimension.
+ * \return A view over the parent data using a SubLayout.
+ */
+template<typename ValueType,
+         typename LayoutType,
+         typename PointerType,
+         typename... Slices>
+RAJA_HOST_DEVICE RAJA_INLINE constexpr auto make_subview(
+    const internal::ViewBase<ValueType, PointerType, LayoutType>& view,
+    Slices... slices)
+{
+  using SubLayoutType = SubLayout<LayoutType, camp::list<Slices...>,
+                                  typename LayoutType::IndexLinear>;
+  return internal::ViewBase<ValueType, PointerType, SubLayoutType>(
+      view.get_data(), SubLayoutType(view.get_layout(), slices...));
+}
 
 }  // namespace RAJA
 

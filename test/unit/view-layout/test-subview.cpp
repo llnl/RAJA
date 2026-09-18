@@ -18,24 +18,6 @@
 
 using namespace RAJA;
 
-/* helper to create a RAJA View with a sliced SubLayout */
-template<typename ViewType, typename... Slices>
-RAJA_HOST_DEVICE auto make_view_with_sublayout(ViewType& view, Slices... slices)
-{
-  using SubLayoutType =
-      SubLayout<typename ViewType::layout_type, camp::list<Slices...>>;
-  return View<Index_type, SubLayoutType>(
-      view.get_data(), SubLayoutType(view.get_layout(), slices...));
-}
-
-/* helper to create a sliced SubView without modifying underlying layout */
-template<typename ViewType, typename... Slices>
-RAJA_HOST_DEVICE auto make_subview_with_layout(ViewType& view, Slices... slices)
-{
-  using SubViewType = SubView<ViewType, camp::list<Slices...>>;
-  return SubViewType(view, slices...);
-}
-
 template<typename ViewType, typename... Slices>
 RAJA_HOST_DEVICE auto make_multiview_with_sublayout(ViewType& view,
                                                     Slices... slices)
@@ -46,13 +28,13 @@ RAJA_HOST_DEVICE auto make_multiview_with_sublayout(ViewType& view,
       view.get_data(), SubLayoutType(view.get_layout(), slices...));
 }
 
-struct UseViewWithSubLayout
+struct UseMakeSubview
 {
 
   template<typename ViewType, typename... Slices>
   auto operator()(ViewType& view, Slices... slices) const
   {
-    return make_view_with_sublayout(view, slices...);
+    return make_subview(view, slices...);
   }
 
   template<typename ViewType>
@@ -62,13 +44,13 @@ struct UseViewWithSubLayout
   }
 };
 
-struct UseSubViewWithLayout
+struct UseSlicingAdapterOverView
 {
 
   template<typename ViewType, typename... Slices>
   auto operator()(ViewType& view, Slices... slices) const
   {
-    return make_subview_with_layout(view, slices...);
+    return SlicingAdapter(view, slices...);
   }
 
   template<typename ViewType>
@@ -83,7 +65,7 @@ class SubViewTest : public ::testing::Test
 {};
 
 using FactoryTypes =
-    ::testing::Types<UseViewWithSubLayout, UseSubViewWithLayout>;
+    ::testing::Types<UseMakeSubview, UseSlicingAdapterOverView>;
 TYPED_TEST_SUITE(SubViewTest, FactoryTypes);
 
 TYPED_TEST(SubViewTest, RangeSubView1D)
@@ -130,14 +112,13 @@ TYPED_TEST(SubViewTest, StridedSubView1D)
   View<Index_type, Layout<1>> view(&a[0], Layout<1>(5));
 
   // sv = View[0:4:2]
-  auto sv = make_view_with_sublayout(view, StridedSlice<> {0, 4, 2});
+  auto sv = make_subview(view, StridedSlice<> {0, 4, 2});
 
   // sv_neg_stride = View[4:0:2]
-  auto sv_neg_stride =
-      make_view_with_sublayout(view, StridedSlice<> {4, 0, -2});
+  auto sv_neg_stride = make_subview(view, StridedSlice<> {4, 0, -2});
 
   // sv_odd_stride = View[0:4:3]
-  auto sv_odd_stride = make_view_with_sublayout(view, StridedSlice<> {0, 4, 3});
+  auto sv_odd_stride = make_subview(view, StridedSlice<> {0, 4, 3});
 
   EXPECT_EQ(sv(0), 1);
   EXPECT_EQ(sv(1), 3);
@@ -427,10 +408,10 @@ GPU_TEST(SubViewGPUTest, SubView2D_HIP)
 
   forone<test_hip>([=] RAJA_DEVICE() {
     // sv = View[1:3,1:6:2]
-    auto sv_with_sublayout = make_view_with_sublayout(view, RangeSlice<> {1, 3},
-                                                      StridedSlice<> {1, 6, 2});
-    auto sv_with_layout    = make_subview_with_layout(view, RangeSlice<> {1, 3},
-                                                      StridedSlice<> {1, 6, 2});
+    auto sv_with_sublayout =
+        make_subview(view, RangeSlice<> {1, 3}, StridedSlice<> {1, 6, 2});
+    auto sv_with_layout =
+        SlicingAdapter(view, RangeSlice<> {1, 3}, StridedSlice<> {1, 6, 2});
 
     out[0] = sv_with_sublayout(0, 0);
     out[1] = sv_with_sublayout(0, 1);
