@@ -42,6 +42,9 @@ variables:
   GIT_SUBMODULE_UPDATE_FLAGS: --jobs 3
   GIT_SUBMODULE_PATHS: tpl/desul scripts/radiuss-spack-configs scripts/uberenv
 
+  # Pin the camp sha, update this to point at the submodule sha
+  CAMP_REFERENCE:"15441bb26c9b94546cb8841d3daf73b17463918d"
+
 # PROJECT VARIABLES
   MP_BRANCH: "develop"
 
