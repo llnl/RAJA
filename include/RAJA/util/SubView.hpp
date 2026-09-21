@@ -226,26 +226,26 @@ namespace detail
 {
 
 template<typename... Slices>
-RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_subregion_dim_map()
+RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_parent_to_adapter_dim_map()
 {
-  size_t subregion_dim = 0;
+  size_t adapter_dim = 0;
   camp::array<size_t, sizeof...(Slices)> map {
-      {(Slices::reduces_dimension ? size_t(0) : subregion_dim++)...}};
+      {(Slices::reduces_dimension ? size_t(0) : adapter_dim++)...}};
   return map;
 }
 
 template<typename... Slices>
-RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_subregion_to_parent_dim_map()
+RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_adapter_to_parent_dim_map()
 {
   constexpr size_t n_dims = (!Slices::reduces_dimension + ...);
-  size_t subregion_dim    = 0;
-  size_t parent_dim       = 0;
+  size_t adapter_dim = 0;
+  size_t parent_dim  = 0;
   camp::array<size_t, n_dims> map {};
 
   auto process_slice = [&](bool reduces_dimension) constexpr {
     if (!reduces_dimension)
     {
-      map[subregion_dim++] = parent_dim;
+      map[adapter_dim++] = parent_dim;
     }
     parent_dim++;
   };
@@ -342,33 +342,33 @@ struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
     return prod_dims;
   }
 
-  template<size_t SubregionDim>
+  template<size_t AdapterDim>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr auto get_dim_size() const
   {
-    static_assert(SubregionDim < n_dims, "Dimension out of bounds");
-    constexpr auto parent_dim = s_subregion_to_parent_dim[SubregionDim];
+    static_assert(AdapterDim < n_dims, "Dimension out of bounds");
+    constexpr auto parent_dim = s_adapter_to_parent_dim[AdapterDim];
     return camp::get<parent_dim>(m_slices).template size<parent_dim>(m_parent);
   }
 
-  template<size_t SubregionDim>
+  template<size_t AdapterDim>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_stride() const
   {
-    static_assert(SubregionDim < n_dims, "Dimension out of bounds");
-    constexpr auto parent_dim = s_subregion_to_parent_dim[SubregionDim];
+    static_assert(AdapterDim < n_dims, "Dimension out of bounds");
+    constexpr auto parent_dim = s_adapter_to_parent_dim[AdapterDim];
     return m_parent.template get_dim_stride<parent_dim>() *
            camp::get<parent_dim>(m_slices).stride();
   }
 
-  template<size_t SubregionDim>
+  template<size_t AdapterDim>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_begin() const
   {
-    static_assert(SubregionDim < n_dims, "Dimension out of bounds");
+    static_assert(AdapterDim < n_dims, "Dimension out of bounds");
     return IndexLinear(0);
   }
 
   /*!
-   * \brief Access the parent using indices mapped from the subregion index
-   * space.
+   * \brief Map indices in this adapter's index space to the parent and access
+   * the corresponding element.
    */
   template<typename... Idxs>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr decltype(auto) operator()(
@@ -376,7 +376,7 @@ struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
   {
     static_assert(sizeof...(idxs) == n_dims, "Wrong number of indices");
 
-    camp::array<IndexType, n_dims> subregion_indices {idxs...};
+    camp::array<IndexType, n_dims> adapter_indices {idxs...};
     camp::array<IndexType, s_num_slices> parent_indices {};
 
     for_each_tuple_index(m_slices, [&](auto slice, auto parent_dim) {
@@ -388,7 +388,7 @@ struct SlicingAdapter<ParentType, camp::list<Slices...>, IndexType>
       else
       {
         parent_indices[parent_dim] = slice.template map_index<parent_dim>(
-            subregion_indices[s_parent_to_subregion_dim[parent_dim]], m_parent);
+            adapter_indices[s_parent_to_adapter_dim[parent_dim]], m_parent);
       }
     });
 
@@ -400,12 +400,12 @@ private:
   static_assert(s_num_slices == ParentType::n_dims, "Wrong number of slices");
 
   static inline constexpr camp::array<size_t, s_num_slices>
-      s_parent_to_subregion_dim =
-          detail::make_parent_to_subregion_dim_map<Slices...>();
+      s_parent_to_adapter_dim =
+          detail::make_parent_to_adapter_dim_map<Slices...>();
 
   static inline constexpr camp::array<size_t, n_dims>
-      s_subregion_to_parent_dim =
-          detail::make_subregion_to_parent_dim_map<Slices...>();
+      s_adapter_to_parent_dim =
+          detail::make_adapter_to_parent_dim_map<Slices...>();
 
   const ParentType m_parent;
   camp::tuple<Slices...> m_slices;

@@ -38,7 +38,7 @@ struct UseMakeSubview
   }
 
   template<typename ViewType>
-  static auto& get_subregion(ViewType& sv)
+  static auto& get_adapter(ViewType& sv)
   {
     return sv.get_layout();
   }
@@ -54,7 +54,7 @@ struct UseSlicingAdapterOverView
   }
 
   template<typename ViewType>
-  static auto& get_subregion(ViewType& sv)
+  static auto& get_adapter(ViewType& sv)
   {
     return sv;
   }
@@ -128,8 +128,8 @@ TYPED_TEST(SubViewTest, RangeSubView1D)
   EXPECT_EQ(sv(1), 3);
   EXPECT_EQ(sv(2), 4);
 
-  auto& sr = TypeParam::get_subregion(sv);
-  EXPECT_EQ(sr.size(), 3);
+  auto& adapter = TypeParam::get_adapter(sv);
+  EXPECT_EQ(adapter.size(), 3);
 }
 
 TYPED_TEST(SubViewTest, WriteThrough1D)
@@ -157,8 +157,8 @@ TYPED_TEST(SubViewTest, RangeStartSubView1D)
   EXPECT_EQ(sv(1), 4);
   EXPECT_EQ(sv(2), 5);
 
-  auto& sr = TypeParam::get_subregion(sv);
-  EXPECT_EQ(sr.size(), 3);
+  auto& adapter = TypeParam::get_adapter(sv);
+  EXPECT_EQ(adapter.size(), 3);
 }
 
 TYPED_TEST(SubViewTest, OffsetLayoutSubView1D)
@@ -228,14 +228,14 @@ TYPED_TEST(SubViewTest, StridedSubView1D)
   EXPECT_EQ(sv_odd_stride(0), 1);
   EXPECT_EQ(sv_odd_stride(1), 4);
 
-  auto& sr = TypeParam::get_subregion(sv);
-  EXPECT_EQ(sr.size(), 2);
+  auto& adapter = TypeParam::get_adapter(sv);
+  EXPECT_EQ(adapter.size(), 2);
 
-  auto& sr_neg_stride = TypeParam::get_subregion(sv_neg_stride);
-  EXPECT_EQ(sr_neg_stride.size(), 2);
+  auto& neg_stride_adapter = TypeParam::get_adapter(sv_neg_stride);
+  EXPECT_EQ(neg_stride_adapter.size(), 2);
 
-  auto& sr_odd_stride = TypeParam::get_subregion(sv_odd_stride);
-  EXPECT_EQ(sr_odd_stride.size(), 2);
+  auto& odd_stride_adapter = TypeParam::get_adapter(sv_odd_stride);
+  EXPECT_EQ(odd_stride_adapter.size(), 2);
 }
 
 TYPED_TEST(SubViewTest, EmptySlices1D)
@@ -244,19 +244,19 @@ TYPED_TEST(SubViewTest, EmptySlices1D)
   View<Index_type, Layout<1>> view(a, Layout<1>(5));
 
   auto range          = TypeParam {}(view, RangeSlice<> {2, 2});
-  auto& range_adapter = TypeParam::get_subregion(range);
+  auto& range_adapter = TypeParam::get_adapter(range);
   EXPECT_EQ(range_adapter.template get_dim_size<0>(), 0);
   EXPECT_EQ(range_adapter.size(), 1);
   EXPECT_EQ(range_adapter.size_noproj(), 0);
 
   auto positive_stride          = TypeParam {}(view, StridedSlice<> {3, 1, 1});
-  auto& positive_stride_adapter = TypeParam::get_subregion(positive_stride);
+  auto& positive_stride_adapter = TypeParam::get_adapter(positive_stride);
   EXPECT_EQ(positive_stride_adapter.template get_dim_size<0>(), 0);
   EXPECT_EQ(positive_stride_adapter.size(), 1);
   EXPECT_EQ(positive_stride_adapter.size_noproj(), 0);
 
   auto negative_stride          = TypeParam {}(view, StridedSlice<> {1, 3, -1});
-  auto& negative_stride_adapter = TypeParam::get_subregion(negative_stride);
+  auto& negative_stride_adapter = TypeParam::get_adapter(negative_stride);
   EXPECT_EQ(negative_stride_adapter.template get_dim_size<0>(), 0);
   EXPECT_EQ(negative_stride_adapter.size(), 1);
   EXPECT_EQ(negative_stride_adapter.size_noproj(), 0);
@@ -276,9 +276,9 @@ TYPED_TEST(SubViewTest, FixedSubView1D)
   sv() = 20;
   EXPECT_EQ(a[1], 20);
 
-  auto& sr = TypeParam::get_subregion(sv);
-  EXPECT_EQ(sr.size(), 1);
-  EXPECT_EQ(sr.size_noproj(), 1);
+  auto& adapter = TypeParam::get_adapter(sv);
+  EXPECT_EQ(adapter.size(), 1);
+  EXPECT_EQ(adapter.size_noproj(), 1);
 }
 
 TYPED_TEST(SubViewTest, RangeSubView2D)
@@ -296,12 +296,12 @@ TYPED_TEST(SubViewTest, RangeSubView2D)
   EXPECT_EQ(sv(1, 0), 8);
   EXPECT_EQ(sv(1, 1), 9);
 
-  auto& sr = TypeParam::get_subregion(sv);
-  EXPECT_EQ(sr.size(), 4);
-  EXPECT_EQ(sr.template get_dim_size<0>(), 2);
-  EXPECT_EQ(sr.template get_dim_size<1>(), 2);
-  EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
-  EXPECT_EQ(sr.template get_dim_stride<1>(), 1);
+  auto& adapter = TypeParam::get_adapter(sv);
+  EXPECT_EQ(adapter.size(), 4);
+  EXPECT_EQ(adapter.template get_dim_size<0>(), 2);
+  EXPECT_EQ(adapter.template get_dim_size<1>(), 2);
+  EXPECT_EQ(adapter.template get_dim_stride<0>(), 3);
+  EXPECT_EQ(adapter.template get_dim_stride<1>(), 1);
 }
 
 TYPED_TEST(SubViewTest, ProjectedLayoutSizeDiff2D)
@@ -315,9 +315,9 @@ TYPED_TEST(SubViewTest, ProjectedLayoutSizeDiff2D)
   // sv = View[:, :]
   auto sv = TypeParam {}(view, NoSlice {}, NoSlice {});
 
-  auto& sr = TypeParam::get_subregion(sv);
-  EXPECT_EQ(sr.size(), 3);
-  EXPECT_EQ(sr.size_noproj(), 0);
+  auto& adapter = TypeParam::get_adapter(sv);
+  EXPECT_EQ(adapter.size(), 3);
+  EXPECT_EQ(adapter.size_noproj(), 0);
 }
 
 TYPED_TEST(SubViewTest, RangeFixedSubView2D)
@@ -333,10 +333,10 @@ TYPED_TEST(SubViewTest, RangeFixedSubView2D)
   EXPECT_EQ(sv(0), 5);
   EXPECT_EQ(sv(1), 8);
 
-  auto& sr = TypeParam::get_subregion(sv);
-  EXPECT_EQ(sr.size(), 2);
-  EXPECT_EQ(sr.template get_dim_size<0>(), 2);
-  EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
+  auto& adapter = TypeParam::get_adapter(sv);
+  EXPECT_EQ(adapter.size(), 2);
+  EXPECT_EQ(adapter.template get_dim_size<0>(), 2);
+  EXPECT_EQ(adapter.template get_dim_stride<0>(), 3);
 }
 
 TYPED_TEST(SubViewTest, FixedFirstDimSubView2D)
@@ -353,10 +353,10 @@ TYPED_TEST(SubViewTest, FixedFirstDimSubView2D)
   EXPECT_EQ(sv(1), 5);
   EXPECT_EQ(sv(2), 6);
 
-  auto& sr = TypeParam::get_subregion(sv);
-  EXPECT_EQ(sr.size(), 3);
-  EXPECT_EQ(sr.template get_dim_size<0>(), 3);
-  EXPECT_EQ(sr.template get_dim_stride<0>(), 1);
+  auto& adapter = TypeParam::get_adapter(sv);
+  EXPECT_EQ(adapter.size(), 3);
+  EXPECT_EQ(adapter.template get_dim_size<0>(), 3);
+  EXPECT_EQ(adapter.template get_dim_stride<0>(), 1);
 }
 
 TYPED_TEST(SubViewTest, RangeFirstDimSubView2D)
@@ -377,12 +377,12 @@ TYPED_TEST(SubViewTest, RangeFirstDimSubView2D)
   EXPECT_EQ(sv(1, 1), 8);
   EXPECT_EQ(sv(1, 2), 9);
 
-  auto& sr = TypeParam::get_subregion(sv);
-  EXPECT_EQ(sr.size(), 6);
-  EXPECT_EQ(sr.template get_dim_size<0>(), 2);
-  EXPECT_EQ(sr.template get_dim_size<1>(), 3);
-  EXPECT_EQ(sr.template get_dim_stride<0>(), 3);
-  EXPECT_EQ(sr.template get_dim_stride<1>(), 1);
+  auto& adapter = TypeParam::get_adapter(sv);
+  EXPECT_EQ(adapter.size(), 6);
+  EXPECT_EQ(adapter.template get_dim_size<0>(), 2);
+  EXPECT_EQ(adapter.template get_dim_size<1>(), 3);
+  EXPECT_EQ(adapter.template get_dim_stride<0>(), 3);
+  EXPECT_EQ(adapter.template get_dim_stride<1>(), 1);
 }
 
 TYPED_TEST(SubViewTest, RangeFirstDimStridedSecondDimSubView2D)
@@ -404,12 +404,12 @@ TYPED_TEST(SubViewTest, RangeFirstDimStridedSecondDimSubView2D)
   EXPECT_EQ(sv(1, 1), 16);
   EXPECT_EQ(sv(1, 2), 18);
 
-  auto& sr = TypeParam::get_subregion(sv);
-  EXPECT_EQ(sr.size(), 6);
-  EXPECT_EQ(sr.template get_dim_size<0>(), 2);
-  EXPECT_EQ(sr.template get_dim_size<1>(), 3);
-  EXPECT_EQ(sr.template get_dim_stride<0>(), 6);
-  EXPECT_EQ(sr.template get_dim_stride<1>(), 2);
+  auto& adapter = TypeParam::get_adapter(sv);
+  EXPECT_EQ(adapter.size(), 6);
+  EXPECT_EQ(adapter.template get_dim_size<0>(), 2);
+  EXPECT_EQ(adapter.template get_dim_size<1>(), 3);
+  EXPECT_EQ(adapter.template get_dim_stride<0>(), 6);
+  EXPECT_EQ(adapter.template get_dim_stride<1>(), 2);
 }
 
 TYPED_TEST(SubViewTest, SubViewOfSubView2D)
@@ -423,8 +423,8 @@ TYPED_TEST(SubViewTest, SubViewOfSubView2D)
   auto sv = TypeParam {}(view, RangeSlice<> {1, 3}, NoSlice {});
 
 
-  auto& sr = TypeParam::get_subregion(sv);
-  EXPECT_EQ(sr.size(), 6);
+  auto& adapter = TypeParam::get_adapter(sv);
+  EXPECT_EQ(adapter.size(), 6);
 
   // sv2 = sv[0:2,1:3]
   auto sv2 = TypeParam {}(sv, RangeSlice<> {0, 2}, RangeSlice<> {1, 3});
@@ -435,7 +435,7 @@ TYPED_TEST(SubViewTest, SubViewOfSubView2D)
   EXPECT_EQ(sv2(1, 0), 8);
   EXPECT_EQ(sv2(1, 1), 9);
 
-  EXPECT_EQ(TypeParam::get_subregion(sv2).size(), 4);
+  EXPECT_EQ(TypeParam::get_adapter(sv2).size(), 4);
 
   // sv3 = sv2[:,1]
   auto sv3 = TypeParam {}(sv2, NoSlice {}, FixedSlice<> {1});
@@ -443,7 +443,7 @@ TYPED_TEST(SubViewTest, SubViewOfSubView2D)
   EXPECT_EQ(sv3(0), 6);
   EXPECT_EQ(sv3(1), 9);
 
-  EXPECT_EQ(TypeParam::get_subregion(sv3).size(), 2);
+  EXPECT_EQ(TypeParam::get_adapter(sv3).size(), 2);
 }
 
 TEST(SubLayoutMultiViewTest, MultiViewWithSubLayout2D)
