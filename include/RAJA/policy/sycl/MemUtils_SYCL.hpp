@@ -121,6 +121,15 @@ using device_zeroed_mempool_type =
     basic_mempool::MemPool<DeviceZeroedAllocator>;
 using pinned_mempool_type = basic_mempool::MemPool<PinnedAllocator>;
 
+inline size_t release_unused_internal_memory()
+{
+  size_t released = 0;
+  released += device_mempool_type::getInstance().release_unused();
+  released += device_zeroed_mempool_type::getInstance().release_unused();
+  released += pinned_mempool_type::getInstance().release_unused();
+  return released;
+}
+
 }  // namespace sycl
 
 }  // namespace RAJA

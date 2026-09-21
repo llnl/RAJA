@@ -35,5 +35,6 @@ to use RAJA in an application can be found in :ref:`app-considerations-label`.
    features
    cook_book
    profiling_with_caliper
+   memory
    app_considerations
    tutorial
