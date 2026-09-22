@@ -21,6 +21,25 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
+Version 2026.07.1 -- Release date 2026-09-xx
+============================================
+
+This release contains ...
+
+Notable changes include:
+
+  * New features / API changes:
+    * Substantially reworked RAJA User Guide policy sections to make it more clear and instructive.
+    * Added optional memory cleanup method that can be called to free RAJA's internal memory pools. The method `RAJA::release_unused_internal_memory` can be called after RAJA and device work has completed. This makes memory checker tool output cleaner.
+
+  * Build changes/improvements:
+    * Updated Camp submodule to v2026.07.2 Camp release.
+
+  * Bug fixes/improvements:
+    * Resolved performance issue in the recently released `RAJA::range(N)` construct.
+
+
+
 Version 2026.07.0 -- Release date 2026-08-04
 ============================================
 
