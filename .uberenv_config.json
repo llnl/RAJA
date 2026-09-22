@@ -7,7 +7,7 @@
 "spack_branch": "v1.1.1",
 "spack_configs_path": "scripts/radiuss-spack-configs",
 "spack_packages_path": "scripts/radiuss-spack-configs/spack_repo/llnl_radiuss/packages",
-"spack_packages_url": "https://github.com/johnbowen42/spack-packages.git",
-"spack_packages_commit": "a2b72cb799614a229f1ffc40019a63a826373cad",
+"spack_packages_url": "https://github.com/spack/spack-packages.git",
+"spack_packages_commit": "4b6b842d494ab86ebef5304e6bfe766aa421a66b",
 "spack_setup_clingo": false
 }

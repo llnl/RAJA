@@ -42,8 +42,8 @@ variables:
   GIT_SUBMODULE_UPDATE_FLAGS: --jobs 3
   GIT_SUBMODULE_PATHS: tpl/desul scripts/radiuss-spack-configs scripts/uberenv
 
-  # TODO: Can we pin the camp sha here and not break spack?  That would be nice!
-  # CAMP_REFERENCE: "15441bb26c9b94546cb8841d3daf73b17463918d"
+  # This sha fixes the version of camp used in gitlab CI by RAJA
+  CAMP_REFERENCE: "15441bb26c9b94546cb8841d3daf73b17463918d"
 
 # PROJECT VARIABLES
   MP_BRANCH: "develop"
