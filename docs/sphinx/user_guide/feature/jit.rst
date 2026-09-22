@@ -66,8 +66,9 @@ Marking a kernel for JIT
 The user-facing interface shown in ``examples/forall-jit.cpp`` consists of:
 
 * ``RAJA_JIT_COMPILE``: annotate a lambda or function so Proteus can identify it
-  as a JIT compilation candidate.
-* ``RAJA_JIT_REGISTER_LAMBDA``: register a lambda for JIT compilation.  This call
+  as a JIT compilation candidate.  This annotation goes after the lambda's parameter
+  list.
+* ``proteus::jit::register_lambda``: register a lambda for JIT compilation.  This call
   will enable Proteus to specialize a lambda body using the args specified with
   RAJA_JIT_COMPILE.
 * ``RAJA_JIT_VARIABLE``: wrap runtime values that should be treated as

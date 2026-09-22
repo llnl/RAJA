@@ -1,5 +1,6 @@
 #include "RAJA/config.hpp"
 #if defined(RAJA_ENABLE_JIT)
+#include "RAJA/pattern/launch/launch_context_policy.hpp"
 #include "proteus/JitInterface.h"
 #endif
 
@@ -8,8 +9,19 @@
 
 namespace RAJA
 {
-namespace internal
+#if defined(RAJA_ENABLE_JIT)
+namespace detail
 {
+
+template<std::uint64_t FunctorID, typename Lambda>
+struct launch_context_type<
+    proteus::detail::LambdaFunctorWrapper<FunctorID, Lambda>>
+    : launch_context_type<Lambda>
+{};
+
+}  // namespace detail
+#endif
+
 namespace jit
 {
 
@@ -24,7 +36,6 @@ template<typename Lambda>
 }
 
 }  // namespace jit
-}  // namespace internal
 }  // namespace RAJA
 
 #endif

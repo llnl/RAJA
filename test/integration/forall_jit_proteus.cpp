@@ -34,7 +34,8 @@ int main()
   double *C_ptr = res.template allocate<double>(N * a * b);
   auto C = RAJA::make_permuted_view<RAJA::layout_right>(C_ptr, N, a, b);
 
-  RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=](int i) {
+  RAJA::forall<policy>(RAJA::RangeSegment(0, N),
+                       [=] RAJA_HOST_DEVICE (int i) {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
         C(i, row, col) = 0.0;
@@ -45,8 +46,8 @@ int main()
   proteus::enable();
   RAJA::forall<policy>(
       RAJA::RangeSegment(0, N),
-      RAJA_JIT_REGISTER_LAMBDA([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
-       accum = RAJA_JIT_VARIABLE(accum)](int i) RAJA_JIT_COMPILE {
+      RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
+       accum = RAJA_JIT_VARIABLE(accum)] RAJA_HOST_DEVICE (int i) RAJA_JIT_COMPILE {
         for (int row = 0; row < a; ++row) {
           for (int col = 0; col < b; ++col) {
             double v = static_cast<double>(i + row + col);

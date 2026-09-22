@@ -71,7 +71,8 @@ int main(int argc, char **argv) {
 
   auto Seg = RAJA::RangeSegment(0, N);
 
-  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg), [=](int i) RAJA_HOST_DEVICE {
+  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg),
+                              [=] RAJA_HOST_DEVICE (int i) {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
         A(i, row, col) = 0;
@@ -85,7 +86,8 @@ int main(int argc, char **argv) {
   proteus::disable();
   aot_timer.start();
 
-  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg), [=](int i) RAJA_HOST_DEVICE {
+  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg),
+                              [=] RAJA_HOST_DEVICE (int i) {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
         A(i, row, col) = i % row;
@@ -95,7 +97,8 @@ int main(int argc, char **argv) {
     }
   });
 
-  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg), [=](int i) RAJA_HOST_DEVICE {
+  RAJA::kernel<kernel_policy>(RAJA::make_tuple(Seg),
+                              [=] RAJA_HOST_DEVICE (int i) {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
         if (!accum) {
@@ -116,8 +119,8 @@ int main(int argc, char **argv) {
 
   RAJA::kernel<kernel_policy>(
       RAJA::make_tuple(Seg),
-      RAJA_JIT_REGISTER_LAMBDA([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b)](int i)
-          RAJA_JIT_COMPILE RAJA_HOST_DEVICE {
+      RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b)]
+          RAJA_HOST_DEVICE (int i) RAJA_JIT_COMPILE {
             for (int row = 0; row < a; ++row) {
               for (int col = 0; col < b; ++col) {
                 A(i, row, col) = i % row;
@@ -129,8 +132,8 @@ int main(int argc, char **argv) {
 
   RAJA::kernel<kernel_policy>(
       RAJA::make_tuple(Seg),
-      RAJA_JIT_REGISTER_LAMBDA([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
-       accum = RAJA_JIT_VARIABLE(accum)](int i) RAJA_JIT_COMPILE RAJA_HOST_DEVICE {
+      RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
+       accum = RAJA_JIT_VARIABLE(accum)] RAJA_HOST_DEVICE (int i) RAJA_JIT_COMPILE {
         for (int row = 0; row < a; ++row) {
           for (int col = 0; col < b; ++col) {
             if (!accum) {

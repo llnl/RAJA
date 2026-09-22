@@ -68,7 +68,8 @@ int main (int argc, char** argv) {
   double *C_ptr = res.template allocate<double>(N * a * a);
   auto C = RAJA::make_permuted_view<RAJA::layout_right>(C_ptr, N, a, a);
   // warmup
-  RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=] (int i) {
+  RAJA::forall<policy>(RAJA::RangeSegment(0, N),
+                       [=] RAJA_HOST_DEVICE (int i) {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
         A(i, row, col) = 0;
@@ -82,7 +83,8 @@ int main (int argc, char** argv) {
   proteus::disable();
   aot_timer.start();
   // data setup
-  RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=] (int i) {
+  RAJA::forall<policy>(RAJA::RangeSegment(0, N),
+                       [=] RAJA_HOST_DEVICE (int i) {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
         A(i, row, col) = i % row;
@@ -111,10 +113,10 @@ int main (int argc, char** argv) {
   RAJA::Timer jit_timer;
   jit_timer.start();
 
-  RAJA::forall<policy>(RAJA::RangeSegment(0, N), [=,
+  RAJA::forall<policy>(RAJA::RangeSegment(0, N), RAJA::jit::register_lambda([=,
     a = RAJA_JIT_VARIABLE(a),
     b = RAJA_JIT_VARIABLE(b)
-  ]  (int i) RAJA_JIT_COMPILE {
+  ] RAJA_HOST_DEVICE (int i) RAJA_JIT_COMPILE {
     for (int row = 0; row < a; ++row) {
       for (int col = 0; col < b; ++col) {
         A(i, row, col) = i % row;
@@ -122,14 +124,14 @@ int main (int argc, char** argv) {
         C(i, row, col) = i % col;
       }
     }
-  });
+  }));
 
   // _raja_jit_mark_start
-  RAJA::forall<policy>(RAJA::RangeSegment(0, N), RAJA_JIT_REGISTER_LAMBDA([=,
+  RAJA::forall<policy>(RAJA::RangeSegment(0, N), RAJA::jit::register_lambda([=,
     a =     RAJA_JIT_VARIABLE(a),
     b =     RAJA_JIT_VARIABLE(b),
     accum = RAJA_JIT_VARIABLE(accum)
-  ]  (int i) RAJA_JIT_COMPILE {
+  ] RAJA_HOST_DEVICE (int i) RAJA_JIT_COMPILE {
     for (int row = 0; row < a; ++row){
       for (int col = 0; col < b; ++col) {
         if (!accum) {

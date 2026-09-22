@@ -41,12 +41,12 @@ int main()
   proteus::enable();
   RAJA::launch<launch_policy>(
       RAJA::LaunchParams(RAJA::Teams(1), RAJA::Threads(1)),
-      RAJA_JIT_REGISTER_LAMBDA([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
-       accum = RAJA_JIT_VARIABLE(accum)]
-      RAJA_JIT_COMPILE RAJA_HOST_DEVICE (RAJA::LaunchContext RAJA_UNUSED_ARG(ctx))RAJA_JIT_COMPILE
-           {
-            out_ptr[0] = accum ? (a + b) : (a - b);
-          }));
+      RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
+       accum = RAJA_JIT_VARIABLE(accum)] RAJA_HOST_DEVICE
+      (RAJA::LaunchContext RAJA_UNUSED_ARG(ctx)) RAJA_JIT_COMPILE
+      {
+        out_ptr[0] = accum ? (a + b) : (a - b);
+      }));
 
   res.memcpy(&host_result, out_ptr, sizeof(int));
   res.wait();

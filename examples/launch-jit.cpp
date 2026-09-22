@@ -141,26 +141,27 @@ int main(int argc, char **argv) {
 
   RAJA::launch<launch_policy>(
       Params,
-      [=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
+      RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
         accum = RAJA_JIT_VARIABLE(accum)]
-        RAJA_JIT_COMPILE RAJA_HOST_DEVICE (RAJA::LaunchContext ctx) {
+        RAJA_HOST_DEVICE (RAJA::LaunchContext ctx) RAJA_JIT_COMPILE {
         RAJA::loop<global_thread_x>(
             ctx, Seg,
             [&](int i)  {
-          for (int row = 0; row < a; ++row) {
-            for (int col = 0; col < b; ++col) {
-              A(i, row, col) = (row == 0) ? 0 : (i % row);
-              B(i, row, col) = (col == 0) ? 0 : (i % col);
-              C(i, row, col) = (col == 0) ? 0 : (i % col);
-            }
-          }
-        });
-      });
+              for (int row = 0; row < a; ++row) {
+                for (int col = 0; col < b; ++col) {
+                  A(i, row, col) = (row == 0) ? 0 : (i % row);
+                  B(i, row, col) = (col == 0) ? 0 : (i % col);
+                  C(i, row, col) = (col == 0) ? 0 : (i % col);
+                }
+              }
+            });
+        }));
 
   RAJA::launch<launch_policy>(
       Params,
-      [=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
-       accum = RAJA_JIT_VARIABLE(accum)] RAJA_JIT_COMPILE RAJA_HOST_DEVICE (RAJA::LaunchContext ctx) {
+      RAJA::jit::register_lambda([=, a = RAJA_JIT_VARIABLE(a), b = RAJA_JIT_VARIABLE(b),
+       accum = RAJA_JIT_VARIABLE(accum)]  RAJA_HOST_DEVICE
+       (RAJA::LaunchContext ctx) RAJA_JIT_COMPILE {
         RAJA::loop<global_thread_x>(
             ctx, Seg,
             [&](int i)  {
@@ -174,7 +175,7 @@ int main(int argc, char **argv) {
             }
           }
         });
-      });
+      }));
 
   jit_timer.stop();
 

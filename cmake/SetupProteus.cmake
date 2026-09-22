@@ -20,7 +20,7 @@ else()
   FetchContent_Declare(
     proteus
     GIT_REPOSITORY https://github.com/Olympus-HPC/proteus.git
-    GIT_TAG        44415066d3c91729a23137101a0f08a170101fb5
+    GIT_TAG        a4d845581d70a522ec323d0ce0127c1af08cb038
     )
   FetchContent_MakeAvailable(proteus)
   # Re-enable tests if specified by user.
@@ -29,7 +29,7 @@ else()
   set(PROTEUS_HEADERS_DIR "${proteus_SOURCE_DIR}/include" CACHE STRING "")
 endif()
 # We don't explicitly link against ProteusPass, but it is required to be
-#available as an LLVM pass, so manually enforce order
+# available as an LLVM pass, so manually enforce order
 target_include_directories(RAJA
   PUBLIC
   $<BUILD_INTERFACE:${PROTEUS_HEADERS_DIR}>
