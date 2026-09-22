@@ -238,8 +238,8 @@ template<typename... Slices>
 RAJA_INLINE RAJA_HOST_DEVICE constexpr auto make_adapter_to_parent_dim_map()
 {
   constexpr size_t n_dims = (!Slices::reduces_dimension + ...);
-  size_t adapter_dim = 0;
-  size_t parent_dim  = 0;
+  size_t adapter_dim      = 0;
+  size_t parent_dim       = 0;
   camp::array<size_t, n_dims> map {};
 
   auto process_slice = [&](bool reduces_dimension) constexpr {
@@ -403,9 +403,8 @@ private:
       s_parent_to_adapter_dim =
           detail::make_parent_to_adapter_dim_map<Slices...>();
 
-  static inline constexpr camp::array<size_t, n_dims>
-      s_adapter_to_parent_dim =
-          detail::make_adapter_to_parent_dim_map<Slices...>();
+  static inline constexpr camp::array<size_t, n_dims> s_adapter_to_parent_dim =
+      detail::make_adapter_to_parent_dim_map<Slices...>();
 
   const ParentType m_parent;
   camp::tuple<Slices...> m_slices;
