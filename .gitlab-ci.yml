@@ -28,6 +28,8 @@
 
 variables:
 
+  CAMP_REFERENCE: "15441bb26c9b94546cb8841d3daf73b17463918d"
+
 # LC GITLAB CONFIGURATION
 # Use an LLNL service user to run CI. This prevents from running pipelines as
 # an actual user.
