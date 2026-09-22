@@ -76,7 +76,6 @@ lambda expression as (kernel body) in a non-tiled version above.
 
 
 The ``RAJA::launch`` API also supports loop tiling through specialized
-
 methods. The launch version of the code above is ::
 
   using launch_t = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
@@ -85,16 +84,16 @@ methods. The launch version of the code above is ::
   RAJA::launch<launch_t>(
     RAJA::LaunchParams(), RAJA_HOST_DEVICE(RAJA::launchContext ctx) {
 
-     RAJA::tile<loop_t>(
-       ctx, tile_size, RAJA::TypedRangeSegment<int>(0, 10), [&] (RAJA::TypedRangeSegment<int> const &tile) {
+      RAJA::tile<loop_t>(
+        ctx, tile_size, RAJA::TypedRangeSegment<int>(0, 10), [&] (RAJA::TypedRangeSegment<int> const &tile) {
 
-          RAJA::loop<loop_t>(
-            ctx, tile, [&] (int i) {
+          RAJA::loop<loop_t>(ctx, tile,
+            [&] (int i) {
 
               // kernel body using index 'i'
 
-	    }
-	  );
+            }
+          );
         }
       );
     }
