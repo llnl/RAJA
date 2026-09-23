@@ -43,7 +43,7 @@ variables:
   GIT_SUBMODULE_PATHS: tpl/desul scripts/radiuss-spack-configs scripts/uberenv
 
   # This sha fixes the version of camp used in gitlab CI by RAJA
-  CAMP_REFERENCE: "15441bb26c9b94546cb8841d3daf73b17463918d"
+  CAMP_REFERENCE: "9874852eede53a01024930b40247ad750967a113"
 
 # PROJECT VARIABLES
   MP_BRANCH: "develop"
