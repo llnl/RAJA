@@ -309,8 +309,8 @@ is templated.
 In contrast, the ``RAJA::launch`` interface allows users to express
 nested loop execution in a manner that more closely reflects how one would
 write conventional nested C-style for-loop code. For example, here is an
-example of a ``RAJA::launch`` kernel that copies values from an array in
-into a *shared memory* array::
+example of a ``RAJA::launch`` kernel that copies values from an array into a
+*shared memory* array::
 
   RAJA::launch<launch_policy>(select_CPU_or_GPU)
   RAJA::LaunchParams(RAJA::Teams(NE), RAJA::Threads(Q1D)),
@@ -354,8 +354,11 @@ the same team. The ``RAJA::launch`` interface has three main concepts:
     provided.
 
 Team shared memory can be allocated by using the ``RAJA_TEAM_SHARED`` macro on
-statically sized arrays or via dynamic allocation in the ``RAJA::LaunchParams``
-method. Team shared memory enables threads in a given team to have shared access to a shared memory buffer.
+statically sized arrays, or via dynamic allocation by passing a byte count as
+the third argument to ``RAJA::LaunchParams`` and then using
+``ctx.getSharedMemory<T>(count)`` inside the launch body. Dynamic shared memory
+allocations use a simple bump allocator; call ``ctx.releaseSharedMemory()`` to
+reset the allocator when leaving a shared memory scope.
 Loops are then assigned to either teams or threads based on the GPU execution
 policy. Under the CUDA/HIP nomenclature, teams correspond to blocks while,
 in SYCL nomenclature, teams correspond to workgroups.
