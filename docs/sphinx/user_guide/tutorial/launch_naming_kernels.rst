@@ -8,6 +8,7 @@
 .. ##
 
 .. _tut-teamsbasic-label:
+.. _tut-launchnaming-label:
 
 -------------------------------------
 Naming kernels using NVTX/ROCTX tools
