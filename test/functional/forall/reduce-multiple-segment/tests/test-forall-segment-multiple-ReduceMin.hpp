@@ -62,7 +62,7 @@ void ForallReduceMinMultipleTestImpl(IDX_TYPE first,
     const int nMiddleLoops = 2;
     for (int k = 0; k < nMiddleLoops; ++k) {
 
-      for (IDX_TYPE i = 0; i < last; ++i) {
+      for (IDX_TYPE i {0}; i < last; ++i) {
         test_array[i] = default_val;
       }
       working_res.memcpy(working_array, test_array, sizeof(DATA_TYPE) * last);

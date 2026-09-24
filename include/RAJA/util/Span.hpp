@@ -20,14 +20,10 @@
 #ifndef RAJA_SPAN_HPP
 #define RAJA_SPAN_HPP
 
-#include <concepts>
-#include <type_traits>
-
 #include "RAJA/index/IndexValue.hpp"
-#include "RAJA/util/concepts.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
-#include "camp/concepts.hpp"
+#include "RAJA/pattern/concepts.hpp"
 
 namespace RAJA
 {
@@ -61,19 +57,13 @@ namespace RAJA
  *   compile time extents
  *
  */
-
-namespace concepts
-{
-template<typename T>
-concept SpanIndex = concepts::Integral<T> || concepts::IndexValued<T>;
-};
-
-template<concepts::RandomAccessIterator IterType, concepts::SpanIndex IndexType>
+template<concepts::RandomAccessIterator IterType, concepts::Index IndexType>
 struct Span
 {
   using element_type    = typename std::iterator_traits<IterType>::value_type;
   using value_type      = camp::decay<element_type>;
   using size_type       = IndexType;
+  using offset_type     = RAJA::strip_index_type_t<size_type>;
   using difference_type = std::ptrdiff_t;
   using reference       = element_type&;
   using const_reference = const element_type&;
@@ -87,7 +77,7 @@ struct Span
 
   constexpr RAJA_HOST_DEVICE Span(iterator begin, size_type size)
       : m_begin {begin},
-        m_end {begin + size}
+        m_end {begin + RAJA::stripIndexType(size)}
   {}
 
   constexpr RAJA_HOST_DEVICE RAJA_INLINE iterator begin() { return m_begin; }
@@ -160,7 +150,7 @@ struct Span
 
   constexpr RAJA_HOST_DEVICE RAJA_INLINE reference operator[](size_type i) const
   {
-    return data()[i];
+    return data()[RAJA::stripIndexType(i)];
   }
 
   constexpr RAJA_HOST_DEVICE RAJA_INLINE iterator data() const
@@ -175,12 +165,12 @@ struct Span
 
   constexpr RAJA_HOST_DEVICE RAJA_INLINE bool empty() const
   {
-    return size() == static_cast<size_type>(0);
+    return size() == size_type {0};
   }
 
   constexpr RAJA_HOST_DEVICE RAJA_INLINE Span first(size_type count) const
   {
-    return slice(0, count);
+    return slice(size_type {0}, count);
   }
 
   constexpr RAJA_HOST_DEVICE RAJA_INLINE Span last(size_type count) const
@@ -197,8 +187,11 @@ struct Span
   constexpr RAJA_HOST_DEVICE RAJA_INLINE Span slice(size_type begin,
                                                     size_type length) const
   {
-    auto start = m_begin + begin;
-    auto end   = start + length > m_end ? m_end : start + length;
+    offset_type stripped_begin  = RAJA::stripIndexType(begin);
+    offset_type stripped_length = RAJA::stripIndexType(length);
+    auto start                  = m_begin + stripped_begin;
+    auto end =
+        start + stripped_length > m_end ? m_end : start + stripped_length;
     return Span(start, end);
   }
 

@@ -27,8 +27,8 @@ void ForallListSegmentViewTestImpl(INDEX_TYPE N)
 
   srand ( time(NULL) );
 
-  for (INDEX_TYPE i = 0; i < N; ++i) {
-    INDEX_TYPE randval = rand() % N;
+  for (INDEX_TYPE i {0}; i < N; ++i) {
+    INDEX_TYPE randval = INDEX_TYPE(rand() % RAJA::stripIndexType(N));
     if ( i < randval ) {
       idx_array.push_back(i);
     }     
@@ -51,15 +51,13 @@ void ForallListSegmentViewTestImpl(INDEX_TYPE N)
                                      &check_array,
                                      &test_array);
 
-  memset( test_array, 0, sizeof(INDEX_TYPE) * N );  
+  memset( test_array, 0, sizeof(INDEX_TYPE) * RAJA::stripIndexType(N) );
 
-  working_res.memcpy(working_array, test_array, sizeof(INDEX_TYPE) * N);
+  working_res.memcpy(working_array, test_array,
+                     sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  for (size_t i = 0; i < idxlen; ++i) {
-    test_array[ idx_array[i] ] = idx_array[i];
-  }
-
-  using layout_type = RAJA::Layout<1, INDEX_TYPE, 0>;
+  using layout_type =
+      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
   using view_type = RAJA::View< INDEX_TYPE, layout_type >;
 #if (!(defined(_GLIBCXX_RELEASE) || defined(RAJA_COMPILER_INTEL) || defined(RAJA_COMPILER_MSVC)))\
     || _GLIBCXX_RELEASE >= 20150716
@@ -80,17 +78,23 @@ void ForallListSegmentViewTestImpl(INDEX_TYPE N)
 
 #endif
   
-  RAJA::Layout<1> layout(N);
-  view_type work_view(working_array, layout);
+  view_type test_view(test_array, N);
+  view_type work_view(working_array, N);
+  view_type check_view(check_array, N);
+
+  for (size_t i = 0; i < idxlen; ++i) {
+    test_view(idx_array[i]) = idx_array[i];
+  }
 
   RAJA::forall<EXEC_POLICY>(lseg, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
     work_view( idx ) = idx;
   });
 
-  working_res.memcpy(check_array, working_array, sizeof(INDEX_TYPE) * N);
+  working_res.memcpy(check_array, working_array,
+                     sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  for (INDEX_TYPE i = 0; i < N; i++) {
-    ASSERT_EQ(test_array[i], check_array[i]);
+  for (INDEX_TYPE i {0}; i < N; i++) {
+    ASSERT_EQ(test_view(i), check_view(i));
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,
@@ -108,8 +112,8 @@ void ForallListSegmentOffsetViewTestImpl(INDEX_TYPE N, INDEX_TYPE offset)
 
   srand ( time(NULL) );
 
-  for (INDEX_TYPE i = 0; i < N; ++i) {
-    INDEX_TYPE randval = rand() % N;
+  for (INDEX_TYPE i {0}; i < N; ++i) {
+    INDEX_TYPE randval = INDEX_TYPE(rand() % RAJA::stripIndexType(N));
     if ( i < randval ) {
       idx_array.push_back(i+offset);
     }     
@@ -132,30 +136,36 @@ void ForallListSegmentOffsetViewTestImpl(INDEX_TYPE N, INDEX_TYPE offset)
                                      &check_array,
                                      &test_array);
 
-  memset( test_array, 0, sizeof(INDEX_TYPE) * N );  
+  memset( test_array, 0, sizeof(INDEX_TYPE) * RAJA::stripIndexType(N) );
 
-  working_res.memcpy(working_array, test_array, sizeof(INDEX_TYPE) * N);
+  working_res.memcpy(working_array, test_array,
+                     sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  for (size_t i = 0; i < idxlen; ++i) {
-    test_array[ idx_array[i]-offset ] = idx_array[i];
-  }
-
-  using layout_type = RAJA::OffsetLayout<1, INDEX_TYPE>;
+  using layout_type =
+      RAJA::TypedOffsetLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
   using view_type = RAJA::View< INDEX_TYPE, layout_type >;
 
-  INDEX_TYPE N_offset = N + offset;
-  view_type work_view(working_array, 
-                      RAJA::make_offset_layout<1, INDEX_TYPE>( {{offset}}, 
-                                                               {{N_offset}} ));
+  using raw_index_type = RAJA::strip_index_type_t<INDEX_TYPE>;
+  raw_index_type offset_raw = RAJA::stripIndexType(offset);
+  raw_index_type N_offset = RAJA::stripIndexType(N + offset);
+  layout_type layout({{offset_raw}}, {{N_offset}});
+  view_type test_view(test_array, layout);
+  view_type work_view(working_array, layout);
+  view_type check_view(check_array, layout);
+
+  for (size_t i = 0; i < idxlen; ++i) {
+    test_view(idx_array[i]) = idx_array[i];
+  }
 
   RAJA::forall<EXEC_POLICY>(lseg, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
     work_view( idx ) = idx;
   });
 
-  working_res.memcpy(check_array, working_array, sizeof(INDEX_TYPE) * N);
+  working_res.memcpy(check_array, working_array,
+                     sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  for (INDEX_TYPE i = 0; i < N; i++) {
-    ASSERT_EQ(test_array[i], check_array[i]);
+  for (INDEX_TYPE i = offset; i < N + offset; i++) {
+    ASSERT_EQ(test_view(i), check_view(i));
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,
@@ -176,13 +186,19 @@ TYPED_TEST_P(ForallListSegmentViewTest, ListSegmentForallView)
   using WORKING_RESOURCE = typename camp::at<TypeParam, camp::num<1>>::type;
   using EXEC_POLICY      = typename camp::at<TypeParam, camp::num<2>>::type;
 
-  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(13);
-  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(2047);
-  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(32000);
+  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(13));
+  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(2047));
+  ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(32000));
 
-  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(13, 1);
-  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(2047, 2);
-  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(32000, 3);
+  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(13), INDEX_TYPE(1));
+  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(2047), INDEX_TYPE(2));
+  ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
+      INDEX_TYPE(32000), INDEX_TYPE(3));
 }
 
 REGISTER_TYPED_TEST_SUITE_P(ForallListSegmentViewTest,

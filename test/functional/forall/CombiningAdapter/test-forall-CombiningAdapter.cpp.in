@@ -30,7 +30,7 @@
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@ForallCombiningAdapter@DIMENSION@Types =
-  Test< camp::cartesian_product</*Strong*/IdxTypeList,
+  Test< camp::cartesian_product<StrongIdxTypeList,
                                 @BACKEND@ResourceList,
                                 @BACKEND@ForallExecPols>>::Types;
 

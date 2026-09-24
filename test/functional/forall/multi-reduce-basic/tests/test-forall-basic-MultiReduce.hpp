@@ -66,7 +66,7 @@ ForallMultiReduceBasicTestImpl(const SEG_TYPE& seg,
   IDX_TYPE* check_bins;
   IDX_TYPE* test_bins;
 
-  IDX_TYPE data_len = 0;
+  IDX_TYPE data_len {0};
 
   allocateForallTestData(idx_range+1,
                          working_res,
@@ -74,14 +74,14 @@ ForallMultiReduceBasicTestImpl(const SEG_TYPE& seg,
                          &check_range,
                          &test_range);
 
-  for (IDX_TYPE i = 0; i < idx_range+1; ++i) {
+  for (IDX_TYPE i {0}; i < idx_range+1; ++i) {
     test_range[i] = ~IDX_TYPE(0);
   }
 
   {
     std::uniform_int_distribution<IDX_TYPE> work_per_iterate_distribution(0, num_bins);
 
-    for (IDX_TYPE i = 0; i < idx_len; ++i) {
+    for (IDX_TYPE i {0}; i < idx_len; ++i) {
       IDX_TYPE idx = seg_idx[i];
       test_range[idx] = data_len;
       data_len += work_per_iterate_distribution(rngen);
@@ -108,7 +108,7 @@ ForallMultiReduceBasicTestImpl(const SEG_TYPE& seg,
     std::uniform_int_distribution<IDX_TYPE> bin_distribution(0, num_bins-1);
 
 
-    for (IDX_TYPE i = 0; i < data_len; ++i) {
+    for (IDX_TYPE i {0}; i < data_len; ++i) {
       test_array[i] = DATA_TYPE(array_int_distribution(rngen));
 
       // this may use the same bin multiple times per iterate
@@ -128,7 +128,7 @@ ForallMultiReduceBasicTestImpl(const SEG_TYPE& seg,
   {
     std::vector<DATA_TYPE> ref_vals(num_bins, ABSTRACTION::identity(red));
 
-    for (IDX_TYPE i = 0; i < data_len; ++i) {
+    for (IDX_TYPE i {0}; i < data_len; ++i) {
       ref_vals[test_bins[i]] = ABSTRACTION::combine(ref_vals[test_bins[i]], test_array[i]);
     }
 
@@ -157,7 +157,7 @@ ForallMultiReduceBasicTestImpl(const SEG_TYPE& seg,
     const int nloops = 2;
     for (int j = 0; j < nloops; ++j) {
 
-      for (IDX_TYPE i = 0; i < data_len; ++i) {
+      for (IDX_TYPE i {0}; i < data_len; ++i) {
         ref_vals[test_bins[i]] = ABSTRACTION::combine(ref_vals[test_bins[i]], test_array[i]);
       }
 
@@ -184,7 +184,7 @@ ForallMultiReduceBasicTestImpl(const SEG_TYPE& seg,
           std::uniform_int_distribution<DATA_TYPE>,
           std::uniform_real_distribution<DATA_TYPE>> array_flt_distribution(0, modval-1);
 
-      for (IDX_TYPE i = 0; i < data_len; ++i) {
+      for (IDX_TYPE i {0}; i < data_len; ++i) {
         test_array[i] = DATA_TYPE(array_flt_distribution(rngen));
       }
       working_res.memcpy(working_array, test_array, sizeof(DATA_TYPE) * data_len);
@@ -289,9 +289,9 @@ TYPED_TEST_P(ForallMultiReduceBasicTest, MultiReduceBasicForall)
 
     // List segment test
     seg_idx.clear();
-    IDX_TYPE last = 10567;
+    IDX_TYPE last {10567};
     std::uniform_int_distribution<IDX_TYPE> dist(0, last-1);
-    for (IDX_TYPE i = 0; i < last; ++i) {
+    for (IDX_TYPE i {0}; i < last; ++i) {
       IDX_TYPE randval = dist(rngen);
       if ( i < randval ) {
         seg_idx.push_back(i);

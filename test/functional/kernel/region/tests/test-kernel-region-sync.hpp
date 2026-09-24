@@ -77,7 +77,7 @@ void KernelRegionSyncTestImpl(INDEX_TYPE first, INDEX_TYPE last)
   work_res.memcpy(check_array, work_array3, sizeof(INDEX_TYPE) * N);
   work_res.wait();
 
-  for (INDEX_TYPE i = 0; i < N; i++) {
+  for (INDEX_TYPE i {0}; i < N; i++) {
     ASSERT_EQ(check_array[i], 151);
   }
 
@@ -100,9 +100,9 @@ TYPED_TEST_P(KernelRegionSyncTest, RegionSyncKernel)
   using WORKING_RES = typename camp::at<TypeParam, camp::num<1>>::type;
   using EXEC_POLICY = typename camp::at<TypeParam, camp::num<2>>::type;
 
-  KernelRegionSyncTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(0, 25);
-  KernelRegionSyncTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(1, 153);
-  KernelRegionSyncTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(3, 2556);
+  KernelRegionSyncTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE{0}, INDEX_TYPE{25});
+  KernelRegionSyncTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE{1}, INDEX_TYPE{153});
+  KernelRegionSyncTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE{3}, INDEX_TYPE{2556});
 }
 
 REGISTER_TYPED_TEST_SUITE_P(KernelRegionSyncTest,

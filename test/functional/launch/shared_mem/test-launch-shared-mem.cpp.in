@@ -29,7 +29,7 @@
 // Cartesian product of types used in parameterized tests
 //
 using @BACKEND@LaunchSharedMemTypes =
-  Test< camp::cartesian_product<StrongIdxTypeList,
+  Test< camp::cartesian_product<LaunchIdxTypeList,
                                 @BACKEND@ResourceList,
                                 @BACKEND@_launch_policies>>::Types;
 
