@@ -56,6 +56,7 @@ cmake \
   -C ../host-configs/lc-builds/toss4/gcc_X.cmake \
   -DENABLE_OPENMP=On \
   -DENABLE_BENCHMARKS=On \
+  -DRAJA_ENABLE_VECTORIZATION=On \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \
   "$@" \
   ..
