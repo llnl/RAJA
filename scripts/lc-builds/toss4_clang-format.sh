@@ -53,6 +53,7 @@ cmake \
   -DBLT_CXX_STD=c++20 \
   -C ../host-configs/lc-builds/toss4/clang_X.cmake \
   -DENABLE_CLANGFORMAT=On \
+  -DRAJA_ENABLE_VECTORIZATION=On \
   -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-${COMP_VER}/bin/clang-format \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \
   "$@" \
