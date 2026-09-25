@@ -46,7 +46,7 @@ variables:
   MP_BRANCH: "develop"
 
 # This sha fixes the version of camp used in gitlab CI by RAJA
-  CAMP_REFERENCE: "fc134ad9b980e33a66e6d39879f34ed2cc9a17a5"
+  CAMP_REFERENCE: "b4edd077937245c120e25e6080be8caee5926347"
 
 # SHARED_CI CONFIGURATION
 # Required information about GitHub repository
