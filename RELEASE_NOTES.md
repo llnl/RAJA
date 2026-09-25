@@ -38,8 +38,8 @@ Notable changes include:
     * Updated Camp submodule to v2026.07.2 Camp release.
 
   * Bug fixes/improvements:
-    * Resolved performance issue in the recently released `RAJA::range(N)` construct.
-
+    * Resolved performance issue in `RAJA::range(N)`.
+    * Resolved performance issue in `RAJA::AtomicViewWrapper`.
 
 
 Version 2026.07.0 -- Release date 2026-08-04
