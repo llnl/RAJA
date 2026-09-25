@@ -59,6 +59,7 @@ public:
     policy_matches_or_throw(
         "SeqReduce", reduction_supported_policies_t<Policy::sequential> {}, p);
 #endif
+    RAJA_UNUSED_VAR(p);
   }
 
   RAJA_SUPPRESS_HD_WARN
@@ -71,6 +72,7 @@ public:
         "SeqReduce::reset",
         reduction_supported_policies_t<Policy::sequential> {}, p);
 #endif
+    RAJA_UNUSED_VAR(p);
     Base::reset(init_val, identity_);
   }
 };

@@ -32,6 +32,10 @@ raja_add_executable(
   SOURCES dynamic-forall.cpp)
 
 raja_add_executable(
+  NAME dynamic-fornest
+  SOURCES dynamic-fornest.cpp)
+
+raja_add_executable(
   NAME device-policy-aliases
   SOURCES device-policy-aliases.cpp)
 
@@ -82,6 +86,10 @@ raja_add_executable(
 raja_add_executable(
   NAME launch_flatten
   SOURCES launch_flatten.cpp)
+
+raja_add_executable(
+  NAME fornest-basic
+  SOURCES fornest-basic.cpp)
 
 raja_add_executable(
   NAME launch_reductions
