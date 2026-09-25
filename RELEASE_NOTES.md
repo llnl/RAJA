@@ -21,10 +21,10 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
-Version 2026.07.1 -- Release date 2026-09-xx
+Version 2026.07.1 -- Release date 2026-09-29
 ============================================
 
-This release contains ...
+This release contains some bug fixes and feature updates.
 
 Notable changes include:
 
