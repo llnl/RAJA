@@ -333,7 +333,6 @@ install(FILES
   ${PROJECT_BINARY_DIR}/include/RAJA/config.hpp
   DESTINATION "include/RAJA/")
 
-
 # Setup internal RAJA configuration options
 include(cmake/SetupRajaConfig.cmake)
 
