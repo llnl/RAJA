@@ -53,6 +53,11 @@ Please see the following cook book sections for guidance on policy usage:
 
  * :ref:`cook-book-reductions-label`.
 
+Some backend reduction implementations may use RAJA internal temporary storage.
+Please see the following section for guidance on releasing unused internal
+memory:
+
+ * :ref:`memory-release-internal-pool-label`.
 
 ----------------
 Reduction Types

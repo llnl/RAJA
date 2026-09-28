@@ -50,34 +50,36 @@ Segments and IndexSets
 -----------------------
 
 A RAJA **Segment** represents a set of indices that one wants to 
-execute as a unit for a kernel. RAJA provides the following Segment types:
+execute as a unit in a kernel. RAJA provides the following Segment types:
 
    * ``RAJA::TypedRangeSegment`` represents a stride-1 range
    * ``RAJA::TypedRangeStrideSegment`` represents a (non-unit) stride range
    * ``RAJA::TypedListSegment`` represents an arbitrary set of indices
 
-RAJA also provides a convenience helper ``RAJA::mask<Policy>(ctx, body)`` for
-RAJA::launch kernels when one logical thread should execute setup work. It is mainly
-useful for per-team initialization before ``ctx.teamSync()``, and it keeps the
-intent explicit without pretending the work is a one-element segment.
-
 A ``RAJA::TypedIndexSet`` is a container that can hold an arbitrary collection
-of segments to compose iteration patterns in a single kernel invocation.
+of segments to compose iteration patterns in a single kernel invocation. For
+example, one may have a kernel that contains stride-1 access patterns alongside 
+irregular, non-unit stride accesses. All of these could be run in a single
+kernel lauch using appropriately defined segments assembled in an index set.
 
 Segment and IndexSet types are used in ``RAJA::forall`` and other RAJA kernel
 execution mechanisms to define the iteration space for a kernel.
 
-.. note:: Iterating over the indices of all segments in a RAJA index set 
-          requires a two-level execution policy, with two template parameters,
-          as shown above. The first parameter specifies how to iterate over 
-          the segments. The second parameter specifies how each segment will 
-          execute. See :ref:`indexsetpolicy-label` for more information about 
-          RAJA index set execution policies.
+.. note:: * Iterating over the indices of all segments in a RAJA index set 
+            requires a two-level execution policy, with two template parameters,
+            as shown above. The first parameter specifies how to iterate over 
+            the segments. The second parameter specifies how each segment will 
+            execute. See :ref:`indexsetpolicy-label` for more information about 
+            RAJA index set execution policies.
+          * It is the responsibility of the user to ensure that segments are
+            defined properly when using RAJA index sets. For example, if the
+            same index appears in multiple segments, the corresponding loop
+            iteration will be run multiple times.
 
-.. note:: It is the responsibility of the user to ensure that segments are
-          defined properly when using RAJA index sets. For example, if the
-          same index appears in multiple segments, the corresponding loop
-          iteration will be run multiple times.
+RAJA also provides a convenience helper ``RAJA::mask<Policy>(ctx, body)`` for
+RAJA::launch kernels when one logical thread should execute setup work. It is mainly
+useful for per-team initialization before ``ctx.teamSync()``, and it keeps the
+intent explicit without pretending the work is a one-element segment.
 
 Please see :ref:`tut-indexset-label` for a detailed discussion of how to create
 and use these segment types.

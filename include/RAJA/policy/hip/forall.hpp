@@ -532,7 +532,6 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
   // Only launch kernel if we have something to iterate over
   if (len > 0)
   {
-    RAJA::internal::jit::register_lambda(loop_body);
     auto func = reinterpret_cast<const void*>(
         &impl::forallp_hip_kernel<EXEC_POL, Iterator, LOOP_BODY, IndexType,
                                   camp::decay<ForallParam>>);
@@ -613,7 +612,6 @@ RAJA_INLINE resources::EventProxy<resources::Hip> forall_impl(
     const TypedIndexSet<SegmentTypes...>& iset,
     LoopBody&& loop_body)
 {
-  RAJA::internal::jit::register_lambda(loop_body);
   int num_seg = iset.getNumSegments();
   for (int isi = 0; isi < num_seg; ++isi)
   {

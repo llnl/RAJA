@@ -65,6 +65,7 @@ cmake \
   -C ../host-configs/lc-builds/toss4/clang_X_${SAN_VER}.cmake \
   -DENABLE_OPENMP=On \
   -DENABLE_BENCHMARKS=ON \
+  -DRAJA_ENABLE_VECTORIZATION=On \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \
   "$@" \
   ..
