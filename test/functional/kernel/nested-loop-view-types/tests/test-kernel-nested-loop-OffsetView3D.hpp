@@ -10,7 +10,6 @@
 #ifndef __TEST_KERNEL_NESTEDLOOP_OFFSETVIEW3D_HPP__
 #define __TEST_KERNEL_NESTEDLOOP_OFFSETVIEW3D_HPP__
 
-
 template <typename IDX_TYPE, typename WORKING_RES, typename EXEC_POLICY>
 void KernelOffsetView3DTestImpl(std::array<RAJA::idx_t, 3> dim,
                                 std::array<RAJA::idx_t, 3> offset_lo,
@@ -50,19 +49,26 @@ void KernelOffsetView3DTestImpl(std::array<RAJA::idx_t, 3> dim,
   }
 
 
-  RAJA::OffsetLayout<3> layout =
-    RAJA::make_offset_layout<3>( {{offset_lo.at(0),
-                                   offset_lo.at(1),
-                                   offset_lo.at(2)}},
-                                 {{offset_lo.at(0) + dim.at(0),
-                                   offset_lo.at(1) + dim.at(1),
-                                   offset_lo.at(2) + dim.at(2)}} );
+  using raw_idx_type = RAJA::strip_index_type_t<IDX_TYPE>;
+  using LayoutType =
+      RAJA::TypedOffsetLayout<IDX_TYPE,
+                              camp::tuple<IDX_TYPE, IDX_TYPE, IDX_TYPE>>;
 
-  RAJA::View< IDX_TYPE, RAJA::OffsetLayout<3> > view(working_array, layout);
+  LayoutType layout({{raw_idx_type(offset_lo.at(0)),
+                      raw_idx_type(offset_lo.at(1)),
+                      raw_idx_type(offset_lo.at(2))}},
+                    {{raw_idx_type(offset_lo.at(0) + dim.at(0)),
+                      raw_idx_type(offset_lo.at(1) + dim.at(1)),
+                      raw_idx_type(offset_lo.at(2) + dim.at(2))}});
 
-  RAJA::TypedRangeSegment<IDX_TYPE> iseg( offset_lo.at(0), offset_hi.at(0));
-  RAJA::TypedRangeSegment<IDX_TYPE> jseg( offset_lo.at(1), offset_hi.at(1));
-  RAJA::TypedRangeSegment<IDX_TYPE> kseg( offset_lo.at(2), offset_hi.at(2));
+  RAJA::View<IDX_TYPE, LayoutType> view(working_array, layout);
+
+  RAJA::TypedRangeSegment<IDX_TYPE> iseg( IDX_TYPE(offset_lo.at(0)),
+                                          IDX_TYPE(offset_hi.at(0)));
+  RAJA::TypedRangeSegment<IDX_TYPE> jseg( IDX_TYPE(offset_lo.at(1)),
+                                          IDX_TYPE(offset_hi.at(1)));
+  RAJA::TypedRangeSegment<IDX_TYPE> kseg( IDX_TYPE(offset_lo.at(2)),
+                                          IDX_TYPE(offset_hi.at(2)));
 
   RAJA::kernel<EXEC_POLICY>(
     RAJA::make_tuple( iseg, jseg, kseg ),

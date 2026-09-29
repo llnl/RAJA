@@ -118,7 +118,7 @@ TYPED_TEST(TypedLayoutUnitTest, 2D_IJ_ProjJ)
   ASSERT_EQ(TypeParam(0), layout(0, 1));
   ASSERT_EQ(TypeParam(0), layout(0, 5));
 
-  TypeParam pK = 0;
+  TypeParam pK {0};
   // Check that we get the identity (mod 7)
   for (int k = 0; k < 20; ++k) {
 
@@ -144,8 +144,8 @@ TYPED_TEST(TypedLayoutUnitTest, 2D_StaticLayout)
   using static_layout = RAJA::TypedStaticLayout<RAJA::PERM_IJ,TypeParam,RAJA::list<TypeParam,TypeParam>,7,5>;
 
   // Check that we get the same layout
-  for (TypeParam i = 0; i < 7; ++i) {
-    for (TypeParam j = 0; j < 5; ++j) {
+  for (TypeParam i {0}; i < 7; ++i) {
+    for (TypeParam j {0}; j < 5; ++j) {
 
       ASSERT_EQ(dynamic_layout(i, j), static_layout::s_oper(i,j));
     }
@@ -163,8 +163,8 @@ TYPED_TEST(TypedLayoutUnitTest, 2D_PermutedStaticLayout)
                                                 RAJA::list<TypeParam,TypeParam>, 7,5>;
 
   // Check that we get the same layout
-  for (TypeParam i = 0; i < 7; ++i) {
-    for (TypeParam j = 0; j < 5; ++j) {
+  for (TypeParam i {0}; i < 7; ++i) {
+    for (TypeParam j {0}; j < 5; ++j) {
       ASSERT_EQ(TypeParam(dynamic_layout(i, j)), static_layout::s_oper(i,j));
     }
   }
@@ -181,9 +181,9 @@ TYPED_TEST(TypedLayoutUnitTest, 3D_PermutedStaticLayout)
                                                 7,13,5>;
 
   // Check that we get the same layout
-  for (TypeParam i = 0; i < 7; ++i) {
-    for (TypeParam j = 0; j < 9; ++j) {
-      for (TypeParam k = 0; k < 5; ++k) {
+  for (TypeParam i {0}; i < 7; ++i) {
+    for (TypeParam j {0}; j < 9; ++j) {
+      for (TypeParam k {0}; k < 5; ++k) {
         ASSERT_EQ(TypeParam(dynamic_layout(i, j, k)), static_layout::s_oper(i,j,k));
       }
     }
@@ -202,10 +202,10 @@ TYPED_TEST(TypedLayoutUnitTest, 4D_PermutedStaticLayout)
                                                 7,13,5,17>;
 
   // Check that we get the same layout
-  for (TypeParam i = 0; i < 7; ++i) {
-    for (TypeParam j = 0; j < 8; ++j) {
-      for (TypeParam k = 0; k < 5; ++k) {
-        for (TypeParam l = 0; l < 5; ++l) {
+  for (TypeParam i {0}; i < 7; ++i) {
+    for (TypeParam j {0}; j < 8; ++j) {
+      for (TypeParam k {0}; k < 5; ++k) {
+        for (TypeParam l {0}; l < 5; ++l) {
           ASSERT_EQ(TypeParam(dynamic_layout(i, j, k, l)), static_layout::s_oper(i,j,k,l));
         }
       }

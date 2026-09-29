@@ -35,23 +35,31 @@ void ForallCombiningAdapter1DTestImpl(INDEX_TYPE first, INDEX_TYPE last)
                                      &check_array,
                                      &test_array);
 
+  using layout_type =
+      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
+  using view_type = RAJA::View< INDEX_TYPE, layout_type >;
+
+  view_type test_view(test_array, N + INDEX_TYPE(1));
+  view_type work_view(working_array, N + INDEX_TYPE(1));
+  view_type check_view(check_array, N + INDEX_TYPE(1));
+
   {
 
     std::iota(test_array, test_array + RAJA::stripIndexType(N), first - first);
-    for (INDEX_TYPE i0 = INDEX_TYPE(0); i0 < N0; i0++) {
-      test_array[i0] = i0;
+    for (INDEX_TYPE i0 {0}; i0 < N0; i0++) {
+      test_view(i0) = i0;
     }
-    test_array[RAJA::stripIndexType(N)] = INDEX_TYPE(0);
+    test_view(N) = INDEX_TYPE(0);
 
     working_res.memset(working_array, 0, sizeof(INDEX_TYPE) * data_len);
 
     auto adapter = RAJA::make_CombiningAdapter([=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
       if (idx >= first && idx < last) {
         // in bounds
-        working_array[RAJA::stripIndexType(idx - first)] += (idx - first);
+        work_view(idx - first) += (idx - first);
       } else {
         // out of bounds
-        working_array[RAJA::stripIndexType(N)]++;
+        work_view(N)++;
       }
     }, r0);
 
@@ -61,8 +69,8 @@ void ForallCombiningAdapter1DTestImpl(INDEX_TYPE first, INDEX_TYPE last)
 
   working_res.memcpy(check_array, working_array, sizeof(INDEX_TYPE) * data_len);
 
-  for (INDEX_TYPE i = INDEX_TYPE(0); i <= N; i++) {
-    ASSERT_EQ(test_array[RAJA::stripIndexType(i)], check_array[RAJA::stripIndexType(i)]);
+  for (INDEX_TYPE i {0}; i <= N; i++) {
+    ASSERT_EQ(test_view(i), check_view(i));
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,
