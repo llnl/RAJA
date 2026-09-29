@@ -21,6 +21,27 @@ Notable changes include:
   * Bug fixes/improvements:
 
 
+Version 2026.07.1 -- Release date 2026-09-29
+============================================
+
+This release contains some bug fixes and feature updates.
+
+Notable changes include:
+
+  * New features / API changes:
+    * Substantially reworked RAJA User Guide policy sections to make it more clear and instructive.
+    * Added optional memory cleanup method that can be called to free RAJA's internal memory pools. The method `RAJA::release_unused_internal_memory` can be called after RAJA and device work has completed. This makes memory checker tool output cleaner.
+    * Updated Proteus usage based on recent redesign of Proteus' lambda JIT compilation pipeline. In particular, `proteus::register_lambda` has been removed from RAJA abstractions. Now, users must opt-in and indicate which lambda expressions they wish to JIT compile. Please see RAJA User Guide for details.
+    * Changed experimental vectorization feature compilation to Off by default. It can be enabled by passing `-DRAJA_ENABLE_VECTORIZATION=On` to Cmake.
+
+  * Build changes/improvements:
+    * Updated Camp submodule to v2026.07.2 Camp release.
+
+  * Bug fixes/improvements:
+    * Resolved performance issue in `RAJA::range(N)`.
+    * Resolved performance issue in `RAJA::AtomicViewWrapper`.
+
+
 Version 2026.07.0 -- Release date 2026-08-04
 ============================================
 
