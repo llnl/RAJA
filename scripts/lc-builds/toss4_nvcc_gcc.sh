@@ -71,6 +71,7 @@ cmake \
   -DCMAKE_CUDA_COMPILER=/usr/tce/packages/cuda/cuda-${COMP_NVCC_VER}/bin/nvcc \
   -DCMAKE_CUDA_ARCHITECTURES=${COMP_ARCH} \
   -DENABLE_BENCHMARKS=On \
+  -DRAJA_ENABLE_VECTORIZATION=On \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \
   "$@" \
   ..

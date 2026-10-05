@@ -72,6 +72,7 @@ cmake \
   -DBLT_CXX_STD=c++20 \
   -DENABLE_TESTS=On \
   -DENABLE_EXAMPLES=On \
+  -DRAJA_ENABLE_VECTORIZATION=On \
   "$@" \
   ..
 
