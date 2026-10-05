@@ -74,13 +74,14 @@ number of blocks, optimized for performance with multi_reducers.::
   // using exec_policy = RAJA::cuda_exec_with_reduce<256>;
   // using exec_policy = RAJA::hip_exec_with_reduce<256>;
 
-The multi-reduction policy specifies how the multi-reduction is done and must be compatible with the
-execution policy. For example, ``RAJA::seq_multi_reduce`` does a sequential multi-reduction
-and can only be used with sequential execution policies. The
-``RAJA::cuda_multi_reduce_atomic`` policy uses atomics and can only be used with
-cuda execution policies. Similarly for other RAJA execution back-ends, such as
-HIP and OpenMP. Here are example RAJA multi-reduction policies whose names are
-indicative of which execution policies they work with::
+The multi-reduction policy specifies how the multi-reduction is done and must
+support the execution policy. For example, ``RAJA::seq_multi_reduce`` does a
+sequential multi-reduction and can only be used with sequential execution
+policies. The ``RAJA::cuda_multi_reduce_atomic`` policy uses atomics and
+supports CUDA execution policies as well as sequential loops and OpenMP loops
+when that support is enabled in RAJA. Similarly for other RAJA execution
+back-ends, such as HIP and OpenMP. Here are example RAJA multi-reduction
+policies whose names are indicative of which execution policies they work with::
 
   using multi_reduce_policy = RAJA::seq_multi_reduce;
   // using multi_reduce_policy = RAJA::omp_multi_reduce;
@@ -89,7 +90,8 @@ indicative of which execution policies they work with::
 
 Here a simple sum multi-reduction is performed using RAJA::
 
-  RAJA::MultiReduceSum<multi_reduce_policy, int> vsum(num_bins, 0);
+  RAJA::MultiReduceSum<multi_reduce_policy, int> vsum(
+      RAJA::policy_of<exec_policy>::value, num_bins, 0);
 
   RAJA::forall<exec_policy>( RAJA::RangeSegment(0, N),
     [=](RAJA::Index_type i) {
@@ -110,6 +112,25 @@ The results of these operations will yield the following values:
  * ``vsum[7].get() == 100``
  * ``vsum[8].get() == 100``
  * ``vsum[9].get() == 100``
+
+The ``RAJA::policy_of<exec_policy>::value`` constructor argument tells the
+multi-reducer which execution-policy family will use this object at runtime.
+This is important when the multi-reduction policy supports a broader set of
+execution policies than the loop you are about to run. For example, if
+``multi_reduce_policy`` is ``RAJA::cuda_multi_reduce_atomic`` or a HIP
+multi-reduction policy but the object will only be used with ``RAJA::seq_exec``
+or an OpenMP loop, construct or reset it with the matching runtime policy. For
+a sequential loop, use ``RAJA::Policy::sequential`` or
+``RAJA::policy_of<RAJA::seq_exec>::value``. For an OpenMP loop, use
+``RAJA::Policy::openmp`` or, for example,
+``RAJA::policy_of<RAJA::omp_parallel_for_exec>::value``. This tells RAJA not
+to prepare CUDA or HIP multi-reduction resources for that object.
+
+If the same multi-reducer object will later be used with CUDA or HIP loops,
+call ``reset(RAJA::Policy::cuda, ...)`` or ``reset(RAJA::Policy::hip, ...)``
+before that use. Use ``RAJA::Policy::undefined`` only when the object
+intentionally needs to support any loop policy supported by the multi-reduction
+policy.
 
 Another option for the execution policy when using the CUDA or HIP backends are
 the base policies which have a boolean parameter to choose between the general

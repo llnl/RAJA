@@ -22,16 +22,38 @@
 
 #include "RAJA/config.hpp"
 #include "RAJA/internal/get_platform.hpp"
+#include "RAJA/pattern/launch/launch_context_policy.hpp"
 #include "RAJA/util/StaticLayout.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/plugins.hpp"
 #include "RAJA/util/types.hpp"
+
+namespace RAJA
+{
+
+template<typename POLICY>
+struct MaskExecute;
+
+}  // namespace RAJA
+
+// Needed to provide a default indices/dims implementation for LaunchContext
+// when compiling for GPU backends. The default launch context is used by
+// existing examples and user code (e.g. RAJA::LaunchContext), but device-side
+// index mappers require an indices/dims object.
+#if defined(RAJA_HIP_ACTIVE)
+#include "RAJA/policy/hip/policy.hpp"
+#elif defined(RAJA_CUDA_ACTIVE)
+#include "RAJA/policy/cuda/policy.hpp"
+#endif
+
+#if defined(RAJA_ENABLE_OPENMP)
+#include "RAJA/policy/openmp/policy.hpp"
+#endif
+
 #include "camp/camp.hpp"
 #include "camp/concepts.hpp"
 #include "camp/tuple.hpp"
 
-// Odd dependecy with atomics is breaking CI builds
-//#include "RAJA/util/View.hpp"
 
 #if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE) && !defined(RAJA_SYCL_ACTIVE)
 #define RAJA_TEAM_SHARED __shared__
@@ -107,6 +129,22 @@ struct Teams
 
   RAJA_HOST_DEVICE
   constexpr Teams(int i, int j, int k) : value {i, j, k} {}
+
+  /*!
+   * Construct team dimensions using SYCL dim ordering (dim0, dim1, dim2).
+   *
+   * RAJA launch conventions treat Teams(i,j,k) as (x,y,z). SYCL uses a
+   * (dim0, dim1, dim2) ordering. This helper maps:
+   *   dim0 -> z, dim1 -> y, dim2 -> x
+   * i.e. Teams::sycl_order(d0,d1,d2) is equivalent to Teams(d2,d1,d0).
+   */
+  RAJA_INLINE
+
+  RAJA_HOST_DEVICE
+  static constexpr Teams sycl_order(int dim0, int dim1 = 1, int dim2 = 1)
+  {
+    return Teams(dim2, dim1, dim0);
+  }
 };
 
 struct Threads
@@ -132,6 +170,22 @@ struct Threads
 
   RAJA_HOST_DEVICE
   constexpr Threads(int i, int j, int k) : value {i, j, k} {}
+
+  /*!
+   * Construct thread dimensions using SYCL dim ordering (dim0, dim1, dim2).
+   *
+   * RAJA launch conventions treat Threads(i,j,k) as (x,y,z). SYCL uses a
+   * (dim0, dim1, dim2) ordering. This helper maps:
+   *   dim0 -> z, dim1 -> y, dim2 -> x
+   * i.e. Threads::sycl_order(d0,d1,d2) is equivalent to Threads(d2,d1,d0).
+   */
+  RAJA_INLINE
+
+  RAJA_HOST_DEVICE
+  static constexpr Threads sycl_order(int dim0, int dim1 = 1, int dim2 = 1)
+  {
+    return Threads(dim2, dim1, dim0);
+  }
 };
 
 struct Lanes
@@ -178,21 +232,21 @@ private:
   Threads apply(Threads const& a) { return (threads = a); }
 };
 
-class LaunchContext
+class LaunchContextBase
 {
 public:
   // Bump style allocator used to
   // get memory from the pool
   size_t shared_mem_offset;
-
   void* shared_mem_ptr;
 
+// In the future move this into a derived class.
 #if defined(RAJA_SYCL_ACTIVE)
   // SGS ODR issue
   mutable ::sycl::nd_item<3>* itm;
 #endif
 
-  RAJA_HOST_DEVICE LaunchContext()
+  RAJA_HOST_DEVICE LaunchContextBase()
       : shared_mem_offset(0),
         shared_mem_ptr(nullptr)
   {}
@@ -210,20 +264,6 @@ public:
     // convert to desired type
     return static_cast<T*>(mem_ptr);
   }
-
-  /*
-  //Odd dependecy with atomics is breaking CI builds
-  template<typename T, size_t DIM, typename IDX_T=RAJA::Index_type, ptrdiff_t
-  z_stride=DIM-1, typename arg, typename... args> RAJA_HOST_DEVICE auto
-  getSharedMemoryView(size_t bytes, arg idx, args... idxs)
-  {
-    T * mem_ptr = &((T*) shared_mem_ptr)[shared_mem_offset];
-
-    shared_mem_offset += bytes*sizeof(T);
-    return RAJA::View<T, RAJA::Layout<DIM, IDX_T, z_stride>>(mem_ptr, idx,
-  idxs...);
-  }
-  */
 
   RAJA_HOST_DEVICE void releaseSharedMemory()
   {
@@ -244,6 +284,24 @@ public:
 #endif
   }
 };
+
+template<>
+class LaunchContextT<LaunchContextHostPolicy> : public LaunchContextBase
+{
+public:
+  using LaunchContextBase::LaunchContextBase;
+};
+
+// Preserve backwards compatibility
+#if defined(RAJA_HIP_ACTIVE)
+using LaunchContext =
+    LaunchContextT<HipLaunchContextNonCachedIndicesAndDimsPolicy>;
+#elif defined(RAJA_CUDA_ACTIVE)
+using LaunchContext =
+    LaunchContextT<CudaLaunchContextNonCachedIndicesAndDimsPolicy>;
+#else
+using LaunchContext = LaunchContextT<LaunchContextHostPolicy>;
+#endif
 
 template<typename LAUNCH_POLICY>
 struct LaunchExecute;
@@ -462,6 +520,13 @@ using loop_policy = typename POLICY_LIST::device_policy_t;
 using loop_policy = typename POLICY_LIST::host_policy_t;
 #endif
 
+template<typename POLICY_LIST>
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
+using mask_policy = typename POLICY_LIST::device_policy_t;
+#else
+using mask_policy = typename POLICY_LIST::host_policy_t;
+#endif
+
 template<typename POLICY, typename SEGMENT>
 struct LoopExecute;
 
@@ -492,6 +557,13 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
 
   LoopICountExecute<loop_policy<POLICY_LIST>, SEGMENT>::exec(ctx, segment,
                                                              body);
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename POLICY_LIST, typename CONTEXT, typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void mask(CONTEXT const& ctx, BODY const& body)
+{
+  MaskExecute<mask_policy<POLICY_LIST>>::exec(ctx, body);
 }
 
 namespace expt
@@ -557,6 +629,13 @@ RAJA_HOST_DEVICE RAJA_INLINE void loop_icount(CONTEXT const& ctx,
 
   LoopICountExecute<loop_policy<POLICY_LIST>, SEGMENT>::exec(
       ctx, segment0, segment1, segment2, body);
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename POLICY_LIST, typename CONTEXT, typename BODY>
+RAJA_HOST_DEVICE RAJA_INLINE void mask(CONTEXT const& ctx, BODY const& body)
+{
+  MaskExecute<mask_policy<POLICY_LIST>>::exec(ctx, body);
 }
 
 }  // namespace expt

@@ -14,7 +14,11 @@
 
 #if defined(RAJA_ENABLE_DESUL_ATOMICS)
 
+#include <concepts>
+#include <type_traits>
+
 #include "RAJA/util/macros.hpp"
+#include "RAJA/util/TypeConvert.hpp"
 
 #include "RAJA/policy/atomic_builtin.hpp"
 
@@ -151,6 +155,56 @@ atomicCAS(AtomicPolicy, T* acc, T compare, T value)
   return desul::atomic_compare_exchange(acc, compare, value,
                                         raja_default_desul_order {},
                                         raja_default_desul_scope {});
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename AtomicPolicy, typename T, typename Operation>
+RAJA_HOST_DEVICE RAJA_INLINE T atomicGeneric(AtomicPolicy,
+                                             T* acc,
+                                             Operation&& operation)
+{
+  T old = desul::atomic_load(acc, desul::MemoryOrderRelaxed {},
+                             raja_default_desul_scope {});
+  T expected;
+
+  do
+  {
+    expected = old;
+    old = desul::atomic_compare_exchange(acc, expected, operation(expected),
+                                         raja_default_desul_order {},
+                                         raja_default_desul_scope {});
+  } while (!RAJA::util::bit_equal(old, expected));
+
+  return old;
+}
+
+RAJA_SUPPRESS_HD_WARN
+template<typename AtomicPolicy,
+         typename T,
+         typename Operation,
+         std::predicate<T> StopPredicate>
+RAJA_HOST_DEVICE RAJA_INLINE T
+atomicGeneric(AtomicPolicy, T* acc, Operation&& operation, StopPredicate&& stop)
+{
+  T old = desul::atomic_load(acc, desul::MemoryOrderRelaxed {},
+                             raja_default_desul_scope {});
+
+  if (stop(old))
+  {
+    return old;
+  }
+
+  T expected;
+
+  do
+  {
+    expected = old;
+    old = desul::atomic_compare_exchange(acc, expected, operation(expected),
+                                         raja_default_desul_order {},
+                                         raja_default_desul_scope {});
+  } while (!RAJA::util::bit_equal(old, expected) && !stop(old));
+
+  return old;
 }
 
 }  // namespace RAJA

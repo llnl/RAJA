@@ -115,9 +115,9 @@ struct HoldForall
 {
   using resource_type = typename resources::get_resource<ExecutionPolicy>::type;
   using HoldBodyArgs  = typename std::conditional<
-      !type_traits::is_device_exec_policy<ExecutionPolicy>::value,
-      HoldBodyArgs_host<LoopBody, index_type, Args...>,
-      HoldBodyArgs_device<LoopBody, index_type, Args...>>::type;
+       !type_traits::is_device_exec_policy<ExecutionPolicy>::value,
+       HoldBodyArgs_host<LoopBody, index_type, Args...>,
+       HoldBodyArgs_device<LoopBody, index_type, Args...>>::type;
 
   template<typename segment_in, typename body_in>
   HoldForall(segment_in&& segment, body_in&& body)

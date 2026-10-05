@@ -58,7 +58,12 @@ void testWorkGroupWorkStorageMultiple(
   using callable1 = TestCallable<type1>;
   using callable2 = TestCallable<type2>;
 
+  // MSVC ran into an "Internal Compiler Error" with the static keyword
+#if !defined(RAJA_COMPILER_MSVC)
   static constexpr auto platform = RAJA::Platform::host;
+#else
+  constexpr auto platform = RAJA::Platform::host;
+#endif
   using DispatchPolicy = typename DispatchTyper::template type<callable0, callable1, callable2>;
   using Dispatcher_type = RAJA::detail::Dispatcher<
       platform, DispatchPolicy, void, void*, bool*, bool*>;

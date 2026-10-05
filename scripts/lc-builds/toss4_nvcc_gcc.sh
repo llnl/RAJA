@@ -61,7 +61,7 @@ module load cmake/${CMAKE_VER}
 cmake \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_CXX_COMPILER=/usr/tce/packages/gcc/gcc-${COMP_GCC_VER}/bin/g++ \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -C ../host-configs/lc-builds/toss4/nvcc_gcc_X.cmake \
   -DENABLE_CLANGFORMAT=Off \
   -DENABLE_OPENMP=On \
@@ -71,6 +71,7 @@ cmake \
   -DCMAKE_CUDA_COMPILER=/usr/tce/packages/cuda/cuda-${COMP_NVCC_VER}/bin/nvcc \
   -DCMAKE_CUDA_ARCHITECTURES=${COMP_ARCH} \
   -DENABLE_BENCHMARKS=On \
+  -DRAJA_ENABLE_VECTORIZATION=On \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \
   "$@" \
   ..

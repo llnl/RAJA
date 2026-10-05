@@ -186,8 +186,8 @@ struct AddStaticIndexArray<
                                                 HEAD + DELTA,
                                                 typename Orig::Tail>::Type;
   using Seq  = typename PrependStaticIndexArray<INDEX_TYPE,
-                                               HEAD + DELTA,
-                                               typename Orig::Tail>::Seq;
+                                                HEAD + DELTA,
+                                                typename Orig::Tail>::Seq;
 };
 
 template<typename INDEX_TYPE,
@@ -226,8 +226,8 @@ struct SetStaticIndexArray<
                                                 VALUE,
                                                 typename Orig::Tail>::Type;
   using Seq  = typename PrependStaticIndexArray<INDEX_TYPE,
-                                               VALUE,
-                                               typename Orig::Tail>::Seq;
+                                                VALUE,
+                                                typename Orig::Tail>::Seq;
 };
 
 enum TensorTileSize
@@ -389,10 +389,10 @@ struct SetStaticTensorTileBegin<
 {
   using BeginType = StaticIndexArray<TBEGIN>;
   using Type      = StaticTensorTile<
-      INDEX_TYPE,
-      TENSOR_SIZE,
-      typename SetStaticIndexArray<INDEX_TYPE, IDX, VALUE, BeginType>::Seq,
-      TSIZE>;
+           INDEX_TYPE,
+           TENSOR_SIZE,
+           typename SetStaticIndexArray<INDEX_TYPE, IDX, VALUE, BeginType>::Seq,
+           TSIZE>;
 };
 
 template<typename TILE, typename VALUE, size_t IDX>
@@ -411,10 +411,10 @@ struct SetStaticTensorTileSize<
 {
   using SizeType = StaticIndexArray<TSIZE>;
   using Type     = StaticTensorTile<
-      INDEX_TYPE,
-      TENSOR_SIZE,
-      TBEGIN,
-      typename SetStaticIndexArray<INDEX_TYPE, IDX, VALUE, SizeType>::Seq>;
+          INDEX_TYPE,
+          TENSOR_SIZE,
+          TBEGIN,
+          typename SetStaticIndexArray<INDEX_TYPE, IDX, VALUE, SizeType>::Seq>;
 };
 
 template<typename POINTER_TYPE,
@@ -429,10 +429,10 @@ struct TensorRef
   static constexpr TensorTileSize s_tensor_size = TENSOR_SIZE;
 
   using self_type    = TensorRef<POINTER_TYPE,
-                              INDEX_TYPE,
-                              TENSOR_SIZE,
-                              NUM_DIMS,
-                              STRIDE_ONE_DIM>;
+                                 INDEX_TYPE,
+                                 TENSOR_SIZE,
+                                 NUM_DIMS,
+                                 STRIDE_ONE_DIM>;
   using tile_type    = TensorTile<INDEX_TYPE, TENSOR_SIZE, NUM_DIMS>;
   using pointer_type = POINTER_TYPE;
   using index_type   = INDEX_TYPE;

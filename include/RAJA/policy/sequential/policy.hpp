@@ -24,6 +24,13 @@
 
 namespace RAJA
 {
+
+template<>
+struct reduction_supported_policies<Policy::sequential>
+{
+  using type = PolicyList<Policy::sequential>;
+};
+
 namespace sequential
 {
 
@@ -127,6 +134,7 @@ struct seq_atomic
 {};
 
 struct seq_thread
+    : make_policy_pattern_t<Policy::sequential, Pattern::undefined>
 {};
 
 template<RAJA::sequential::multi_reduce_algorithm algorithm>

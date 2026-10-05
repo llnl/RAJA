@@ -332,7 +332,7 @@ struct MatrixMatrixMultiplyHelper<
 
         ++bc_col;
       }  // c_segment
-    }    // c_reg
+    }  // c_reg
   }
 
   RAJA_HOST_DEVICE

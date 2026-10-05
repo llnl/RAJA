@@ -99,9 +99,11 @@ struct OperatorTraits
   RAJA_INLINE
 
   RAJA_HOST_DEVICE
-  static int getDimSize(int dim, LHS_TYPE const& lhs, RHS_TYPE const& rhs)
+  static int getDimSize(int dim,
+                        LHS_TYPE const& lhs,
+                        RHS_TYPE const& RAJA_UNUSED_ARG(rhs))
   {
-    return dim == 0 ? lhs.getDimSize(0) : rhs.getDimSize(1);
+    return lhs.getDimSize(dim);
   }
 };
 
@@ -125,7 +127,9 @@ struct OperatorTraits<LHS_TYPE,
   RAJA_INLINE
 
   RAJA_HOST_DEVICE
-  static int getDimSize(int dim, LHS_TYPE const&, RHS_TYPE const& rhs)
+  static int getDimSize(int dim,
+                        LHS_TYPE const& RAJA_UNUSED_ARG(lhs),
+                        RHS_TYPE const& rhs)
   {
     return rhs.getDimSize(dim);
   }
@@ -151,7 +155,9 @@ struct OperatorTraits<LHS_TYPE,
   RAJA_INLINE
 
   RAJA_HOST_DEVICE
-  static int getDimSize(int dim, LHS_TYPE const& lhs, RHS_TYPE const&)
+  static int getDimSize(int dim,
+                        LHS_TYPE const& lhs,
+                        RHS_TYPE const& RAJA_UNUSED_ARG(rhs))
   {
     return lhs.getDimSize(dim);
   }

@@ -140,8 +140,7 @@ struct Reducer : public ForallParamBase
 // I is a deduced index type
 template<typename T,
          typename I,
-         template<typename, typename, typename>
-         class Op>
+         template<typename, typename, typename> class Op>
 struct Reducer<Op<ValLoc<T, I>, ValLoc<T, I>, ValLoc<T, I>>,
                ValLoc<T, I>,
                ValOp<ValLoc<T, I>, Op>> : public ForallParamBase

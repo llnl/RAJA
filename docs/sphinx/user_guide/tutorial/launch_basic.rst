@@ -50,12 +50,30 @@ for a sequential and CUDA kernel dispatch::
 Whether a kernel executes on the host or device is determined by the first 
 argument passed to the ``RAJA::launch`` method, which is a 
 ``RAJA::ExecPlace`` enum value, either ``HOST`` or ``DEVICE``.
+If a ``RAJA::LaunchPolicy`` is defined with only a host policy (for example,
+``RAJA::LaunchPolicy<RAJA::seq_launch_t>``), an overload of ``RAJA::launch``
+exists that omits the ``RAJA::ExecPlace`` argument and always executes on the
+host.
 Similar to GPU thread and block programming models, RAJA Launch carries out
 computation in a predefined compute grid made up of threads which are
 then grouped into teams when executing on the device. The execution space is 
 then enclosed by a host/device lambda which takes a 
 ``RAJA::LaunchContext`` object, which may be used to control the flow 
 within the kernel, for example by creating thread-team synchronization points.
+
+.. note::
+  RAJA treats ``Teams(i,j,k)`` and ``Threads(i,j,k)`` as an (x,y,z) ordering.
+  For users who prefer SYCL's (dim0, dim1, dim2) ordering, RAJA provides
+  ``Teams::sycl_order(dim0, dim1, dim2)`` and
+  ``Threads::sycl_order(dim0, dim1, dim2)``, which map SYCL dimensions to
+  RAJA coordinates as ``x = dim2``, ``y = dim1``, and ``z = dim0``. In other
+  words, ``Teams::sycl_order(dim0, dim1, dim2)`` is equivalent to
+  ``Teams(dim2, dim1, dim0)``, and similarly for ``Threads``. For example::
+
+    RAJA::LaunchParams(RAJA::Teams::sycl_order(g0, g1, g2),
+                       RAJA::Threads::sycl_order(l0, l1, l2))
+
+  See also the example ``examples/launch-device-policy-aliases.cpp``.
 
 Inside the execution space, developers write a kernel using nested
 ``RAJA::loop`` methods. The manner in which each loop is executed 
@@ -77,8 +95,8 @@ defined. For example, we may define host and device mapping strategies as::
 
   using teams_x = RAJA::LoopPolicy< RAJA::seq_exec,
                                     RAJA::cuda_block_x_direct >;
-  using thread_x = RAJA::LoopPolicy< RAJA::seq_exec,
-                                     RAJA::cuda_block_x_direct >;
+  using threads_x = RAJA::LoopPolicy< RAJA::seq_exec,
+                                      RAJA::cuda_thread_x_direct >;
 
 Here, the ``RAJA::LoopPolicy`` type holds both the host (CPU) and 
 device (CUDA GPU) loop mapping strategies. On the host, both the team/thread 
@@ -98,3 +116,19 @@ equivalent of the kernel body using the policy shown above is:
    :start-after: // _device_loop_start
    :end-before: // _device_loop_end
    :language: C++
+
+When only one logical thread should execute a piece of work inside a RAJA::launch
+kernel execution space, use ``RAJA::mask<threads_x>(ctx, ...)``. This keeps the intent explicit
+for per-team setup before a synchronization point:
+
+.. literalinclude:: ../../../../examples/raja-launch.cpp
+   :start-after: // __mask_loop_start
+   :end-before: // __mask_loop_end
+   :language: C++
+
+.. note::
+  Launch execution policies are described in more detail in the execution policy
+  reference (:ref:`feat-policies-execution-reference-label`). In particular,
+  ``RAJA::seq_launch_t`` creates a sequential execution space, ``RAJA::omp_launch_t``
+  creates an OpenMP parallel region, and ``RAJA::cuda_launch_t``/``RAJA::hip_launch_t``/
+  ``RAJA::sycl_launch_t`` create device kernels when the corresponding back-end is enabled.

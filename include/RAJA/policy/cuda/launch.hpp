@@ -26,25 +26,55 @@
 #include "RAJA/policy/cuda/MemUtils_CUDA.hpp"
 #include "RAJA/policy/cuda/raja_cudaerrchk.hpp"
 #include "RAJA/util/resource.hpp"
+#include "RAJA/util/Jit.hpp"
 
 namespace RAJA
 {
 
-template<typename BODY, typename ReduceParams>
-__global__ void launch_new_reduce_global_fcn(const RAJA_CUDA_GRID_CONSTANT BODY
-                                                 body_in,
-                                             ReduceParams reduce_params)
+/*!
+ * LaunchContextT specialization that carries a backend-specific IndicesAndDims
+ * instance, allowing IndexMapper objects to consume cached thread/block/grid
+ * indices and dimensions when available.
+ */
+template<typename IndicesAndDimsT>
+class LaunchContextT<cuda::LaunchContextIndicesAndDimsPolicy<IndicesAndDimsT>>
+    : public LaunchContextBase
 {
-  LaunchContext ctx;
+public:
+  using indices_and_dims_t = IndicesAndDimsT;
 
+  /*[[no_unique_address]] -- add when we move to C++20  */
+  indices_and_dims_t indices_and_dims;
+
+  RAJA_HOST_DEVICE RAJA_INLINE LaunchContextT()
+      : LaunchContextBase(),
+        indices_and_dims()
+  {}
+
+  RAJA_HOST_DEVICE RAJA_INLINE indices_and_dims_t const& get_indices_and_dims()
+      const
+  {
+    return indices_and_dims;
+  }
+};
+
+template<typename BODY, typename ReduceParams>
+__global__ RAJA_JIT_COMPILE void launch_new_reduce_global_fcn(
+    const RAJA_CUDA_GRID_CONSTANT BODY body_in,
+    ReduceParams reduce_params)
+{
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
   auto& body      = privatizer.get_priv();
 
   // Set pointer to shared memory
   extern __shared__ char raja_shmem_ptr[];
-  ctx.shared_mem_ptr = raja_shmem_ptr;
 
+  using LaunchContextType =
+      typename RAJA::detail::launch_context_type<BODY>::type;
+
+  LaunchContextType ctx;
+  ctx.shared_mem_ptr = raja_shmem_ptr;
   RAJA::expt::invoke_body(reduce_params, body, ctx);
 
   // Using a flatten global policy as we may use all dimensions
@@ -137,12 +167,11 @@ template<typename BODY,
          int num_threads,
          size_t BLOCKS_PER_SM,
          typename ReduceParams>
-__launch_bounds__(num_threads, BLOCKS_PER_SM) __global__
+__launch_bounds__(num_threads, BLOCKS_PER_SM) __global__ RAJA_JIT_COMPILE
     void launch_new_reduce_global_fcn_fixed(const RAJA_CUDA_GRID_CONSTANT BODY
                                                 body_in,
                                             ReduceParams reduce_params)
 {
-  LaunchContext ctx;
 
   using RAJA::internal::thread_privatize;
   auto privatizer = thread_privatize(body_in);
@@ -150,8 +179,12 @@ __launch_bounds__(num_threads, BLOCKS_PER_SM) __global__
 
   // Set pointer to shared memory
   extern __shared__ char raja_shmem_ptr[];
-  ctx.shared_mem_ptr = raja_shmem_ptr;
 
+  using LaunchContextType =
+      typename RAJA::detail::launch_context_type<BODY>::type;
+
+  LaunchContextType ctx;
+  ctx.shared_mem_ptr = raja_shmem_ptr;
   RAJA::expt::invoke_body(reduce_params, body, ctx);
 
   // Using a flatten global policy as we may use all dimensions
@@ -241,6 +274,47 @@ struct LaunchExecute<
   }
 };
 
+template<typename IterationMapping,
+         kernel_sync_requirement sync,
+         typename... IndexMappers>
+struct MaskExecute<
+    RAJA::policy::cuda::cuda_indexer<IterationMapping, sync, IndexMappers...>>
+{
+  template<typename LaunchContextPolicy, typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(
+      LaunchContextT<LaunchContextPolicy> const& ctx,
+      BODY const& body)
+  {
+    auto const& indices_and_dims = ctx.get_indices_and_dims();
+    if (((IndexMappers::template index<camp::idx_t>(indices_and_dims) == 0) &&
+         ...))
+    {
+      body();
+    }
+  }
+};
+
+template<typename IterationMapping,
+         kernel_sync_requirement sync,
+         typename... IndexMappers>
+struct MaskExecute<RAJA::policy::cuda::cuda_flatten_indexer<IterationMapping,
+                                                            sync,
+                                                            IndexMappers...>>
+{
+  template<typename LaunchContextPolicy, typename BODY>
+  static RAJA_INLINE RAJA_DEVICE void exec(
+      LaunchContextT<LaunchContextPolicy> const& ctx,
+      BODY const& body)
+  {
+    auto const& indices_and_dims = ctx.get_indices_and_dims();
+    if (((IndexMappers::template index<camp::idx_t>(indices_and_dims) == 0) &&
+         ...))
+    {
+      body();
+    }
+  }
+};
+
 /*
    CUDA generic loop implementations
 */
@@ -255,13 +329,14 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t i = IndexMapper::template index<diff_t>();
+    const diff_t i =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment.begin() + i));
   }
@@ -279,15 +354,17 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>();
-    const diff_t i1 = IndexMapper1::template index<diff_t>();
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment0.begin() + i0), *(segment1.begin() + i1));
   }
@@ -309,17 +386,20 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>();
-    const diff_t i1 = IndexMapper1::template index<diff_t>();
-    const diff_t i2 = IndexMapper2::template index<diff_t>();
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment0.begin() + i0), *(segment1.begin() + i1),
          *(segment2.begin() + i2));
@@ -337,14 +417,15 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
     const diff_t len = segment.end() - segment.begin();
-    const diff_t i   = IndexMapper::template index<diff_t>();
+    const diff_t i =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i < len)
     {
@@ -365,9 +446,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -375,8 +456,10 @@ struct LoopExecute<
     const int len0 = segment0.end() - segment0.begin();
     const int len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>();
-    const diff_t i1 = IndexMapper1::template index<diff_t>();
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i0 < len0 && i1 < len1)
     {
@@ -401,9 +484,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -413,9 +496,12 @@ struct LoopExecute<
     const int len1 = segment1.end() - segment1.begin();
     const int len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>();
-    const diff_t i1 = IndexMapper1::template index<diff_t>();
-    const diff_t i2 = IndexMapper2::template index<diff_t>();
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i0 < len0 && i1 < len1 && i2 < len2)
     {
@@ -437,15 +523,17 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename BODY, typename LaunchContextPolicy>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t len      = segment.end() - segment.begin();
-    const diff_t i_init   = IndexMapper::template index<diff_t>();
-    const diff_t i_stride = IndexMapper::template size<diff_t>();
+    const diff_t len = segment.end() - segment.begin();
+    const diff_t i_init =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i_stride =
+        IndexMapper::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i = i_init; i < len; i += i_stride)
     {
@@ -467,9 +555,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -477,11 +565,15 @@ struct LoopExecute<
     const int len0 = segment0.end() - segment0.begin();
     const int len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>();
-    const diff_t i1_init = IndexMapper1::template index<diff_t>();
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>();
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>();
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i0 = i0_init; i0 < len0; i0 += i0_stride)
     {
@@ -512,9 +604,9 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -524,13 +616,19 @@ struct LoopExecute<
     const int len1 = segment1.end() - segment1.begin();
     const int len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>();
-    const diff_t i1_init = IndexMapper1::template index<diff_t>();
-    const diff_t i2_init = IndexMapper2::template index<diff_t>();
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2_init =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>();
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>();
-    const diff_t i2_stride = IndexMapper2::template size<diff_t>();
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2_stride =
+        IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i0 = i0_init; i0 < len0; i0 += i0_stride)
     {
@@ -563,13 +661,14 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t i = IndexMapper::template index<diff_t>();
+    const diff_t i =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment.begin() + i), i);
   }
@@ -587,15 +686,17 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>();
-    const diff_t i1 = IndexMapper1::template index<diff_t>();
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment0.begin() + i0), *(segment1.begin() + i1), i0, i1);
   }
@@ -617,17 +718,20 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>();
-    const diff_t i1 = IndexMapper1::template index<diff_t>();
-    const diff_t i2 = IndexMapper2::template index<diff_t>();
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     body(*(segment0.begin() + i0), *(segment1.begin() + i1),
          *(segment2.begin() + i2), i0, i1, i2);
@@ -645,14 +749,15 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
     const diff_t len = segment.end() - segment.begin();
-    const diff_t i   = IndexMapper::template index<diff_t>();
+    const diff_t i =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i < len)
     {
@@ -673,9 +778,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -683,8 +788,10 @@ struct LoopICountExecute<
     const int len0 = segment0.end() - segment0.begin();
     const int len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>();
-    const diff_t i1 = IndexMapper1::template index<diff_t>();
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i0 < len0 && i1 < len1)
     {
@@ -709,9 +816,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -721,9 +828,12 @@ struct LoopICountExecute<
     const int len1 = segment1.end() - segment1.begin();
     const int len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>();
-    const diff_t i1 = IndexMapper1::template index<diff_t>();
-    const diff_t i2 = IndexMapper2::template index<diff_t>();
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     if (i0 < len0 && i1 < len1 && i2 < len2)
     {
@@ -745,15 +855,17 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t len      = segment.end() - segment.begin();
-    const diff_t i_init   = IndexMapper::template index<diff_t>();
-    const diff_t i_stride = IndexMapper::template size<diff_t>();
+    const diff_t len = segment.end() - segment.begin();
+    const diff_t i_init =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i_stride =
+        IndexMapper::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i = i_init; i < len; i += i_stride)
     {
@@ -775,9 +887,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
@@ -785,11 +897,15 @@ struct LoopICountExecute<
     const int len0 = segment0.end() - segment0.begin();
     const int len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>();
-    const diff_t i1_init = IndexMapper1::template index<diff_t>();
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>();
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>();
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i0 = i0_init; i0 < len0; i0 += i0_stride)
     {
@@ -820,9 +936,9 @@ struct LoopICountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       SEGMENT const& segment2,
@@ -832,13 +948,19 @@ struct LoopICountExecute<
     const int len1 = segment1.end() - segment1.begin();
     const int len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>();
-    const diff_t i1_init = IndexMapper1::template index<diff_t>();
-    const diff_t i2_init = IndexMapper2::template index<diff_t>();
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2_init =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>();
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>();
-    const diff_t i2_stride = IndexMapper2::template size<diff_t>();
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i2_stride =
+        IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (diff_t i0 = i0_init; i0 < len0; i0 += i0_stride)
     {
@@ -884,16 +1006,19 @@ struct LoopExecute<RAJA::policy::cuda::cuda_flatten_indexer<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
-    const int i0 = IndexMapper0::template index<diff_t>();
-    const int i1 = IndexMapper1::template index<diff_t>();
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>();
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
 
     const int i = i0 + i0_stride * i1;
 
@@ -916,18 +1041,23 @@ struct LoopExecute<RAJA::policy::cuda::cuda_flatten_indexer<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
-    const int i0 = IndexMapper0::template index<diff_t>();
-    const int i1 = IndexMapper1::template index<diff_t>();
-    const int i2 = IndexMapper2::template index<diff_t>();
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>();
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>();
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     const int i = i0 + i0_stride * (i1 + i1_stride * i2);
 
@@ -958,18 +1088,21 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
     const int len = segment.end() - segment.begin();
 
-    const int i0 = IndexMapper0::template index<diff_t>();
-    const int i1 = IndexMapper1::template index<diff_t>();
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>();
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
 
     const int i = i0 + i0_stride * i1;
 
@@ -995,20 +1128,25 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
     const int len = segment.end() - segment.begin();
 
-    const int i0 = IndexMapper0::template index<diff_t>();
-    const int i1 = IndexMapper1::template index<diff_t>();
-    const int i2 = IndexMapper2::template index<diff_t>();
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const diff_t i0_stride = IndexMapper0::template size<diff_t>();
-    const diff_t i1_stride = IndexMapper1::template size<diff_t>();
+    const diff_t i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     const int i = i0 + i0_stride * (i1 + i1_stride * i2);
 
@@ -1046,19 +1184,23 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
     const int len = segment.end() - segment.begin();
 
-    const int i0 = IndexMapper0::template index<diff_t>();
-    const int i1 = IndexMapper1::template index<diff_t>();
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const int i0_stride = IndexMapper0::template size<diff_t>();
-    const int i1_stride = IndexMapper1::template size<diff_t>();
+    const int i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const int i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (int i = i0 + i0_stride * i1; i < len; i += i0_stride * i1_stride)
     {
@@ -1083,21 +1225,27 @@ struct LoopExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename BODY>
+  template<typename LaunchContextPolicy, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       SEGMENT const& segment,
       BODY const& body)
   {
     const int len = segment.end() - segment.begin();
 
-    const int i0 = IndexMapper0::template index<diff_t>();
-    const int i1 = IndexMapper1::template index<diff_t>();
-    const int i2 = IndexMapper2::template index<diff_t>();
+    const int i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const int i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
-    const int i0_stride = IndexMapper0::template size<diff_t>();
-    const int i1_stride = IndexMapper1::template size<diff_t>();
-    const int i2_stride = IndexMapper2::template size<diff_t>();
+    const int i0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const int i1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const int i2_stride =
+        IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
 
     for (int i = i0 + i0_stride * (i1 + i1_stride * i2); i < len;
          i += i0_stride * i1_stride * i2_stride)
@@ -1121,15 +1269,16 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
   {
     const diff_t i =
-        IndexMapper::template index<diff_t>() * static_cast<diff_t>(tile_size);
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size);
 
     body(segment.slice(i, static_cast<diff_t>(tile_size)));
   }
@@ -1147,19 +1296,21 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>() *
-                      static_cast<diff_t>(tile_size0);
-    const diff_t i1 = IndexMapper1::template index<diff_t>() *
-                      static_cast<diff_t>(tile_size1);
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
 
     body(segment0.slice(i0, static_cast<diff_t>(tile_size0)),
          segment1.slice(i1, static_cast<diff_t>(tile_size1)));
@@ -1182,9 +1333,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
@@ -1193,12 +1344,15 @@ struct TileExecute<
       SEGMENT const& segment2,
       BODY const& body)
   {
-    const diff_t i0 = IndexMapper0::template index<diff_t>() *
-                      static_cast<diff_t>(tile_size0);
-    const diff_t i1 = IndexMapper1::template index<diff_t>() *
-                      static_cast<diff_t>(tile_size1);
-    const diff_t i2 = IndexMapper2::template index<diff_t>() *
-                      static_cast<diff_t>(tile_size2);
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size2);
 
     body(segment0.slice(i0, static_cast<diff_t>(tile_size0)),
          segment1.slice(i1, static_cast<diff_t>(tile_size1)),
@@ -1217,16 +1371,17 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
   {
     const diff_t len = segment.end() - segment.begin();
     const diff_t i =
-        IndexMapper::template index<diff_t>() * static_cast<diff_t>(tile_size);
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size);
 
     if (i < len)
     {
@@ -1247,9 +1402,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
@@ -1259,10 +1414,12 @@ struct TileExecute<
     const diff_t len0 = segment0.end() - segment0.begin();
     const diff_t len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>() *
-                      static_cast<diff_t>(tile_size0);
-    const diff_t i1 = IndexMapper1::template index<diff_t>() *
-                      static_cast<diff_t>(tile_size1);
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
 
     if (i0 < len0 && i1 < len1)
     {
@@ -1288,9 +1445,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
@@ -1303,12 +1460,15 @@ struct TileExecute<
     const diff_t len1 = segment1.end() - segment1.begin();
     const diff_t len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0 = IndexMapper0::template index<diff_t>() *
-                      static_cast<diff_t>(tile_size0);
-    const diff_t i1 = IndexMapper1::template index<diff_t>() *
-                      static_cast<diff_t>(tile_size1);
-    const diff_t i2 = IndexMapper2::template index<diff_t>() *
-                      static_cast<diff_t>(tile_size2);
+    const diff_t i0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
+    const diff_t i2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size2);
 
     if (i0 < len0 && i1 < len1 && i2 < len2)
     {
@@ -1331,18 +1491,20 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
   {
     const diff_t len = segment.end() - segment.begin();
     const diff_t i_init =
-        IndexMapper::template index<diff_t>() * static_cast<diff_t>(tile_size);
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size);
     const diff_t i_stride =
-        IndexMapper::template size<diff_t>() * static_cast<diff_t>(tile_size);
+        IndexMapper::template size<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size);
 
     for (diff_t i = i_init; i < len; i += i_stride)
     {
@@ -1364,9 +1526,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
@@ -1376,15 +1538,19 @@ struct TileExecute<
     const diff_t len0 = segment0.end() - segment0.begin();
     const diff_t len1 = segment1.end() - segment1.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>() *
-                           static_cast<diff_t>(tile_size0);
-    const diff_t i1_init = IndexMapper1::template index<diff_t>() *
-                           static_cast<diff_t>(tile_size1);
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
 
     const diff_t i0_stride =
-        IndexMapper0::template size<diff_t>() * static_cast<diff_t>(tile_size0);
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
     const diff_t i1_stride =
-        IndexMapper1::template size<diff_t>() * static_cast<diff_t>(tile_size1);
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
 
     for (diff_t i0 = i0_init; i0 < len0; i0 += i0_stride)
     {
@@ -1414,9 +1580,9 @@ struct TileExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
@@ -1429,19 +1595,25 @@ struct TileExecute<
     const diff_t len1 = segment1.end() - segment1.begin();
     const diff_t len2 = segment2.end() - segment2.begin();
 
-    const diff_t i0_init = IndexMapper0::template index<diff_t>() *
-                           static_cast<diff_t>(tile_size0);
-    const diff_t i1_init = IndexMapper1::template index<diff_t>() *
-                           static_cast<diff_t>(tile_size1);
-    const diff_t i2_init = IndexMapper2::template index<diff_t>() *
-                           static_cast<diff_t>(tile_size2);
+    const diff_t i0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
+    const diff_t i1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
+    const diff_t i2_init =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size2);
 
     const diff_t i0_stride =
-        IndexMapper0::template size<diff_t>() * static_cast<diff_t>(tile_size0);
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size0);
     const diff_t i1_stride =
-        IndexMapper1::template size<diff_t>() * static_cast<diff_t>(tile_size1);
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size1);
     const diff_t i2_stride =
-        IndexMapper2::template size<diff_t>() * static_cast<diff_t>(tile_size2);
+        IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims()) *
+        static_cast<diff_t>(tile_size2);
 
     for (diff_t i0 = i0_init; i0 < len0; i0 += i0_stride)
     {
@@ -1472,14 +1644,15 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t t = IndexMapper::template index<diff_t>();
+    const diff_t t =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
     const diff_t i = t * static_cast<diff_t>(tile_size);
 
     body(segment.slice(i, static_cast<diff_t>(tile_size)), t);
@@ -1498,17 +1671,19 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
       SEGMENT const& segment1,
       BODY const& body)
   {
-    const diff_t t0 = IndexMapper0::template index<diff_t>();
-    const diff_t t1 = IndexMapper1::template index<diff_t>();
+    const diff_t t0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0 = t0 * static_cast<diff_t>(tile_size0);
     const diff_t i1 = t1 * static_cast<diff_t>(tile_size1);
@@ -1534,9 +1709,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
@@ -1545,9 +1720,12 @@ struct TileTCountExecute<
       SEGMENT const& segment2,
       BODY const& body)
   {
-    const diff_t t0 = IndexMapper0::template index<diff_t>();
-    const diff_t t1 = IndexMapper1::template index<diff_t>();
-    const diff_t t2 = IndexMapper2::template index<diff_t>();
+    const diff_t t0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0 = t0 * static_cast<diff_t>(tile_size0);
     const diff_t i1 = t1 * static_cast<diff_t>(tile_size1);
@@ -1570,16 +1748,17 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
   {
     const diff_t len = segment.end() - segment.begin();
-    const diff_t t   = IndexMapper::template index<diff_t>();
-    const diff_t i   = t * static_cast<diff_t>(tile_size);
+    const diff_t t =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i = t * static_cast<diff_t>(tile_size);
 
     if (i < len)
     {
@@ -1600,9 +1779,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
@@ -1612,8 +1791,10 @@ struct TileTCountExecute<
     const diff_t len0 = segment0.end() - segment0.begin();
     const diff_t len1 = segment1.end() - segment1.begin();
 
-    const diff_t t0 = IndexMapper0::template index<diff_t>();
-    const diff_t t1 = IndexMapper1::template index<diff_t>();
+    const diff_t t0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0 = t0 * static_cast<diff_t>(tile_size0);
     const diff_t i1 = t1 * static_cast<diff_t>(tile_size1);
@@ -1642,9 +1823,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
@@ -1657,9 +1838,12 @@ struct TileTCountExecute<
     const diff_t len1 = segment1.end() - segment1.begin();
     const diff_t len2 = segment2.end() - segment2.begin();
 
-    const diff_t t0 = IndexMapper0::template index<diff_t>();
-    const diff_t t1 = IndexMapper1::template index<diff_t>();
-    const diff_t t2 = IndexMapper2::template index<diff_t>();
+    const diff_t t0 =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1 =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t2 =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0 = t0 * static_cast<diff_t>(tile_size0);
     const diff_t i1 = t1 * static_cast<diff_t>(tile_size1);
@@ -1686,17 +1870,19 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size,
       SEGMENT const& segment,
       BODY const& body)
   {
-    const diff_t len      = segment.end() - segment.begin();
-    const diff_t t_init   = IndexMapper::template index<diff_t>();
-    const diff_t i_init   = t_init * static_cast<diff_t>(tile_size);
-    const diff_t t_stride = IndexMapper::template size<diff_t>();
+    const diff_t len = segment.end() - segment.begin();
+    const diff_t t_init =
+        IndexMapper::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t i_init = t_init * static_cast<diff_t>(tile_size);
+    const diff_t t_stride =
+        IndexMapper::template size<diff_t>(ctx.get_indices_and_dims());
     const diff_t i_stride = t_stride * static_cast<diff_t>(tile_size);
 
     for (diff_t i = i_init, t = t_init; i < len; i += i_stride, t += t_stride)
@@ -1719,9 +1905,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       SEGMENT const& segment0,
@@ -1731,14 +1917,18 @@ struct TileTCountExecute<
     const diff_t len0 = segment0.end() - segment0.begin();
     const diff_t len1 = segment1.end() - segment1.begin();
 
-    const diff_t t0_init = IndexMapper0::template index<diff_t>();
-    const diff_t t1_init = IndexMapper1::template index<diff_t>();
+    const diff_t t0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0_init = t0_init * static_cast<diff_t>(tile_size0);
     const diff_t i1_init = t1_init * static_cast<diff_t>(tile_size1);
 
-    const diff_t t0_stride = IndexMapper0::template size<diff_t>();
-    const diff_t t1_stride = IndexMapper1::template size<diff_t>();
+    const diff_t t0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0_stride = t0_stride * static_cast<diff_t>(tile_size0);
     const diff_t i1_stride = t1_stride * static_cast<diff_t>(tile_size1);
@@ -1773,9 +1963,9 @@ struct TileTCountExecute<
   using diff_t = typename std::iterator_traits<
       typename SEGMENT::iterator>::difference_type;
 
-  template<typename TILE_T, typename BODY>
+  template<typename LaunchContextPolicy, typename TILE_T, typename BODY>
   static RAJA_INLINE RAJA_DEVICE void exec(
-      LaunchContext const RAJA_UNUSED_ARG(&ctx),
+      LaunchContextT<LaunchContextPolicy> const& ctx,
       TILE_T tile_size0,
       TILE_T tile_size1,
       TILE_T tile_size2,
@@ -1788,17 +1978,23 @@ struct TileTCountExecute<
     const diff_t len1 = segment1.end() - segment1.begin();
     const diff_t len2 = segment2.end() - segment2.begin();
 
-    const diff_t t0_init = IndexMapper0::template index<diff_t>();
-    const diff_t t1_init = IndexMapper1::template index<diff_t>();
-    const diff_t t2_init = IndexMapper2::template index<diff_t>();
+    const diff_t t0_init =
+        IndexMapper0::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1_init =
+        IndexMapper1::template index<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t2_init =
+        IndexMapper2::template index<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0_init = t0_init * static_cast<diff_t>(tile_size0);
     const diff_t i1_init = t1_init * static_cast<diff_t>(tile_size1);
     const diff_t i2_init = t2_init * static_cast<diff_t>(tile_size2);
 
-    const diff_t t0_stride = IndexMapper0::template size<diff_t>();
-    const diff_t t1_stride = IndexMapper1::template size<diff_t>();
-    const diff_t t2_stride = IndexMapper2::template size<diff_t>();
+    const diff_t t0_stride =
+        IndexMapper0::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t1_stride =
+        IndexMapper1::template size<diff_t>(ctx.get_indices_and_dims());
+    const diff_t t2_stride =
+        IndexMapper2::template size<diff_t>(ctx.get_indices_and_dims());
 
     const diff_t i0_stride = t0_stride * static_cast<diff_t>(tile_size0);
     const diff_t i1_stride = t1_stride * static_cast<diff_t>(tile_size1);

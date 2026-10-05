@@ -63,7 +63,7 @@ template <typename ExecPolicy,
 void ForallAtomicBasicTestImpl( IdxType seglimit )
 {
   // initialize an array
-  const int len = 12;
+  const int len = 14;
 
   camp::resources::Resource work_res{WorkingRes::get_default()};
 
@@ -93,6 +93,8 @@ void ForallAtomicBasicTestImpl( IdxType seglimit )
   test_array[9] = static_cast<T>(0);
   test_array[10] = static_cast<T>(0);
   test_array[11] = static_cast<T>(0);
+  test_array[12] = static_cast<T>(1);
+  test_array[13] = static_cast<T>(0);
 
   work_res.memcpy(work_array, test_array, sizeof(T) * len);
 
@@ -109,6 +111,32 @@ void ForallAtomicBasicTestImpl( IdxType seglimit )
     RAJA::atomicStore<AtomicPolicy>(work_array + 9, static_cast<T>(1));
     RAJA::atomicInc<AtomicPolicy>(work_array + 10, static_cast<T>(16));
     RAJA::atomicDec<AtomicPolicy>(work_array + 11, static_cast<T>(16));
+
+    // Exercise atomicGeneric with an order-independent update:
+    // compute factorial(N) by multiplying by (i+1) for i in [0, N).
+    //
+    // Choose N small enough that:
+    // - The result fits in 32-bit signed ints (avoids overflow/UB).
+    // - The intermediate values are exactly representable in float/double
+    //   (avoids non-associativity issues).
+    constexpr IdxType factN = static_cast<IdxType>(10);
+    RAJA::atomicGeneric<AtomicPolicy>(work_array + 12,
+                                      [=] (T old) {
+                                        if (i < factN) {
+                                          return old * static_cast<T>(i + static_cast<IdxType>(1));
+                                        }
+                                        return old;
+                                      });
+
+    // Exercise the stop-aware atomicGeneric overload with a saturating update.
+    constexpr T stop_value = static_cast<T>(7);
+    RAJA::atomicGeneric<AtomicPolicy>(work_array + 13,
+                                      [] (T old) {
+                                        return old + static_cast<T>(1);
+                                      },
+                                      [=] (T current) {
+                                        return current >= stop_value;
+                                      });
   });
 
   work_res.memcpy( check_array, work_array, sizeof(T) * len );
@@ -128,6 +156,8 @@ void ForallAtomicBasicTestImpl( IdxType seglimit )
   EXPECT_EQ(static_cast<T>(1), check_array[9]);
   EXPECT_EQ(static_cast<T>(4), check_array[10]);
   EXPECT_EQ(static_cast<T>(13), check_array[11]);
+  EXPECT_EQ(static_cast<T>(3628800), check_array[12]);
+  EXPECT_EQ(static_cast<T>(7), check_array[13]);
 
   deallocateForallTestData<T>(work_res,
                               work_array,

@@ -34,7 +34,7 @@ void ResourceJoinAsyncSemanticsTestImpl()
   dev2.memcpy(d_array, h_array, sizeof(int) * ARRAY_SIZE);
 
   auto e1 = dev2.get_event_erased();
-  dev1.wait_for(&e1);
+  dev1.wait_for(e1);
 
   RAJA::resources::Event e2 = forall<EXEC_POLICY>(dev1, RangeSegment(0,ARRAY_SIZE),
     [=] RAJA_HOST_DEVICE (int i) {
@@ -42,7 +42,7 @@ void ResourceJoinAsyncSemanticsTestImpl()
     }
   );
 
-  dev2.wait_for(&e2);
+  dev2.wait_for(e2);
 
   dev2.memcpy(h_array, d_array, sizeof(int) * ARRAY_SIZE);
 

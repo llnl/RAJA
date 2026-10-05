@@ -348,6 +348,15 @@ struct ViewReturnHelper<
            : -1)...);
 
 
+  using new_stride_seq =
+      camp::int_seq<LinIdx,
+                    (LinIdx)LayoutType()
+                        .template get_dim_stride<
+                            GetTensorArgIdx<VecHead, index_list>::value>(),
+                    (LinIdx)LayoutType()
+                        .template get_dim_stride<
+                            GetTensorArgIdx<VecSeq, index_list>::value>()...>;
+
   using new_begin_seq =
       camp::int_seq<LinIdx,
                     (LinIdx)get_tensor_args_begin<VecHead>(
@@ -376,7 +385,7 @@ struct ViewReturnHelper<
       internal::expt::StaticTensorRef<ElementType*,
                                       LinIdx,
                                       internal::expt::TENSOR_MULTIPLE,
-                                      stride_seq,
+                                      new_stride_seq,
                                       new_begin_seq,
                                       new_size_seq,
                                       s_stride_one_dim>;
@@ -746,9 +755,9 @@ public:
 
   using Base         = ViewBase<ValueType, PointerType, LayoutType>;
   using Self         = TypedViewBase<value_type,
-                             pointer_type,
-                             layout_type,
-                             camp::list<IndexTypes...>>;
+                                     pointer_type,
+                                     layout_type,
+                                     camp::list<IndexTypes...>>;
   using NonConstView = TypedViewBase<nc_value_type,
                                      nc_pointer_type,
                                      layout_type,
@@ -756,9 +765,9 @@ public:
 
   using shifted_layout_type = typename add_offset<layout_type>::type;
   using ShiftedView         = TypedViewBase<value_type,
-                                    pointer_type,
-                                    shifted_layout_type,
-                                    camp::list<IndexTypes...>>;
+                                            pointer_type,
+                                            shifted_layout_type,
+                                            camp::list<IndexTypes...>>;
 
   static constexpr size_t n_dims = sizeof...(IndexTypes);
 

@@ -62,7 +62,7 @@
 #include "RAJA/policy/sequential.hpp"
 
 //
-// All platforms should support simd and vector execution.
+// All platforms should support simd vector execution.
 //
 #include "RAJA/policy/simd.hpp"
 #if defined(RAJA_ENABLE_VECTORIZATION)
@@ -75,6 +75,10 @@
 
 #if defined(RAJA_ENABLE_HIP)
 #include "RAJA/policy/hip.hpp"
+#endif
+
+#if defined(RAJA_ENABLE_JIT)
+#include "proteus/JitInterface.h"
 #endif
 
 #if defined(RAJA_ENABLE_SYCL)
@@ -92,6 +96,8 @@
 #if defined(RAJA_ENABLE_DESUL_ATOMICS)
 #include "RAJA/policy/desul.hpp"
 #endif
+
+#include "RAJA/policy/device.hpp"
 
 #include "RAJA/index/IndexSet.hpp"
 
@@ -152,6 +158,11 @@
 #include "RAJA/util/BitMask.hpp"
 
 //
+// Memory utility routines
+//
+#include "RAJA/util/memory.hpp"
+
+//
 // sort algorithms
 //
 #include "RAJA/util/sort.hpp"
@@ -178,6 +189,11 @@
 // Synchronization
 //
 #include "RAJA/pattern/synchronize.hpp"
+
+//
+// Message handler to pass messages between host and device
+//
+#include "RAJA/pattern/messages.hpp"
 
 //
 //////////////////////////////////////////////////////////////////////

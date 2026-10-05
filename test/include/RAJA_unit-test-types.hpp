@@ -92,4 +92,12 @@ using UnitIndexTypes = ::testing::Types<RAJA::Index_type,
 #endif
                                         unsigned long long>;
 
+RAJA_INDEX_VALUE(Index, "INDEX");
+struct Ty {};
+template<RAJA::concepts::IndexValued T>
+struct Tester {};
+
+template<typename IndexValued, template<typename> typename TemplateClass>
+concept Compiles = requires  { TemplateClass<IndexValued> {}; };
+                                        
 #endif  // __RAJA_unit_test_types_HPP__

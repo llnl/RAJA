@@ -43,6 +43,12 @@ RAJA scan operations:
 
  * :ref:`tut-scan-label`.
 
+Some backend scan implementations may use RAJA internal temporary storage.
+Please see the following section for guidance on releasing unused internal
+memory:
+
+ * :ref:`memory-release-internal-pool-label`.
+
 -----------------
 Scan Operations
 -----------------

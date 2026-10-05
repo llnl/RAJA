@@ -39,7 +39,7 @@ void ResourceDependsTestImpl()
     }
   );
 
-  dev1.wait_for(&e);
+  dev1.wait_for(e);
 
   forall<EXEC_POLICY>(dev1, RangeSegment(0,ARRAY_SIZE),
     [=] RAJA_HOST_DEVICE (int i) {

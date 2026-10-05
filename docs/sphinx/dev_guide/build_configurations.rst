@@ -84,6 +84,31 @@ After running a build script, one then goes into that directory and runs
   $ make -j
   $ make test
 
+JIT build script (TOSS4 amdclang + Proteus)
+------------------------------------------
+
+The script ``./scripts/lc-builds/toss4_amdclang_proteus.sh`` generates a TOSS4
+HIP build configured for Proteus-based JIT compilation:
+
+.. code-block:: bash
+
+  $ ./scripts/lc-builds/toss4_amdclang_proteus.sh 6.4.2 gfx942
+
+This script enables the CMake cache variables:
+
+* ``RAJA_ENABLE_JIT=ON`` to enable RAJA JIT support (requires a Clang-family compiler).
+* ``LLVM_INSTALL_DIR`` must point to an LLVM 18, 19, or 20 installation unless you
+  provide a Proteus installation that is statically linked with LLVM.
+
+You can pass additional CMake arguments after the required positional
+arguments. For example, to use a pre-installed Proteus rather than fetching it
+via ``FetchContent``:
+
+.. code-block:: bash
+
+  $ ./scripts/lc-builds/toss4_amdclang_proteus.sh 6.4.2 gfx942 \
+      -DPROTEUS_INSTALL_DIR=/path/to/proteus/prefix
+
 .. _spack_host_config-label:
 
 ==================================

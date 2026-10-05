@@ -85,14 +85,15 @@ cmake \
   -DCMAKE_HIP_ARCHITECTURES="${COMP_ARCH}" \
   -DGPU_TARGETS="${COMP_ARCH}" \
   -DAMDGPU_TARGETS="${COMP_ARCH}" \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -DENABLE_CLANGFORMAT=On \
-  -DCLANGFORMAT_EXECUTABLE=/opt/rocm-5.2.3/llvm/bin/clang-format \
+  -DCLANGFORMAT_EXECUTABLE=/opt/rocm-6.4.3/llvm/bin/clang-format \
   -C "../host-configs/lc-builds/toss4/${HOSTCONFIG}.cmake" \
   -DENABLE_HIP=ON \
   -DENABLE_OPENMP=ON \
   -DENABLE_CUDA=OFF \
   -DENABLE_BENCHMARKS=On \
+  -DRAJA_ENABLE_VECTORIZATION=On \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \
   "$@" \
   ..

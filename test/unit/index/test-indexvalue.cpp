@@ -280,3 +280,9 @@ TYPED_TEST(IndexValueUnitTest, IndexTypeCompare)
   ASSERT_NE(x, x_lower);
   ASSERT_NE(x, x_higher);
 }
+
+TYPED_TEST(IndexValueUnitTest, IndexValueConcept) 
+{
+  static_assert(Compiles<Index, Tester>, "Test that index value concept accepts IndexValue"); 
+  static_assert(!Compiles<Ty, Tester>, "Test that index value concept does not accept generic types"); 
+}

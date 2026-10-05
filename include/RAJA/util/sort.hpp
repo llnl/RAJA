@@ -391,7 +391,7 @@ RAJA_HOST_DEVICE inline void intro_sort_depth(Iter begin,
     }
 
     // partition
-    mid = partition(begin, last, [&](Iter it) {
+    mid = detail::partition(begin, last, [&](Iter it) {
       return comp(*it, *pivot);
     });
 

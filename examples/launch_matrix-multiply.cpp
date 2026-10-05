@@ -58,9 +58,9 @@ using gpu_block_x_policy = RAJA::cuda_block_x_direct;
 using gpu_block_y_policy = RAJA::cuda_block_y_direct;
 using gpu_thread_x_policy = RAJA::cuda_thread_x_loop;
 using gpu_thread_y_policy = RAJA::cuda_thread_y_loop;
-using gpu_global_thread_x_policy = RAJA::cuda_global_thread_x;
-using gpu_global_thread_y_policy = RAJA::cuda_global_thread_y;
-using gpu_global_thread_xy_policy = RAJA::cuda_global_thread_xy;
+using gpu_global_thread_x_policy = RAJA::cuda_global_x_direct;
+using gpu_global_thread_y_policy = RAJA::cuda_global_y_direct;
+using gpu_global_thread_xy_policy = RAJA::cuda_global_xy_direct;
 #endif
 
 #if defined(RAJA_ENABLE_HIP)
@@ -68,9 +68,9 @@ using gpu_block_x_policy = RAJA::hip_block_x_direct;
 using gpu_block_y_policy = RAJA::hip_block_y_direct;
 using gpu_thread_x_policy = RAJA::hip_thread_x_loop;
 using gpu_thread_y_policy = RAJA::hip_thread_y_loop;
-using gpu_global_thread_x_policy = RAJA::hip_global_thread_x;
-using gpu_global_thread_y_policy = RAJA::hip_global_thread_y;
-using gpu_global_thread_xy_policy = RAJA::hip_global_thread_xy;
+using gpu_global_thread_x_policy = RAJA::hip_global_x_direct;
+using gpu_global_thread_y_policy = RAJA::hip_global_y_direct;
+using gpu_global_thread_xy_policy = RAJA::hip_global_xy_direct;
 #endif
 
 /*

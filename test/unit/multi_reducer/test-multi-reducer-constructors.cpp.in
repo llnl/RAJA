@@ -17,16 +17,8 @@ using @BACKEND@MultiReducerConstructorTypes =
   Test< camp::cartesian_product< @BACKEND@MultiReducerPolicyList,
                                  DataTypeList > >::Types;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@BasicTest,
-                               MultiReducerBasicConstructorUnitTest,
-                               @BACKEND@MultiReducerConstructorTypes);
-
-INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@InitTest,
-                               MultiReducerSingleInitConstructorUnitTest,
-                               @BACKEND@MultiReducerConstructorTypes);
-
-INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@InitTest,
-                               MultiReducerContainerInitConstructorUnitTest,
+INSTANTIATE_TYPED_TEST_SUITE_P(@BACKEND@Test,
+                               MultiReducerConstructorUnitTest,
                                @BACKEND@MultiReducerConstructorTypes);
 
 

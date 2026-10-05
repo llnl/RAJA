@@ -32,22 +32,31 @@ gpu_time_wait_for(float time, float clockrate) {
 int get_clockrate()
 {
   int cuda_device = 0;
-  cudaDeviceProp deviceProp;
   CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetDevice, &cuda_device);
-  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetDeviceProperties, &deviceProp, cuda_device);
-  if ((deviceProp.concurrentKernels == 0))
+
+  int concurrentKernels = 0;
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceGetAttribute,
+                                 &concurrentKernels,
+                                 cudaDevAttrConcurrentKernels,
+                                 cuda_device);
+
+  if (concurrentKernels == 0)
   {
     printf("> GPU does not support concurrent kernel execution\n");
     printf("  CUDA kernel runs will be serialized\n");
     return -1;
   }
-  //printf("> Detected Compute SM %d.%d hardware with %d multi-processors\n",
-  //    deviceProp.major, deviceProp.minor, deviceProp.multiProcessorCount);
+
+  int clockRate = 0;
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceGetAttribute,
+                                 &clockRate,
+                                 cudaDevAttrClockRate,
+                                 cuda_device);
 
 #if defined(__arm__) || defined(__aarch64__)
-  return deviceProp.clockRate/1000;
+  return clockRate / 1000;
 #else
-  return deviceProp.clockRate;
+  return clockRate;
 #endif
 }
 

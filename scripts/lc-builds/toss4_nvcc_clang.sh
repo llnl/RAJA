@@ -61,10 +61,10 @@ module load cmake/${CMAKE_VER}
 cmake \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_CXX_COMPILER=/usr/tce/packages/clang/clang-${COMP_CLANG_VER}/bin/clang++ \
-  -DBLT_CXX_STD=c++17 \
+  -DBLT_CXX_STD=c++20 \
   -C ../host-configs/lc-builds/toss4/nvcc_clang_X.cmake \
   -DENABLE_CLANGFORMAT=Off \
-  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-14.0.6/bin/clang-format \
+  -DCLANGFORMAT_EXECUTABLE=/usr/tce/packages/clang/clang-19.1.3/bin/clang-format \
   -DENABLE_OPENMP=On \
   -DENABLE_CUDA=On \
   -DRAJA_ENABLE_NVTX=On \
@@ -72,6 +72,7 @@ cmake \
   -DCMAKE_CUDA_COMPILER=/usr/tce/packages/cuda/cuda-${COMP_NVCC_VER}/bin/nvcc \
   -DCMAKE_CUDA_ARCHITECTURES=${COMP_ARCH} \
   -DENABLE_BENCHMARKS=On \
+  -DRAJA_ENABLE_VECTORIZATION=On \
   -DCMAKE_INSTALL_PREFIX=../install_${BUILD_SUFFIX} \
   "$@" \
   ..

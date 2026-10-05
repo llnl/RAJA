@@ -37,6 +37,12 @@
 namespace RAJA
 {
 
+template<>
+struct reduction_supported_policies<Policy::sycl>
+{
+  using type = PolicyList<Policy::sequential, Policy::sycl>;
+};
+
 struct uint3
 {
   unsigned long x, y, z;

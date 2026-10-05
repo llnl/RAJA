@@ -9,11 +9,11 @@
 
 include_directories(include)
 
-add_subdirectory(integration)
+add_subdirectory(unit)
 
 add_subdirectory(functional)
 
-add_subdirectory(unit)
+add_subdirectory(integration)
 
 add_subdirectory(old-tests)
 

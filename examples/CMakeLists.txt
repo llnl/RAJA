@@ -20,8 +20,36 @@ raja_add_executable(
   SOURCES resource-forall.cpp)
 
 raja_add_executable(
+  NAME raja-ranges
+  SOURCES raja-ranges.cpp)
+
+raja_add_executable(
+  NAME messages-forall
+  SOURCES messages-forall.cpp)
+
+raja_add_executable(
   NAME dynamic-forall
   SOURCES dynamic-forall.cpp)
+
+raja_add_executable(
+  NAME device-policy-aliases
+  SOURCES device-policy-aliases.cpp)
+
+raja_add_executable(
+  NAME launch-device-policy-aliases
+  SOURCES launch-device-policy-aliases.cpp)
+
+if (RAJA_ENABLE_JIT)
+  raja_add_executable(
+    NAME forall-jit
+    SOURCES forall-jit.cpp)
+  raja_add_executable(
+    NAME kernel-jit
+    SOURCES kernel-jit.cpp)
+  raja_add_executable(
+    NAME launch-jit
+    SOURCES launch-jit.cpp)
+endif()
 
 raja_add_executable(
   NAME forall-param-reductions
@@ -74,6 +102,10 @@ raja_add_executable(
 raja_add_executable(
   NAME raja-launch
   SOURCES raja-launch.cpp)
+
+raja_add_executable(
+  NAME gpu-launch-context-indices
+  SOURCES gpu-launch-context-indices.cpp)
 
 raja_add_executable(
   NAME launch_matrix-multiply

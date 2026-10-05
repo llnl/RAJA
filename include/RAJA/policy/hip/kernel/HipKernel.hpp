@@ -32,6 +32,7 @@
 
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
+#include "RAJA/util/Jit.hpp"
 
 #include "RAJA/pattern/kernel.hpp"
 #include "RAJA/pattern/kernel/For.hpp"
@@ -181,7 +182,7 @@ namespace internal
  * HIP global function for launching HipKernel policies
  */
 template<typename Data, typename Exec>
-__global__ void HipKernelLauncher(const Data data)
+__global__ RAJA_JIT_COMPILE void HipKernelLauncher(const Data data)
 {
 
   using data_t        = camp::decay<Data>;
@@ -200,7 +201,7 @@ __global__ void HipKernelLauncher(const Data data)
  * This launcher is used by the HipKerelFixed policies.
  */
 template<int BlockSize, typename Data, typename Exec>
-__launch_bounds__(BlockSize, 1) __global__
+__launch_bounds__(BlockSize, 1) __global__ RAJA_JIT_COMPILE
     void HipKernelLauncherFixed(const Data data)
 {
 
@@ -606,10 +607,7 @@ struct StatementExecutor<
       //
       // make sure that we fit
       //
-      /* Doesn't make sense to check this anymore - AJK
-      if(launch_dims.num_blocks() > max_blocks){
-        RAJA_ABORT_OR_THROW("RAJA::kernel exceeds max num blocks");
-      }*/
+
       if (launch_dims.num_threads() > max_threads)
       {
         RAJA_ABORT_OR_THROW("RAJA::kernel exceeds max num threads");

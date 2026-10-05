@@ -44,6 +44,8 @@ namespace RAJA
  *
  * \brief  Min multi reducer class template.
  *
+ * This is the declaration of the user facing Reduction API.
+ *
  * Usage example:
  *
  * \verbatim
@@ -73,6 +75,8 @@ struct MultiReduceMin;
  ******************************************************************************
  *
  * \brief  Max multi reducer class template.
+ *
+ * This is the declaration of the user facing Reduction API.
  *
  * Usage example:
  *
@@ -104,6 +108,8 @@ struct MultiReduceMax;
  *
  * \brief  Sum multi reducer class template.
  *
+ * This is the declaration of the user facing Reduction API.
+ *
  * Usage example:
  *
  * \verbatim
@@ -133,6 +139,8 @@ struct MultiReduceSum;
  ******************************************************************************
  *
  * \brief  Bitwise OR multi reducer class template.
+ *
+ * This is the declaration of the user facing Reduction API.
  *
  * Usage example:
  *
@@ -164,6 +172,8 @@ struct MultiReduceBitOr;
  ******************************************************************************
  *
  * \brief  Bitwise AND multi reducer class template.
+ *
+ * This is the declaration of the user facing Reduction API.
  *
  * Usage example:
  *

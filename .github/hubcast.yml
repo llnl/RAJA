@@ -1,0 +1,14 @@
+Repo:
+  dest_org: radiuss
+
+  dest_name: raja
+
+  check_name: gitlab-ci
+
+  check_types: [pipeline, child-pipelines]
+
+  delete_closed: true
+
+  sync_drafts: false
+
+  sync_drafts_msg: true

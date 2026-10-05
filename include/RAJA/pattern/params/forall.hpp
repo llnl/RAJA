@@ -431,7 +431,7 @@ std::string get_kernel_name_helper(
 {
   constexpr std::size_t default_idx = std::numeric_limits<std::size_t>::max();
   constexpr std::size_t name_idx    = std::min(
-         {default_idx, (std::is_same<std::decay_t<Args>, RAJA::detail::Name>::value
+      {default_idx, (std::is_same<std::decay_t<Args>, RAJA::detail::Name>::value
                             ? Idx
                             : default_idx)...});
 

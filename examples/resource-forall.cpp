@@ -271,7 +271,7 @@ using EXEC_POLICY = RAJA::sycl_exec<GPU_BLOCK_SIZE>;
   // _raja_res_k2_end
 
   // _raja_res_wait_start
-  res_gpu2.wait_for(&e);
+  res_gpu2.wait_for(e);
   // _raja_res_wait_end
 
   // _raja_res_k3_start

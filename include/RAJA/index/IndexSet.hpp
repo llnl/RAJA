@@ -22,9 +22,6 @@
 
 #include "RAJA/config.hpp"
 
-#include "RAJA/index/ListSegment.hpp"
-#include "RAJA/index/RangeSegment.hpp"
-
 #include "RAJA/internal/Iterators.hpp"
 #include "RAJA/internal/RAJAVec.hpp"
 

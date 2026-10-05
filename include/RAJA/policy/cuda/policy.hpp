@@ -25,6 +25,7 @@
 #if defined(RAJA_CUDA_ACTIVE)
 
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 
 #include "RAJA/pattern/reduce.hpp"
@@ -44,6 +45,15 @@ namespace RAJA
 using cuda_dim_t = RAJA_CUDA_DIM_T;
 
 using cuda_dim_member_t = camp::decay<decltype(std::declval<cuda_dim_t>().x)>;
+
+template<>
+struct reduction_supported_policies<Policy::cuda>
+{
+  using type = std::conditional_t<
+      policy_active<Policy::openmp>,
+      PolicyList<Policy::sequential, Policy::openmp, Policy::cuda>,
+      PolicyList<Policy::sequential, Policy::cuda>>;
+};
 
 //
 /////////////////////////////////////////////////////////////////////
@@ -227,6 +237,10 @@ struct ThreadsPerBlockCutoffPreferredReplicationConcretizer
 template<typename GetPreferredReplication>
 struct SharedAtomicReplicationMaxPow2Concretizer
 {
+  template<typename OtherGetPreferredReplication>
+  using rebind =
+      SharedAtomicReplicationMaxPow2Concretizer<OtherGetPreferredReplication>;
+
   template<typename IdxT, typename Data>
   static IdxT get_shared_replication(Data const& data)
   {
@@ -250,6 +264,10 @@ struct SharedAtomicReplicationMaxPow2Concretizer
 template<typename GetPreferredReplication>
 struct GlobalAtomicReplicationMinPow2Concretizer
 {
+  template<typename OtherGetPreferredReplication>
+  using rebind =
+      GlobalAtomicReplicationMinPow2Concretizer<OtherGetPreferredReplication>;
+
   template<typename IdxT, typename Data>
   static IdxT get_global_replication(Data const& data)
   {
@@ -654,6 +672,164 @@ struct IndexSize
   {}
 };
 
+// Class to help cache thread indices or not based on template arg
+template<bool cache_threadIdx>
+struct ThreadIndices
+{
+  template<named_dim dim>
+  RAJA_DEVICE constexpr cuda_dim_member_t get_threadIdx() const
+  {
+    return ::RAJA::internal::CudaDimHelper<dim>::get(threadIdx);
+  }
+};
+
+template<>
+struct ThreadIndices<true>
+{
+  dim3 m_threadIdx;
+
+  RAJA_HOST_DEVICE ThreadIndices()
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
+      : m_threadIdx(threadIdx)
+#endif
+  {}
+
+  template<named_dim dim>
+  RAJA_DEVICE constexpr cuda_dim_member_t get_threadIdx() const
+  {
+    return ::RAJA::internal::CudaDimHelper<dim>::get(m_threadIdx);
+  }
+};
+
+// Class to help cache block indices or not based on template arg
+template<bool cache_blockIdx>
+struct BlockIndices
+{
+  template<named_dim dim>
+  RAJA_DEVICE constexpr cuda_dim_member_t get_blockIdx() const
+  {
+    return ::RAJA::internal::CudaDimHelper<dim>::get(blockIdx);
+  }
+};
+
+template<>
+struct BlockIndices<true>
+{
+  dim3 m_blockIdx;
+
+  RAJA_HOST_DEVICE BlockIndices()
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
+      : m_blockIdx(blockIdx)
+#endif
+  {}
+
+  template<named_dim dim>
+  RAJA_DEVICE constexpr cuda_dim_member_t get_blockIdx() const
+  {
+    return ::RAJA::internal::CudaDimHelper<dim>::get(m_blockIdx);
+  }
+};
+
+// Class to help cache block dimensions or not based on template arg
+template<bool cache_blockDim>
+struct BlockDimensions
+{
+  template<named_dim dim>
+  RAJA_DEVICE constexpr cuda_dim_member_t get_blockDim() const
+  {
+    return ::RAJA::internal::CudaDimHelper<dim>::get(blockDim);
+  }
+};
+
+template<>
+struct BlockDimensions<true>
+{
+  dim3 m_blockDim;
+
+  RAJA_HOST_DEVICE BlockDimensions()
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
+      : m_blockDim(blockDim)
+#endif
+  {}
+
+  template<named_dim dim>
+  RAJA_DEVICE constexpr cuda_dim_member_t get_blockDim() const
+  {
+    return ::RAJA::internal::CudaDimHelper<dim>::get(m_blockDim);
+  }
+};
+
+// Class to help cache grid dimensions or not based on template arg
+template<bool cache_gridDim>
+struct GridDimensions
+{
+  template<named_dim dim>
+  RAJA_DEVICE constexpr cuda_dim_member_t get_gridDim() const
+  {
+    return ::RAJA::internal::CudaDimHelper<dim>::get(gridDim);
+  }
+};
+
+template<>
+struct GridDimensions<true>
+{
+  dim3 m_gridDim = gridDim;
+
+  RAJA_HOST_DEVICE GridDimensions()
+#if defined(RAJA_GPU_DEVICE_COMPILE_PASS_ACTIVE)
+      : m_gridDim(gridDim)
+#endif
+  {}
+
+  template<named_dim dim>
+  RAJA_DEVICE constexpr cuda_dim_member_t get_gridDim() const
+  {
+    return ::RAJA::internal::CudaDimHelper<dim>::get(m_gridDim);
+  }
+};
+
+// Class to help cache indices and dimensions or not based on template args
+template<bool cache_threadIdx,
+         bool cache_blockIdx,
+         bool cache_blockDim,
+         bool cache_gridDim>
+struct IndicesAndDims : ThreadIndices<cache_threadIdx>,
+                        BlockIndices<cache_blockIdx>,
+                        BlockDimensions<cache_blockDim>,
+                        GridDimensions<cache_gridDim>
+{};
+
+// Nothing cached
+using NonCachedIndicesAndDims = IndicesAndDims<false, false, false, false>;
+
+// threadIdx and blockDim cached, rest not cached
+using CachedBlockDims = IndicesAndDims<false, false, true, false>;
+
+// threadIdx, blockIdx, blockDim, gridDim cached
+using AllCachedIndicesAndDims = IndicesAndDims<true, true, true, true>;
+
+/*!
+ * Launch context policy helper to include IndicesAndDims caching.
+ *
+ * This policy can be used with RAJA::LaunchContextT to request a launch
+ * context that contains an IndicesAndDimsT instance (cached or uncached),
+ * when supported by the active launch backend.
+ */
+template<typename IndicesAndDimsT = NonCachedIndicesAndDims>
+struct LaunchContextIndicesAndDimsPolicy
+{
+  using indices_and_dims_t = IndicesAndDimsT;
+};
+
+using LaunchContextNonCachedIndicesAndDimsPolicy =
+    LaunchContextIndicesAndDimsPolicy<NonCachedIndicesAndDims>;
+
+using LaunchContextCachedBlockDimsPolicy =
+    LaunchContextIndicesAndDimsPolicy<CachedBlockDims>;
+
+using LaunchContextAllCachedIndicesAndDimsPolicy =
+    LaunchContextIndicesAndDimsPolicy<AllCachedIndicesAndDims>;
+
 /// Type representing thread indexing within a grid
 /// It has various specializations that optimize specific patterns
 
@@ -668,18 +844,18 @@ struct IndexGlobal
   static constexpr int block_size = BLOCK_SIZE;
   static constexpr int grid_size  = GRID_SIZE;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-               ::RAJA::internal::CudaDimHelper<dim>::get(threadIdx)) +
+    return static_cast<IdxT>(idxNDims.template get_threadIdx<dim>()) +
            static_cast<IdxT>(block_size) *
-               static_cast<IdxT>(
-                   ::RAJA::internal::CudaDimHelper<dim>::get(blockIdx));
+               static_cast<IdxT>(idxNDims.template get_blockIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static constexpr IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(block_size) * static_cast<IdxT>(grid_size);
   }
@@ -694,15 +870,16 @@ struct IndexGlobal<dim, 1, GRID_SIZE>
   static constexpr int block_size = 1;
   static constexpr int grid_size  = GRID_SIZE;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(blockIdx));
+    return static_cast<IdxT>(idxNDims.template get_blockIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static constexpr IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(grid_size);
   }
@@ -717,15 +894,16 @@ struct IndexGlobal<dim, BLOCK_SIZE, 1>
   static constexpr int block_size = BLOCK_SIZE;
   static constexpr int grid_size  = 1;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(threadIdx));
+    return static_cast<IdxT>(idxNDims.template get_threadIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static constexpr IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(block_size);
   }
@@ -738,14 +916,16 @@ struct IndexGlobal<dim, 1, 1>
   static constexpr int block_size = 1;
   static constexpr int grid_size  = 1;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(0);
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(1);
   }
@@ -760,22 +940,20 @@ struct IndexGlobal<dim, named_usage::unspecified, GRID_SIZE>
   static constexpr int block_size = named_usage::unspecified;
   static constexpr int grid_size  = GRID_SIZE;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-               ::RAJA::internal::CudaDimHelper<dim>::get(threadIdx)) +
-           static_cast<IdxT>(
-               ::RAJA::internal::CudaDimHelper<dim>::get(blockDim)) *
-               static_cast<IdxT>(
-                   ::RAJA::internal::CudaDimHelper<dim>::get(blockIdx));
+    return static_cast<IdxT>(idxNDims.template get_threadIdx<dim>()) +
+           static_cast<IdxT>(idxNDims.template get_blockDim<dim>()) *
+               static_cast<IdxT>(idxNDims.template get_blockIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-               ::RAJA::internal::CudaDimHelper<dim>::get(blockDim)) *
+    return static_cast<IdxT>(idxNDims.template get_blockDim<dim>()) *
            static_cast<IdxT>(grid_size);
   }
 };
@@ -787,18 +965,18 @@ struct IndexGlobal<dim, named_usage::unspecified, 1>
   static constexpr int block_size = named_usage::unspecified;
   static constexpr int grid_size  = 1;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(threadIdx));
+    return static_cast<IdxT>(idxNDims.template get_threadIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(blockDim));
+    return static_cast<IdxT>(idxNDims.template get_blockDim<dim>());
   }
 };
 
@@ -811,22 +989,21 @@ struct IndexGlobal<dim, BLOCK_SIZE, named_usage::unspecified>
   static constexpr int block_size = BLOCK_SIZE;
   static constexpr int grid_size  = named_usage::unspecified;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-               ::RAJA::internal::CudaDimHelper<dim>::get(threadIdx)) +
+    return static_cast<IdxT>(idxNDims.template get_threadIdx<dim>()) +
            static_cast<IdxT>(block_size) *
-               static_cast<IdxT>(
-                   ::RAJA::internal::CudaDimHelper<dim>::get(blockIdx));
+               static_cast<IdxT>(idxNDims.template get_blockIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
   {
     return static_cast<IdxT>(block_size) *
-           static_cast<IdxT>(
-               ::RAJA::internal::CudaDimHelper<dim>::get(gridDim));
+           static_cast<IdxT>(idxNDims.template get_gridDim<dim>());
   }
 };
 
@@ -837,18 +1014,18 @@ struct IndexGlobal<dim, 1, named_usage::unspecified>
   static constexpr int block_size = 1;
   static constexpr int grid_size  = named_usage::unspecified;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(blockIdx));
+    return static_cast<IdxT>(idxNDims.template get_blockIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(gridDim));
+    return static_cast<IdxT>(idxNDims.template get_gridDim<dim>());
   }
 };
 
@@ -859,24 +1036,21 @@ struct IndexGlobal<dim, named_usage::unspecified, named_usage::unspecified>
   static constexpr int block_size = named_usage::unspecified;
   static constexpr int grid_size  = named_usage::unspecified;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-               ::RAJA::internal::CudaDimHelper<dim>::get(threadIdx)) +
-           static_cast<IdxT>(
-               ::RAJA::internal::CudaDimHelper<dim>::get(blockDim)) *
-               static_cast<IdxT>(
-                   ::RAJA::internal::CudaDimHelper<dim>::get(blockIdx));
+    return static_cast<IdxT>(idxNDims.template get_threadIdx<dim>()) +
+           static_cast<IdxT>(idxNDims.template get_blockDim<dim>()) *
+               static_cast<IdxT>(idxNDims.template get_blockIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-               ::RAJA::internal::CudaDimHelper<dim>::get(blockDim)) *
-           static_cast<IdxT>(
-               ::RAJA::internal::CudaDimHelper<dim>::get(gridDim));
+    return static_cast<IdxT>(idxNDims.template get_blockDim<dim>()) *
+           static_cast<IdxT>(idxNDims.template get_gridDim<dim>());
   }
 };
 
@@ -890,15 +1064,16 @@ struct IndexGlobal<dim, named_usage::ignored, GRID_SIZE>
   static constexpr int block_size = named_usage::ignored;
   static constexpr int grid_size  = GRID_SIZE;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(blockIdx));
+    return static_cast<IdxT>(idxNDims.template get_blockIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static constexpr IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(grid_size);
   }
@@ -911,14 +1086,16 @@ struct IndexGlobal<dim, named_usage::ignored, 1>
   static constexpr int block_size = named_usage::ignored;
   static constexpr int grid_size  = 1;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(0);
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(1);
   }
@@ -931,18 +1108,18 @@ struct IndexGlobal<dim, named_usage::ignored, named_usage::unspecified>
   static constexpr int block_size = named_usage::ignored;
   static constexpr int grid_size  = named_usage::unspecified;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(blockIdx));
+    return static_cast<IdxT>(idxNDims.template get_blockIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(gridDim));
+    return static_cast<IdxT>(idxNDims.template get_gridDim<dim>());
   }
 };
 
@@ -956,15 +1133,16 @@ struct IndexGlobal<dim, BLOCK_SIZE, named_usage::ignored>
   static constexpr int block_size = BLOCK_SIZE;
   static constexpr int grid_size  = named_usage::ignored;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(threadIdx));
+    return static_cast<IdxT>(idxNDims.template get_threadIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static constexpr IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static constexpr IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(block_size);
   }
@@ -977,14 +1155,16 @@ struct IndexGlobal<dim, 1, named_usage::ignored>
   static constexpr int block_size = 1;
   static constexpr int grid_size  = named_usage::ignored;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(0);
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(1);
   }
@@ -997,18 +1177,18 @@ struct IndexGlobal<dim, named_usage::unspecified, named_usage::ignored>
   static constexpr int block_size = named_usage::unspecified;
   static constexpr int grid_size  = named_usage::ignored;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(threadIdx));
+    return static_cast<IdxT>(idxNDims.template get_threadIdx<dim>());
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return static_cast<IdxT>(
-        ::RAJA::internal::CudaDimHelper<dim>::get(blockDim));
+    return static_cast<IdxT>(idxNDims.template get_blockDim<dim>());
   }
 };
 
@@ -1020,14 +1200,16 @@ struct IndexGlobal<dim, named_usage::ignored, named_usage::ignored>
   static constexpr int block_size = named_usage::ignored;
   static constexpr int grid_size  = named_usage::ignored;
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(0);
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(1);
   }
@@ -1038,17 +1220,19 @@ template<typename x_index>
 struct IndexFlatten<x_index>
 {
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
 
-    return x_index::template index<IdxT>();
+    return x_index::template index<IdxT>(idxNDims);
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return x_index::template size<IdxT>();
+    return x_index::template size<IdxT>(idxNDims);
   }
 };
 
@@ -1057,18 +1241,22 @@ template<typename x_index, typename y_index>
 struct IndexFlatten<x_index, y_index>
 {
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
 
-    return x_index::template index<IdxT>() +
-           x_index::template size<IdxT>() * (y_index::template index<IdxT>());
+    return x_index::template index<IdxT>(idxNDims) +
+           x_index::template size<IdxT>(idxNDims) *
+               (y_index::template index<IdxT>(idxNDims));
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return x_index::template size<IdxT>() * y_index::template size<IdxT>();
+    return x_index::template size<IdxT>(idxNDims) *
+           y_index::template size<IdxT>(idxNDims);
   }
 };
 
@@ -1077,38 +1265,43 @@ template<typename x_index, typename y_index, typename z_index>
 struct IndexFlatten<x_index, y_index, z_index>
 {
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
 
-    return x_index::template index<IdxT>() +
-           x_index::template size<IdxT>() *
-               (y_index::template index<IdxT>() +
-                y_index::template size<IdxT>() *
-                    z_index::template index<IdxT>());
+    return x_index::template index<IdxT>(idxNDims) +
+           x_index::template size<IdxT>(idxNDims) *
+               (y_index::template index<IdxT>(idxNDims) +
+                y_index::template size<IdxT>(idxNDims) *
+                    z_index::template index<IdxT>(idxNDims));
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return x_index::template size<IdxT>() * y_index::template size<IdxT>() *
-           z_index::template size<IdxT>();
+    return x_index::template size<IdxT>(idxNDims) *
+           y_index::template size<IdxT>(idxNDims) *
+           z_index::template size<IdxT>(idxNDims);
   }
 };
 
 template<size_t divisor, typename indexer>
 struct IndexDivide
 {
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return indexer::template index<IdxT>() / static_cast<IdxT>(divisor);
+    return indexer::template index<IdxT>(idxNDims) / static_cast<IdxT>(divisor);
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return RAJA_DIVIDE_CEILING_INT(indexer::template size<IdxT>(),
+    return RAJA_DIVIDE_CEILING_INT(indexer::template size<IdxT>(idxNDims),
                                    static_cast<IdxT>(divisor));
   }
 };
@@ -1116,14 +1309,16 @@ struct IndexDivide
 template<size_t divisor, typename indexer>
 struct IndexModulo
 {
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT index()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT index(IdxNDims const& idxNDims = IdxNDims {})
   {
-    return indexer::template index<IdxT>() % static_cast<IdxT>(divisor);
+    return indexer::template index<IdxT>(idxNDims) % static_cast<IdxT>(divisor);
   }
 
-  template<typename IdxT = cuda_dim_member_t>
-  RAJA_DEVICE static inline IdxT size()
+  template<typename IdxT     = cuda_dim_member_t,
+           typename IdxNDims = NonCachedIndicesAndDims>
+  RAJA_DEVICE static inline IdxT size(IdxNDims const& = IdxNDims {})
   {
     return static_cast<IdxT>(divisor);
   }
@@ -1237,6 +1432,29 @@ using warp_global_xyz =
                  block_xyz<GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z>>;
 
 }  // namespace cuda
+
+using CudaAllCachedIndicesAndDims = cuda::AllCachedIndicesAndDims;
+using CudaCachedBlockDims         = cuda::CachedBlockDims;
+using CudaNonCachedIndicesAndDims = cuda::NonCachedIndicesAndDims;
+
+template<bool cache_threadIdx,
+         bool cache_blockIdx,
+         bool cache_blockDim,
+         bool cache_gridDim>
+using CudaIndicesAndDims = cuda::IndicesAndDims<cache_threadIdx,
+                                                cache_blockIdx,
+                                                cache_blockDim,
+                                                cache_gridDim>;
+
+using CudaLaunchContextAllCachedIndicesAndDimsPolicy =
+    cuda::LaunchContextAllCachedIndicesAndDimsPolicy;
+using CudaLaunchContextCachedBlockDimsPolicy =
+    cuda::LaunchContextCachedBlockDimsPolicy;
+template<typename IndicesAndDimsT = cuda::NonCachedIndicesAndDims>
+using CudaLaunchContextIndicesAndDimsPolicy =
+    cuda::LaunchContextIndicesAndDimsPolicy<IndicesAndDimsT>;
+using CudaLaunchContextNonCachedIndicesAndDimsPolicy =
+    cuda::LaunchContextNonCachedIndicesAndDimsPolicy;
 
 // contretizers used in forall, scan, and sort policies
 
@@ -3928,79 +4146,148 @@ using cuda_flatten_global_size_zyx_loop =
 /*
  * Deprecated policies
  */
-using cuda_global_thread_x = cuda_global_x_direct;
-using cuda_global_thread_y = cuda_global_y_direct;
-using cuda_global_thread_z = cuda_global_z_direct;
+#define RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG                                  \
+  "Deprecated CUDA policy alias; use the corresponding '*_direct' or "         \
+  "'*_loop' policy."
 
-using cuda_global_thread_xy = cuda_global_xy_direct;
-using cuda_global_thread_xz = cuda_global_xz_direct;
-using cuda_global_thread_yx = cuda_global_yx_direct;
-using cuda_global_thread_yz = cuda_global_yz_direct;
-using cuda_global_thread_zx = cuda_global_zx_direct;
-using cuda_global_thread_zy = cuda_global_zy_direct;
+using cuda_global_thread_x RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_x_direct;
+using cuda_global_thread_y RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_y_direct;
+using cuda_global_thread_z RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_z_direct;
 
-using cuda_global_thread_xyz = cuda_global_xyz_direct;
-using cuda_global_thread_xzy = cuda_global_xzy_direct;
-using cuda_global_thread_yxz = cuda_global_yxz_direct;
-using cuda_global_thread_yzx = cuda_global_yzx_direct;
-using cuda_global_thread_zxy = cuda_global_zxy_direct;
-using cuda_global_thread_zyx = cuda_global_zyx_direct;
+using cuda_global_thread_xy RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_xy_direct;
+using cuda_global_thread_xz RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_xz_direct;
+using cuda_global_thread_yx RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_yx_direct;
+using cuda_global_thread_yz RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_yz_direct;
+using cuda_global_thread_zx RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_zx_direct;
+using cuda_global_thread_zy RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_zy_direct;
 
-using cuda_flatten_block_threads_xy_direct = cuda_flatten_thread_xy_direct;
-using cuda_flatten_block_threads_xz_direct = cuda_flatten_thread_xz_direct;
-using cuda_flatten_block_threads_yx_direct = cuda_flatten_thread_yx_direct;
-using cuda_flatten_block_threads_yz_direct = cuda_flatten_thread_yz_direct;
-using cuda_flatten_block_threads_zx_direct = cuda_flatten_thread_zx_direct;
-using cuda_flatten_block_threads_zy_direct = cuda_flatten_thread_zy_direct;
+using cuda_global_thread_xyz RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_xyz_direct;
+using cuda_global_thread_xzy RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_xzy_direct;
+using cuda_global_thread_yxz RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_yxz_direct;
+using cuda_global_thread_yzx RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_yzx_direct;
+using cuda_global_thread_zxy RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_zxy_direct;
+using cuda_global_thread_zyx RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_global_zyx_direct;
 
-using cuda_flatten_block_threads_xyz_direct = cuda_flatten_thread_xyz_direct;
-using cuda_flatten_block_threads_xzy_direct = cuda_flatten_thread_xzy_direct;
-using cuda_flatten_block_threads_yxz_direct = cuda_flatten_thread_yxz_direct;
-using cuda_flatten_block_threads_yzx_direct = cuda_flatten_thread_yzx_direct;
-using cuda_flatten_block_threads_zxy_direct = cuda_flatten_thread_zxy_direct;
-using cuda_flatten_block_threads_zyx_direct = cuda_flatten_thread_zyx_direct;
+using cuda_flatten_block_threads_xy_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xy_direct;
+using cuda_flatten_block_threads_xz_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xz_direct;
+using cuda_flatten_block_threads_yx_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yx_direct;
+using cuda_flatten_block_threads_yz_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yz_direct;
+using cuda_flatten_block_threads_zx_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zx_direct;
+using cuda_flatten_block_threads_zy_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zy_direct;
 
-using cuda_flatten_block_threads_xy_loop = cuda_flatten_thread_xy_loop;
-using cuda_flatten_block_threads_xz_loop = cuda_flatten_thread_xz_loop;
-using cuda_flatten_block_threads_yx_loop = cuda_flatten_thread_yx_loop;
-using cuda_flatten_block_threads_yz_loop = cuda_flatten_thread_yz_loop;
-using cuda_flatten_block_threads_zx_loop = cuda_flatten_thread_zx_loop;
-using cuda_flatten_block_threads_zy_loop = cuda_flatten_thread_zy_loop;
+using cuda_flatten_block_threads_xyz_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xyz_direct;
+using cuda_flatten_block_threads_xzy_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xzy_direct;
+using cuda_flatten_block_threads_yxz_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yxz_direct;
+using cuda_flatten_block_threads_yzx_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yzx_direct;
+using cuda_flatten_block_threads_zxy_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zxy_direct;
+using cuda_flatten_block_threads_zyx_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zyx_direct;
 
-using cuda_flatten_block_threads_xyz_loop = cuda_flatten_thread_xyz_loop;
-using cuda_flatten_block_threads_xzy_loop = cuda_flatten_thread_xzy_loop;
-using cuda_flatten_block_threads_yxz_loop = cuda_flatten_thread_yxz_loop;
-using cuda_flatten_block_threads_yzx_loop = cuda_flatten_thread_yzx_loop;
-using cuda_flatten_block_threads_zxy_loop = cuda_flatten_thread_zxy_loop;
-using cuda_flatten_block_threads_zyx_loop = cuda_flatten_thread_zyx_loop;
+using cuda_flatten_block_threads_xy_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xy_loop;
+using cuda_flatten_block_threads_xz_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xz_loop;
+using cuda_flatten_block_threads_yx_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yx_loop;
+using cuda_flatten_block_threads_yz_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yz_loop;
+using cuda_flatten_block_threads_zx_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zx_loop;
+using cuda_flatten_block_threads_zy_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zy_loop;
 
-using cuda_block_xy_nested_direct = cuda_block_xy_direct;
-using cuda_block_xz_nested_direct = cuda_block_xz_direct;
-using cuda_block_yx_nested_direct = cuda_block_yx_direct;
-using cuda_block_yz_nested_direct = cuda_block_yz_direct;
-using cuda_block_zx_nested_direct = cuda_block_zx_direct;
-using cuda_block_zy_nested_direct = cuda_block_zy_direct;
+using cuda_flatten_block_threads_xyz_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xyz_loop;
+using cuda_flatten_block_threads_xzy_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_xzy_loop;
+using cuda_flatten_block_threads_yxz_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yxz_loop;
+using cuda_flatten_block_threads_yzx_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_yzx_loop;
+using cuda_flatten_block_threads_zxy_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zxy_loop;
+using cuda_flatten_block_threads_zyx_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_flatten_thread_zyx_loop;
 
-using cuda_block_xyz_nested_direct = cuda_block_xyz_direct;
-using cuda_block_xzy_nested_direct = cuda_block_xzy_direct;
-using cuda_block_yxz_nested_direct = cuda_block_yxz_direct;
-using cuda_block_yzx_nested_direct = cuda_block_yzx_direct;
-using cuda_block_zxy_nested_direct = cuda_block_zxy_direct;
-using cuda_block_zyx_nested_direct = cuda_block_zyx_direct;
+using cuda_block_xy_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xy_direct;
+using cuda_block_xz_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xz_direct;
+using cuda_block_yx_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yx_direct;
+using cuda_block_yz_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yz_direct;
+using cuda_block_zx_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zx_direct;
+using cuda_block_zy_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zy_direct;
 
-using cuda_block_xy_nested_loop = cuda_block_xy_loop;
-using cuda_block_xz_nested_loop = cuda_block_xz_loop;
-using cuda_block_yx_nested_loop = cuda_block_yx_loop;
-using cuda_block_yz_nested_loop = cuda_block_yz_loop;
-using cuda_block_zx_nested_loop = cuda_block_zx_loop;
-using cuda_block_zy_nested_loop = cuda_block_zy_loop;
+using cuda_block_xyz_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xyz_direct;
+using cuda_block_xzy_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xzy_direct;
+using cuda_block_yxz_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yxz_direct;
+using cuda_block_yzx_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yzx_direct;
+using cuda_block_zxy_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zxy_direct;
+using cuda_block_zyx_nested_direct RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zyx_direct;
 
-using cuda_block_xyz_nested_loop = cuda_block_xyz_loop;
-using cuda_block_xzy_nested_loop = cuda_block_xzy_loop;
-using cuda_block_yxz_nested_loop = cuda_block_yxz_loop;
-using cuda_block_yzx_nested_loop = cuda_block_yzx_loop;
-using cuda_block_zxy_nested_loop = cuda_block_zxy_loop;
-using cuda_block_zyx_nested_loop = cuda_block_zyx_loop;
+using cuda_block_xy_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xy_loop;
+using cuda_block_xz_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xz_loop;
+using cuda_block_yx_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yx_loop;
+using cuda_block_yz_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yz_loop;
+using cuda_block_zx_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zx_loop;
+using cuda_block_zy_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zy_loop;
+
+using cuda_block_xyz_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xyz_loop;
+using cuda_block_xzy_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_xzy_loop;
+using cuda_block_yxz_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yxz_loop;
+using cuda_block_yzx_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_yzx_loop;
+using cuda_block_zxy_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zxy_loop;
+using cuda_block_zyx_nested_loop RAJA_DEPRECATE_ALIAS(
+    RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG) = cuda_block_zyx_loop;
+
+#undef RAJA_CUDA_DEPRECATED_POLICY_ALIAS_MSG
 
 }  // namespace RAJA
 

@@ -169,8 +169,7 @@ struct ValOp
 
 template<typename T,
          typename IndexType,
-         template<typename, typename, typename>
-         class Op>
+         template<typename, typename, typename> class Op>
 struct ValOp<ValLoc<T, IndexType>, Op>
 {
   using index_type        = IndexType;
@@ -257,8 +256,7 @@ struct ValOp<ValLoc<T, IndexType>, Op>
 
 template<typename T,
          typename IndexType,
-         template<typename, typename, typename>
-         class Op>
+         template<typename, typename, typename> class Op>
 using ValLocOp = ValOp<ValLoc<T, IndexType>, Op>;
 
 namespace detail

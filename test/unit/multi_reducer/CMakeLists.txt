@@ -32,9 +32,6 @@ endmacro()
 
 set(BACKENDS Sequential)
 
-# only need to test WorkStorage once
-set(WorkStorage_BACKENDS Sequential)
-
 if(RAJA_ENABLE_OPENMP)
   list(APPEND BACKENDS OpenMP)
 endif()
@@ -51,6 +48,11 @@ endif()
 if(RAJA_ENABLE_HIP)
   list(APPEND BACKENDS Hip)
 endif()
+
+# Add OpenMP Target tests when implementation exists for multi-reducer
+#if(RAJA_ENABLE_SYCL)
+#  list(APPEND BACKENDS Sycl)
+#endif()
 
 
 

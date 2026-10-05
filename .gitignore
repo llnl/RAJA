@@ -16,3 +16,5 @@
 /Debug/
 *.swp
 *.orig
+slirp.out
+.codex

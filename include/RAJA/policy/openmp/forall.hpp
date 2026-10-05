@@ -24,6 +24,7 @@
 #define RAJA_forall_openmp_HPP
 
 #include "RAJA/config.hpp"
+#include "RAJA/pattern/concepts.hpp"
 
 #if defined(RAJA_ENABLE_OPENMP)
 
@@ -59,16 +60,13 @@ namespace omp
 template<typename Iterable,
          typename Func,
          typename InnerPolicy,
-         typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Host>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>,
-    RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>>
-forall_impl(resources::Host host_res,
-            const omp_parallel_exec<InnerPolicy>&,
-            Iterable&& iter,
-            Func&& loop_body,
-            ForallParam f_params)
+         concepts::EmptyForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
+    resources::Host host_res,
+    const omp_parallel_exec<InnerPolicy>&,
+    Iterable&& iter,
+    Func&& loop_body,
+    ForallParam f_params)
 {
   if constexpr (!RAJA::internal::is_wrapper_with_reducers<
                     camp::decay<Func>>::value)
@@ -330,16 +328,13 @@ RAJA_INLINE void forall_impl_nowait(const Policy&,
 template<typename Schedule,
          typename Iterable,
          typename Func,
-         typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Host>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>,
-    RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>>
-forall_impl(resources::Host host_res,
-            const omp_for_schedule_exec<Schedule>&,
-            Iterable&& iter,
-            Func&& loop_body,
-            ForallParam)
+         concepts::EmptyForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
+    resources::Host host_res,
+    const omp_for_schedule_exec<Schedule>&,
+    Iterable&& iter,
+    Func&& loop_body,
+    ForallParam)
 {
   internal::forall_impl(Schedule {}, std::forward<Iterable>(iter),
                         std::forward<Func>(loop_body));
@@ -349,16 +344,13 @@ forall_impl(resources::Host host_res,
 template<typename Schedule,
          typename Iterable,
          typename Func,
-         typename ForallParam>
-RAJA_INLINE concepts::enable_if_t<
-    resources::EventProxy<resources::Host>,
-    RAJA::expt::type_traits::is_ForallParamPack<ForallParam>,
-    RAJA::expt::type_traits::is_ForallParamPack_empty<ForallParam>>
-forall_impl(resources::Host host_res,
-            const omp_for_nowait_schedule_exec<Schedule>&,
-            Iterable&& iter,
-            Func&& loop_body,
-            ForallParam)
+         concepts::EmptyForallParams ForallParam>
+RAJA_INLINE resources::EventProxy<resources::Host> forall_impl(
+    resources::Host host_res,
+    const omp_for_nowait_schedule_exec<Schedule>&,
+    Iterable&& iter,
+    Func&& loop_body,
+    ForallParam)
 {
   internal::forall_impl_nowait(Schedule {}, std::forward<Iterable>(iter),
                                std::forward<Func>(loop_body));

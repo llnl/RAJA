@@ -35,5 +35,6 @@ materials that provide detailed examples of usage.
    feature/tiling
    feature/workgroup
    feature/vectorization
+   feature/jit
+   feature/messages
    feature/plugins
-

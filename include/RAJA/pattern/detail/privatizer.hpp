@@ -20,11 +20,6 @@ namespace RAJA
 namespace internal
 {
 
-// template <typename T>
-// struct HasPrivatizer : DefineConcept(typename T::privatizer(camp::val<T>()))
-// {
-// };
-// DefineTypeTraitFromConcept(has_privatizer, HasPrivatizer);
 
 template<typename T>
 class has_privatizer

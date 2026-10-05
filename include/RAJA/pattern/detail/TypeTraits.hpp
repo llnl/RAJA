@@ -96,6 +96,16 @@ struct tuple_contains_Reducers<camp::tuple<Params...>>
 {};
 
 }  // namespace expt
+
+namespace type_traits
+{
+template<typename U, typename V>
+struct is_same_decay : std::is_same<std::decay_t<U>, std::decay_t<V>>
+{};
+
+template<typename U, typename V>
+static constexpr bool is_same_decay_v = is_same_decay<U, V>::value;
+}  // namespace type_traits
 }  // namespace RAJA
 
 #endif  //  RAJA_TYPETRAITS_HPP

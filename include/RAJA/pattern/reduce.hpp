@@ -61,6 +61,8 @@ namespace RAJA
  *
  * \brief  Min reducer class template.
  *
+ * This is the declaration of the user facing Reduction API.
+ *
  * Usage example:
  *
  * \verbatim
@@ -85,6 +87,8 @@ class ReduceMin;
  ******************************************************************************
  *
  * \brief  Min-loc reducer class template.
+ *
+ * This is the declaration of the user facing Reduction API.
  *
  * Usage example:
  *
@@ -112,6 +116,8 @@ class ReduceMinLoc;
  *
  * \brief  Max reducer class template.
  *
+ * This is the declaration of the user facing Reduction API.
+ *
  * Usage example:
  *
  * \verbatim
@@ -136,6 +142,8 @@ class ReduceMax;
  ******************************************************************************
  *
  * \brief  Max-loc reducer class template.
+ *
+ * This is the declaration of the user facing Reduction API.
  *
  * Usage example:
  *
@@ -163,6 +171,8 @@ class ReduceMaxLoc;
  *
  * \brief  Sum reducer class template.
  *
+ * This is the declaration of the user facing Reduction API.
+ *
  * Usage example:
  *
  * \verbatim
@@ -187,6 +197,8 @@ class ReduceSum;
  ******************************************************************************
  *
  * \brief  Bitwise OR reducer class template.
+ *
+ * This is the declaration of the user facing Reduction API.
  *
  * Usage example:
  *
@@ -213,6 +225,8 @@ class ReduceBitOr;
  ******************************************************************************
  *
  * \brief  Bitwise AND reducer class template.
+ *
+ * This is the declaration of the user facing Reduction API.
  *
  * Usage example:
  *

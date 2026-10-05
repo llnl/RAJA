@@ -41,8 +41,7 @@ namespace statement
  *
  */
 template<typename ReducePolicy,
-         template<typename...>
-         class ReduceOperator,
+         template<typename...> class ReduceOperator,
          typename ParamId,
          typename... EnclosedStmts>
 struct Reduce : public internal::Statement<camp::nil, EnclosedStmts...>

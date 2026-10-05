@@ -298,9 +298,9 @@ struct AtomicViewWrapper
   }
 
   template<typename... ARGS>
-  RAJA_HOST_DEVICE RAJA_INLINE atomic_type operator()(ARGS&&... args) const
+  RAJA_HOST_DEVICE RAJA_INLINE atomic_type operator()(ARGS... args) const
   {
-    return atomic_type(&base_.operator()(std::forward<ARGS>(args)...));
+    return atomic_type(&base_.operator()(args...));
   }
 };
 
@@ -329,9 +329,9 @@ struct AtomicViewWrapper<ViewType, RAJA::seq_atomic>
   }
 
   template<typename... ARGS>
-  RAJA_HOST_DEVICE RAJA_INLINE value_type& operator()(ARGS&&... args) const
+  RAJA_HOST_DEVICE RAJA_INLINE value_type& operator()(ARGS... args) const
   {
-    return base_.operator()(std::forward<ARGS>(args)...);
+    return base_.operator()(args...);
   }
 };
 
