@@ -19,7 +19,7 @@ macro(raja_link_include_proteus)
     add_proteus(${arg_NAME})
     target_include_directories(${arg_NAME}
       PUBLIC
-      "${PROTEUS_HEADERS_DIR}"
+      $<BUILD_INTERFACE:${PROTEUS_HEADERS_DIR}>
     )
   endif()
 endmacro(raja_link_include_proteus)

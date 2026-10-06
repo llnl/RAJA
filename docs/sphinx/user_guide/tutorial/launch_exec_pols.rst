@@ -126,6 +126,13 @@ execution policies. As before, the ``RAJA::LaunchParams`` object may be
 initialized without grid dimensions as the CPU does not require specifying a 
 compute grid.
 
+.. note::
+  ``RAJA::omp_launch_t`` behaves like an OpenMP ``parallel`` region: the launch
+  body is executed by every OpenMP thread. To distribute work, use
+  ``RAJA::loop<RAJA::omp_for_exec>(...)`` (or another OpenMP *inner* policy)
+  inside the launch body. If you use a sequential loop policy inside an OpenMP
+  launch, each OpenMP thread will execute the **entire** loop independently.
+
 The first RAJA-based kernel for parallel GPU execution using the RAJA CUDA
 back-end we introduce is:
 
@@ -145,12 +152,38 @@ Here, we use the ``RAJA::cuda_launch_t`` policy type to
 indicate that we want a CUDA kernel to be launched. The 'k', 'j', 'i'
 iteration variables are mapped to CUDA threads and blocks using the CUDA 
 execution policy types ``RAJA::cuda_block_z_direct``, 
-``RAJA::cuda_global_thread_y``, and ``RAJA::cuda_global_thread_x``,
+``RAJA::cuda_global_y_direct``, and ``RAJA::cuda_global_x_direct``,
 respectively. Thus, we use a two-dimensional CUDA thread-block and 
 three-dimensional compute grid to map the loop iterations to CUDA threads. In 
 comparison to the RAJA CUDA example in :ref:`tut-kernelexecpols-label` , 
 ``RAJA::loop`` methods support execution policies, which enable mapping 
 directly to the global thread ID of a compute grid.
+
+----------------------------------------
+Global thread loop policies
+----------------------------------------
+
+RAJA provides both *team-local* thread mappings (e.g., ``cuda_thread_x_direct``)
+and *global* thread mappings (e.g., ``cuda_global_x_direct``). The global thread
+policies map loop indices to the global thread id of the grid:
+
+  * ``cuda_global_x_direct`` corresponds to ``threadIdx.x + blockIdx.x * blockDim.x``
+  * ``cuda_global_y_direct`` corresponds to ``threadIdx.y + blockIdx.y * blockDim.y``
+  * ``cuda_global_z_direct`` corresponds to ``threadIdx.z + blockIdx.z * blockDim.z``
+
+This is useful when you want a loop to be executed over the full grid rather
+than within a single team, for example to flatten a 1D iteration space over all
+threads in the launch.
+
+When using global thread policies, ensure that the grid dimensions provided via
+``RAJA::LaunchParams(RAJA::Teams(...), RAJA::Threads(...))`` provide enough
+threads to cover the loop segment extents. RAJA will mask out-of-bounds indices
+when the grid is larger than the iteration space.
+
+.. note::
+  HIP provides analogous policies (e.g., ``hip_global_x_direct``) with the same
+  semantics when the HIP back-end is enabled.
+
 
 Using a combination of ``RAJA::tile`` and ``RAJA::loop`` methods, 
 we can create a loop tiling platform portable implementation. Here, is a 
