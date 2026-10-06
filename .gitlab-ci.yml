@@ -234,9 +234,13 @@ tuolumne-build-and-test:
         job: 'generate-job-lists'
 
 # MULTI-PROJECT PIPELINE
-# If testing develop branch, always test RAJAPerf, CHAI, and CARE with lastest RAJA develop commit.
-# If testing other branches, allow manually triggering the multi-project pipelines with the current RAJA commit.
-# Allow deactivating any multi-project pipeline by setting MULTI_PROJECT variable to "OFF".
+# In RAJA@develop CI pipelines, automatically test RAJAPerf, CHAI, and CARE
+# against RAJA@develop.
+#
+# Otherwise, in regular CI pipelines, add manual trigger jobs to the pipeline.
+# The trigger-<project> jobs test the current RAJA commit in RAJAPerf, CHAI or CARE.
+#
+# Set MULTI_PROJECT to "OFF" to disable all downstream pipeline triggers.
 trigger-rajaperf:
   stage: multi-project
   rules:
