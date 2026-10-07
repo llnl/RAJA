@@ -519,7 +519,7 @@ WorkGroup<
                       Args... args)
 {
   util::PluginContext context {
-      util::make_context<EXEC_POLICY_T>(std::string())};
+      util::make_context<EXEC_POLICY_T>(std::string(), r)};
   util::callPreLaunchPlugins(context);
 
   // move any per run storage into worksite
