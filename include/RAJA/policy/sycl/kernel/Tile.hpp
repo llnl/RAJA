@@ -85,7 +85,8 @@ struct SyclStatementExecutor<
     {
 
       // Assign our new tiled segment
-      segment = orig_segment.slice(i, chunk_size);
+      segment = orig_segment.slice(typename segment_t::size_type(i),
+                                   typename segment_t::size_type {chunk_size});
 
       // execute enclosed statements
       enclosed_stmts_t::exec(data, item, thread_active);
@@ -103,10 +104,12 @@ struct SyclStatementExecutor<
     data_t private_data = data;
 
     // Get original segment
-    auto& segment = camp::get<ArgumentId>(private_data.segment_tuple);
+    auto& segment       = camp::get<ArgumentId>(private_data.segment_tuple);
+    using segment_idx_t = typename camp::decay<decltype(segment)>::size_type;
 
     // restrict to first tile
-    segment = segment.slice(0, TPol::chunk_size);
+    segment =
+        segment.slice(segment_idx_t {0}, segment_idx_t {TPol::chunk_size});
 
     // compute dimensions of children with segment restricted to tile
     LaunchDims enclosed_dims =
@@ -165,7 +168,8 @@ struct SyclStatementExecutor<Data,
       segment_t orig_segment = segment;
 
       // Assign our new tiled segment
-      segment = orig_segment.slice(i, chunk_size);
+      segment = orig_segment.slice(typename segment_t::size_type(i),
+                                   typename segment_t::size_type {chunk_size});
 
       // execute enclosed statements
       enclosed_stmts_t::exec(data, item, thread_active);
@@ -198,10 +202,11 @@ struct SyclStatementExecutor<Data,
     data_t private_data = data;
 
     // Get original segment
-    auto& segment = camp::get<ArgumentId>(private_data.segment_tuple);
+    auto& segment       = camp::get<ArgumentId>(private_data.segment_tuple);
+    using segment_idx_t = typename camp::decay<decltype(segment)>::size_type;
 
     // restrict to first tile
-    segment = segment.slice(0, chunk_size);
+    segment = segment.slice(segment_idx_t {0}, segment_idx_t {chunk_size});
 
 
     LaunchDims enclosed_dims =
@@ -257,7 +262,8 @@ struct SyclStatementExecutor<Data,
     {
 
       // Assign our new tiled segment
-      segment = orig_segment.slice(i, chunk_size);
+      segment = orig_segment.slice(typename segment_t::size_type(i),
+                                   typename segment_t::size_type {chunk_size});
 
       // execute enclosed statements
       enclosed_stmts_t::exec(data, item, thread_active);
@@ -287,10 +293,11 @@ struct SyclStatementExecutor<Data,
     data_t private_data = data;
 
     // Get original segment
-    auto& segment = camp::get<ArgumentId>(private_data.segment_tuple);
+    auto& segment       = camp::get<ArgumentId>(private_data.segment_tuple);
+    using segment_idx_t = typename camp::decay<decltype(segment)>::size_type;
 
     // restrict to first tile
-    segment = segment.slice(0, chunk_size);
+    segment = segment.slice(segment_idx_t {0}, segment_idx_t {chunk_size});
 
 
     LaunchDims enclosed_dims =
@@ -346,7 +353,8 @@ struct SyclStatementExecutor<Data,
 
     // Assign our new tiled segment
     diff_t slice_size = have_work ? chunk_size : 0;
-    segment           = orig_segment.slice(i, slice_size);
+    segment           = orig_segment.slice(typename segment_t::size_type(i),
+                                           typename segment_t::size_type(slice_size));
 
     // execute enclosed statements
     enclosed_stmts_t::exec(data, item, thread_active && have_work);
@@ -375,10 +383,11 @@ struct SyclStatementExecutor<Data,
     data_t private_data = data;
 
     // Get original segment
-    auto& segment = camp::get<ArgumentId>(private_data.segment_tuple);
+    auto& segment       = camp::get<ArgumentId>(private_data.segment_tuple);
+    using segment_idx_t = typename camp::decay<decltype(segment)>::size_type;
 
     // restrict to first tile
-    segment = segment.slice(0, chunk_size);
+    segment = segment.slice(segment_idx_t {0}, segment_idx_t {chunk_size});
 
 
     LaunchDims enclosed_dims =
@@ -440,7 +449,8 @@ struct SyclStatementExecutor<Data,
 
       // Assign our new tiled segment
       diff_t slice_size = have_work ? chunk_size : 0;
-      segment           = orig_segment.slice(i, slice_size);
+      segment           = orig_segment.slice(typename segment_t::size_type(i),
+                                             typename segment_t::size_type(slice_size));
 
       // execute enclosed statements
       enclosed_stmts_t::exec(data, item, thread_active && have_work);
@@ -471,10 +481,11 @@ struct SyclStatementExecutor<Data,
     data_t private_data = data;
 
     // Get original segment
-    auto& segment = camp::get<ArgumentId>(private_data.segment_tuple);
+    auto& segment       = camp::get<ArgumentId>(private_data.segment_tuple);
+    using segment_idx_t = typename camp::decay<decltype(segment)>::size_type;
 
     // restrict to first tile
-    segment = segment.slice(0, chunk_size);
+    segment = segment.slice(segment_idx_t {0}, segment_idx_t {chunk_size});
 
 
     LaunchDims enclosed_dims =

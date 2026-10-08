@@ -40,7 +40,7 @@ void ForallReduceBitAndBasicTestImpl(const SEG_TYPE& seg,
   //
   // First a simple non-trivial test that is mildly interesting
   //
-  for (IDX_TYPE i = 0; i < data_len; ++i) {
+  for (IDX_TYPE i {0}; i < data_len; ++i) {
     test_array[i] = 13;
   }
   working_res.memcpy(working_array, test_array, sizeof(DATA_TYPE) * data_len);
@@ -63,13 +63,13 @@ void ForallReduceBitAndBasicTestImpl(const SEG_TYPE& seg,
 
   const int modval = 100;
 
-  for (IDX_TYPE i = 0; i < data_len; ++i) {
+  for (IDX_TYPE i {0}; i < data_len; ++i) {
     test_array[i] = static_cast<DATA_TYPE>( rand() % modval );
   }
   working_res.memcpy(working_array, test_array, sizeof(DATA_TYPE) * data_len);
 
   DATA_TYPE ref_and = 0;
-  for (IDX_TYPE i = 0; i < idx_len; ++i) {
+  for (IDX_TYPE i {0}; i < idx_len; ++i) {
     ref_and &= test_array[ seg_idx[i] ];
   }
 
@@ -170,9 +170,9 @@ TYPED_TEST_P(ForallReduceBitAndBasicTest, ReduceBitAndBasicForall)
 
   // List segment tests
   seg_idx.clear();
-  IDX_TYPE last = 10567;
+  IDX_TYPE last {10567};
   srand( time(NULL) );
-  for (IDX_TYPE i = 0; i < last; ++i) {
+  for (IDX_TYPE i {0}; i < last; ++i) {
     IDX_TYPE randval = IDX_TYPE( rand() % RAJA::stripIndexType(last) );
     if ( i < randval ) {
       seg_idx.push_back(i);

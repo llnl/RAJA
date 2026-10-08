@@ -239,8 +239,9 @@ RAJA_INLINE auto make_CombiningAdapter(
 
   Layout layout(static_cast<IdxLin>(distance(begin(segs), end(segs)))...);
   OffsetLayout offset_layout = OffsetLayout::from_layout_and_offsets(
-      {{(distance(begin(segs), end(segs)) ? static_cast<IdxLin>(*begin(segs))
-                                          : static_cast<IdxLin>(0))...}},
+      {{(distance(begin(segs), end(segs))
+             ? static_cast<IdxLin>(stripIndexType(*begin(segs)))
+             : static_cast<IdxLin>(0))...}},
       std::move(layout));
   return make_CombiningAdapter_from_layout(std::forward<Lambda>(lambda),
                                            std::move(offset_layout));
@@ -266,8 +267,9 @@ RAJA_INLINE auto make_PermutedCombiningAdapter(
       {{static_cast<IdxLin>(distance(begin(segs), end(segs)))...}},
       RAJA::as_array<Perm>::get());
   OffsetLayout offset_layout = OffsetLayout::from_layout_and_offsets(
-      {{(distance(begin(segs), end(segs)) ? static_cast<IdxLin>(*begin(segs))
-                                          : static_cast<IdxLin>(0))...}},
+      {{(distance(begin(segs), end(segs))
+             ? static_cast<IdxLin>(stripIndexType(*begin(segs)))
+             : static_cast<IdxLin>(0))...}},
 
       std::move(layout));
   return make_CombiningAdapter_from_layout(std::forward<Lambda>(lambda),

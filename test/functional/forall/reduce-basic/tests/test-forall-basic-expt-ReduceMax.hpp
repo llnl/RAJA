@@ -41,12 +41,12 @@ void ForallReduceMaxBasicTestImpl(const SEG_TYPE& seg,
   const DATA_TYPE max_init = -1;
   const DATA_TYPE big_max = modval + 1;
 
-  for (IDX_TYPE i = 0; i < data_len; ++i) {
+  for (IDX_TYPE i {0}; i < data_len; ++i) {
     test_array[i] = static_cast<DATA_TYPE>( rand() % modval );
   }
 
   DATA_TYPE ref_max = max_init;
-  for (IDX_TYPE i = 0; i < idx_len; ++i) {
+  for (IDX_TYPE i {0}; i < idx_len; ++i) {
     ref_max = RAJA_MAX(test_array[ seg_idx[i] ], ref_max); 
   }
 
@@ -154,9 +154,9 @@ TYPED_TEST_P(ForallReduceMaxBasicTest, ReduceMaxBasicForall)
 
 // List segment tests
   seg_idx.clear();
-  IDX_TYPE last = 10567;
+  IDX_TYPE last {10567};
   srand( time(NULL) );
-  for (IDX_TYPE i = 0; i < last; ++i) {
+  for (IDX_TYPE i {0}; i < last; ++i) {
     IDX_TYPE randval = IDX_TYPE( rand() % RAJA::stripIndexType(last) );
     if ( i < randval ) {
       seg_idx.push_back(i);

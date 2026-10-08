@@ -15,6 +15,8 @@
 
 #include "RAJA_unit-test-types.hpp"
 
+#include <type_traits>
+
 template<typename T>
 class IndexValueUnitTest : public ::testing::Test {};
 
@@ -32,6 +34,10 @@ TYPED_TEST(IndexValueUnitTest, Construct)
   ASSERT_EQ(std::string("Strong Type"), StrongTypeIndex::getName());
 
   RAJA_INDEX_VALUE_T(TestType, TypeParam, "Test Type");
+  // Test IndexValue's operator= overloads
+  static_assert(std::is_assignable<TestType&, TestType>::value);
+  static_assert(!std::is_assignable<TestType&, TypeParam>::value);
+
   TestType c;
   ASSERT_EQ((TypeParam)0, *c);
   const TestType d(5);
@@ -183,7 +189,7 @@ TYPED_TEST(IndexValueUnitTest, IndexTypeArith)
   ASSERT_EQ(StrongTypeIndex(8), a);
   ASSERT_EQ(RAJA::Index_type(2), b);
 
-  
+
   RAJA_INDEX_VALUE_T(TestType, TypeParam, "Test Type");
   TestType c(8);
   RAJA::Index_type d(2);
@@ -281,8 +287,8 @@ TYPED_TEST(IndexValueUnitTest, IndexTypeCompare)
   ASSERT_NE(x, x_higher);
 }
 
-TYPED_TEST(IndexValueUnitTest, IndexValueConcept) 
+TYPED_TEST(IndexValueUnitTest, IndexValueConcept)
 {
-  static_assert(Compiles<Index, Tester>, "Test that index value concept accepts IndexValue"); 
-  static_assert(!Compiles<Ty, Tester>, "Test that index value concept does not accept generic types"); 
+  static_assert(Compiles<Index, Tester>, "Test that index value concept accepts IndexValue");
+  static_assert(!Compiles<Ty, Tester>, "Test that index value concept does not accept generic types");
 }

@@ -54,6 +54,9 @@ concept ExecutionPolicy =
 /// value type is actually const long, not bool.  Therefore, static_cast to
 /// bool is used below to define these.
 template<typename T>
+concept Index = concepts::Integral<T> || concepts::IndexValued<T>;
+
+template<typename T>
 concept IndexSetType =
     static_cast<bool>(type_traits::is_index_set<std::decay_t<T>>::value);
 
