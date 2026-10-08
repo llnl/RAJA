@@ -363,7 +363,9 @@ RAJA_INLINE __device__ T hip_atomicCAS(T* acc, T compare, T value)
 template<typename T, typename Oper>
 RAJA_INLINE __device__ T hip_atomicCAS_loop(T* acc, Oper&& oper)
 {
-  T old = hip_atomicLoad(acc);
+  // // A failed CAS supplies the current value for the next iteration. Avoid an
+  // // agent-scope atomic seed load on the uncontended fast path.
+  T old = *acc;
   T expected;
 
   do
