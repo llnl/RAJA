@@ -355,7 +355,7 @@ RAJA_INLINE __device__ T hip_atomicCAS(T* acc, T compare, T value)
 }
 
 /*!
- * Generic impementation of any atomic 32-bit or 64-bit operator.
+ * Generic implementation of any atomic 32-bit or 64-bit operator.
  * Implementation uses the existing HIP supplied unsigned 32-bit or 64-bit CAS
  * operator. Returns the OLD value that was replaced by the result of this
  * operation.
@@ -363,7 +363,9 @@ RAJA_INLINE __device__ T hip_atomicCAS(T* acc, T compare, T value)
 template<typename T, typename Oper>
 RAJA_INLINE __device__ T hip_atomicCAS_loop(T* acc, Oper&& oper)
 {
-  T old = hip_atomicLoad(acc);
+  // The CAS validates this regular-load seed and returns the current value on
+  // failure, avoiding an agent-scope atomic load on the uncontended fast path.
+  T old = *acc;
   T expected;
 
   do
@@ -376,7 +378,7 @@ RAJA_INLINE __device__ T hip_atomicCAS_loop(T* acc, Oper&& oper)
 }
 
 /*!
- * Generic impementation of any atomic 32-bit or 64-bit operator with
+ * Generic implementation of any atomic 32-bit or 64-bit operator with
  * short-circuiting. Implementation uses the existing HIP supplied unsigned
  * 32-bit or 64-bit CAS operator. Returns the OLD value that was replaced by the
  * result of this operation.

@@ -141,6 +141,7 @@ struct AtomicCAS {
     }
 };
 
+#if defined (RAJA_ENABLE_OPENMP)
 /// ExecPolicy wrapper for OpenMP
 struct ExecPolicyOMP {
     using policy = RAJA::omp_parallel_for_exec;;
@@ -150,6 +151,7 @@ struct ExecPolicyOMP {
         return ss.str();
     }
 };
+#endif
 
 /// Functor wrapping the desul implementation.  Wrapping the desul call ensure an identical signature with
 /// RAJA's implementations.  Wrapping the call in an functor allows simple type deduction for printing
