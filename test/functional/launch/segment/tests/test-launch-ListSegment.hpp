@@ -26,7 +26,7 @@ void LaunchListSegmentTestImpl(INDEX_TYPE N)
 
   srand ( time(NULL) );
 
-  for (INDEX_TYPE i = INDEX_TYPE(0); i < N; ++i) {
+  for (INDEX_TYPE i {0}; i < N; ++i) {
     INDEX_TYPE randval = INDEX_TYPE(rand() % RAJA::stripIndexType(N));
     if ( i < randval ) {
       idx_array.push_back(i);
@@ -101,7 +101,7 @@ void LaunchListSegmentTestImpl(INDEX_TYPE N)
   working_res.memcpy(check_array, working_array, sizeof(INDEX_TYPE) * data_len);
 
   if (RAJA::stripIndexType(N) > 0) {
-    for (INDEX_TYPE i = INDEX_TYPE(0); i < N; i++) {
+    for (INDEX_TYPE i {0}; i < N; i++) {
       ASSERT_EQ(test_array[RAJA::stripIndexType(i)], check_array[RAJA::stripIndexType(i)]);
     }
   } else {

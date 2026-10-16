@@ -44,7 +44,7 @@ TYPED_TEST(ForEachUnitTest, EmptyRange)
 TYPED_TEST(ForEachUnitTest, VectorRange)
 {
   std::vector<TypeParam> numbers;
-  for (TypeParam i = 0; i < 13; ++i) {
+  for (TypeParam i {0}; i < 13; ++i) {
     numbers.push_back(i);
   }
 
@@ -55,7 +55,7 @@ TYPED_TEST(ForEachUnitTest, VectorRange)
   });
 
   ASSERT_EQ(copies.size(), 13);
-  for (TypeParam i = 0; i < 13; ++i) {
+  for (TypeParam i {0}; i < 13; ++i) {
     ASSERT_EQ(numbers[i], copies[i]+1);
   }
 }
@@ -63,7 +63,7 @@ TYPED_TEST(ForEachUnitTest, VectorRange)
 TYPED_TEST(ForEachUnitTest, RajaSpanRange)
 {
   std::vector<TypeParam> numbers;
-  for (TypeParam i = 0; i < 11; ++i) {
+  for (TypeParam i {0}; i < 11; ++i) {
     numbers.push_back(i);
   }
 
@@ -74,7 +74,7 @@ TYPED_TEST(ForEachUnitTest, RajaSpanRange)
   });
 
   ASSERT_EQ(copies.size(), 11);
-  for (TypeParam i = 0; i < 11; ++i) {
+  for (TypeParam i {0}; i < 11; ++i) {
     ASSERT_EQ(numbers[i], copies[i]+1);
   }
 }
@@ -82,7 +82,7 @@ TYPED_TEST(ForEachUnitTest, RajaSpanRange)
 TYPED_TEST(ForEachUnitTest, SetRange)
 {
   std::set<TypeParam> numbers;
-  for (TypeParam i = 0; i < 6; ++i) {
+  for (TypeParam i {0}; i < 6; ++i) {
     numbers.insert(i);
   }
 
@@ -92,7 +92,7 @@ TYPED_TEST(ForEachUnitTest, SetRange)
   });
 
   ASSERT_EQ(copies.size(), 6);
-  for (TypeParam i = 0; i < 6; ++i) {
+  for (TypeParam i {0}; i < 6; ++i) {
     ASSERT_EQ(i, copies[i]);
     ASSERT_EQ(numbers.count(i), 1);
   }
@@ -134,7 +134,7 @@ void run_int_type_test()
   });
 
   ASSERT_EQ(copies.size(), 5);
-  for (TypeParam i = 0; i < 5; ++i) {
+  for (TypeParam i {0}; i < 5; ++i) {
     ASSERT_EQ(i, copies[i]);
   }
 }

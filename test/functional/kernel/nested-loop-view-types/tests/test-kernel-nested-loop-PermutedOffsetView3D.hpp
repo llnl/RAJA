@@ -14,6 +14,7 @@ template <typename IDX_TYPE, typename WORKING_RES, typename EXEC_POLICY>
 void KernelPermutedOffsetView3DTestImpl(std::array<RAJA::idx_t, 3> dim,
                                         std::array<RAJA::idx_t, 3> perm)
 {
+  using raw_idx_type = RAJA::strip_index_type_t<IDX_TYPE>;
   camp::resources::Resource working_res{WORKING_RES::get_default()};
   IDX_TYPE* A_work_array;
   IDX_TYPE* A_check_array;
@@ -86,8 +87,8 @@ void KernelPermutedOffsetView3DTestImpl(std::array<RAJA::idx_t, 3> dim,
     for (RAJA::idx_t j = 0; j < Nint_middle; ++j) {
       for (RAJA::idx_t k = 0; k < Nint_inner; ++k) {
 
-        int A_idx = k + j * Nint_inner + i * Nint_inner * Nint_middle;
-        int B_idx =
+        RAJA::idx_t A_idx = k + j * Nint_inner + i * Nint_inner * Nint_middle;
+        RAJA::idx_t B_idx =
           (k + 1) + (j + 1) * Ntot_inner + (i + 1) * Ntot_inner * Ntot_middle;
 
         A_test_array[A_idx] =
@@ -115,20 +116,25 @@ void KernelPermutedOffsetView3DTestImpl(std::array<RAJA::idx_t, 3> dim,
                                   Nint_len.at(1),
                                   Nint_len.at(2)}}, perm );
 
-  RAJA::View< IDX_TYPE, RAJA::OffsetLayout<3> > B_view(B_work_array, B_layout);
-  RAJA::View< IDX_TYPE, RAJA::Layout<3> >  A_view(A_work_array, A_layout);
-
-  RAJA::TypedRangeSegment<IDX_TYPE> iseg( 0, Nint_len.at(0) );
-  RAJA::TypedRangeSegment<IDX_TYPE> jseg( 0, Nint_len.at(1) );
-  RAJA::TypedRangeSegment<IDX_TYPE> kseg( 0, Nint_len.at(2) );
+  RAJA::TypedRangeSegment<IDX_TYPE> iseg( 0, IDX_TYPE(Nint_len.at(0)) );
+  RAJA::TypedRangeSegment<IDX_TYPE> jseg( 0, IDX_TYPE(Nint_len.at(1)) );
+  RAJA::TypedRangeSegment<IDX_TYPE> kseg( 0, IDX_TYPE(Nint_len.at(2)) );
 
   RAJA::kernel<EXEC_POLICY>(
     RAJA::make_tuple( iseg, jseg, kseg ),
     [=] RAJA_HOST_DEVICE(IDX_TYPE i, IDX_TYPE j, IDX_TYPE k) {
-      A_view(i, j, k) = B_view(i, j, k) +
-                        B_view(i - 1, j, k) + B_view(i + 1, j, k) +
-                        B_view(i, j - 1, k) + B_view(i, j + 1, k) +
-                        B_view(i, j, k - 1) + B_view(i, j, k + 1);
+      auto ii = raw_idx_type(RAJA::stripIndexType(i));
+      auto jj = raw_idx_type(RAJA::stripIndexType(j));
+      auto kk = raw_idx_type(RAJA::stripIndexType(k));
+      auto a_idx = RAJA::stripIndexType(A_layout(ii, jj, kk));
+      A_work_array[a_idx] =
+          B_work_array[RAJA::stripIndexType(B_layout(ii, jj, kk))] +
+          B_work_array[RAJA::stripIndexType(B_layout(ii - raw_idx_type(1), jj, kk))] +
+          B_work_array[RAJA::stripIndexType(B_layout(ii + raw_idx_type(1), jj, kk))] +
+          B_work_array[RAJA::stripIndexType(B_layout(ii, jj - raw_idx_type(1), kk))] +
+          B_work_array[RAJA::stripIndexType(B_layout(ii, jj + raw_idx_type(1), kk))] +
+          B_work_array[RAJA::stripIndexType(B_layout(ii, jj, kk - raw_idx_type(1)))] +
+          B_work_array[RAJA::stripIndexType(B_layout(ii, jj, kk + raw_idx_type(1)))];
     }
   );
 

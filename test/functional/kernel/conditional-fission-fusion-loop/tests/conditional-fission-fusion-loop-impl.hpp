@@ -28,7 +28,7 @@ void KernelConditionalFissionFusionLoopTestImpl(
     WORKING_RES working_res,
     camp::resources::Resource erased_working_res)
 {
-  IDX_TYPE data_len = IDX_TYPE(0);
+  IDX_TYPE data_len {0};
 
   if (seg_idx.size() > 0) {
     data_len = seg_idx[seg_idx.size() - 1] + 1;
@@ -92,7 +92,7 @@ void KernelConditionalFissionFusionLoopTestImpl(
     });
 
 
-    for (IDX_TYPE i = IDX_TYPE(0); i < data_len; ++i) {
+    for (IDX_TYPE i {0}; i < data_len; ++i) {
       ASSERT_EQ(check_array_x[RAJA::stripIndexType(i)],
                 check_array_y[RAJA::stripIndexType(i)]);
     }

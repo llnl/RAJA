@@ -39,7 +39,7 @@ void ForallIndexSetReduceMaxMultipleTestImpl()
   iset.push_back(r3);
   iset.push_back(r4);
 
-  const IDX_TYPE alen = 15286;
+  const IDX_TYPE alen {15286};
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
 
@@ -55,7 +55,7 @@ void ForallIndexSetReduceMaxMultipleTestImpl()
 
   const double default_val = -DBL_MAX;
 
-  for (IDX_TYPE i = 0; i < alen; ++i) {
+  for (IDX_TYPE i {0}; i < alen; ++i) {
     test_array[i] = default_val;
   }
 

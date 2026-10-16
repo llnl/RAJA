@@ -10,7 +10,6 @@
 #ifndef __TEST_KERNEL_NESTEDLOOP_PERMUTEDVIEW3D_HPP_
 #define __TEST_KERNEL_NESTEDLOOP_PERMUTEDVIEW3D_HPP_
 
-
 template <typename IDX_TYPE, typename WORKING_RES, typename EXEC_POLICY>
 void KernelPermutedView3DTestImpl(std::array<IDX_TYPE, 3> dim,
                                   std::array<RAJA::idx_t, 3> perm)
@@ -36,21 +35,21 @@ void KernelPermutedView3DTestImpl(std::array<IDX_TYPE, 3> dim,
 
   working_res.memcpy(working_array, test_array, sizeof(IDX_TYPE) * N);
 
-  int mod_val = dim.at( perm.at(1) ) * dim.at( perm.at(2) );
+  using raw_idx_type = RAJA::strip_index_type_t<IDX_TYPE>;
+  raw_idx_type mod_val = RAJA::stripIndexType(dim.at(perm.at(1))) * RAJA::stripIndexType(dim.at(perm.at(2)));
   for (RAJA::idx_t ii = 0; ii < N; ++ii) {
     test_array[ii] = static_cast<IDX_TYPE>(ii % mod_val);
   }
 
   RAJA::Layout<3> layout = RAJA::make_permuted_layout(dim_strip, perm);
-  RAJA::View< IDX_TYPE, RAJA::Layout<3, int> > view(working_array, layout);
 
   RAJA::kernel<EXEC_POLICY>(
-    RAJA::make_tuple( RAJA::TypedRangeSegment<IDX_TYPE>(0, dim_strip.at(0)),
-                      RAJA::TypedRangeSegment<IDX_TYPE>(0, dim_strip.at(1)),
-                      RAJA::TypedRangeSegment<IDX_TYPE>(0, dim_strip.at(2)) ),
+    RAJA::make_tuple( RAJA::TypedRangeSegment<IDX_TYPE>(0, IDX_TYPE(dim_strip.at(0))),
+                      RAJA::TypedRangeSegment<IDX_TYPE>(0, IDX_TYPE(dim_strip.at(1))),
+                      RAJA::TypedRangeSegment<IDX_TYPE>(0, IDX_TYPE(dim_strip.at(2))) ),
     [=] RAJA_HOST_DEVICE(IDX_TYPE i, IDX_TYPE j, IDX_TYPE k) {
-      int val = RAJA::stripIndexType(layout(i, j, k)) % mod_val;
-      view(i, j, k) = static_cast<IDX_TYPE>(val);
+      auto linear = RAJA::stripIndexType(layout(RAJA::stripIndexType(i), RAJA::stripIndexType(j), RAJA::stripIndexType(k)));
+      working_array[linear] = static_cast<IDX_TYPE>(linear % mod_val);
     }
   );
 

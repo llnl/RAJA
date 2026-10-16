@@ -13,11 +13,17 @@
 
 #include "test-span.hpp"
 
-#define RAJA_SPAN_RUN_TEST(test) \
-  test<int, int>(); \
-  test<int, size_t>(); \
-  test<double, int>(); \
-  test<double, size_t>(); \
+#include "RAJA/index/IndexValue.hpp"
+
+RAJA_INDEX_VALUE_T(TestIndex, int, "TestIndex");
+
+#define RAJA_SPAN_RUN_TEST(test)                                               \
+  test<int, int>();                                                            \
+  test<int, size_t>();                                                         \
+  test<double, int>();                                                         \
+  test<double, size_t>();                                                      \
+  // test<int, TestIndex>();                                                      \
+  // test<double, TestIndex>();
 
 TEST(Span, basic_construct_Span)
 {

@@ -100,9 +100,9 @@ TYPED_TEST_P(KernelConditionalFissionFusionLoopTest,
 
   // List segment tests
   seg_idx.clear();
-  IDX_TYPE last = IDX_TYPE(10567);
+  IDX_TYPE last {10567};
   srand(time(NULL));
-  for (IDX_TYPE i = IDX_TYPE(0); i < last; ++i) {
+  for (IDX_TYPE i {0}; i < last; ++i) {
     IDX_TYPE randval = IDX_TYPE(rand() % RAJA::stripIndexType(last));
     if (i < randval) {
       seg_idx.push_back(i);

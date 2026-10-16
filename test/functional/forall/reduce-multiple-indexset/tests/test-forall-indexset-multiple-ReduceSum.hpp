@@ -37,7 +37,7 @@ void ForallIndexSetReduceSumMultipleTestImpl()
   iset.push_back(r3); 
   iset.push_back(r4); 
 
-  const IDX_TYPE alen = 15286;
+  const IDX_TYPE alen {15286};
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
 
@@ -64,7 +64,7 @@ void ForallIndexSetReduceSumMultipleTestImpl()
   const double dinit_val = 0.1;
   const int iinit_val = 1;
 
-  for (IDX_TYPE i = 0; i < alen; ++i) {
+  for (IDX_TYPE i {0}; i < alen; ++i) {
     dtest_array[i] = dinit_val;
     itest_array[i] = iinit_val;
   }

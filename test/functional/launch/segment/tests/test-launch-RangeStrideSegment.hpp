@@ -47,7 +47,7 @@ void LaunchRangeStrideSegmentTestImpl(INDEX_TYPE first, INDEX_TYPE last,
   if ( RAJA::stripIndexType(N) > 0 ) {
 
     INDEX_TYPE index = first;
-    for (INDEX_TYPE i = INDEX_TYPE(0); i < N; ++i) {
+    for (INDEX_TYPE i {0}; i < N; ++i) {
       test_array[ RAJA::stripIndexType((index-first)/stride) ] = index;
       index += stride;
     }
@@ -83,7 +83,7 @@ void LaunchRangeStrideSegmentTestImpl(INDEX_TYPE first, INDEX_TYPE last,
 
   if (RAJA::stripIndexType(N) > 0) {
 
-    for (INDEX_TYPE i = INDEX_TYPE(0); i < N; i++) {
+    for (INDEX_TYPE i {0}; i < N; i++) {
       ASSERT_EQ(test_array[RAJA::stripIndexType(i)], check_array[RAJA::stripIndexType(i)]);
     }
 
