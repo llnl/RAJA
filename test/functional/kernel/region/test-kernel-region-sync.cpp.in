@@ -90,7 +90,7 @@ using OpenMPKernelRegionSyncExecPols =
 // Cartesian product of types used in parameterized tests
 //
 using @REGION_BACKEND@KernelRegionSyncTypes =
-  Test< camp::cartesian_product<IdxTypeList,
+  Test< camp::cartesian_product<RawIdxTypeList,
                                 @REGION_BACKEND@ResourceList,
                                 @REGION_BACKEND@KernelRegionSyncExecPols>>::Types;
 
