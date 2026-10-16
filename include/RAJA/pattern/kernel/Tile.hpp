@@ -29,6 +29,7 @@
 #include "camp/concepts.hpp"
 #include "camp/tuple.hpp"
 
+#include "RAJA/index/IndexValue.hpp"
 #include "RAJA/pattern/kernel/internal.hpp"
 #include "RAJA/util/macros.hpp"
 #include "RAJA/util/types.hpp"
@@ -81,6 +82,12 @@ struct tile_dynamic
 
 namespace internal
 {
+// template<typename T>
+// struct is_instance_of_tile_size : std::false_type {};
+
+// template<typename SizeT>
+// struct is_instance_of_tile_size<TileSize<SizeT>> : std::true_type {};
+
 
 /*!
  * A generic RAJA::kernel forall_impl tile wrapper for statement::For
@@ -109,22 +116,24 @@ struct TileWrapper : public GenericWrapper<Data, Types, EnclosedStmts...>
   }
 };
 
-template<typename Iterable>
+template<typename Iterable, typename BlockSizeT>
 struct IterableTiler
 {
   using value_type = camp::decay<Iterable>;
+  using slice_type = typename value_type::size_type;
+  using block_type = RAJA::strip_index_type_t<slice_type>;
 
   struct iterate
   {
     value_type s;
-    Index_type i;
+    block_type i;
   };
 
   class iterator
   {
     // NOTE: this must be held by value for NVCC support, *even on the host*
     const IterableTiler itiler;
-    const Index_type block_id;
+    const block_type block_id;
 
   public:
     using value_type        = iterate;
@@ -136,7 +145,7 @@ struct IterableTiler
     RAJA_HOST_DEVICE
 
     RAJA_INLINE
-    constexpr iterator(IterableTiler const& itiler_, Index_type block_id_)
+    constexpr iterator(IterableTiler const& itiler_, block_type block_id_)
         : itiler {itiler_},
           block_id {block_id_}
     {}
@@ -146,7 +155,9 @@ struct IterableTiler
     RAJA_INLINE
     value_type operator*()
     {
-      auto start = block_id * itiler.block_size;
+      auto start =
+          slice_type {block_id * static_cast<block_type>(
+                                     RAJA::stripIndexType(itiler.block_size))};
       return iterate {itiler.it.slice(start, itiler.block_size), block_id};
     }
 
@@ -160,15 +171,19 @@ struct IterableTiler
     RAJA_HOST_DEVICE
     RAJA_INLINE iterator operator-(const difference_type& rhs) const
     {
-      return iterator(itiler, block_id - rhs);
+      return iterator(itiler,
+                      static_cast<block_type>(
+                          static_cast<difference_type>(block_id) - rhs));
     }
 
     RAJA_HOST_DEVICE
     RAJA_INLINE iterator operator+(const difference_type& rhs) const
     {
-      return iterator(itiler, block_id + rhs >= itiler.num_blocks
-                                  ? itiler.num_blocks
-                                  : block_id + rhs);
+      const difference_type next = static_cast<difference_type>(block_id) + rhs;
+      return iterator(itiler,
+                      next >= static_cast<difference_type>(itiler.num_blocks)
+                          ? itiler.num_blocks
+                          : static_cast<block_type>(next));
     }
 
     RAJA_HOST_DEVICE
@@ -190,20 +205,20 @@ struct IterableTiler
     }
   };
 
-  RAJA_HOST_DEVICE
-
-  RAJA_INLINE
-  IterableTiler(const Iterable& it_, camp::idx_t block_size_)
+  RAJA_HOST_DEVICE RAJA_INLINE IterableTiler(const Iterable& it_,
+                                             BlockSizeT block_size_)
       : it {it_},
         block_size {block_size_}
   {
     using std::begin;
     using std::distance;
     using std::end;
-    dist       = it.end() - it.begin();  // distance(begin(it), end(it));
-    num_blocks = dist / block_size;
+    const block_type stripped_block_size =
+        static_cast<block_type>(RAJA::stripIndexType(block_size));
+    dist       = static_cast<block_type>(it.end() - it.begin());
+    num_blocks = dist / stripped_block_size;
     // if (dist % block_size) num_blocks += 1;
-    if (dist - num_blocks * block_size > 0)
+    if (dist - num_blocks * stripped_block_size > block_type {0})
     {
       num_blocks += 1;
     }
@@ -212,7 +227,7 @@ struct IterableTiler
   RAJA_HOST_DEVICE
 
   RAJA_INLINE
-  iterator begin() const { return iterator(*this, 0); }
+  iterator begin() const { return iterator(*this, block_type {0}); }
 
   RAJA_HOST_DEVICE
 
@@ -220,9 +235,9 @@ struct IterableTiler
   iterator end() const { return iterator(*this, num_blocks); }
 
   value_type it;
-  camp::idx_t block_size;
-  camp::idx_t num_blocks;
-  camp::idx_t dist;
+  BlockSizeT block_size;
+  block_type num_blocks;
+  block_type dist;
 };
 
 /*!
@@ -247,11 +262,15 @@ struct StatementExecutor<
     auto const& segment = camp::get<ArgumentId>(data.segment_tuple);
 
     // Get the tiling policies chunk size
-    auto chunk_size = tile_fixed<ChunkSize>::chunk_size;
+    constexpr auto chunk_size = tile_fixed<ChunkSize>::chunk_size;
+    using segment_t           = decltype(segment);
+    using slice_t             = typename std::decay_t<segment_t>::size_type;
+    using slice_value_t       = RAJA::strip_index_type_t<slice_t>;
 
     // Create a tile iterator, needs to survive until the forall is
     // done executing.
-    IterableTiler<decltype(segment)> tiled_iterable(segment, chunk_size);
+    IterableTiler<segment_t, slice_t> tiled_iterable(
+        segment, slice_t {static_cast<slice_value_t>(chunk_size)});
 
     // Wrap in case forall_impl needs to thread_privatize
     TileWrapper<ArgumentId, Data, Types, EnclosedStmts...> tile_wrapper(data);
@@ -282,14 +301,20 @@ struct StatementExecutor<
     // Get the segment we are going to tile
     auto const& segment = camp::get<ArgumentId>(data.segment_tuple);
 
+    using segment_t     = decltype(segment);
+    using slice_t       = typename std::decay_t<segment_t>::size_type;
+    using slice_value_t = RAJA::strip_index_type_t<slice_t>;
     // Get the tiling policies chunk size
     auto chunk_size = camp::get<ArgumentId>(data.param_tuple);
     static_assert(
         camp::concepts::metalib::is_same<TileSize, decltype(chunk_size)>::value,
+        // is_instance_of_tile_size<decltype(chunk_size)>::value,
         "Extracted parameter must be of type TileSize.");
 
     // Create a tile iterator
-    IterableTiler<decltype(segment)> tiled_iterable(segment, chunk_size.size);
+    IterableTiler<segment_t, slice_t> tiled_iterable(
+        segment, slice_t {static_cast<slice_value_t>(
+                     RAJA::stripIndexType(chunk_size.size))});
 
     // Wrap in case forall_impl needs to thread_privatize
     TileWrapper<ArgumentId, Data, Types, EnclosedStmts...> tile_wrapper(data);
