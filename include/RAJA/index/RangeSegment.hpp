@@ -95,7 +95,7 @@ namespace RAJA
  *
  ******************************************************************************
  */
-template<typename StorageT,
+template<concepts::Index StorageT,
          typename DiffT = make_signed_t<strip_index_type_t<StorageT>>>
 struct TypedRangeSegment
 {
@@ -138,6 +138,21 @@ struct TypedRangeSegment
                                                StripStorageT end)
       : m_begin(iterator(begin)),
         m_end(begin > end ? m_begin : iterator(end))
+  {}
+
+  //! This constructor exists whenever an IndexValued index is passed to a
+  //! RangeSegment So that the class may be constructed directly with values of
+  //! the underlying storage type
+  template<concepts::Index BeginT, concepts::Index EndT>
+    requires((concepts::IndexValued<BeginT> || concepts::IndexValued<EndT>) &&
+             std::is_convertible_v<strip_index_type_t<BeginT>, StripStorageT> &&
+             std::is_convertible_v<strip_index_type_t<EndT>, StripStorageT>)
+  RAJA_HOST_DEVICE constexpr TypedRangeSegment(BeginT begin, EndT end)
+      : m_begin(iterator(StripStorageT(stripIndexType(begin)))),
+        m_end(StripStorageT(stripIndexType(begin)) >
+                      StripStorageT(stripIndexType(end))
+                  ? m_begin
+                  : iterator(StripStorageT(stripIndexType(end))))
   {}
 
   //! Disable compiler generated constructor

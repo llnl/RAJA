@@ -117,13 +117,16 @@ struct StatementExecutor<
   {
     // Get the segment we are going to tile
     auto const& segment = camp::get<ArgumentId>(data.segment_tuple);
-
+    using segment_t     = decltype(segment);
+    using slice_t       = typename std::decay_t<segment_t>::size_type;
+    using slice_value_t = RAJA::strip_index_type_t<slice_t>;
     // Get the tiling policies chunk size
-    auto chunk_size = TPol::chunk_size;
+    constexpr auto chunk_size = TPol::chunk_size;
 
     // Create a tile iterator, needs to survive until the forall is
     // done executing.
-    IterableTiler<decltype(segment)> tiled_iterable(segment, chunk_size);
+    IterableTiler<segment_t, slice_t> tiled_iterable(
+        segment, slice_t {static_cast<slice_value_t>(chunk_size)});
 
     // Wrap in case forall_impl needs to thread_privatize
     TileTCountWrapper<ArgumentId, ParamId, Data, Types, EnclosedStmts...>

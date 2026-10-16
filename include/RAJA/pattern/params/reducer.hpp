@@ -146,8 +146,9 @@ struct Reducer<Op<ValLoc<T, I>, ValLoc<T, I>, ValLoc<T, I>>,
                ValOp<ValLoc<T, I>, Op>> : public ForallParamBase
 {
   using target_value_type = T;
-  using target_index_type = I;
   using value_type        = ValLoc<T, I>;
+  using target_index_type = typename value_type::index_type;
+  using stored_index_type = typename value_type::stored_index_type;
   using op                = Op<value_type, value_type, value_type>;
   using VOp = ValOp<ValLoc<target_value_type, target_index_type>, Op>;
 
@@ -168,7 +169,7 @@ struct Reducer<Op<ValLoc<T, I>, ValLoc<T, I>, ValLoc<T, I>>,
                            target_index_type* index_in)
       : m_valop(VOp {}),
         target_value(data_in),
-        target_index(index_in)
+        external_target_index(index_in)
   {}
 
   Reducer(Reducer const&)            = default;
@@ -183,18 +184,26 @@ struct Reducer<Op<ValLoc<T, I>, ValLoc<T, I>, ValLoc<T, I>>,
 
   // Points to either dual value and index defined by the user, or value and
   // index within a ValLoc defined by the user
-  target_value_type* target_value = nullptr;
-  target_index_type* target_index = nullptr;
+  target_value_type* target_value          = nullptr;
+  stored_index_type* target_index          = nullptr;
+  target_index_type* external_target_index = nullptr;
 
   // combineTarget() performs the final op on the target data and location in
   // param_resolve()
   RAJA_HOST_DEVICE void combineTarget(value_type in)
   {
     // Create a different temp ValLoc solely for combining
-    value_type temp(*target_value, *target_index);
+    value_type temp(*target_value, getTargetIndex());
     temp          = op {}(temp, in);
     *target_value = temp.val;
-    *target_index = temp.loc;
+    if (target_index != nullptr)
+    {
+      *target_index = temp.getStoredLoc();
+    }
+    if (external_target_index != nullptr)
+    {
+      *external_target_index = temp.getLoc();
+    }
   }
 
   RAJA_HOST_DEVICE
@@ -222,6 +231,17 @@ struct Reducer<Op<ValLoc<T, I>, ValLoc<T, I>, ValLoc<T, I>>,
 
   using ARG_LIST_T                        = typename ARG_TUP_T::TList;
   static constexpr size_t num_lambda_args = camp::tuple_size<ARG_TUP_T>::value;
+
+private:
+  RAJA_HOST_DEVICE target_index_type getTargetIndex() const
+  {
+    if (target_index != nullptr)
+    {
+      return RAJA::expt::detail::restore_valloc_index<target_index_type>(
+          *target_index);
+    }
+    return *external_target_index;
+  }
 };
 
 }  // namespace detail
