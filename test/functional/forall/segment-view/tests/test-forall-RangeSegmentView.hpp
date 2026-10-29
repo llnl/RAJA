@@ -37,9 +37,7 @@ void ForallRangeSegmentViewTestImpl(INDEX_TYPE first, INDEX_TYPE last)
       RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
   using view_type = RAJA::View< INDEX_TYPE, layout_type >;
  
-  view_type test_view(test_array, N);
   view_type work_view(working_array, N);
-  view_type check_view(check_array, N);
 
   RAJA::forall<EXEC_POLICY>(r1, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
     work_view( idx - rbegin ) = idx;
@@ -49,7 +47,8 @@ void ForallRangeSegmentViewTestImpl(INDEX_TYPE first, INDEX_TYPE last)
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
   for (INDEX_TYPE i {0}; i < N; i++) {
-    ASSERT_EQ(test_view(i), check_view(i));
+    ASSERT_EQ(test_array[RAJA::stripIndexType(i)],
+              check_array[RAJA::stripIndexType(i)]);
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,
@@ -88,9 +87,7 @@ void ForallRangeSegmentOffsetViewTestImpl(INDEX_TYPE first, INDEX_TYPE last,
   raw_index_type f_offset = RAJA::stripIndexType(first + offset);
   raw_index_type l_offset = RAJA::stripIndexType(last + offset);
   layout_type layout({{f_offset}}, {{l_offset}});
-  view_type test_view(test_array, layout);
   view_type work_view(working_array, layout);
-  view_type check_view(check_array, layout);
 
   RAJA::forall<EXEC_POLICY>(r1, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
     work_view( idx ) = idx;
@@ -99,8 +96,9 @@ void ForallRangeSegmentOffsetViewTestImpl(INDEX_TYPE first, INDEX_TYPE last,
   working_res.memcpy(check_array, working_array,
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  for (INDEX_TYPE i = first + offset; i < last + offset; i++) {
-    ASSERT_EQ(test_view(i), check_view(i));
+  for (INDEX_TYPE i {0}; i < N; i++) {
+    ASSERT_EQ(test_array[RAJA::stripIndexType(i)],
+              check_array[RAJA::stripIndexType(i)]);
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,

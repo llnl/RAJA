@@ -38,9 +38,7 @@ void ForallRangeSegment2DViewTestImpl(INDEX_TYPE N)
       RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE>>;
   using view_type = RAJA::View< INDEX_TYPE, layout_type >;
   
-  view_type test_view(test_array, N, N);
   view_type work_view(working_array, N, N);
-  view_type check_view(check_array, N, N);
 
   RAJA::forall<EXEC_POLICY>(r1, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
     const INDEX_TYPE row = idx / N;
@@ -52,9 +50,8 @@ void ForallRangeSegment2DViewTestImpl(INDEX_TYPE N)
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(lentot));
 
   for (INDEX_TYPE i {0}; i < lentot; i++) {
-    const INDEX_TYPE row = i / N;
-    const INDEX_TYPE col = i % N;
-    ASSERT_EQ(test_view(row, col), check_view(row, col));
+    ASSERT_EQ(test_array[RAJA::stripIndexType(i)],
+              check_array[RAJA::stripIndexType(i)]);
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,
@@ -95,13 +92,12 @@ void ForallRangeSegment2DOffsetViewTestImpl(INDEX_TYPE N)
   raw_index_type first = -1;
   raw_index_type last  = RAJA::stripIndexType(N + 1);
   layout_type layout({{first, first}}, {{last, last}});
-  view_type test_view(test_array, layout);
   view_type work_view(working_array, layout);
-  view_type check_view(check_array, layout);
 
-  for (INDEX_TYPE row {0}; row < N; ++row) {
-    for (INDEX_TYPE col {0}; col < N; ++col) {
-      test_view(row, col) = row * N + col;
+  for (INDEX_TYPE row {1}; row < N + 1; ++row) {
+    for (INDEX_TYPE col {1}; col < N + 1; ++col) {
+      INDEX_TYPE array_index = row * (N + 2) + col;
+      test_array[RAJA::stripIndexType(array_index)] = (row - 1) * N + (col - 1);
     }
   }
 
@@ -116,7 +112,9 @@ void ForallRangeSegment2DOffsetViewTestImpl(INDEX_TYPE N)
 
   for (INDEX_TYPE row {-1}; row < N + 1; ++row) {
     for (INDEX_TYPE col {-1}; col < N + 1; ++col) {
-      ASSERT_EQ(test_view(row, col), check_view(row, col));
+      INDEX_TYPE array_index = (row + 1) * (N + 2) + (col + 1);
+      ASSERT_EQ(test_array[RAJA::stripIndexType(array_index)],
+                check_array[RAJA::stripIndexType(array_index)]);
     }
   }
 

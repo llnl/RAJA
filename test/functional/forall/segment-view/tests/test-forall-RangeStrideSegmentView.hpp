@@ -41,12 +41,10 @@ void ForallRangeStrideSegmentViewTestImpl(INDEX_TYPE first, INDEX_TYPE last,
       RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
   using view_type = RAJA::View< INDEX_TYPE, layout_type >;
 
-  view_type test_view(test_array, N);
   view_type work_view(working_array, N);
-  view_type check_view(check_array, N);
 
   for (INDEX_TYPE i {0}; i < N; ++i) {
-    test_view( (index-first)/stride ) = index;
+    test_array[RAJA::stripIndexType((index-first)/stride)] = index;
     index += stride;
   }
 
@@ -58,7 +56,8 @@ void ForallRangeStrideSegmentViewTestImpl(INDEX_TYPE first, INDEX_TYPE last,
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
   for (INDEX_TYPE i {0}; i < N; i++) {
-    ASSERT_EQ(test_view(i), check_view(i));
+    ASSERT_EQ(test_array[RAJA::stripIndexType(i)],
+              check_array[RAJA::stripIndexType(i)]);
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,

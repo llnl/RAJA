@@ -78,12 +78,10 @@ void ForallListSegmentViewTestImpl(INDEX_TYPE N)
 
 #endif
   
-  view_type test_view(test_array, N);
   view_type work_view(working_array, N);
-  view_type check_view(check_array, N);
 
   for (size_t i = 0; i < idxlen; ++i) {
-    test_view(idx_array[i]) = idx_array[i];
+    test_array[RAJA::stripIndexType(idx_array[i])] = idx_array[i];
   }
 
   RAJA::forall<EXEC_POLICY>(lseg, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
@@ -94,7 +92,8 @@ void ForallListSegmentViewTestImpl(INDEX_TYPE N)
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
   for (INDEX_TYPE i {0}; i < N; i++) {
-    ASSERT_EQ(test_view(i), check_view(i));
+    ASSERT_EQ(test_array[RAJA::stripIndexType(i)],
+              check_array[RAJA::stripIndexType(i)]);
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,
@@ -149,12 +148,10 @@ void ForallListSegmentOffsetViewTestImpl(INDEX_TYPE N, INDEX_TYPE offset)
   raw_index_type offset_raw = RAJA::stripIndexType(offset);
   raw_index_type N_offset = RAJA::stripIndexType(N + offset);
   layout_type layout({{offset_raw}}, {{N_offset}});
-  view_type test_view(test_array, layout);
   view_type work_view(working_array, layout);
-  view_type check_view(check_array, layout);
 
   for (size_t i = 0; i < idxlen; ++i) {
-    test_view(idx_array[i]) = idx_array[i];
+    test_array[RAJA::stripIndexType(idx_array[i] - offset)] = idx_array[i];
   }
 
   RAJA::forall<EXEC_POLICY>(lseg, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
@@ -165,7 +162,9 @@ void ForallListSegmentOffsetViewTestImpl(INDEX_TYPE N, INDEX_TYPE offset)
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
   for (INDEX_TYPE i = offset; i < N + offset; i++) {
-    ASSERT_EQ(test_view(i), check_view(i));
+    INDEX_TYPE raw_i = i - offset;
+    ASSERT_EQ(test_array[RAJA::stripIndexType(raw_i)],
+              check_array[RAJA::stripIndexType(raw_i)]);
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,

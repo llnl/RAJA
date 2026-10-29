@@ -60,13 +60,10 @@ void ForallIndexSetViewTestImpl()
   using layout_type =
       RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
   using view_type = RAJA::View< INDEX_TYPE, layout_type >;
-
-  view_type test_view(test_array, N);
   view_type work_view(working_array, N);
-  view_type check_view(check_array, N);
 
   for (size_t i = 0; i < is_indices.size(); ++i) {
-    test_view(is_indices[i]) = is_indices[i];
+    test_array[RAJA::stripIndexType(is_indices[i])] = is_indices[i];
   }
 
   RAJA::forall<EXEC_POLICY>(iset, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
@@ -78,7 +75,8 @@ void ForallIndexSetViewTestImpl()
 
   // 
   for (INDEX_TYPE i {0}; i < N; i++) {
-    ASSERT_EQ(test_view(i), check_view(i));
+    ASSERT_EQ(test_array[RAJA::stripIndexType(i)],
+              check_array[RAJA::stripIndexType(i)]);
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,

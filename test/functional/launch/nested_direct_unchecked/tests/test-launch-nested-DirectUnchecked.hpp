@@ -56,11 +56,6 @@ void LaunchNestedDirectUncheckedTestImpl(INDEX_TYPE M)
     working_res.memset(working_array, 0, sizeof(INDEX_TYPE) * data_len);
   }
 
-  using linear_layout_t =
-      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
-  RAJA::View<INDEX_TYPE, linear_layout_t> test_view(test_array, N);
-  RAJA::View<INDEX_TYPE, linear_layout_t> check_view(check_array, N);
-
   //6 threads total
   const int threads_x = 2 * RAJA::stripIndexType(M);
   const int threads_y = 3 * RAJA::stripIndexType(M);
@@ -107,7 +102,8 @@ void LaunchNestedDirectUncheckedTestImpl(INDEX_TYPE M)
   working_res.wait();
     
   for (INDEX_TYPE i {0}; i < N; i++) {
-    ASSERT_EQ(test_view(i), check_view(i));
+    ASSERT_EQ(test_array[RAJA::stripIndexType(i)],
+              check_array[RAJA::stripIndexType(i)]);
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,
