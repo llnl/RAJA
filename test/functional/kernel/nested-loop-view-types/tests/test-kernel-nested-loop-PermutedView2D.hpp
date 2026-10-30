@@ -41,13 +41,15 @@ void KernelPermutedView2DTestImpl(std::array<IDX_TYPE, 2> dim,
   }
 
   RAJA::Layout<2> layout = RAJA::make_permuted_layout(dim_strip, perm);
+  RAJA::View< IDX_TYPE, RAJA::Layout<2, int> > view(working_array, layout);
 
   RAJA::kernel<EXEC_POLICY>(
     RAJA::make_tuple( RAJA::TypedRangeSegment<IDX_TYPE>(0, IDX_TYPE(dim_strip.at(0))),
                       RAJA::TypedRangeSegment<IDX_TYPE>(0, IDX_TYPE(dim_strip.at(1))) ),
     [=] RAJA_HOST_DEVICE(IDX_TYPE i, IDX_TYPE j) {
       auto linear = RAJA::stripIndexType(layout(RAJA::stripIndexType(i), RAJA::stripIndexType(j)));
-      working_array[linear] = static_cast<IDX_TYPE>(linear % mod_val);
+      view(RAJA::stripIndexType(i), RAJA::stripIndexType(j)) =
+          static_cast<IDX_TYPE>(linear % mod_val);
     }
   );
 

@@ -37,7 +37,7 @@ void ForallRangeSegment2DViewTestImpl(INDEX_TYPE N)
   using layout_type =
       RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE>>;
   using view_type = RAJA::View< INDEX_TYPE, layout_type >;
-  
+
   view_type work_view(working_array, N, N);
 
   RAJA::forall<EXEC_POLICY>(r1, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
@@ -84,6 +84,13 @@ void ForallRangeSegment2DOffsetViewTestImpl(INDEX_TYPE N)
   working_res.memcpy(working_array, test_array,
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(lentot));
 
+  for (INDEX_TYPE row {1}; row < N + 1; ++row) {
+    for (INDEX_TYPE col {1}; col < N + 1; ++col) {
+      INDEX_TYPE array_index = row * (N + 2) + col;
+      test_array[RAJA::stripIndexType(array_index)] = (row - 1) * N + (col - 1);
+    }
+  }
+
   using layout_type =
       RAJA::TypedOffsetLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE, INDEX_TYPE>>;
   using view_type = RAJA::View< INDEX_TYPE, layout_type >;
@@ -94,28 +101,19 @@ void ForallRangeSegment2DOffsetViewTestImpl(INDEX_TYPE N)
   layout_type layout({{first, first}}, {{last, last}});
   view_type work_view(working_array, layout);
 
-  for (INDEX_TYPE row {1}; row < N + 1; ++row) {
-    for (INDEX_TYPE col {1}; col < N + 1; ++col) {
-      INDEX_TYPE array_index = row * (N + 2) + col;
-      test_array[RAJA::stripIndexType(array_index)] = (row - 1) * N + (col - 1);
-    }
-  }
 
   RAJA::forall<EXEC_POLICY>(r1, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
     const INDEX_TYPE row = idx / N;
     const INDEX_TYPE col = idx % N;
-    work_view(row, col) = idx;  
+    work_view(row, col) = idx;
   });
 
   working_res.memcpy(check_array, working_array,
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(lentot));
 
-  for (INDEX_TYPE row {-1}; row < N + 1; ++row) {
-    for (INDEX_TYPE col {-1}; col < N + 1; ++col) {
-      INDEX_TYPE array_index = (row + 1) * (N + 2) + (col + 1);
-      ASSERT_EQ(test_array[RAJA::stripIndexType(array_index)],
-                check_array[RAJA::stripIndexType(array_index)]);
-    }
+  for (INDEX_TYPE i = 0; i < lentot; i++) {
+    ASSERT_EQ(test_array[RAJA::stripIndexType(i)],
+              check_array[RAJA::stripIndexType(i)]);
   }
 
   deallocateForallTestData<INDEX_TYPE>(working_res,

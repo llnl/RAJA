@@ -57,17 +57,16 @@ void ForallIndexSetViewTestImpl()
   working_res.memcpy(working_array, test_array,
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  using layout_type =
-      RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
-  using view_type = RAJA::View< INDEX_TYPE, layout_type >;
-  view_type work_view(working_array, N);
-
   for (size_t i = 0; i < is_indices.size(); ++i) {
     test_array[RAJA::stripIndexType(is_indices[i])] = is_indices[i];
   }
 
+  using view_type = RAJA::View< INDEX_TYPE, RAJA::Layout<1, INDEX_TYPE, 0> >;
+  RAJA::Layout<1> layout(N);
+  view_type work_view(working_array, layout);
+
   RAJA::forall<EXEC_POLICY>(iset, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
-    work_view(idx) = idx;
+    working_array[idx] = idx;
   });
 
   working_res.memcpy(check_array, working_array,

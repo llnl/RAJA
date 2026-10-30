@@ -31,14 +31,14 @@ void ForallListSegmentViewTestImpl(INDEX_TYPE N)
     INDEX_TYPE randval = INDEX_TYPE(rand() % RAJA::stripIndexType(N));
     if ( i < randval ) {
       idx_array.push_back(i);
-    }     
+    }
   }
 
   size_t idxlen = idx_array.size();
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
 
-  RAJA::TypedListSegment<INDEX_TYPE> lseg(&idx_array[0], idxlen, 
+  RAJA::TypedListSegment<INDEX_TYPE> lseg(&idx_array[0], idxlen,
                                           working_res);
 
   INDEX_TYPE* working_array;
@@ -56,6 +56,9 @@ void ForallListSegmentViewTestImpl(INDEX_TYPE N)
   working_res.memcpy(working_array, test_array,
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
+  for (size_t i = 0; i < idxlen; ++i) {
+    test_array[RAJA::stripIndexType(idx_array[i])] = idx_array[i];
+  }
   using layout_type =
       RAJA::TypedLayout<INDEX_TYPE, camp::tuple<INDEX_TYPE>>;
   using view_type = RAJA::View< INDEX_TYPE, layout_type >;
@@ -77,12 +80,7 @@ void ForallListSegmentViewTestImpl(INDEX_TYPE N)
 
 
 #endif
-  
   view_type work_view(working_array, N);
-
-  for (size_t i = 0; i < idxlen; ++i) {
-    test_array[RAJA::stripIndexType(idx_array[i])] = idx_array[i];
-  }
 
   RAJA::forall<EXEC_POLICY>(lseg, [=] RAJA_HOST_DEVICE(INDEX_TYPE idx) {
     work_view( idx ) = idx;
@@ -115,14 +113,14 @@ void ForallListSegmentOffsetViewTestImpl(INDEX_TYPE N, INDEX_TYPE offset)
     INDEX_TYPE randval = INDEX_TYPE(rand() % RAJA::stripIndexType(N));
     if ( i < randval ) {
       idx_array.push_back(i+offset);
-    }     
+    }
   }
 
   size_t idxlen = idx_array.size();
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
 
-  RAJA::TypedListSegment<INDEX_TYPE> lseg(&idx_array[0], idxlen, 
+  RAJA::TypedListSegment<INDEX_TYPE> lseg(&idx_array[0], idxlen,
                                           working_res);
 
   INDEX_TYPE* working_array;

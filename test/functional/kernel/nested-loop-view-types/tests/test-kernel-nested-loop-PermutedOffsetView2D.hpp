@@ -14,7 +14,6 @@ template <typename IDX_TYPE, typename WORKING_RES, typename EXEC_POLICY>
 void KernelPermutedOffsetView2DTestImpl(std::array<RAJA::idx_t, 2> dim,
                                         std::array<RAJA::idx_t, 2> perm)
 {
-  using raw_idx_type = RAJA::strip_index_type_t<IDX_TYPE>;
   camp::resources::Resource working_res{WORKING_RES::get_default()};
   IDX_TYPE* A_work_array;
   IDX_TYPE* A_check_array;
@@ -99,21 +98,18 @@ void KernelPermutedOffsetView2DTestImpl(std::array<RAJA::idx_t, 2> dim,
   RAJA::Layout<2> A_layout =
     RAJA::make_permuted_layout( {{Nint_len.at(0), Nint_len.at(1)}}, perm );
 
+  RAJA::View< IDX_TYPE, RAJA::OffsetLayout<2> > B_view(B_work_array, B_layout);
+  RAJA::View< IDX_TYPE, RAJA::Layout<2> >  A_view(A_work_array, A_layout);
+
   RAJA::TypedRangeSegment<IDX_TYPE> iseg( 0, IDX_TYPE(Nint_len.at(0)) );
   RAJA::TypedRangeSegment<IDX_TYPE> jseg( 0, IDX_TYPE(Nint_len.at(1)) );
 
   RAJA::kernel<EXEC_POLICY>(
     RAJA::make_tuple( iseg, jseg ),
     [=] RAJA_HOST_DEVICE(IDX_TYPE i, IDX_TYPE j) {
-      auto ii = raw_idx_type(RAJA::stripIndexType(i));
-      auto jj = raw_idx_type(RAJA::stripIndexType(j));
-      auto a_idx = RAJA::stripIndexType(A_layout(ii, jj));
-      A_work_array[a_idx] =
-          B_work_array[RAJA::stripIndexType(B_layout(ii, jj))] +
-          B_work_array[RAJA::stripIndexType(B_layout(ii - raw_idx_type(1), jj))] +
-          B_work_array[RAJA::stripIndexType(B_layout(ii + raw_idx_type(1), jj))] +
-          B_work_array[RAJA::stripIndexType(B_layout(ii, jj - raw_idx_type(1)))] +
-          B_work_array[RAJA::stripIndexType(B_layout(ii, jj + raw_idx_type(1)))];
+      A_view(i, j) = B_view(i, j) +
+                     B_view(i - 1, j) + B_view(i + 1, j) +
+                     B_view(i, j - 1) + B_view(i, j + 1);
     }
   );
 
