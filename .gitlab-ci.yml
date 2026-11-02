@@ -43,11 +43,10 @@ variables:
   GIT_SUBMODULE_PATHS: tpl/desul scripts/radiuss-spack-configs
 
 # PROJECT VARIABLES
-# This SHA fixes the CAMP version used when refreshing maintained host-configs.
-# The matching conditional spec fragment is declared in .rad-bat.json. If this
-# variable is unset or empty, rad-bat adds no CAMP constraint and Spack chooses
-# the version. Ordinary CI uses the paths frozen in the maintained host-configs.
-  CAMP_REFERENCE: "b4edd077937245c120e25e6080be8caee5926347"
+# Temporarily set this when testing a specific CAMP revision. The matching
+# conditional spec fragment is declared in .rad-bat.json. Keep it unset for
+# normal refreshes so that Spack chooses the CAMP version.
+# CAMP_REFERENCE: "<full commit SHA>"
 
 # SHARED_CI CONFIGURATION
 # Required information about GitHub repository

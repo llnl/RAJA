@@ -25,7 +25,7 @@
       {"path": "scripts/radiuss-spack-configs/spack_repo/llnl_radiuss"},
       {
         "url": "https://github.com/spack/spack-packages.git",
-        "commit": "4d3d0f8ee5ffd6f099727f46ec704f3f4ee98e5c",
+        "commit": "4b6b842d494ab86ebef5304e6bfe766aa421a66b",
         "subdirectory": "repos/spack_repo/builtin"
       }
     ]
