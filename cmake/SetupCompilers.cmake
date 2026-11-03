@@ -26,6 +26,22 @@ endif()
 
 set(RAJA_COMPILER "RAJA_COMPILER_${CMAKE_CXX_COMPILER_ID}")
 
+# Need to detect AMD Clang manually. CMake reports its compiler ID as "Clang", so need to check --version for AMD branding.
+if (NOT DEFINED RAJA_COMPILER_AMDCLANG) # Convenience for turning this off in CMake configuration.
+  set(RAJA_COMPILER_AMDCLANG OFF)
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    execute_process(
+      COMMAND "${CMAKE_CXX_COMPILER}" --version
+      RESULT_VARIABLE _raja_compiler_version_status
+      OUTPUT_VARIABLE _raja_compiler_version_output
+      ERROR_QUIET)
+    if (_raja_compiler_version_status EQUAL 0 AND
+        _raja_compiler_version_output MATCHES "AMD clang version")
+      set(RAJA_COMPILER_AMDCLANG ON)
+    endif()
+  endif()
+endif()
+
 if ( MSVC )
   if (NOT BUILD_SHARED_LIBS)
     foreach(flag_var
