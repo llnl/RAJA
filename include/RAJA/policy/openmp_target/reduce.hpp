@@ -155,6 +155,7 @@ struct Reduce_Data
 
   //! default copy constructor for POD
   Reduce_Data(const Reduce_Data&) = default;
+  Reduce_Data& operator=(const Reduce_Data&) = default;
 
   //! transfers from the host to the device -- exit() is called upon failure
   RAJA_INLINE void hostToDevice(Offload_Info& info)
