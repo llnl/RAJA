@@ -132,16 +132,12 @@ collaboratively with other projects. These include
     reusable GitLab CI Components (requires GitLab 17.0+).
   * `Spack <https://github.com/spack/spack>`_, a multi-platform package 
     manager that builds and installs HPC software stacks.
-  * `Uberenv <https://github.com/LLNL/uberenv>`_, a Python script
-    that helps to simplify the workflow of Spack and other tools for building 
-    third-party dependencies. Uberenv is a submodule in RAJA that lives in
-    ``RAJA/scripts/uberenv/``.
   * `RADIUSS Spack Configs <https://github.com/LLNL/radiuss-spack-configs>`_, a
     collection of Spack compiler and package configurations used by Spack to
     generate build configurations. The build configurations are specific to
     LLNL LC platforms. Spack packages for multiple projects are maintained in
-    this project. Shared RADIUSS CI jobs are also hosted by this project as
-    they relate to the Spack configuration. RADIUSS Spack Configs is a
+    this project. Shared RADIUSS CI jobs and the ``rad-bat`` build-and-test
+    utility are also hosted by this project. RADIUSS Spack Configs is a
     submodule in RAJA that lives in ``RAJA/scripts/radiuss-spack-configs/``.
 
 The relationships among these dependencies in a project that uses them is
@@ -167,17 +163,9 @@ RAJA project.
 GitLab CI Testing Files (specific to LC CZ)
 --------------------------------------------
 
-The following figure shows directories and files in the RAJA project that 
-support LC GitLab CI testing. 
-
-.. figure:: ./figures/RAJA-GitLab-Files.png
-
-   The figure shows directories and files in the RAJA repo that support GitLab
-   CI testing. Files in blue are specific to CI while those in red relate
-   to the build (Spack) environment description. The ``build_and_test.sh``
-   scripts drives the configuration, compilation, and testing processes in
-   GitLab. ``uberenv`` and ``radiuss-spack-configs`` are both Git submodules
-   that are shared and maintained with other projects.
+RAJA's top-level CI configuration, machine job definitions, ``rad-bat``
+configuration, maintained host-configs, and project build adapter work
+together to support LC GitLab CI testing.
 
 Briefly, these files play the following roles in GitLab CI testing:
 
@@ -188,10 +176,11 @@ Briefly, these files play the following roles in GitLab CI testing:
     variables used throughout the CI configuration such as GitHub project name
     and organization, service user account name, and includes components for
     machine-specific pipelines and utilities.
-  * The `RAJA/.uberenv_config.json
-    <https://github.com/LLNL/RAJA/tree/develop/.uberenv_config.json>`_ file
-    defines information about Spack such as Spack version we are using,
-    location of Spack packages, etc.
+  * The `RAJA/.rad-bat.json
+    <https://github.com/LLNL/RAJA/tree/develop/.rad-bat.json>`_ file pins the
+    Spack and ``spack-packages`` revisions and defines RAJA's project-specific
+    build command. It also declares how an optional ``CAMP_REFERENCE`` value
+    becomes a Spack dependency constraint during refresh.
   * The `RAJA/.gitlab <https://github.com/LLNL/RAJA/tree/develop/.gitlab>`_
     directory contains RAJA-specific CI configuration files:
 
@@ -207,10 +196,11 @@ Briefly, these files play the following roles in GitLab CI testing:
     appended to the list of shared CI jobs provided by `RADIUSS Spack Configs
     <https://github.com/LLNL/radiuss-spack-configs>`_. Each job ultimately
     corresponds to one Spack spec.
-  * The `RAJA/scripts/gitlab/build_and_test.sh
-    <https://github.com/LLNL/RAJA/tree/develop/scripts/gitlab/build_and_test.sh>`_
-    script contains commands that are run during the RAJA build and test
-    process. It is set in the CI using the ``JOB_CMD`` variable.
+  * The `RAJA/scripts/gitlab/build_and_test.py
+    <https://github.com/LLNL/RAJA/tree/develop/scripts/gitlab/build_and_test.py>`_
+    script contains RAJA-specific configuration, build, installation, and test
+    steps. The ``JOB_CMD`` variable runs the shared ``rad-bat`` executable,
+    which invokes this script after selecting or generating a host-config.
 
 In the following sections, we discuss how these files are used in the 
 steps of the RAJA GitLab CI testing process summarized above.
@@ -263,7 +253,8 @@ Components accept inputs that configure their behavior. The main inputs used are
     (e.g., ``"^develop$|^main$|^v[0-9.]*-RC$"``)
 
 **Machine Pipeline Components** (dane, matrix, corona, tioga, tuolumne, lassen):
-  * ``job_cmd`` - The command to run for each job (e.g., ``"./scripts/gitlab/build_and_test.sh"``)
+  * ``job_cmd`` - The command to run for each job (for RAJA,
+    ``"./scripts/radiuss-spack-configs/bin/rad-bat"``)
   * ``shared_alloc`` - Scheduler allocation for the shared allocation job
     (e.g., ``"--exclusive --time=120 --nodes=1"`` for SLURM)
   * ``job_alloc`` - Scheduler allocation for individual jobs within the shared allocation
@@ -331,18 +322,19 @@ defines a RAJA job with desul atomics enabled to be run on the dane machine.
 Running a CI build and test pipeline  (steps 3, 4, 5, 6)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The `RAJA/scripts/gitlab/build_and_test.sh <https://github.com/LLNL/RAJA/tree/develop/scripts/gitlab/build_and_test.sh>`_ file defines the steps executed
-for each build and test pipeline as well as information that will appear in the
-log output for each step. The script "echoes" information to the test logs 
-indicating what it is doing. Following the echo commands in the file may help
-one understand the workflow.
+The shared ``rad-bat`` command and RAJA's
+``scripts/gitlab/build_and_test.py`` adapter define the steps executed for each
+build-and-test job. Both produce timed, collapsible sections in the job log.
 
 The details of the various steps in the process may change from time to time.
 However, the basic sequence is:
 
-  #. Perform some basic (platform-independent) setup.
-  #. Invoke the ``RAJA/scripts/uberenv/uberenv.py`` Python script that drives 
-     Spack to generate a host-config file from a given spec **(step 3)**.
+  #. Load the job's required modules before entering its scheduler step.
+  #. In the ordinary ``host-config`` mode, select the maintained host-config
+     named by the job without invoking Spack. In an explicitly requested
+     ``spack`` refresh pipeline, use native Spack environments to concretize
+     the job spec, install dependencies, and generate the host-config
+     **(step 3)**.
   #. Run CMake to configure a build space passing the host-config file to it
      which contains all CMake variable settings for the configuration.
   #. Build RAJA and tests **(step 4)**.
@@ -351,13 +343,30 @@ However, the basic sequence is:
      done by the RADIUSS Shared CI Framework.
   #. Perform clean up tasks.
 
-Recall that RAJA project specific settings defining the Spack version to use, 
-locations of Spack packages, etc. are located in the 
-`RAJA/.uberenv_config.json <https://github.com/LLNL/RAJA/tree/develop/.uberenv_config.json>`_ file.
+RAJA project-specific settings defining the Spack version and package
+repositories are pinned in
+`RAJA/.rad-bat.json <https://github.com/LLNL/RAJA/tree/develop/.rad-bat.json>`_.
+The same file contains a conditional spec fragment mapping a non-empty
+``CAMP_REFERENCE`` environment variable to
+``^camp@git.{CAMP_REFERENCE}=main``. The variable is defined separately in
+``.gitlab-ci.yml``. Both declarations are required: ``rad-bat`` does not assign
+special meaning to the variable by name. If the variable is unset or empty,
+the fragment is omitted and Spack selects CAMP normally. More dependencies can
+be supported with more entries in the ``spec_fragments`` array.
+
+Conditional fragments only describe dependencies in the Spack spec. Source
+checkout overrides used by multi-project testing belong to the project build
+adapter instead; for example, RAJAPerf's ``RAJA_REFERENCE`` selects the
+``tpl/RAJA`` checkout and is not a Spack dependency fragment.
 
 Also, recall that to generate a host-config file, Spack uses packages and 
 specs in the `RADIUSS Spack Configs project <https://github.com/LLNL/radiuss-spack-configs>`_ (a RAJA submodule), 
-plus RAJA-specific specs defined in files in the `RAJA/.gitlab/jobs <https://github.com/LLNL/RAJA/tree/develop/.gitlab/jobs>`_ directory, as described earlier.
+plus RAJA-specific specs defined in files in the `RAJA/.gitlab/jobs <https://github.com/LLNL/RAJA/tree/develop/.gitlab/jobs>`_ directory, as described earlier. Ordinary pipelines use the corresponding maintained files in ``RAJA/host-configs``. A missing maintained host-config is an error; refresh is never triggered implicitly.
+
+To refresh the complete maintained set, manually start a pipeline with
+``RAD_BAT_MODE=spack``. Each job publishes its generated host-config as an
+artifact. Review and commit those files through the normal GitHub workflow;
+the GitLab mirror is not modified by CI.
 
 .. _github_actions_ci-label:
 
@@ -435,4 +444,3 @@ builds of each container and compiler.
 
 .. note:: Please see :ref:`docker_local-label` for more information about
           reproducing Docker builds locally for debugging purposes.
-

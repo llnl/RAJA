@@ -17,12 +17,24 @@
 # Not all configuration can be shared. Here projects can fine tune the
 # CI behavior.
 .custom_job:
+  variables:
+    # Define this in the child job, where CI_PROJECT_DIR is available. Flux
+    # relocates the launcher but preserves this absolute import path.
+    PYTHONPATH: "${CI_PROJECT_DIR}/scripts/radiuss-spack-configs"
+    RAD_BAT_WORK_DIR: "/dev/shm/rad-bat-${CI_JOB_ID}"
+    RAD_BAT_HOST_CONFIG_DIR: "host-configs"
+    RAD_BAT_INSTALL_TREE: "/usr/workspace/rajasa/rad-bat/raja/${CI_MACHINE}/${CI_PIPELINE_ID}/${CI_JOB_NAME}/install"
+    RAD_BAT_OUTPUT_DIR: "${CI_PROJECT_DIR}/.rad-bat-artifacts/host-configs"
+    RAD_BAT_BUILDCACHE: "oci://${CI_REGISTRY_IMAGE}"
+    RAD_BAT_BUILDCACHE_USERNAME_VARIABLE: "CI_REGISTRY_USER"
+    RAD_BAT_BUILDCACHE_PASSWORD_VARIABLE: "CI_JOB_TOKEN"
   artifacts:
     reports:
       junit: junit.xml
     name: "${CI_PROJECT_NAME}-${CI_MACHINE}-${CI_JOB_NAME}-${CI_PIPELINE_ID}"
     paths:
       - ./*.cmake
+      - .rad-bat-artifacts/host-configs/*.cmake
 
 .reproducer_vars:
   script:
@@ -32,7 +44,20 @@
       export MODULE_LIST=\"${MODULE_LIST}\" \n
       export SPEC=\"${SPEC//\"/\\\"}\" \n
       export CMAKE_EXTRA_ARGS=\"${CMAKE_EXTRA_ARGS}\" \n
-      # Allow to set job script for debugging (only this differs from CI) \n
-      export DEBUG_MODE=true \n
-      # Using the CI build cache is optional and requires a token. Set it like so: \n
-      # export REGISTRY_TOKEN=\"<your token here>\" \n"
+      export RAD_BAT_MODE=\"${RAD_BAT_MODE:-}\" \n
+      export RAD_BAT_JOBS=\"${RAD_BAT_JOBS:-}\" \n
+      export RAD_BAT_WORK_DIR=\"${RAD_BAT_WORK_DIR:-}\" \n
+      export RAD_BAT_HOST_CONFIG_DIR=\"${RAD_BAT_HOST_CONFIG_DIR:-}\" \n
+      export RAD_BAT_INSTALL_TREE=\"${RAD_BAT_INSTALL_TREE:-}\" \n
+      export RAD_BAT_OUTPUT_DIR=\"${RAD_BAT_OUTPUT_DIR:-}\" \n
+      export RAD_BAT_SPACK_ENV=\"${RAD_BAT_SPACK_ENV:-}\" \n
+      export RAD_BAT_UPSTREAMS=\"${RAD_BAT_UPSTREAMS:-}\" \n
+      export RAD_BAT_BUILDCACHE=\"${RAD_BAT_BUILDCACHE:-}\" \n
+      export RAD_BAT_BUILDCACHE_USERNAME_VARIABLE=\"${RAD_BAT_BUILDCACHE_USERNAME_VARIABLE:-}\" \n
+      export RAD_BAT_BUILDCACHE_PASSWORD_VARIABLE=\"${RAD_BAT_BUILDCACHE_PASSWORD_VARIABLE:-}\" \n
+      export RAD_BAT_PUSH_TO_BUILDCACHE=\"${RAD_BAT_PUSH_TO_BUILDCACHE:-}\" \n
+      export RAD_BAT_HOST_CONFIG_NAME=\"${RAD_BAT_HOST_CONFIG_NAME:-}\" \n
+      export CTEST_REGEX=\"${CTEST_REGEX:-}\" \n
+      export CTEST_JOBS=\"${CTEST_JOBS:-}\" \n
+      export PYTHONPATH=\"scripts/radiuss-spack-configs\" \n
+      # Outside CI, set the credential variables named above before using the build cache. \n"
