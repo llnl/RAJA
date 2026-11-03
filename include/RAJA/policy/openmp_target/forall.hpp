@@ -127,12 +127,18 @@ RAJA_INLINE resources::EventProxy<resources::Omp> forall_impl(
 
   RAJA_EXTRACT_BED_IT(iter);
 
-  // Temporarily use map(to), amdclang likely using host pointers for firstprivate.
+  // Work around amdclang's firstprivate OpenMP target failure, amdclang likely using host pointers for firstprivate.
+#if defined(RAJA_COMPILER_AMDCLANG)
+#define RAJA_OMP_TARGET_CAPTURE map(to : body, begin_it)
+#else
+#define RAJA_OMP_TARGET_CAPTURE firstprivate(body, begin_it)
+#endif
+
   if constexpr (!is_forall_param_empty)
   {
     RAJA_OMP_DECLARE_REDUCTION_COMBINE;
 #pragma omp target teams distribute parallel for schedule(static, 1)           \
-    map(to : body, begin_it) reduction(combine : f_params)
+    RAJA_OMP_TARGET_CAPTURE reduction(combine : f_params)
     for (decltype(distance_it) i = 0; i < distance_it; ++i)
     {
       Body ib = body;
@@ -144,13 +150,16 @@ RAJA_INLINE resources::EventProxy<resources::Omp> forall_impl(
   else
   {
 #pragma omp target teams distribute parallel for schedule(static, 1)           \
-    map(to : body, begin_it)
+    RAJA_OMP_TARGET_CAPTURE
     for (decltype(distance_it) i = 0; i < distance_it; ++i)
     {
       Body ib = body;
       ib(begin_it[i]);
     }
   }
+
+#undef RAJA_OMP_TARGET_CAPTURE
+
   return resources::EventProxy<resources::Omp>(omp_res);
 }
 
