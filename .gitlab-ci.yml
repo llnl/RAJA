@@ -52,9 +52,6 @@ variables:
 # Required information about GitHub repository
   GITHUB_PROJECT_NAME: "RAJA"
   GITHUB_PROJECT_ORG: "LLNL"
-# Project-wide default. Override with RAD_BAT_MODE=spack in a manually started
-# pipeline to regenerate every maintained host-config.
-  RAD_BAT_MODE: "host-config"
 # Set the build-and-test command.
 # Nested variables are allowed and useful to customize the job command. We
 # prevent variable expansion so that you can define them at job level.

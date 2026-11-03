@@ -1,8 +1,14 @@
 # Maintaining host-configs with `rad-bat`
 
-Ordinary RAJA CI sets `RAD_BAT_MODE=host-config`. Every build-and-test job
-uses the stable host-config filename stored beside its `SPEC`; a missing file
-is an error and never causes an implicit Spack invocation.
+Every maintained RAJA build-and-test job defines both `SPEC` and
+`RAD_BAT_HOST_CONFIG_NAME`. With `RAD_BAT_MODE` unset, `rad-bat` therefore
+selects host-config mode. A missing file is an error and never causes an
+implicit Spack invocation.
+
+A job with only `SPEC` selects Spack mode. A job with only a host-config name
+selects host-config mode. If both are present, host-config mode wins unless an
+explicit `RAD_BAT_MODE` overrides the selection. Each job logs the set/unset
+inputs and selected mode without printing their values.
 
 To regenerate the complete maintained set, start a GitLab pipeline for the
 mirrored GitHub branch with:
