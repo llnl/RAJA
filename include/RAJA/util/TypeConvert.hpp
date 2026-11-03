@@ -44,8 +44,8 @@ namespace util
 RAJA_INLINE RAJA_HOST_DEVICE
 void* custom_memcpy(void* dest, const void* src, size_t len)
 {
-  char * customdest = (char *) dest;
-  const char * customsrc = (const char *) src;
+  char * customdest = static_cast<char *>(dest);
+  const char * customsrc = static_cast<const char *>(src);
 
   for ( size_t ii = 0; ii < len; ++ii )
   {
