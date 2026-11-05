@@ -41,13 +41,14 @@ namespace util
 
 #if defined(RAJA_COMPILER_AMDCLANG) && defined(RAJA_ENABLE_TARGET_OPENMP)
 // Work around amdclang's OpenMP target memcpy link failure.
-RAJA_INLINE RAJA_HOST_DEVICE
-void* custom_memcpy(void* dest, const void* src, size_t len)
+RAJA_INLINE RAJA_HOST_DEVICE void* custom_memcpy(void* dest,
+                                                 const void* src,
+                                                 size_t len)
 {
-  char * customdest = static_cast<char *>(dest);
-  const char * customsrc = static_cast<const char *>(src);
+  char* customdest      = static_cast<char*>(dest);
+  const char* customsrc = static_cast<const char*>(src);
 
-  for ( size_t ii = 0; ii < len; ++ii )
+  for (size_t ii = 0; ii < len; ++ii)
   {
     customdest[ii] = customsrc[ii];
   }
