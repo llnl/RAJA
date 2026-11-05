@@ -39,6 +39,24 @@ namespace RAJA
 namespace util
 {
 
+#if defined(RAJA_COMPILER_AMDCLANG) && defined(RAJA_ENABLE_TARGET_OPENMP)
+// Work around amdclang's OpenMP target memcpy link failure.
+RAJA_INLINE RAJA_HOST_DEVICE void* custom_memcpy(void* dest,
+                                                 const void* src,
+                                                 size_t len)
+{
+  char* customdest      = static_cast<char*>(dest);
+  const char* customsrc = static_cast<const char*>(src);
+
+  for (size_t ii = 0; ii < len; ++ii)
+  {
+    customdest[ii] = customsrc[ii];
+  }
+
+  return dest;
+}
+#endif
+
 
 // TODO: Investigate std::bit_cast in C++20.
 //       Currently breaks the ROCm 5.7.1 build.
@@ -53,7 +71,11 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr B reinterp_A_as_B(A const& a)
   // TODO: Consider requiring A and B to be trivially copyable
 
   B b;
+#if defined(RAJA_COMPILER_AMDCLANG) && defined(RAJA_ENABLE_TARGET_OPENMP)
+  custom_memcpy(&b, &a, sizeof(A));
+#else
   memcpy(&b, &a, sizeof(A));
+#endif
   return b;
 }
 

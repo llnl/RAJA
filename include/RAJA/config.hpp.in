@@ -241,6 +241,7 @@ static_assert(RAJA_HAS_SOME_CXX14,
 #define RAJA_COMPILER_XLC
 #elif defined(__clang__)
 #define RAJA_COMPILER_CLANG
+#cmakedefine RAJA_COMPILER_AMDCLANG
 #elif defined(__PGI)
 #define RAJA_COMPILER_PGI
 #elif defined(__GNUC__)

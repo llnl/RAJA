@@ -22,8 +22,6 @@
 #define VARIANT_RAJA_SEQ             1
 #define VARIANT_RAJA_SEQ_ARGS        1
 #define VARIANT_RAJA_TEAMS_SEQ       1
-#define VARIANT_RAJA_VECTOR          1
-#define VARIANT_RAJA_MATRIX          1
 #define VARIANT_RAJA_SEQ_SHMEM       1
 
 #if defined(RAJA_ENABLE_OPENMP)
@@ -33,13 +31,20 @@
 #if defined(RAJA_ENABLE_CUDA)
 #define VARIANT_CUDA_KERNEL          1
 #define VARIANT_CUDA_TEAMS           1
-#define VARIANT_CUDA_TEAMS_MATRIX    1
 #define VARIANT_CUDA_KERNEL_SHMEM    1
-#endif
+#if defined(RAJA_ENABLE_VECTORIZATION)
+#define VARIANT_CUDA_TEAMS_MATRIX    1
+#endif  // RAJA_ENABLE_VECTORIZATION
+#endif  // RAJA_ENABLE_CUDA
 
 #if defined(RAJA_ENABLE_HIP)
 #define RAJA_HIP_KERNEL              1
 #define RAJA_HIP_KERNEL_SHMEM        1
+#endif
+
+#if defined(RAJA_ENABLE_VECTORIZATION)
+#define VARIANT_RAJA_VECTOR          1
+#define VARIANT_RAJA_MATRIX          1
 #endif
 
 

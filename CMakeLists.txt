@@ -250,6 +250,10 @@ if (RAJA_ENABLE_DESUL_ATOMICS)
 endif ()
 
 if (NOT TARGET camp)
+  # Configure CAMP's OpenMP target backend before it generates config.hpp.
+  set(CAMP_ENABLE_TARGET_OPENMP ${RAJA_ENABLE_TARGET_OPENMP}
+      CACHE BOOL "Enable OpenMP offload as device runtime" FORCE)
+
   set(EXTERNAL_CAMP_SOURCE_DIR "" CACHE FILEPATH "build with a specific external
 camp source repository")
   if (EXTERNAL_CAMP_SOURCE_DIR)
@@ -277,7 +281,7 @@ camp source repository")
     blt_add_target_definitions(
       TO camp
       SCOPE INTERFACE
-      TARGET_DEFINITIONS CAMP_ENABLE_TARGET_OPENMP)
+      TARGET_DEFINITIONS CAMP_ENABLE_TARGET_OPENMP=)
   endif()
 endif (NOT TARGET camp)
 
