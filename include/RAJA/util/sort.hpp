@@ -339,7 +339,9 @@ struct intro_sort_insertion_sort_cutoff
     \brief unstable intro sort given range inplace using comparison function
     and using O(N*lg(N)) comparisons and O(lg(N)) memory, with limited depth.
 */
-template<typename Iter, typename Compare>
+template<unsigned DeviceDepth = intro_sort_device_max_depth::get(),
+         typename Iter,
+         typename Compare>
 RAJA_HOST_DEVICE inline void intro_sort_depth(Iter begin,
                                               Iter end,
                                               Compare comp,
@@ -365,7 +367,7 @@ RAJA_HOST_DEVICE inline void intro_sort_depth(Iter begin,
     // use insertion sort for small inputs
     detail::insertion_sort(begin, end, comp);
   }
-  else if (depth == 0)
+  else if (depth == 0 || DeviceDepth == 0)
   {
 
     // use heap sort if recurse too deep
@@ -404,8 +406,20 @@ RAJA_HOST_DEVICE inline void intro_sort_depth(Iter begin,
 
     // recurse to sort first and second parts, ignoring already sorted pivot
     // by construction pivot is always in the range [begin, last]
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+    // Limit CUDA/HIP IntroSort recursion depth explicit at compile time with DeviceDepth
+    // template parameter to prevent stack overflow.
+    // Runtime-bounded recursion prevents CUDA from determining stack usage.
+    if constexpr (DeviceDepth > 0)
+    {
+      detail::intro_sort_depth<DeviceDepth - 1>(begin, pivot, comp, depth - 1);
+      detail::intro_sort_depth<DeviceDepth - 1>(RAJA::next(pivot), end, comp,
+                                                depth - 1);
+    }
+#else
     detail::intro_sort_depth(begin, pivot, comp, depth - 1);
     detail::intro_sort_depth(RAJA::next(pivot), end, comp, depth - 1);
+#endif
   }
 }
 
