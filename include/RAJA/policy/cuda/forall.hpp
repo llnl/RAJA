@@ -389,7 +389,7 @@ template<typename EXEC_POL,
                               (IterationGetter::block_size > 0),
                           size_t> BlockSize = IterationGetter::block_size>
 __launch_bounds__(BlockSize > 0 ? BlockSize : 1, BlocksPerSM) __global__
-    RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
+    RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel_direct_fixed(
         const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
         const RAJA_CUDA_GRID_CONSTANT Iterator idx,
         const RAJA_CUDA_GRID_CONSTANT IndexType length,
@@ -421,7 +421,7 @@ template<typename EXEC_POL,
                                           IterationMapping>::value &&
                               (IterationGetter::block_size <= 0),
                           size_t> RAJA_UNUSED_ARG(BlockSize) = 0>
-__global__ RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
+__global__ RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel_direct_dynamic(
     const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
     const RAJA_CUDA_GRID_CONSTANT Iterator idx,
     const RAJA_CUDA_GRID_CONSTANT IndexType length,
@@ -457,7 +457,7 @@ template<
                          (IterationGetter::block_size > 0),
                      size_t> BlockSize = IterationGetter::block_size>
 __launch_bounds__(BlockSize > 0 ? BlockSize : 1, BlocksPerSM) __global__
-    RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
+    RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel_strided_fixed(
         const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
         const RAJA_CUDA_GRID_CONSTANT Iterator idx,
         const RAJA_CUDA_GRID_CONSTANT IndexType length,
@@ -492,7 +492,7 @@ template<
                                          IterationMapping>::value &&
                          (IterationGetter::block_size <= 0),
                      size_t> RAJA_UNUSED_ARG(BlockSize) = 0>
-__global__ RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel(
+__global__ RAJA_JIT_COMPILE_ARGS(3) void forallp_cuda_kernel_strided_dynamic(
     const RAJA_CUDA_GRID_CONSTANT LOOP_BODY loop_body,
     const RAJA_CUDA_GRID_CONSTANT Iterator idx,
     const RAJA_CUDA_GRID_CONSTANT IndexType length,
@@ -564,13 +564,43 @@ forall_impl(resources::Cuda cuda_res,
   // Only launch kernel if we have something to iterate over
   if (len > 0)
   {
-    // Note: we cannot fully remove enable_if_t from this file because NVCC is
-    // not capable of disambiguating conceptified versions of
-    // forallp_cuda_kernel when they are used by address like below.
-
-    auto func = reinterpret_cast<const void*>(
-        &impl::forallp_cuda_kernel<EXEC_POL, BlocksPerSM, Iterator, LOOP_BODY,
-                                   IndexType, camp::decay<ForallParam>>);
+    // Select distinct kernel names to avoid overloaded CUDA host stubs on MSVC.
+    const void* func = nullptr;
+    if constexpr (std::is_base_of<iteration_mapping::DirectBase,
+                                  IterationMapping>::value)
+    {
+      if constexpr (IterationGetter::block_size > 0)
+      {
+        func = reinterpret_cast<const void*>(
+            &impl::forallp_cuda_kernel_direct_fixed<
+                EXEC_POL, BlocksPerSM, Iterator, LOOP_BODY, IndexType,
+                camp::decay<ForallParam>>);
+      }
+      else
+      {
+        func = reinterpret_cast<const void*>(
+            &impl::forallp_cuda_kernel_direct_dynamic<
+                EXEC_POL, BlocksPerSM, Iterator, LOOP_BODY, IndexType,
+                camp::decay<ForallParam>>);
+      }
+    }
+    else
+    {
+      if constexpr (IterationGetter::block_size > 0)
+      {
+        func = reinterpret_cast<const void*>(
+            &impl::forallp_cuda_kernel_strided_fixed<
+                EXEC_POL, BlocksPerSM, Iterator, LOOP_BODY, IndexType,
+                camp::decay<ForallParam>>);
+      }
+      else
+      {
+        func = reinterpret_cast<const void*>(
+            &impl::forallp_cuda_kernel_strided_dynamic<
+                EXEC_POL, BlocksPerSM, Iterator, LOOP_BODY, IndexType,
+                camp::decay<ForallParam>>);
+      }
+    }
 
     //
     // Setup shared memory buffers
