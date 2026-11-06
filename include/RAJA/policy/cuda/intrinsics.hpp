@@ -142,14 +142,23 @@ struct AccessorDeviceScopeUseBlockFence
     using ArrayType = RAJA::detail::AsIntegerArray<T, min_atomic_int_type_size,
                                                    max_atomic_int_type_size>;
     using integer_type = typename ArrayType::integer_type;
+    // Select an exact integer type supported by CUDA atomic overloads.
+    // The checks below ensure compatible storage size and alignment.
+    using atomic_type = std::conditional_t<
+        sizeof(integer_type) == sizeof(unsigned int), unsigned int,
+        unsigned long long>;
+    static_assert(sizeof(atomic_type) == sizeof(integer_type),
+                  "CUDA atomic type must preserve the storage width");
+    static_assert(alignof(integer_type) >= alignof(atomic_type),
+                  "CUDA atomic type must preserve the storage alignment");
 
     ArrayType u;
-    auto ptr = const_cast<integer_type*>(
-        reinterpret_cast<const integer_type*>(in_ptr + idx));
+    auto ptr = const_cast<atomic_type*>(
+        reinterpret_cast<const atomic_type*>(in_ptr + idx));
 
     for (size_t i = 0; i < u.array_size(); ++i)
     {
-      u.array[i] = ::atomicAdd(&ptr[i], integer_type(0));
+      u.array[i] = ::atomicAdd(&ptr[i], atomic_type(0));
     }
 
     return u.get_value();
@@ -161,14 +170,23 @@ struct AccessorDeviceScopeUseBlockFence
     using ArrayType = RAJA::detail::AsIntegerArray<T, min_atomic_int_type_size,
                                                    max_atomic_int_type_size>;
     using integer_type = typename ArrayType::integer_type;
+    // Select an exact integer type supported by CUDA atomic overloads.
+    // The checks below ensure compatible storage size and alignment.
+    using atomic_type = std::conditional_t<
+        sizeof(integer_type) == sizeof(unsigned int), unsigned int,
+        unsigned long long>;
+    static_assert(sizeof(atomic_type) == sizeof(integer_type),
+                  "CUDA atomic type must preserve the storage width");
+    static_assert(alignof(integer_type) >= alignof(atomic_type),
+                  "CUDA atomic type must preserve the storage alignment");
 
     ArrayType u;
     u.set_value(val);
-    auto ptr = reinterpret_cast<integer_type*>(in_ptr + idx);
+    auto ptr = reinterpret_cast<atomic_type*>(in_ptr + idx);
 
     for (size_t i = 0; i < u.array_size(); ++i)
     {
-      ::atomicExch(&ptr[i], u.array[i]);
+      ::atomicExch(&ptr[i], static_cast<atomic_type>(u.array[i]));
     }
   }
 
