@@ -407,9 +407,9 @@ RAJA_HOST_DEVICE inline void intro_sort_depth(Iter begin,
     // recurse to sort first and second parts, ignoring already sorted pivot
     // by construction pivot is always in the range [begin, last]
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-    // Limit CUDA/HIP IntroSort recursion depth explicit at compile time with DeviceDepth
-    // template parameter to prevent stack overflow.
-    // Runtime-bounded recursion prevents CUDA from determining stack usage.
+    // Limit CUDA/HIP IntroSort recursion depth explicit at compile time with
+    // DeviceDepth template parameter to prevent stack overflow. Runtime-bounded
+    // recursion prevents CUDA from determining stack usage.
     if constexpr (DeviceDepth > 0)
     {
       detail::intro_sort_depth<DeviceDepth - 1>(begin, pivot, comp, depth - 1);

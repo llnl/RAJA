@@ -144,9 +144,9 @@ struct AccessorDeviceScopeUseBlockFence
     using integer_type = typename ArrayType::integer_type;
     // Select an exact integer type supported by CUDA atomic overloads.
     // The checks below ensure compatible storage size and alignment.
-    using atomic_type = std::conditional_t<
-        sizeof(integer_type) == sizeof(unsigned int), unsigned int,
-        unsigned long long>;
+    using atomic_type =
+        std::conditional_t<sizeof(integer_type) == sizeof(unsigned int),
+                           unsigned int, unsigned long long>;
     static_assert(sizeof(atomic_type) == sizeof(integer_type),
                   "CUDA atomic type must preserve the storage width");
     static_assert(alignof(integer_type) >= alignof(atomic_type),
@@ -172,9 +172,9 @@ struct AccessorDeviceScopeUseBlockFence
     using integer_type = typename ArrayType::integer_type;
     // Select an exact integer type supported by CUDA atomic overloads.
     // The checks below ensure compatible storage size and alignment.
-    using atomic_type = std::conditional_t<
-        sizeof(integer_type) == sizeof(unsigned int), unsigned int,
-        unsigned long long>;
+    using atomic_type =
+        std::conditional_t<sizeof(integer_type) == sizeof(unsigned int),
+                           unsigned int, unsigned long long>;
     static_assert(sizeof(atomic_type) == sizeof(integer_type),
                   "CUDA atomic type must preserve the storage width");
     static_assert(alignof(integer_type) >= alignof(atomic_type),
