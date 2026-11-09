@@ -43,8 +43,6 @@ variables:
   GIT_SUBMODULE_PATHS: tpl/desul scripts/radiuss-spack-configs scripts/uberenv
 
 # PROJECT VARIABLES
-  MP_BRANCH: "develop"
-
 # This sha fixes the version of camp used in gitlab CI by RAJA
   CAMP_REFERENCE: "b4edd077937245c120e25e6080be8caee5926347"
 
@@ -239,19 +237,64 @@ tuolumne-build-and-test:
       - artifact: 'tuolumne-jobs.yml'
         job: 'generate-job-lists'
 
-# If testing develop branch, trigger RAJAPerf pipeline with this version of
-# RAJA.
-# TODO: Once spack allows to clone a specific commit on demand, then point to the exact commit.
-#       This will prevent from sticking to a branch (here develop).
-#       MP_BRANCH is short for "Multi-Project Branch" and will usually be develop.
+# MULTI-PROJECT PIPELINE
+# In RAJA@develop CI pipelines, automatically test RAJAPerf, CHAI, and CARE
+# against RAJA@develop.
+#
+# Otherwise, in regular CI pipelines, add manual trigger jobs to the pipeline.
+# The trigger-<project> jobs test the current RAJA commit in RAJAPerf, CHAI or CARE.
+#
+# Set MULTI_PROJECT to "OFF" to disable all downstream pipeline triggers.
 trigger-rajaperf:
   stage: multi-project
   rules:
-    - if: $CI_COMMIT_BRANCH == $MP_BRANCH || $MULTI_PROJECT == "ON" #run only if ...
+    - if: $MULTI_PROJECT != "OFF" && $CI_COMMIT_BRANCH == "develop"
+      when: on_success
+      allow_failure: true
+    - if: $MULTI_PROJECT != "OFF"
+      when: manual
+      allow_failure: true
+    - when: never
   inherit:
     variables: false
   variables:
-    UPDATE_RAJA: ${MP_BRANCH}
+    RAJA_REFERENCE: ${CI_COMMIT_SHA}
   trigger:
     project: radiuss/multi-project/rajaperf-trigger
+    branch: develop
+
+trigger-chai:
+  stage: multi-project
+  rules:
+    - if: $MULTI_PROJECT != "OFF" && $CI_COMMIT_BRANCH == "develop"
+      when: on_success
+      allow_failure: true
+    - if: $MULTI_PROJECT != "OFF"
+      when: manual
+      allow_failure: true
+    - when: never
+  inherit:
+    variables: false
+  variables:
+    RAJA_REFERENCE: ${CI_COMMIT_SHA}
+  trigger:
+    project: radiuss/multi-project/chai-trigger
+    branch: develop
+
+trigger-care:
+  stage: multi-project
+  rules:
+    - if: $MULTI_PROJECT != "OFF" && $CI_COMMIT_BRANCH == "develop"
+      when: on_success
+      allow_failure: true
+    - if: $MULTI_PROJECT != "OFF"
+      when: manual
+      allow_failure: true
+    - when: never
+  inherit:
+    variables: false
+  variables:
+    RAJA_REFERENCE: ${CI_COMMIT_SHA}
+  trigger:
+    project: radiuss/multi-project/care-trigger
     branch: develop

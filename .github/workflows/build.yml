@@ -13,17 +13,17 @@ jobs:
         sudo rm -rf /opt/ghc
         sudo rm -rf /opt/hostedtoolcache/CodeQL
         sudo docker image prune --all --force
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
       with:
         submodules: recursive
-    - uses: docker/setup-buildx-action@v3
-    - uses: docker/build-push-action@v6
+    - uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003  # v4.4.0
+    - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
       with:
         target: ${{ matrix.target }}
   build_mac:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           submodules: recursive
 
@@ -33,7 +33,7 @@ jobs:
         with:
           cmakeVersion: "~3.29.0"
 
-      - uses: threeal/cmake-action@v1.3.0
+      - uses: threeal/cmake-action@725d1314ccf9ea922805d7e3f9d9bcbca892b406  # v2.1.0
         with:
           build-dir: build
           options:
@@ -42,7 +42,7 @@ jobs:
             CMAKE_BUILD_TYPE=Release
           run-build: true
           build-args: '--parallel 16'
-      - uses: threeal/ctest-action@v1.1.0
+      - uses: threeal/ctest-action@8f90c568a3060a3cffb896e241be14bd3f53d526   # v1.1.0
   build_windows:
     strategy:
       matrix:
@@ -60,7 +60,7 @@ jobs:
 # be resolved.
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           submodules: recursive
 
@@ -72,13 +72,13 @@ jobs:
 
 ## ====================================
 ## Config and build action
-      - uses: threeal/cmake-action@v1.3.0
+      - uses: threeal/cmake-action@b684818e3104c3151285e9001e7652b717f11bcd # v1.3.0
         with:
           build-dir: build
           generator: 'Visual Studio 17 2022'     # force VS generator so MSVC is used instead of NMake
           options:
             ENABLE_WARNINGS_AS_ERRORS=Off
-            BLT_CXX_STD="c++20"
+            BLT_CXX_STD=c++20
             CMAKE_CXX_STANDARD=20
             CMAKE_BUILD_TYPE=Release
             ${{ matrix.shared.args }}
@@ -90,6 +90,6 @@ jobs:
 ##        dir -r D:\a\RAJA\RAJA\build\test
 ## ====================================
 ## Run tests action
-      - uses: threeal/ctest-action@v1.1.0
+      - uses: threeal/ctest-action@8f90c568a3060a3cffb896e241be14bd3f53d526   # v1.1.0
         with:
           build-config: Debug
