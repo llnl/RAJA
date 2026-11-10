@@ -151,23 +151,24 @@ INTEL-DATA-CENTER-MAX-1100:
       ctest --test-dir build --output-on-failure --output-junit junit.xml -T test
       --exclude-regex 'test-forall-basic-msg-Sycl|test-tensor-register-double-Subtract'
 
-AMD-MI300A:
-  extends: [.common-setup, .junit-artifacts]
-  tags: [uo-gpu, odyssey, amd-mi300, x86_64-amdgpu]
-  image: rocm/dev-ubuntu-26.04:7.14.0-full
-  timeout: 2h
-  script:
-    - apt-get update && apt-get install -y build-essential cmake git python3
-    - export CMAKE_BUILD_PARALLEL_LEVEL=8
-    - export HSA_XNACK=1
-    - export HIP_VISIBLE_DEVICES=3
-    - export LD_LIBRARY_PATH=/opt/rocm/lib:/opt/rocm/lib64:${LD_LIBRARY_PATH}
-    - >-
-      cmake -S ${CI_PROJECT_DIR} -B build
-      -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
-      -C ${CI_PROJECT_DIR}/host-configs/uoregon/amd_mi300a.cmake
-    - cmake --build build
-    - >-
-
-# Disable tests for now, execution is failing can't find ROCM devices
-# - ctest --test-dir build --output-on-failure --output-junit junit.xml -T test
+# SGS 2026-11-10: Disable this job for now, re-enable when Odyssey is back up and running.
+# Queue is currently down and ctest jobs had been failing to find the ROCM device on the nodes.
+# 
+# AMD-MI300A:
+#   extends: [.common-setup, .junit-artifacts]
+#   tags: [uo-gpu, odyssey, amd-mi300, x86_64-amdgpu]
+#   image: rocm/dev-ubuntu-26.04:7.14.0-full
+#   timeout: 2h
+#   script:
+#     - apt-get update && apt-get install -y build-essential cmake git python3
+#     - export CMAKE_BUILD_PARALLEL_LEVEL=8
+#     - export HSA_XNACK=1
+#     - export HIP_VISIBLE_DEVICES=3
+#     - export LD_LIBRARY_PATH=/opt/rocm/lib:/opt/rocm/lib64:${LD_LIBRARY_PATH}
+#     - >-
+#       cmake -S ${CI_PROJECT_DIR} -B build
+#       -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+#       -C ${CI_PROJECT_DIR}/host-configs/uoregon/amd_mi300a.cmake
+#     - cmake --build build
+#     - ctest --test-dir build --output-on-failure --output-junit junit.xml -T test
+#     - >-

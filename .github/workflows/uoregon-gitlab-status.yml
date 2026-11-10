@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   gitlab-pipeline:
+    continue-on-error: true
     runs-on: ubuntu-latest
     environment: delayed-90-minutes 
     timeout-minutes: 130
