@@ -111,7 +111,7 @@ void ForallRangeSegment2DOffsetViewTestImpl(INDEX_TYPE N)
   working_res.memcpy(check_array, working_array,
                      sizeof(INDEX_TYPE) * RAJA::stripIndexType(lentot));
 
-  for (INDEX_TYPE i = 0; i < lentot; i++) {
+  for (INDEX_TYPE i {0}; i < lentot; i++) {
     ASSERT_EQ(test_array[RAJA::stripIndexType(i)],
               check_array[RAJA::stripIndexType(i)]);
   }
