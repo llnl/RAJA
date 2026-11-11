@@ -72,7 +72,7 @@ jobs:
 
 ## ====================================
 ## Config and build action
-      - uses: threeal/cmake-action@b684818e3104c3151285e9001e7652b717f11bcd # v1.3.0
+      - uses: threeal/cmake-action@725d1314ccf9ea922805d7e3f9d9bcbca892b406  # v2.1.0
         with:
           build-dir: build
           generator: 'Visual Studio 17 2022'     # force VS generator so MSVC is used instead of NMake
