@@ -34,10 +34,12 @@
 
 rocmcc_6_4_3_hip_desul_atomics:
   variables:
-    SPEC: "~shared +rocm ~openmp +desul +tests amdgpu_target=gfx942 %llvm-amdgpu@=6.4.3 ^hip@6.4.3"
+    SPEC: "~shared +rocm ~openmp +desul +tests amdgpu_target=gfx942 %llvm-amdgpu@=6.4.3 ^hip@6.4.3 ${PROJECT_TUOLUMNE_DEPS}"
+    RAD_BAT_HOST_CONFIG_NAME: "tuolumne-rocmcc_6_4_3_hip_desul_atomics.cmake"
   extends: .job_on_tuolumne
 
 rocmcc_6_4_3_hip_openmp:
   variables:
-    SPEC: "~shared +rocm +openmp +omptask +tests amdgpu_target=gfx942 %llvm-amdgpu@=6.4.3 ^hip@6.4.3"
+    SPEC: "~shared +rocm +openmp +omptask +tests amdgpu_target=gfx942 %llvm-amdgpu@=6.4.3 ^hip@6.4.3 ${PROJECT_TUOLUMNE_DEPS}"
+    RAD_BAT_HOST_CONFIG_NAME: "tuolumne-rocmcc_6_4_3_hip_openmp.cmake"
   extends: .job_on_tuolumne

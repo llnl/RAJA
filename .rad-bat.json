@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "project": {
+    "package": "raja",
+    "command": [
+      "python3",
+      "scripts/gitlab/build_and_test.py",
+      "--host-config", "{host_config}",
+      "--work-dir", "{work_dir}",
+      "--source", "{source}",
+      "--jobs", "{jobs}"
+    ]
+  },
+  "spack": {
+    "url": "https://github.com/spack/spack.git",
+    "commit": "2a4c87fd44bd303643c0b0e0d7ed6fe1d1a23937",
+    "environment": "scripts/radiuss-spack-configs/{sys_type}/spack.yaml",
+    "spec_fragments": [
+      {
+        "if_env": "CAMP_REFERENCE",
+        "value": "^camp@git.{CAMP_REFERENCE}=main"
+      }
+    ],
+    "repositories": [
+      {"path": "scripts/radiuss-spack-configs/spack_repo/llnl_radiuss"},
+      {
+        "url": "https://github.com/spack/spack-packages.git",
+        "commit": "4b6b842d494ab86ebef5304e6bfe766aa421a66b",
+        "subdirectory": "repos/spack_repo/builtin"
+      }
+    ]
+  }
+}

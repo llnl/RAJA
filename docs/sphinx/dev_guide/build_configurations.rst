@@ -115,25 +115,23 @@ via ``FetchContent``:
 Spack-Generated Host-Config Files
 ==================================
 
-As described in :ref:`gitlab_ci_depend-label`, the RAJA repository contains 
-two submodules `Uberenv <https://github.com/LLNL/uberenv>`_ and
-`RADIUSS Spack Configs <https://github.com/LLNL/radiuss-spack-configs>`_ that 
-work together with Spack to generate host-config files. Uberenv and RADIUSS
-Spack Configs are projects in the GitHub LLNL organization and contain 
-utilities shared and maintained by various LLNL open-source projects. Uberenv 
-contains a Python script that is used to drive Spack to generate a 
-*host-config* file. The generated file can be passed to CMake using the '-C' 
-option to create a build configuration. *Spack specs* defining compiler and 
-toolchain configurations, and Spack packages for RAJA and other projects are 
-maintained in the RADIUSS Spack Configs project.
+As described in :ref:`gitlab_ci_depend-label`, RAJA uses
+`RADIUSS Spack Configs <https://github.com/LLNL/radiuss-spack-configs>`_ with
+Spack to generate host-config files. The generated file can be passed to CMake
+using the ``-C`` option to create a build configuration. *Spack specs*
+defining compiler and toolchain configurations, and Spack packages for RAJA
+and other projects are maintained in RADIUSS Spack Configs.
+
+RAJA CI uses the ``rad-bat`` utility from RADIUSS Spack Configs and native
+Spack environments. The Uberenv submodule remains available for the
+interactive host-config generation workflow described below.
 
 Additional information about this process is available in the
 `RADIUSS Uberenv Guide <https://radiuss-ci.readthedocs.io/en/latest/uberenv.html#uberenv-guide>`_.
 
-.. important:: The process of generating a host-config file and using it to 
-               test a build of RAJA is very useful since the same procedure
-               is done in our GitLab CI testing. See :ref:`ci-label` for more 
-               information about our GitLab testing process.
+.. important:: Generating a host-config file and using it to test a RAJA build
+               exercises the same interface used by ordinary GitLab CI. See
+               :ref:`ci-label` for more information about the CI workflow.
 
 
 Generating a RAJA host-config file
@@ -228,17 +226,19 @@ You may also run the RAJA tests with the command
 
 as an alternative to the 'ctest' command used above.
 
-It is also possible to use the configuration with the RAJA GitLab CI script 
-outside of the GitLab environment:
+It is also possible to run RAJA's complete build-and-test sequence with
+``rad-bat`` outside CI:
 
 .. code-block:: bash
 
-  $ HOST_CONFIG=<path_to>/<host-config>.cmake ./scripts/gitlab/build_and_test.sh
+  $ scripts/radiuss-spack-configs/bin/rad-bat host-config \
+      --host-config <path_to>/<host-config>.cmake \
+      --work-dir .rad-bat-work
 
 .. important:: Before adding a new configuration to RAJA GitLab CI, it is
                prudent to manually perform the process of generating the
-               corresponding host-config file and testing it by running it
-               though our GitLab testing script as described here.
+               corresponding host-config file and testing it with ``rad-bat``
+               as described here.
 
 
 MacOS
