@@ -323,11 +323,16 @@ void launch(LaunchParams const& launch_params,
   auto&& launch_body =
       expt::get_lambda(std::forward<ReduceParams>(rest_of_launch_args)...);
 
+  using launch_t = LaunchExecute<typename LAUNCH_POLICY::host_policy_t>;
+  using Res      = typename resources::get_resource<
+           typename LAUNCH_POLICY::host_policy_t>::type;
+  auto res = Res::get_default();
+
   // Take the first policy as we assume the second policy is not user defined.
   // We rely on the user to pair launch and loop policies correctly.
   util::PluginContext context {
       util::make_context<typename LAUNCH_POLICY::host_policy_t>(
-          std::move(kernel_name))};
+          std::move(kernel_name), res)};
   util::callPreCapturePlugins(context);
 
   using RAJA::util::trigger_updates_before;
@@ -337,12 +342,7 @@ void launch(LaunchParams const& launch_params,
 
   util::callPreLaunchPlugins(context);
 
-  using launch_t = LaunchExecute<typename LAUNCH_POLICY::host_policy_t>;
-
-  using Res = typename resources::get_resource<
-      typename LAUNCH_POLICY::host_policy_t>::type;
-
-  launch_t::exec(Res::get_default(), launch_params, p_body, reducers);
+  launch_t::exec(res, launch_params, p_body, reducers);
 
   util::callPostLaunchPlugins(context);
 }
@@ -463,13 +463,13 @@ resources::EventProxy<resources::Resource> launch(
   util::PluginContext context {
       place == ExecPlace::HOST
           ? util::make_context<typename POLICY_LIST::host_policy_t>(
-                std::move(kernel_name))
+                std::move(kernel_name), res)
           : util::make_context<typename POLICY_LIST::device_policy_t>(
-                std::move(kernel_name))};
+                std::move(kernel_name), res)};
 #else
   util::PluginContext context {
       util::make_context<typename POLICY_LIST::host_policy_t>(
-          std::move(kernel_name))};
+          std::move(kernel_name), res)};
 #endif
 
   util::callPreCapturePlugins(context);

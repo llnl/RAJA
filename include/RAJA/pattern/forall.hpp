@@ -334,8 +334,8 @@ RAJA_INLINE resources::EventProxy<Res> forall_Icount(ExecutionPolicy&& p,
   auto&& loop_body = expt::get_lambda(std::forward<Params>(params)...);
   // expt::check_forall_optional_args(loop_body, f_params);
 
-  util::PluginContext context {
-      util::make_context<camp::decay<ExecutionPolicy>>(std::move(kernel_name))};
+  util::PluginContext context {util::make_context<camp::decay<ExecutionPolicy>>(
+      std::move(kernel_name), r)};
   util::callPreCapturePlugins(context);
 
   using RAJA::util::trigger_updates_before;
@@ -390,8 +390,8 @@ RAJA_INLINE resources::EventProxy<Res> forall(ExecutionPolicy&& p,
   auto&& loop_body = expt::get_lambda(std::forward<Params>(params)...);
   expt::check_forall_optional_args(loop_body, f_params);
 
-  util::PluginContext context {
-      util::make_context<camp::decay<ExecutionPolicy>>(std::move(kernel_name))};
+  util::PluginContext context {util::make_context<camp::decay<ExecutionPolicy>>(
+      std::move(kernel_name), r)};
   util::callPreCapturePlugins(context);
 
   using RAJA::util::trigger_updates_before;
@@ -474,8 +474,8 @@ RAJA_INLINE resources::EventProxy<Res> forall_Icount(ExecutionPolicy&& p,
                                       std::forward<Params>(params)...);
   // expt::check_forall_optional_args(loop_body, f_params);
 
-  util::PluginContext context {
-      util::make_context<camp::decay<ExecutionPolicy>>(std::move(kernel_name))};
+  util::PluginContext context {util::make_context<camp::decay<ExecutionPolicy>>(
+      std::move(kernel_name), r)};
   util::callPreCapturePlugins(context);
 
   using RAJA::util::trigger_updates_before;
@@ -538,8 +538,8 @@ RAJA_INLINE resources::EventProxy<Res> forall(ExecutionPolicy&& p,
 
   expt::check_forall_optional_args(loop_body, f_params);
 
-  util::PluginContext context {
-      util::make_context<camp::decay<ExecutionPolicy>>(std::move(kernel_name))};
+  util::PluginContext context {util::make_context<camp::decay<ExecutionPolicy>>(
+      std::move(kernel_name), r)};
   util::callPreCapturePlugins(context);
 
   using RAJA::util::trigger_updates_before;
