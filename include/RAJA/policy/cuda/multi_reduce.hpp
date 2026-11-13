@@ -306,7 +306,7 @@ private:
   static constexpr size_t s_tally_bunch_size =
       RAJA_DIVIDE_CEILING_INT(s_tally_alignment, sizeof(T));
 
-  using tally_mempool_type = device_pinned_mempool_type;
+  using tally_mempool_type = host_accessible_reduction_mempool_type;
   using tally_tuning       = typename tuning::GlobalAtomicReplicationTuning;
   using GlobalAtomicReplicationConcretizer =
       typename tally_tuning::AtomicReplicationConcretizer;

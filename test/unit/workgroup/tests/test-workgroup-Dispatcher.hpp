@@ -32,6 +32,22 @@ call_dispatcher( Invoker invoker,
 }
 
 #if defined(RAJA_ENABLE_CUDA) || defined(RAJA_ENABLE_HIP)
+/**
+ * Invoke a dispatcher on the device without an extended-lambda wrapper.
+ * NVCC-generated wrappers for function-pointer captures can fail on MSVC.
+ */
+template <typename Invoker, typename... CallArgs>
+struct DispatcherDeviceCall
+{
+  Invoker invoker;
+  RAJA::tuple<CallArgs...> call_args;
+
+  RAJA_DEVICE void operator()() const
+  {
+    camp::invoke(call_args, invoker);
+  }
+};
+
 template  < typename ForOnePol,
             typename Invoker,
             typename ... CallArgs >
@@ -41,10 +57,8 @@ typename  std::enable_if<
 call_dispatcher( Invoker invoker,
                  CallArgs... callArgs )
 {
-  RAJA::tuple<CallArgs...> lambda_capturable_callArgs(callArgs...);
-  forone<ForOnePol>( [=] RAJA_DEVICE () {
-    camp::invoke(lambda_capturable_callArgs, invoker);
-  });
+  forone<ForOnePol>(DispatcherDeviceCall<Invoker, CallArgs...>{
+      invoker, RAJA::tuple<CallArgs...>(callArgs...)});
 }
 #endif
 
