@@ -148,13 +148,13 @@ struct OffsetLayout_impl<camp::idx_seq<RangeInts...>, IdxLin>
   template<camp::idx_t DIM>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_stride() const
   {
-    return base_.get_dim_stride();
+    return base_.template get_dim_stride<DIM>();
   }
 
   template<camp::idx_t DIM>
   RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_size() const
   {
-    return base_.get_dim_size();
+    return base_.template get_dim_size<DIM>();
   }
 
   template<camp::idx_t DIM>

@@ -150,6 +150,13 @@ struct IndexLayout_impl<camp::idx_seq<RangeInts...>, IdxLin, IndexTypes...>
   {
     return base_.template get_dim_size<DIM>();
   }
+
+  template<camp::idx_t DIM>
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr IndexLinear get_dim_begin() const
+  {
+    static_assert(DIM < n_dims, "Dimension out of bounds");
+    return IndexLinear(0);
+  }
 };
 
 }  // namespace internal
