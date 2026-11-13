@@ -154,6 +154,20 @@ private:
                : (col * IDX(ROW_SIZE) + row) & IDX(s_mask_per_register);
   }
 
+  RAJA_INLINE RAJA_HOST_DEVICE constexpr static camp::idx_t bounded_extent(
+      camp::idx_t extent,
+      camp::idx_t offset,
+      camp::idx_t max_extent)
+  {
+    if (offset >= extent)
+    {
+      return 0;
+    }
+
+    camp::idx_t remaining = extent - offset;
+    return remaining > max_extent ? max_extent : remaining;
+  }
+
   using base_type::m_registers;
 
 public:
@@ -806,10 +820,10 @@ public:
                 s_elements_per_register * (i - (row * s_minor_dim_registers));
 
 
-            camp::idx_t reg_num_cols = s_elements_per_register;
-            if (reg_num_cols + col > num_cols)
+            camp::idx_t reg_num_cols =
+                bounded_extent(num_cols, col, s_elements_per_register);
+            if (reg_num_cols < s_elements_per_register)
             {
-              reg_num_cols = num_cols - col;
               m_registers[i].load_strided_n(ptr + row * row_stride +
                                                 col * col_stride,
                                             col_stride, reg_num_cols);
@@ -829,10 +843,9 @@ public:
         for (camp::idx_t i = 0; i < s_num_registers; ++i)
         {
           // figure out how many rows get loaded in this register
-          camp::idx_t reg_num_rows = num_rows - i * s_major_dim_per_register;
-          reg_num_rows             = reg_num_rows > s_major_dim_per_register
-                                         ? s_major_dim_per_register
-                                         : reg_num_rows;
+          camp::idx_t row = i * s_major_dim_per_register;
+          camp::idx_t reg_num_rows =
+              bounded_extent(num_rows, row, s_major_dim_per_register);
 
           element_type const* ptr_i =
               ptr + i * row_stride * s_major_dim_per_register;
@@ -862,10 +875,10 @@ public:
             camp::idx_t row =
                 s_elements_per_register * (i - (col * s_minor_dim_registers));
 
-            camp::idx_t reg_num_rows = s_elements_per_register;
-            if (reg_num_rows + row > num_rows)
+            camp::idx_t reg_num_rows =
+                bounded_extent(num_rows, row, s_elements_per_register);
+            if (reg_num_rows < s_elements_per_register)
             {
-              reg_num_rows = num_rows - row;
               m_registers[i].load_strided_n(ptr + row * row_stride +
                                                 col * col_stride,
                                             row_stride, reg_num_rows);
@@ -884,10 +897,9 @@ public:
         for (camp::idx_t i = 0; i < s_num_registers; ++i)
         {
           // figure out how many columns get loaded in this register
-          camp::idx_t reg_num_cols = num_cols - i * s_major_dim_per_register;
-          reg_num_cols             = reg_num_cols > s_major_dim_per_register
-                                         ? s_major_dim_per_register
-                                         : reg_num_cols;
+          camp::idx_t col = i * s_major_dim_per_register;
+          camp::idx_t reg_num_cols =
+              bounded_extent(num_cols, col, s_major_dim_per_register);
 
           element_type const* ptr_i =
               ptr + i * col_stride * s_major_dim_per_register;
@@ -1177,10 +1189,10 @@ public:
                 s_elements_per_register * (i - (row * s_minor_dim_registers));
 
 
-            camp::idx_t reg_num_cols = s_elements_per_register;
-            if (reg_num_cols + col > num_cols)
+            camp::idx_t reg_num_cols =
+                bounded_extent(num_cols, col, s_elements_per_register);
+            if (reg_num_cols < s_elements_per_register)
             {
-              reg_num_cols = num_cols - col;
               m_registers[i].store_strided_n(ptr + row * row_stride +
                                                  col * col_stride,
                                              col_stride, reg_num_cols);
@@ -1200,10 +1212,9 @@ public:
         for (camp::idx_t i = 0; i < s_num_registers; ++i)
         {
           // figure out how many rows get loaded in this register
-          camp::idx_t reg_num_rows = num_rows - i * s_major_dim_per_register;
-          reg_num_rows             = reg_num_rows > s_major_dim_per_register
-                                         ? s_major_dim_per_register
-                                         : reg_num_rows;
+          camp::idx_t row = i * s_major_dim_per_register;
+          camp::idx_t reg_num_rows =
+              bounded_extent(num_rows, row, s_major_dim_per_register);
 
           element_type* ptr_i = ptr + i * row_stride * s_major_dim_per_register;
           m_registers[i].segmented_store_nm(ptr_i, s_segbits, col_stride,
@@ -1228,10 +1239,10 @@ public:
             camp::idx_t row =
                 s_elements_per_register * (i - (col * s_minor_dim_registers));
 
-            camp::idx_t reg_num_rows = s_elements_per_register;
-            if (reg_num_rows + row > num_rows)
+            camp::idx_t reg_num_rows =
+                bounded_extent(num_rows, row, s_elements_per_register);
+            if (reg_num_rows < s_elements_per_register)
             {
-              reg_num_rows = num_rows - row;
               m_registers[i].store_strided_n(ptr + row * row_stride +
                                                  col * col_stride,
                                              row_stride, reg_num_rows);
@@ -1250,10 +1261,9 @@ public:
         for (camp::idx_t i = 0; i < s_num_registers; ++i)
         {
           // figure out how many columns get loaded in this register
-          camp::idx_t reg_num_cols = num_cols - i * s_major_dim_per_register;
-          reg_num_cols             = reg_num_cols > s_major_dim_per_register
-                                         ? s_major_dim_per_register
-                                         : reg_num_cols;
+          camp::idx_t col = i * s_major_dim_per_register;
+          camp::idx_t reg_num_cols =
+              bounded_extent(num_cols, col, s_major_dim_per_register);
 
           element_type* ptr_i = ptr + i * col_stride * s_major_dim_per_register;
           m_registers[i].segmented_store_nm(ptr_i, s_segbits, row_stride,
@@ -1290,10 +1300,10 @@ public:
                 s_elements_per_register * (i - (row * s_minor_dim_registers));
 
 
-            camp::idx_t reg_num_cols = s_elements_per_register;
-            if (reg_num_cols + col > num_cols)
+            camp::idx_t reg_num_cols =
+                bounded_extent(num_cols, col, s_elements_per_register);
+            if (reg_num_cols < s_elements_per_register)
             {
-              reg_num_cols = num_cols - col;
               result.m_registers[i] =
                   m_registers[i].divide_n(mat.m_registers[i], reg_num_cols);
             }
@@ -1311,10 +1321,9 @@ public:
         for (camp::idx_t i = 0; i < s_num_registers; ++i)
         {
           // figure out how many rows get loaded in this register
-          camp::idx_t reg_num_rows = num_rows - i * s_major_dim_per_register;
-          reg_num_rows             = reg_num_rows > s_major_dim_per_register
-                                         ? s_major_dim_per_register
-                                         : reg_num_rows;
+          camp::idx_t row = i * s_major_dim_per_register;
+          camp::idx_t reg_num_rows =
+              bounded_extent(num_rows, row, s_major_dim_per_register);
 
           result.m_registers[i] = m_registers[i].segmented_divide_nm(
               mat.m_registers[i], s_segbits, num_cols, reg_num_rows);
@@ -1338,10 +1347,10 @@ public:
             camp::idx_t row =
                 s_elements_per_register * (i - (col * s_minor_dim_registers));
 
-            camp::idx_t reg_num_rows = s_elements_per_register;
-            if (reg_num_rows + row > num_rows)
+            camp::idx_t reg_num_rows =
+                bounded_extent(num_rows, row, s_elements_per_register);
+            if (reg_num_rows < s_elements_per_register)
             {
-              reg_num_rows = num_rows - row;
               result.m_registers[i] =
                   m_registers[i].divide_n(mat.m_registers[i], reg_num_rows);
             }
@@ -1358,10 +1367,9 @@ public:
         for (camp::idx_t i = 0; i < s_num_registers; ++i)
         {
           // figure out how many columns get loaded in this register
-          camp::idx_t reg_num_cols = num_cols - i * s_major_dim_per_register;
-          reg_num_cols             = reg_num_cols > s_major_dim_per_register
-                                         ? s_major_dim_per_register
-                                         : reg_num_cols;
+          camp::idx_t col = i * s_major_dim_per_register;
+          camp::idx_t reg_num_cols =
+              bounded_extent(num_cols, col, s_major_dim_per_register);
 
           result.m_registers[i] = m_registers[i].segmented_divide_nm(
               mat.m_registers[i], s_segbits, num_rows, reg_num_cols);
