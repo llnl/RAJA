@@ -15,6 +15,8 @@
 
 #include "RAJA_unit-test-types.hpp"
 
+#include <vector>
+
 template<typename T>
 class RangeStrideSegmentUnitTest : public ::testing::Test {};
 
@@ -61,6 +63,51 @@ TYPED_TEST(RangeStrideSegmentUnitTest, Iterators)
     ASSERT_EQ(difftype_t(25), r1.end() - r1.begin());
     ASSERT_EQ(difftype_t(25), std::distance(r1.begin(), r1.end()));
     ASSERT_EQ(difftype_t(25), r1.size());
+}
+
+TYPED_TEST(RangeStrideSegmentUnitTest, Iteration)
+{
+  auto check = [](int begin, int end, int stride,
+                  std::vector<TypeParam> const& expected) {
+    SCOPED_TRACE(::testing::Message() << "begin=" << begin << " end=" << end
+                                    << " stride=" << stride);
+    RAJA::TypedRangeStrideSegment<TypeParam> segment(begin, end, stride);
+    ASSERT_EQ(expected.size(), size_t(segment.size()));
+
+    std::vector<TypeParam> actual;
+    for (auto index : segment) {
+      ASSERT_LT(actual.size(), expected.size());
+      actual.push_back(index);
+    }
+    EXPECT_EQ(expected, actual);
+
+    actual.clear();
+    for (auto it = segment.begin(); it != segment.end(); ++it) {
+      ASSERT_LT(actual.size(), expected.size());
+      actual.push_back(*it);
+    }
+    EXPECT_EQ(expected, actual);
+
+    if (!expected.empty()) {
+      EXPECT_EQ(expected.back(), *(--segment.end()));
+    }
+  };
+
+  check(0, 5, 2, {0, 2, 4});
+  check(0, 6, 2, {0, 2, 4});
+  check(0, 1, 2, {0});
+  check(2, 9, 3, {2, 5, 8});
+  check(2, 2, 3, {});
+
+  if constexpr (std::is_signed<TypeParam>::value) {
+    check(5, 0, -2, {5, 3, 1});
+    check(5, -1, -2, {5, 3, 1});
+    check(1, 0, -2, {1});
+    check(9, 2, -3, {9, 6, 3});
+    check(2, 2, -3, {});
+    check(5, 0, 2, {});
+    check(0, 5, -2, {});
+  }
 }
 
 template< typename T, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>

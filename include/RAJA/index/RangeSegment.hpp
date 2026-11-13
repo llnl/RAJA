@@ -387,6 +387,11 @@ struct TypedRangeStrideSegment
     {
       m_end = m_begin;
     }
+    else
+    {
+      // Keep the end iterator on the stride so comparisons include the last index.
+      m_end = m_begin + m_size;
+    }
     // m_size initialized as negative indicates a zero iteration space
     m_size = m_size < DiffT {0} ? DiffT {0} : m_size;
   }
