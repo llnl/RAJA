@@ -99,6 +99,8 @@ namespace RAJA
 namespace detail
 {
 /// Adapter to replace specific implementations for the icount variants
+/// TODO: make icount correspond to the stripped index type for strongly
+/// typed indices
 template<typename Range, typename Body, typename IndexT>
 struct icount_adapter
 {
