@@ -52,24 +52,28 @@ void ForallResourceIcountIndexSetTestImpl()
                                      &check_array,
                                      &test_array);
 
-  memset( test_array, 0, sizeof(INDEX_TYPE) * N );  
+  memset( test_array, 0, sizeof(INDEX_TYPE) * RAJA::stripIndexType(N) );
 
-  working_res.memcpy(working_array, test_array, sizeof(INDEX_TYPE) * N);
+  working_res.memcpy(working_array, test_array,
+                     sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  INDEX_TYPE ticount = 0;
+  INDEX_TYPE ticount {0};
   for (size_t i = 0; i < is_indices.size(); ++i) {
-    test_array[ ticount++ ] = is_indices[i];
+    test_array[RAJA::stripIndexType(ticount++)] = is_indices[i];
   }
 
+  using icount_type = RAJA::strip_index_type_t<INDEX_TYPE>;
+
   RAJA::forall_Icount<EXEC_POLICY>(working_res, iset,
-    [=] RAJA_HOST_DEVICE(INDEX_TYPE icount, INDEX_TYPE idx) {
-    working_array[icount] = idx;
+    [=] RAJA_HOST_DEVICE(icount_type icount, INDEX_TYPE idx) {
+    working_array[RAJA::stripIndexType(icount)] = idx;
   });
 
-  working_res.memcpy(check_array, working_array, sizeof(INDEX_TYPE) * N);
+  working_res.memcpy(check_array, working_array,
+                     sizeof(INDEX_TYPE) * RAJA::stripIndexType(N));
 
-  for (INDEX_TYPE i = 0; i < N; i++) {
-    ASSERT_EQ(test_array[i], check_array[i]);
+  for (INDEX_TYPE i {0}; i < N; i++) {
+    ASSERT_EQ(test_array[RAJA::stripIndexType(i)], check_array[RAJA::stripIndexType(i)]);
   }
 
   deallocateForallTestData<INDEX_TYPE>(erased_working_res,

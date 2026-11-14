@@ -39,7 +39,7 @@ void ForallIndexSetReduceMinLocMultipleTestImpl()
   iset.push_back(r3); 
   iset.push_back(r4); 
 
-  const IDX_TYPE alen = 15286;
+  const IDX_TYPE alen {15286};
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
 
@@ -54,9 +54,9 @@ void ForallIndexSetReduceMinLocMultipleTestImpl()
                                  &test_array);
 
   double current_min = DBL_MAX;
-  IDX_TYPE current_loc = -1;
+  IDX_TYPE current_loc {-1};
 
-  for (IDX_TYPE i = 0; i < alen; ++i) {
+  for (IDX_TYPE i {0}; i < alen; ++i) {
     test_array[i] = current_min;
   }
   

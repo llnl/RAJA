@@ -17,17 +17,18 @@ template <typename INDEX_TYPE, typename WORKING_RES, typename LAUNCH_POLICY,
 void LaunchNestedTileLoopTestImpl(INDEX_TYPE M)
 {
 
-  constexpr INDEX_TYPE tile_size   = 4;
+  constexpr int tile_size = 4;
+  INDEX_TYPE tile_size_idx{tile_size};
 
   //following grid will require loop policies
-  constexpr INDEX_TYPE threads_x   = 3;
-  constexpr INDEX_TYPE blocks_x    = 1;
+  constexpr int threads_x = 3;
+  constexpr int blocks_x  = 1;
 
-  RAJA::TypedRangeSegment<INDEX_TYPE> r1(0, M*tile_size+1);
+  RAJA::TypedRangeSegment<INDEX_TYPE> r1(INDEX_TYPE{0}, M * tile_size_idx + 1);
 
   INDEX_TYPE N1 = static_cast<INDEX_TYPE>(r1.end() - r1.begin());
 
-  INDEX_TYPE no_tiles = (N1-1)/tile_size + 1;
+  INDEX_TYPE no_tiles = (N1 - 1) / tile_size_idx + 1;
 
   INDEX_TYPE N = static_cast<INDEX_TYPE>(RAJA::stripIndexType(N1));
 
@@ -57,8 +58,8 @@ void LaunchNestedTileLoopTestImpl(INDEX_TYPE M)
                                      &check_iloop_array,
                                      &test_iloop_array);
 
-  std::iota(test_ttile_array, test_ttile_array + data_len, 0);
-  std::iota(test_iloop_array, test_iloop_array + data_len, 0);
+  std::iota(test_ttile_array, test_ttile_array + data_len, INDEX_TYPE{0});
+  std::iota(test_iloop_array, test_iloop_array + data_len, INDEX_TYPE{0});
   working_res.memset(working_ttile_array, 0, sizeof(INDEX_TYPE) * data_len);
   working_res.memset(working_iloop_array, 0, sizeof(INDEX_TYPE) * data_len);
 
@@ -72,8 +73,8 @@ void LaunchNestedTileLoopTestImpl(INDEX_TYPE M)
             RAJA::loop_icount<THREAD_X_POLICY>(
               ctx, x_tile, [&](INDEX_TYPE tx, INDEX_TYPE ix) {
 
-                working_ttile_array[tx] = bx;
-                working_iloop_array[tx] = ix;
+                working_ttile_array[RAJA::stripIndexType(tx)] = bx;
+                working_iloop_array[RAJA::stripIndexType(tx)] = ix;
 
               }
             );
@@ -109,9 +110,9 @@ void LaunchNestedTileLoopTestImpl(INDEX_TYPE M)
 
   if (RAJA::stripIndexType(N) > 0) {
 
-    INDEX_TYPE idx = 0;
-    for (INDEX_TYPE bx = INDEX_TYPE(0); bx < no_tiles; ++bx) {
-      for (INDEX_TYPE tx = INDEX_TYPE(0); tx < tile_size; ++tx) {
+    INDEX_TYPE idx {0};
+    for (INDEX_TYPE bx {0}; bx < no_tiles; ++bx) {
+      for (INDEX_TYPE tx {0}; tx < tile_size_idx; ++tx) {
 
         if(idx >= N1) break;
 

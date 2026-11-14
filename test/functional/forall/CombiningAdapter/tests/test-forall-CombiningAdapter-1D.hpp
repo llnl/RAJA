@@ -38,8 +38,8 @@ void ForallCombiningAdapter1DTestImpl(INDEX_TYPE first, INDEX_TYPE last)
   {
 
     std::iota(test_array, test_array + RAJA::stripIndexType(N), first - first);
-    for (INDEX_TYPE i0 = INDEX_TYPE(0); i0 < N0; i0++) {
-      test_array[i0] = i0;
+    for (INDEX_TYPE i0 {0}; i0 < N0; i0++) {
+      test_array[RAJA::stripIndexType(i0)] = i0;
     }
     test_array[RAJA::stripIndexType(N)] = INDEX_TYPE(0);
 
@@ -61,7 +61,7 @@ void ForallCombiningAdapter1DTestImpl(INDEX_TYPE first, INDEX_TYPE last)
 
   working_res.memcpy(check_array, working_array, sizeof(INDEX_TYPE) * data_len);
 
-  for (INDEX_TYPE i = INDEX_TYPE(0); i <= N; i++) {
+  for (INDEX_TYPE i {0}; i <= N; i++) {
     ASSERT_EQ(test_array[RAJA::stripIndexType(i)], check_array[RAJA::stripIndexType(i)]);
   }
 

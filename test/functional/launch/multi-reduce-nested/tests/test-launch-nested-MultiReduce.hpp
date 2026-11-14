@@ -49,9 +49,9 @@ void Launch(const SEGMENTS_TYPE& segments,
   RAJA_EXTRACT_BED_SUFFIXED(sj, _sj);
   RAJA_EXTRACT_BED_SUFFIXED(sk, _sk);
 
-  IDX_TYPE threads_i = 16;
-  IDX_TYPE threads_j = 4;
-  IDX_TYPE threads_k = 4;
+  IDX_TYPE threads_i {16};
+  IDX_TYPE threads_j {4};
+  IDX_TYPE threads_k {4};
 
   IDX_TYPE blocks_i = RAJA_DIVIDE_CEILING_INT(distance_si, threads_i);
   IDX_TYPE blocks_j = RAJA_DIVIDE_CEILING_INT(distance_sj, threads_j);
@@ -144,7 +144,7 @@ LaunchMultiReduceNestedTestImpl(const SEGMENTS_TYPE& segments,
   IDX_TYPE* check_bins;
   IDX_TYPE* test_bins;
 
-  IDX_TYPE data_len = 0;
+  IDX_TYPE data_len {0};
 
   allocateForallTestData(idx_range+1,
                          working_res,
@@ -152,7 +152,7 @@ LaunchMultiReduceNestedTestImpl(const SEGMENTS_TYPE& segments,
                          &check_range,
                          &test_range);
 
-  for (IDX_TYPE i = 0; i < idx_range+1; ++i) {
+  for (IDX_TYPE i {0}; i < idx_range+1; ++i) {
     test_range[i] = ~IDX_TYPE(0);
   }
 
@@ -190,7 +190,7 @@ LaunchMultiReduceNestedTestImpl(const SEGMENTS_TYPE& segments,
     std::uniform_int_distribution<IDX_TYPE> bin_distribution(0, num_bins-1);
 
 
-    for (IDX_TYPE i = 0; i < data_len; ++i) {
+    for (IDX_TYPE i {0}; i < data_len; ++i) {
       test_array[i] = DATA_TYPE(array_int_distribution(rngen));
 
       // this may use the same bin multiple times per iterate
@@ -210,7 +210,7 @@ LaunchMultiReduceNestedTestImpl(const SEGMENTS_TYPE& segments,
   {
     std::vector<DATA_TYPE> ref_vals(num_bins, ABSTRACTION::identity(red));
 
-    for (IDX_TYPE i = 0; i < data_len; ++i) {
+    for (IDX_TYPE i {0}; i < data_len; ++i) {
       ref_vals[test_bins[i]] = ABSTRACTION::combine(ref_vals[test_bins[i]], test_array[i]);
     }
 
@@ -241,7 +241,7 @@ LaunchMultiReduceNestedTestImpl(const SEGMENTS_TYPE& segments,
     const int nloops = 2;
     for (int j = 0; j < nloops; ++j) {
 
-      for (IDX_TYPE i = 0; i < data_len; ++i) {
+      for (IDX_TYPE i {0}; i < data_len; ++i) {
         ref_vals[test_bins[i]] = ABSTRACTION::combine(ref_vals[test_bins[i]], test_array[i]);
       }
 
@@ -270,7 +270,7 @@ LaunchMultiReduceNestedTestImpl(const SEGMENTS_TYPE& segments,
           std::uniform_int_distribution<DATA_TYPE>,
           std::uniform_real_distribution<DATA_TYPE>> array_flt_distribution(0, modval-1);
 
-      for (IDX_TYPE i = 0; i < data_len; ++i) {
+      for (IDX_TYPE i {0}; i < data_len; ++i) {
         test_array[i] = DATA_TYPE(array_flt_distribution(rngen));
       }
       working_res.memcpy(working_array, test_array, sizeof(DATA_TYPE) * data_len);

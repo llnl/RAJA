@@ -36,7 +36,7 @@ void ForallReduceMinLocMultipleTestImpl(IDX_TYPE first,
                                     &test_array);
 
   const DATA_TYPE default_val = static_cast<DATA_TYPE>(SHRT_MAX);
-  const IDX_TYPE default_loc = -1;
+  const IDX_TYPE default_loc {-1};
   const DATA_TYPE big_val = -500;
 
   static std::random_device rd;
