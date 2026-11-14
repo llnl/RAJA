@@ -219,7 +219,7 @@ using OpenMPTargetKernelTileExecPols =
 // Cartesian product of types used in parameterized tests
 //
 using @TILE_BACKEND@KernelTileTypes =
-  Test< camp::cartesian_product<IdxTypeList,
+  Test< camp::cartesian_product<StrongIdxTypeList,
                                 ReduceDataTypeList,
                                 @TILE_BACKEND@ResourceList,
                                 @TILE_BACKEND@KernelTileExecPols>>::Types;

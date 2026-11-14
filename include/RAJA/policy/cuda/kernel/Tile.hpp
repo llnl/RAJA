@@ -92,7 +92,8 @@ struct CudaStatementExecutor<
     segment_t orig_segment = segment;
 
     // Assign our new tiled segment
-    segment = orig_segment.slice(i, static_cast<diff_t>(chunk_size));
+    segment = orig_segment.slice(typename segment_t::size_type(i),
+                                 typename segment_t::size_type {chunk_size});
 
     // execute enclosed statements
     enclosed_stmts_t::exec(data, thread_active);
@@ -115,10 +116,11 @@ struct CudaStatementExecutor<
     data_t private_data = data;
 
     // Get original segment
-    auto& segment = camp::get<ArgumentId>(private_data.segment_tuple);
+    auto& segment       = camp::get<ArgumentId>(private_data.segment_tuple);
+    using segment_idx_t = typename camp::decay<decltype(segment)>::size_type;
 
     // restrict to first tile
-    segment = segment.slice(0, static_cast<diff_t>(chunk_size));
+    segment = segment.slice(segment_idx_t {0}, segment_idx_t {chunk_size});
 
     // NOTE: We do not detect improper uses of direct_unchecked policies under
     // tiling. This happens when using a direct unchecked policy on a tiled
@@ -183,7 +185,8 @@ struct CudaStatementExecutor<
     segment_t orig_segment = segment;
 
     // Assign our new tiled segment
-    segment = orig_segment.slice(i, static_cast<diff_t>(chunk_size));
+    segment = orig_segment.slice(typename segment_t::size_type(i),
+                                 typename segment_t::size_type {chunk_size});
 
     // execute enclosed statements
     enclosed_stmts_t::exec(data, thread_active && have_work);
@@ -206,10 +209,12 @@ struct CudaStatementExecutor<
     data_t private_data = data;
 
     // Get original segment
-    auto& segment = camp::get<ArgumentId>(private_data.segment_tuple);
+    auto& segment   = camp::get<ArgumentId>(private_data.segment_tuple);
+    using segment_t = camp::decay<decltype(segment)>;
 
     // restrict to first tile
-    segment = segment.slice(0, static_cast<diff_t>(chunk_size));
+    segment = segment.slice(typename segment_t::size_type {0},
+                            typename segment_t::size_type {chunk_size});
 
     LaunchDims enclosed_dims =
         enclosed_stmts_t::calculateDimensions(private_data);
@@ -281,7 +286,8 @@ struct CudaStatementExecutor<
       const bool have_work = (i < len);
 
       // Assign our new tiled segment
-      segment = orig_segment.slice(i, static_cast<diff_t>(chunk_size));
+      segment = orig_segment.slice(typename segment_t::size_type(i),
+                                   typename segment_t::size_type {chunk_size});
 
       // execute enclosed statements
       enclosed_stmts_t::exec(data, thread_active && have_work);
@@ -305,10 +311,11 @@ struct CudaStatementExecutor<
     data_t private_data = data;
 
     // Get original segment
-    auto& segment = camp::get<ArgumentId>(private_data.segment_tuple);
+    auto& segment       = camp::get<ArgumentId>(private_data.segment_tuple);
+    using segment_idx_t = typename camp::decay<decltype(segment)>::size_type;
 
     // restrict to first tile
-    segment = segment.slice(0, chunk_size);
+    segment = segment.slice(segment_idx_t {0}, segment_idx_t {chunk_size});
 
     LaunchDims enclosed_dims =
         enclosed_stmts_t::calculateDimensions(private_data);
@@ -375,7 +382,8 @@ struct CudaStatementExecutor<
     {
 
       // Assign our new tiled segment
-      segment = orig_segment.slice(i, static_cast<diff_t>(chunk_size));
+      segment = orig_segment.slice(typename segment_t::size_type(i),
+                                   typename segment_t::size_type {chunk_size});
 
       // execute enclosed statements
       enclosed_stmts_t::exec(data, thread_active);
@@ -399,10 +407,11 @@ struct CudaStatementExecutor<
     data_t private_data = data;
 
     // Get original segment
-    auto& segment = camp::get<ArgumentId>(private_data.segment_tuple);
+    auto& segment       = camp::get<ArgumentId>(private_data.segment_tuple);
+    using segment_idx_t = typename camp::decay<decltype(segment)>::size_type;
 
     // restrict to first tile
-    segment = segment.slice(0, chunk_size);
+    segment = segment.slice(segment_idx_t {0}, segment_idx_t {chunk_size});
 
     LaunchDims enclosed_dims =
         enclosed_stmts_t::calculateDimensions(private_data);
