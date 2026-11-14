@@ -54,12 +54,12 @@ void KernelOffsetView3DTestImpl(std::array<RAJA::idx_t, 3> dim,
       RAJA::TypedOffsetLayout<IDX_TYPE,
                               camp::tuple<IDX_TYPE, IDX_TYPE, IDX_TYPE>>;
 
-  LayoutType layout({{raw_idx_type(offset_lo.at(0)),
-                      raw_idx_type(offset_lo.at(1)),
-                      raw_idx_type(offset_lo.at(2))}},
-                    {{raw_idx_type(offset_lo.at(0) + dim.at(0)),
-                      raw_idx_type(offset_lo.at(1) + dim.at(1)),
-                      raw_idx_type(offset_lo.at(2) + dim.at(2))}});
+  LayoutType layout({{raw_idx_type{offset_lo.at(0)},
+                      raw_idx_type{offset_lo.at(1)},
+                      raw_idx_type{offset_lo.at(2)}}},
+                    {{raw_idx_type{offset_lo.at(0) + dim.at(0)},
+                      raw_idx_type{offset_lo.at(1) + dim.at(1)},
+                      raw_idx_type{offset_lo.at(2) + dim.at(2)}}});
 
   RAJA::View<IDX_TYPE, LayoutType> view(working_array, layout);
 

@@ -28,7 +28,7 @@ void ForallListSegmentViewTestImpl(INDEX_TYPE N)
   srand ( time(NULL) );
 
   for (INDEX_TYPE i {0}; i < N; ++i) {
-    INDEX_TYPE randval = INDEX_TYPE(rand() % RAJA::stripIndexType(N));
+    INDEX_TYPE randval = INDEX_TYPE{rand() % RAJA::stripIndexType(N)};
     if ( i < randval ) {
       idx_array.push_back(i);
     }
@@ -110,7 +110,7 @@ void ForallListSegmentOffsetViewTestImpl(INDEX_TYPE N, INDEX_TYPE offset)
   srand ( time(NULL) );
 
   for (INDEX_TYPE i {0}; i < N; ++i) {
-    INDEX_TYPE randval = INDEX_TYPE(rand() % RAJA::stripIndexType(N));
+    INDEX_TYPE randval = INDEX_TYPE{rand() % RAJA::stripIndexType(N)};
     if ( i < randval ) {
       idx_array.push_back(i+offset);
     }
@@ -184,18 +184,18 @@ TYPED_TEST_P(ForallListSegmentViewTest, ListSegmentForallView)
   using EXEC_POLICY      = typename camp::at<TypeParam, camp::num<2>>::type;
 
   ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
-      INDEX_TYPE(13));
+      INDEX_TYPE{13});
   ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
-      INDEX_TYPE(2047));
+      INDEX_TYPE{2047});
   ForallListSegmentViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
-      INDEX_TYPE(32000));
+      INDEX_TYPE{32000});
 
   ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
-      INDEX_TYPE(13), INDEX_TYPE(1));
+      INDEX_TYPE{13}, INDEX_TYPE{1});
   ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
-      INDEX_TYPE(2047), INDEX_TYPE(2));
+      INDEX_TYPE{2047}, INDEX_TYPE{2});
   ForallListSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RESOURCE, EXEC_POLICY>(
-      INDEX_TYPE(32000), INDEX_TYPE(3));
+      INDEX_TYPE{32000}, INDEX_TYPE{3});
 }
 
 REGISTER_TYPED_TEST_SUITE_P(ForallListSegmentViewTest,

@@ -18,7 +18,7 @@ void ForallRangeStrideSegmentViewTestImpl(INDEX_TYPE first, INDEX_TYPE last,
   RAJA::TypedRangeStrideSegment<INDEX_TYPE> r1(RAJA::stripIndexType(first),
                                                RAJA::stripIndexType(last),
                                                stride);
-  INDEX_TYPE N = INDEX_TYPE(r1.size());
+  INDEX_TYPE N = INDEX_TYPE{r1.size()};
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
   INDEX_TYPE* working_array;
@@ -77,16 +77,16 @@ template <typename INDEX_TYPE, typename DIFF_TYPE, typename WORKING_RES, typenam
 void runNegativeIndexViewTests()
 {
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(-10), INDEX_TYPE(-1), DIFF_TYPE(2));
+      INDEX_TYPE{-10}, INDEX_TYPE{-1}, DIFF_TYPE{2});
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(-5), INDEX_TYPE(0), DIFF_TYPE(2));
+      INDEX_TYPE{-5}, INDEX_TYPE{0}, DIFF_TYPE{2});
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(-5), INDEX_TYPE(5), DIFF_TYPE(3));
+      INDEX_TYPE{-5}, INDEX_TYPE{5}, DIFF_TYPE{3});
 
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(10), INDEX_TYPE(-1), DIFF_TYPE(-1));
+      INDEX_TYPE{10}, INDEX_TYPE{-1}, DIFF_TYPE{-1});
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(10), INDEX_TYPE(0), DIFF_TYPE(-2));
+      INDEX_TYPE{10}, INDEX_TYPE{0}, DIFF_TYPE{-2});
 }
 
 
@@ -105,25 +105,25 @@ TYPED_TEST_P(ForallRangeStrideSegmentViewTest, RangeStrideSegmentForallView)
       typename std::make_signed<RAJA::strip_index_type_t<INDEX_TYPE>>::type;
 
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(0), INDEX_TYPE(20), DIFF_TYPE(1));
+      INDEX_TYPE{0}, INDEX_TYPE{20}, DIFF_TYPE{1});
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(1), INDEX_TYPE(20), DIFF_TYPE(1));
+      INDEX_TYPE{1}, INDEX_TYPE{20}, DIFF_TYPE{1});
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(0), INDEX_TYPE(20), DIFF_TYPE(2));
+      INDEX_TYPE{0}, INDEX_TYPE{20}, DIFF_TYPE{2});
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(1), INDEX_TYPE(20), DIFF_TYPE(2));
+      INDEX_TYPE{1}, INDEX_TYPE{20}, DIFF_TYPE{2});
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(0), INDEX_TYPE(21), DIFF_TYPE(2));
+      INDEX_TYPE{0}, INDEX_TYPE{21}, DIFF_TYPE{2});
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(1), INDEX_TYPE(21), DIFF_TYPE(2));
+      INDEX_TYPE{1}, INDEX_TYPE{21}, DIFF_TYPE{2});
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(1), INDEX_TYPE(255), DIFF_TYPE(2));
+      INDEX_TYPE{1}, INDEX_TYPE{255}, DIFF_TYPE{2});
 
 // Test size zero segments
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(0), INDEX_TYPE(20), DIFF_TYPE(-2));
+      INDEX_TYPE{0}, INDEX_TYPE{20}, DIFF_TYPE{-2});
   ForallRangeStrideSegmentViewTestImpl<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(1), INDEX_TYPE(20), DIFF_TYPE(-2));
+      INDEX_TYPE{1}, INDEX_TYPE{20}, DIFF_TYPE{-2});
 
   runNegativeIndexViewTests<INDEX_TYPE, DIFF_TYPE, WORKING_RES, EXEC_POLICY>();
 }

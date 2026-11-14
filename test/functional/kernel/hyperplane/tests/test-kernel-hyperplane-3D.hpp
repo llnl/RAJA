@@ -142,9 +142,9 @@ KernelHyperplane3DTestImpl(const INDEX_TYPE groups, const INDEX_TYPE idimin, con
     kdim = RAJA::stripIndexType(kdimin);
   }
 
-  INDEX_TYPE idim_t(idim);
-  INDEX_TYPE jdim_t(jdim);
-  INDEX_TYPE kdim_t(kdim);
+  INDEX_TYPE idim_t{idim};
+  INDEX_TYPE jdim_t{jdim};
+  INDEX_TYPE kdim_t{kdim};
 
   camp::resources::Resource work_res{WORKING_RES::get_default()};
 
@@ -183,10 +183,10 @@ KernelHyperplane3DTestImpl(const INDEX_TYPE groups, const INDEX_TYPE idimin, con
   work_res.memcpy( check_array, work_array, sizeof(DATA_TYPE) * RAJA::stripIndexType(array_length) );
 
   // perform array arithmetic on the CPU
-  for (INDEX_TYPE g(0); g < groups; ++g) {
-    for (INDEX_TYPE i(0); i < idim_t; ++i) {
-      for (INDEX_TYPE j(jdim_t - 1); j >= INDEX_TYPE(0); --j) {
-        for (INDEX_TYPE k(0); k < kdim_t; ++k) {
+  for (INDEX_TYPE g{0}; g < groups; ++g) {
+    for (INDEX_TYPE i{0}; i < idim_t; ++i) {
+      for (INDEX_TYPE j{jdim_t - 1}; j >= INDEX_TYPE{0}; --j) {
+        for (INDEX_TYPE k{0}; k < kdim_t; ++k) {
           DATA_TYPE left = 1;
           if (i > 0) {
             left = HostView(g, i - 1, j, k);
@@ -208,10 +208,10 @@ KernelHyperplane3DTestImpl(const INDEX_TYPE groups, const INDEX_TYPE idimin, con
     }
   }
 
-  for (INDEX_TYPE g(0); g < groups; ++g) {
-    for (INDEX_TYPE i(0); i < idim_t; ++i) {
-      for (INDEX_TYPE j(0); j < jdim_t; ++j) {
-        for (INDEX_TYPE k(0); k < kdim_t; ++k) {
+  for (INDEX_TYPE g{0}; g < groups; ++g) {
+    for (INDEX_TYPE i{0}; i < idim_t; ++i) {
+      for (INDEX_TYPE j{0}; j < jdim_t; ++j) {
+        for (INDEX_TYPE k{0}; k < kdim_t; ++k) {
           ASSERT_FLOAT_EQ(CheckView(g, i, j, k), HostView(g, i, j, k));
         }
       }

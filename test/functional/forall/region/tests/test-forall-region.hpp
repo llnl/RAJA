@@ -86,11 +86,11 @@ TYPED_TEST_P(ForallRegionTest, RegionForall)
   using EXEC_POLICY = typename camp::at<TypeParam, camp::num<3>>::type;
 
   ForallRegionTestImpl<INDEX_TYPE, WORKING_RES, REG_POLICY, EXEC_POLICY>(
-      INDEX_TYPE(0), INDEX_TYPE(25));
+      INDEX_TYPE{0}, INDEX_TYPE{25});
   ForallRegionTestImpl<INDEX_TYPE, WORKING_RES, REG_POLICY, EXEC_POLICY>(
-      INDEX_TYPE(1), INDEX_TYPE(153));
+      INDEX_TYPE{1}, INDEX_TYPE{153});
   ForallRegionTestImpl<INDEX_TYPE, WORKING_RES, REG_POLICY, EXEC_POLICY>(
-      INDEX_TYPE(3), INDEX_TYPE(2556));
+      INDEX_TYPE{3}, INDEX_TYPE{2556});
 }
 
 REGISTER_TYPED_TEST_SUITE_P(ForallRegionTest,

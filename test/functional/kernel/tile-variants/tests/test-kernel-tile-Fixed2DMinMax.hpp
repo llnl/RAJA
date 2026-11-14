@@ -57,7 +57,7 @@ void KernelTileFixed2DMinMaxTestImpl(const INDEX_TYPE rows_t, const INDEX_TYPE c
   std::vector<INDEX_TYPE> colidx;
   for (raw_index_type ii = 0; ii < RAJA::stripIndexType(cols_t); ++ii)
   {
-    colidx.push_back(INDEX_TYPE(ii));
+    colidx.push_back(INDEX_TYPE{ii});
   }
 
   RAJA::TypedListSegment<INDEX_TYPE> colrange( &colidx[0], colidx.size(), work_res );
@@ -94,9 +94,9 @@ TYPED_TEST_P(KernelTileFixed2DMinMaxTest, TileFixed2DMinMaxKernel)
   using EXEC_POLICY = typename camp::at<TypeParam, camp::num<3>>::type;
   using REDUCE_POLICY = typename camp::at<TypeParam, camp::num<4>>::type;
 
-  KernelTileFixed2DMinMaxTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE(10), INDEX_TYPE(10));
-  KernelTileFixed2DMinMaxTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE(151), INDEX_TYPE(111));
-  KernelTileFixed2DMinMaxTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE(362), INDEX_TYPE(362));
+  KernelTileFixed2DMinMaxTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE{10}, INDEX_TYPE{10});
+  KernelTileFixed2DMinMaxTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE{151}, INDEX_TYPE{111});
+  KernelTileFixed2DMinMaxTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY, REDUCE_POLICY>(INDEX_TYPE{362}, INDEX_TYPE{362});
 }
 
 REGISTER_TYPED_TEST_SUITE_P(KernelTileFixed2DMinMaxTest,

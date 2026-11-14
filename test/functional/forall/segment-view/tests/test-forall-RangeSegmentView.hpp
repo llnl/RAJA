@@ -16,7 +16,7 @@ template <typename INDEX_TYPE, typename WORKING_RES, typename EXEC_POLICY>
 void ForallRangeSegmentViewTestImpl(INDEX_TYPE first, INDEX_TYPE last)
 {
   RAJA::TypedRangeSegment<INDEX_TYPE> r1(first, last);
-  INDEX_TYPE N = INDEX_TYPE(r1.end() - r1.begin());
+  INDEX_TYPE N = INDEX_TYPE{r1.end() - r1.begin()};
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
   INDEX_TYPE* working_array;
@@ -62,7 +62,7 @@ void ForallRangeSegmentOffsetViewTestImpl(INDEX_TYPE first, INDEX_TYPE last,
                                           INDEX_TYPE offset)
 {
   RAJA::TypedRangeSegment<INDEX_TYPE> r1(first+offset, last+offset);
-  INDEX_TYPE N = INDEX_TYPE(r1.end() - r1.begin());
+  INDEX_TYPE N = INDEX_TYPE{r1.end() - r1.begin()};
 
   camp::resources::Resource working_res{WORKING_RES::get_default()};
   INDEX_TYPE* working_array;
@@ -118,16 +118,16 @@ template <typename INDEX_TYPE, typename WORKING_RES, typename EXEC_POLICY,
 void runNegativeViewTests()
 {
   ForallRangeSegmentViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(-5), INDEX_TYPE(0));
+      INDEX_TYPE{-5}, INDEX_TYPE{0});
   ForallRangeSegmentViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(-5), INDEX_TYPE(5));
+      INDEX_TYPE{-5}, INDEX_TYPE{5});
 
   ForallRangeSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(-5), INDEX_TYPE(0), INDEX_TYPE(1));
+      INDEX_TYPE{-5}, INDEX_TYPE{0}, INDEX_TYPE{1});
   ForallRangeSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(-5), INDEX_TYPE(5), INDEX_TYPE(2));
+      INDEX_TYPE{-5}, INDEX_TYPE{5}, INDEX_TYPE{2});
   ForallRangeSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(0), INDEX_TYPE(10), INDEX_TYPE(-5));
+      INDEX_TYPE{0}, INDEX_TYPE{10}, INDEX_TYPE{-5});
 }
 
 
@@ -144,18 +144,18 @@ TYPED_TEST_P(ForallRangeSegmentViewTest, RangeSegmentForallView)
   using EXEC_POLICY = typename camp::at<TypeParam, camp::num<2>>::type;
 
   ForallRangeSegmentViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(0), INDEX_TYPE(5));
+      INDEX_TYPE{0}, INDEX_TYPE{5});
   ForallRangeSegmentViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(1), INDEX_TYPE(5));
+      INDEX_TYPE{1}, INDEX_TYPE{5});
   ForallRangeSegmentViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(1), INDEX_TYPE(255));
+      INDEX_TYPE{1}, INDEX_TYPE{255});
 
   ForallRangeSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(0), INDEX_TYPE(5), INDEX_TYPE(1));
+      INDEX_TYPE{0}, INDEX_TYPE{5}, INDEX_TYPE{1});
   ForallRangeSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(1), INDEX_TYPE(5), INDEX_TYPE(2));
+      INDEX_TYPE{1}, INDEX_TYPE{5}, INDEX_TYPE{2});
   ForallRangeSegmentOffsetViewTestImpl<INDEX_TYPE, WORKING_RES, EXEC_POLICY>(
-      INDEX_TYPE(1), INDEX_TYPE(255), INDEX_TYPE(3));
+      INDEX_TYPE{1}, INDEX_TYPE{255}, INDEX_TYPE{3});
 
   runNegativeViewTests<INDEX_TYPE, WORKING_RES, EXEC_POLICY>();
 }

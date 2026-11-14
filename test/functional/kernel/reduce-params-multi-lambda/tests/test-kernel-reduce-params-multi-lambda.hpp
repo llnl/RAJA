@@ -41,7 +41,7 @@ void KernelParamReduceMultiLambda(const INDEX_TYPE xdim_t, const INDEX_TYPE ydim
                                         &testarr2D
                                       );
 
-  RAJA::TypedRangeSegment<INDEX_TYPE> seg(INDEX_TYPE(0), ydim_t);
+  RAJA::TypedRangeSegment<INDEX_TYPE> seg(INDEX_TYPE{0}, ydim_t);
   RAJA::forall<FORALL_POLICY>(seg, [=] RAJA_HOST_DEVICE (INDEX_TYPE zz)
   {
     workarr2D[RAJA::stripIndexType(zz)] =
@@ -55,7 +55,7 @@ void KernelParamReduceMultiLambda(const INDEX_TYPE xdim_t, const INDEX_TYPE ydim
   });
 
   // initializing  values
-  for (INDEX_TYPE row(0); row < ydim_t; ++row)
+  for (INDEX_TYPE row{0}; row < ydim_t; ++row)
   {
     for ( raw_index_type col = 0; col < RAJA::stripIndexType(xdim_t); ++col )
     {
@@ -63,11 +63,11 @@ void KernelParamReduceMultiLambda(const INDEX_TYPE xdim_t, const INDEX_TYPE ydim
           (RAJA::stripIndexType(row) * RAJA::stripIndexType(xdim_t) + col) % 100 + 1;
     }
     // Make a unique min
-    checkarr2D[RAJA::stripIndexType(ydim_t - INDEX_TYPE(1))]
-              [RAJA::stripIndexType(xdim_t - INDEX_TYPE(1))] = 0;
+    checkarr2D[RAJA::stripIndexType(ydim_t - INDEX_TYPE{1})]
+              [RAJA::stripIndexType(xdim_t - INDEX_TYPE{1})] = 0;
     // Make a unique max
-    checkarr2D[RAJA::stripIndexType(ydim_t / INDEX_TYPE(2))]
-              [RAJA::stripIndexType(xdim_t / INDEX_TYPE(2))] = 101;
+    checkarr2D[RAJA::stripIndexType(ydim_t / INDEX_TYPE{2})]
+              [RAJA::stripIndexType(xdim_t / INDEX_TYPE{2})] = 101;
   }
 
   work_res.memcpy(work_array, check_array, sizeof(DATA_TYPE) * RAJA::stripIndexType(array_length));
@@ -203,9 +203,9 @@ TYPED_TEST_P(KernelParamReduceMultiLambdaTest, ParamReduceKernel)
   using FORALL_POLICY = typename camp::at<TypeParam, camp::num<3>>::type;
   using EXEC_POLICY = typename camp::at<TypeParam, camp::num<4>>::type;
 
-  KernelParamReduceMultiLambda<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY>(INDEX_TYPE(10), INDEX_TYPE(10));
-  KernelParamReduceMultiLambda<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY>(INDEX_TYPE(151), INDEX_TYPE(151));
-  KernelParamReduceMultiLambda<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY>(INDEX_TYPE(362), INDEX_TYPE(362));
+  KernelParamReduceMultiLambda<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY>(INDEX_TYPE{10}, INDEX_TYPE{10});
+  KernelParamReduceMultiLambda<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY>(INDEX_TYPE{151}, INDEX_TYPE{151});
+  KernelParamReduceMultiLambda<INDEX_TYPE, DATA_TYPE, WORKING_RES, FORALL_POLICY, EXEC_POLICY>(INDEX_TYPE{362}, INDEX_TYPE{362});
 }
 
 REGISTER_TYPED_TEST_SUITE_P(KernelParamReduceMultiLambdaTest,

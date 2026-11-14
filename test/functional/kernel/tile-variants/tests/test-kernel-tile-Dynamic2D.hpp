@@ -67,7 +67,7 @@ void KernelTileDynamic2DTestImpl(const INDEX_TYPE rows_t, const INDEX_TYPE cols_
   {
     for ( raw_index_type cc = 0; cc < RAJA::stripIndexType(cols_t); ++cc )
     {
-      HostTView( INDEX_TYPE(cc), INDEX_TYPE(rr) ) = HostView( INDEX_TYPE(rr), INDEX_TYPE(cc) );
+      HostTView( INDEX_TYPE{cc}, INDEX_TYPE{rr} ) = HostView( INDEX_TYPE{rr}, INDEX_TYPE{cc} );
     }
   }
 
@@ -88,8 +88,8 @@ void KernelTileDynamic2DTestImpl(const INDEX_TYPE rows_t, const INDEX_TYPE cols_
   {
     for ( raw_index_type cc = 0; cc < RAJA::stripIndexType(cols_t); ++cc )
     {
-      ASSERT_EQ(CheckTView(INDEX_TYPE(cc), INDEX_TYPE(rr)),
-                HostTView(INDEX_TYPE(cc), INDEX_TYPE(rr)));
+      ASSERT_EQ(CheckTView(INDEX_TYPE{cc}, INDEX_TYPE{rr}),
+                HostTView(INDEX_TYPE{cc}, INDEX_TYPE{rr}));
     }
   }
 
@@ -111,8 +111,8 @@ void KernelTileDynamic2DTestImpl(const INDEX_TYPE rows_t, const INDEX_TYPE cols_
   {
     for ( raw_index_type cc = 0; cc < RAJA::stripIndexType(cols_t); ++cc )
     {
-      ASSERT_EQ(CheckTView(INDEX_TYPE(cc), INDEX_TYPE(rr)),
-                HostTView(INDEX_TYPE(cc), INDEX_TYPE(rr)));
+      ASSERT_EQ(CheckTView(INDEX_TYPE{cc}, INDEX_TYPE{rr}),
+                HostTView(INDEX_TYPE{cc}, INDEX_TYPE{rr}));
     }
   }
 
@@ -143,9 +143,9 @@ TYPED_TEST_P(KernelTileDynamic2DTest, TileDynamic2DKernel)
   using WORKING_RES = typename camp::at<TypeParam, camp::num<2>>::type;
   using EXEC_POLICY = typename camp::at<TypeParam, camp::num<3>>::type;
 
-  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE(10), INDEX_TYPE(10));
-  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE(151), INDEX_TYPE(111));
-  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE(362), INDEX_TYPE(362));
+  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE{10}, INDEX_TYPE{10});
+  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE{151}, INDEX_TYPE{111});
+  KernelTileDynamic2DTestImpl<INDEX_TYPE, DATA_TYPE, WORKING_RES, EXEC_POLICY>(INDEX_TYPE{362}, INDEX_TYPE{362});
 }
 
 REGISTER_TYPED_TEST_SUITE_P(KernelTileDynamic2DTest,

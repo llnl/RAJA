@@ -139,9 +139,9 @@ void KernelHyperplane2DTestImpl(const INDEX_TYPE groups, const INDEX_TYPE idim, 
   work_res.memcpy( check_array, work_array, sizeof(DATA_TYPE) * RAJA::stripIndexType(array_length) );
 
   // perform array arithmetic on the CPU
-  for (INDEX_TYPE g(0); g < groups; ++g) {
-    for (INDEX_TYPE i(0); i < idim; ++i) {
-      for (INDEX_TYPE j(0); j < jdim; ++j) {
+  for (INDEX_TYPE g{0}; g < groups; ++g) {
+    for (INDEX_TYPE i{0}; i < idim; ++i) {
+      for (INDEX_TYPE j{0}; j < jdim; ++j) {
         DATA_TYPE left = 1;
         if (i > 0) {
           left = HostView(g, i - 1, j);
@@ -157,9 +157,9 @@ void KernelHyperplane2DTestImpl(const INDEX_TYPE groups, const INDEX_TYPE idim, 
     }
   }
 
-  for (INDEX_TYPE g(0); g < groups; ++g) {
-    for (INDEX_TYPE i(0); i < idim; ++i) {
-      for (INDEX_TYPE j(0); j < jdim; ++j) {
+  for (INDEX_TYPE g{0}; g < groups; ++g) {
+    for (INDEX_TYPE i{0}; i < idim; ++i) {
+      for (INDEX_TYPE j{0}; j < jdim; ++j) {
         ASSERT_FLOAT_EQ(CheckView(g, i, j), HostView(g, i, j));
       }
     }

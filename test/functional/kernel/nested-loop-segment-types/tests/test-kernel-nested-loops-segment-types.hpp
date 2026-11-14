@@ -154,7 +154,7 @@ TYPED_TEST_P(KernelNestedLoopsSegmentTypesTest, NestedLoopsSegmentTypesKernel)
   RAJA::TypedRangeSegment<IDX_TYPE> s1( 0, 69 );
   RAJA::getIndices(s1_idx, s1);
 
-  RAJA::TypedRangeStrideSegment<IDX_TYPE> s2( raw_idx_type(3), raw_idx_type(188), raw_idx_type(2) );
+  RAJA::TypedRangeStrideSegment<IDX_TYPE> s2( raw_idx_type{3}, raw_idx_type{188}, raw_idx_type{2} );
   RAJA::getIndices(s2_idx, s2);
 
   IDX_TYPE last {427};
@@ -224,7 +224,7 @@ TYPED_TEST_P(KernelNestedLoopsSegmentTypesTest, NestedLoopsSegmentTypesKernel)
                                         perm);
 
 // Zero-length range stride segment
-  RAJA::TypedRangeStrideSegment<IDX_TYPE> s5( raw_idx_type(3), raw_idx_type(3), raw_idx_type(2) );
+  RAJA::TypedRangeStrideSegment<IDX_TYPE> s5( raw_idx_type{3}, raw_idx_type{3}, raw_idx_type{2} );
   std::vector<IDX_TYPE> s5_idx;
   RAJA::getIndices(s5_idx, s5);
 
