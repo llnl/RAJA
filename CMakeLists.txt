@@ -117,6 +117,11 @@ include(cmake/SetupPackages.cmake)
 
 # Add workaround flags to host compiler if necessary
 if (RAJA_ENABLE_CUDA)
+  if (WIN32 AND MSVC AND CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+    # Use the conforming host preprocessor and support large template-generated
+    # object files. These MSVC options must be forwarded through NVCC.
+    string(APPEND CMAKE_CUDA_FLAGS " -Xcompiler=/Zc:preprocessor,/bigobj")
+  endif ()
   if (CMAKE_CXX_COMPILER_ID MATCHES GNU AND CMAKE_SYSTEM_PROCESSOR MATCHES ppc64le)
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.0)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -mno-float128")
