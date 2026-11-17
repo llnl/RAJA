@@ -35,7 +35,7 @@
 # Keep C/C++ on GCC while using LLVM-AMDGPU only for HIP.
 gcc_13_3_1_rocmcc_6_4_3_hip:
   variables:
-    SPEC: "~shared +rocm ~openmp +tests amdgpu_target=gfx942 %c,cxx=gcc@=13.3.1 %hip-lang=llvm-amdgpu@=6.4.3 ^hip@6.4.3"
+    SPEC: "~shared +rocm ~openmp +tests amdgpu_target=gfx942 %c,cxx=gcc@=13.3.1 %hip-lang=llvm-amdgpu@=6.4.3 ^hip@6.4.3 ^rocprim@6.4.3"
   extends: .job_on_tuolumne
 
 rocmcc_6_4_3_hip_desul_atomics:

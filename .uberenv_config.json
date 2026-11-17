@@ -8,6 +8,6 @@
 "spack_configs_path": "scripts/radiuss-spack-configs",
 "spack_packages_path": "scripts/radiuss-spack-configs/spack_repo/llnl_radiuss/packages",
 "spack_packages_url": "https://github.com/spack/spack-packages.git",
-"spack_packages_commit": "eec110dd7bfb2a056079c6d23cca437b9607a339",
+"spack_packages_commit": "a5153d8941e1938a1ed23575825ea115a7b37f2f",
 "spack_setup_clingo": false
 }
