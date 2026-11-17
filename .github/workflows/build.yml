@@ -21,9 +21,9 @@ jobs:
 ## Use newer version of cmake than is standard for RAJA CI due to better compatiblity
 ## with VS2026 and CUDA 13
       - name: Install CMake 4.4.4
-        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3  # v4.4.0
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9  # v4.4.4
         with:
-          cmakeVersion: "~4.4.4"
+          cmakeVersion: "4.4.4"
 
 ## ====================================
 ## Config and build action
