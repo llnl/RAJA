@@ -88,7 +88,8 @@ jobs:
             CMAKE_CXX_STANDARD=20
             CMAKE_CUDA_ARCHITECTURES=75
             ENABLE_CUDA=On
+	    CMAKE_CUDA_FLAGS="-Ofc=mid"
           run-build: true
-          build-args: '--parallel 4'
+          build-args: '--config Release --parallel 4'
 ## ====================================
 ## Can't execute tests since not devices on GHA runners
