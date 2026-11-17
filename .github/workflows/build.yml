@@ -91,7 +91,7 @@ jobs:
             CMAKE_CXX_STANDARD=20
             CMAKE_CUDA_ARCHITECTURES=75
             ENABLE_CUDA=On
-            CMAKE_CUDA_FLAGS="-Xcompiler=/Zc:preprocessor,/bigobj
+            CMAKE_CUDA_FLAGS="-Xcompiler=/Zc:preprocessor,/bigobj"
           run-build: true
           build-args: '--parallel 8'
 ## ====================================
