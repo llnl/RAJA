@@ -1,5 +1,12 @@
 on: push
 name: Build
+
+# Cancel superseded feature branch builds when a new commit is made to same feature branch to improve CI throughput.
+# Preserve all builds on develop and main branches.
+concurrency:
+  group: ${{ github.workflow }}-${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/main' }}
+  
 jobs:
   build_docker:
     strategy:
