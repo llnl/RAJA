@@ -50,6 +50,10 @@ for a sequential and CUDA kernel dispatch::
 Whether a kernel executes on the host or device is determined by the first 
 argument passed to the ``RAJA::launch`` method, which is a 
 ``RAJA::ExecPlace`` enum value, either ``HOST`` or ``DEVICE``.
+If a ``RAJA::LaunchPolicy`` is defined with only a host policy (for example,
+``RAJA::LaunchPolicy<RAJA::seq_launch_t>``), an overload of ``RAJA::launch``
+exists that omits the ``RAJA::ExecPlace`` argument and always executes on the
+host.
 Similar to GPU thread and block programming models, RAJA Launch carries out
 computation in a predefined compute grid made up of threads which are
 then grouped into teams when executing on the device. The execution space is 
@@ -91,8 +95,8 @@ defined. For example, we may define host and device mapping strategies as::
 
   using teams_x = RAJA::LoopPolicy< RAJA::seq_exec,
                                     RAJA::cuda_block_x_direct >;
-  using thread_x = RAJA::LoopPolicy< RAJA::seq_exec,
-                                     RAJA::cuda_block_x_direct >;
+  using threads_x = RAJA::LoopPolicy< RAJA::seq_exec,
+                                      RAJA::cuda_thread_x_direct >;
 
 Here, the ``RAJA::LoopPolicy`` type holds both the host (CPU) and 
 device (CUDA GPU) loop mapping strategies. On the host, both the team/thread 
@@ -121,3 +125,10 @@ for per-team setup before a synchronization point:
    :start-after: // __mask_loop_start
    :end-before: // __mask_loop_end
    :language: C++
+
+.. note::
+  Launch execution policies are described in more detail in the execution policy
+  reference (:ref:`feat-policies-execution-reference-label`). In particular,
+  ``RAJA::seq_launch_t`` creates a sequential execution space, ``RAJA::omp_launch_t``
+  creates an OpenMP parallel region, and ``RAJA::cuda_launch_t``/``RAJA::hip_launch_t``/
+  ``RAJA::sycl_launch_t`` create device kernels when the corresponding back-end is enabled.

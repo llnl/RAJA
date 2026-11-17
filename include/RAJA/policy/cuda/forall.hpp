@@ -567,7 +567,7 @@ forall_impl(resources::Cuda cuda_res,
     // Note: we cannot fully remove enable_if_t from this file because NVCC is
     // not capable of disambiguating conceptified versions of
     // forallp_cuda_kernel when they are used by address like below.
-    RAJA::internal::jit::register_lambda(loop_body);
+
     auto func = reinterpret_cast<const void*>(
         &impl::forallp_cuda_kernel<EXEC_POL, BlocksPerSM, Iterator, LOOP_BODY,
                                    IndexType, camp::decay<ForallParam>>);
@@ -652,7 +652,7 @@ RAJA_INLINE resources::EventProxy<resources::Cuda> forall_impl(
     LoopBody&& loop_body)
 {
   int num_seg = iset.getNumSegments();
-  RAJA::internal::jit::register_lambda(loop_body);
+
   for (int isi = 0; isi < num_seg; ++isi)
   {
     iset.segmentCall(

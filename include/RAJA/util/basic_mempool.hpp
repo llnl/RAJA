@@ -341,6 +341,31 @@ public:
     }
   }
 
+  /// Free only backing allocations that contain no live allocations
+  size_t release_unused()
+  {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    size_t released                     = 0;
+    arena_container_type::iterator iter = m_arenas.begin();
+    while (iter != m_arenas.end())
+    {
+      if (iter->unused())
+      {
+        released += iter->capacity();
+        void* allocation_ptr = iter->get_allocation();
+        m_alloc.free(allocation_ptr);
+        iter = m_arenas.erase(iter);
+      }
+      else
+      {
+        ++iter;
+      }
+    }
+
+    return released;
+  }
+
   size_t arena_size()
   {
     std::lock_guard<std::mutex> lock(m_mutex);

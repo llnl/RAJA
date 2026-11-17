@@ -16,7 +16,7 @@ option(RAJA_ENABLE_ROCTX "Build with ENABLE_ROCTX support" Off)
 option(RAJA_ENABLE_TARGET_OPENMP "Build OpenMP on target device support" Off)
 option(RAJA_ENABLE_SYCL "Build SYCL support" Off)
 
-option(RAJA_ENABLE_VECTORIZATION "Build experimental vectorization support" On)
+option(RAJA_ENABLE_VECTORIZATION "Build experimental vectorization support" Off)
 
 option(RAJA_ENABLE_OPENMP_TASK "Build OpenMP task variants of certain algorithms" Off)
 

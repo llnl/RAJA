@@ -62,7 +62,7 @@
 #include "RAJA/policy/sequential.hpp"
 
 //
-// All platforms should support simd and vector execution.
+// All platforms should support simd vector execution.
 //
 #include "RAJA/policy/simd.hpp"
 #if defined(RAJA_ENABLE_VECTORIZATION)
@@ -156,6 +156,11 @@
 // Bit masking operators
 //
 #include "RAJA/util/BitMask.hpp"
+
+//
+// Memory utility routines
+//
+#include "RAJA/util/memory.hpp"
 
 //
 // sort algorithms

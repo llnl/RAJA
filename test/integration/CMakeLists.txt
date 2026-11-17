@@ -59,3 +59,37 @@ if (RAJA_ENABLE_RUNTIME_PLUGINS)
                       ENVIRONMENT "KOKKOS_PLUGINS=${CMAKE_BINARY_DIR}/lib/libkokkos_plugin.so")
   endif()
 endif ()
+
+if (RAJA_ENABLE_JIT AND RAJA_ENABLE_HIP)
+  find_program(FILECHECK FileCheck
+               PATHS ${LLVM_BINARY_DIR}/bin ${LLVM_BINARY_DIR}/libexec/llvm)
+
+  if (FILECHECK)
+    function(raja_add_proteus_filecheck_test target source)
+      raja_add_executable(
+        NAME ${target}
+        SOURCES ${source}
+        TEST On)
+
+      add_test(
+        NAME ${target}
+        COMMAND ${CMAKE_COMMAND}
+                -DTEST_EXECUTABLE=$<TARGET_FILE:${target}>
+                -DFILECHECK_EXECUTABLE=${FILECHECK}
+                -DSOURCE_FILE=${CMAKE_CURRENT_SOURCE_DIR}/${source}
+                -DCACHE_DIR=${CMAKE_CURRENT_BINARY_DIR}/${target}.cache
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/run_proteus_filecheck_test.cmake)
+    endfunction()
+
+    raja_add_proteus_filecheck_test(test-forall-jit-proteus
+                                    forall_jit_proteus.cpp)
+
+    raja_add_proteus_filecheck_test(test-launch-jit-proteus
+                                    launch_jit_proteus.cpp)
+
+    raja_add_proteus_filecheck_test(test-kernel-jit-proteus
+                                    kernel_jit_proteus.cpp)
+  else()
+    message(STATUS "Skipping Proteus integration FileCheck tests: FileCheck not found")
+  endif()
+endif()

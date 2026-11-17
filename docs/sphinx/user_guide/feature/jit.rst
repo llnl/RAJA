@@ -55,7 +55,7 @@ RAJA/Proteus at via ``LLVM_INSTALL_DIR``:
 .. code-block:: bash
 
   cmake -DRAJA_ENABLE_JIT=On -DLLVM_INSTALL_DIR=/path/to/llvm-19 ...
-  
+
 An example of how to configure a JIT build of RAJA with HIP on LC machines is included
 in ``scripts/toss4_amdclang_proteus.sh``.
 
@@ -66,7 +66,11 @@ Marking a kernel for JIT
 The user-facing interface shown in ``examples/forall-jit.cpp`` consists of:
 
 * ``RAJA_JIT_COMPILE``: annotate a lambda or function so Proteus can identify it
-  as a JIT compilation candidate.
+  as a JIT compilation candidate.  This annotation goes after the lambda's parameter
+  list.
+* ``proteus::jit::register_lambda``: register a lambda for JIT compilation.  This call
+  will enable Proteus to specialize a lambda body using the args specified with
+  RAJA_JIT_COMPILE.
 * ``RAJA_JIT_VARIABLE``: wrap runtime values that should be treated as
   constants for specialization.
 
@@ -99,11 +103,11 @@ The example takes four command-line arguments:
   ./bin/forall-jit <a> <b> <N> <accum>
 
 where ``a`` and ``b`` are matrix dimensions, ``N`` is the problem size, and
-``accum`` is the branch condition (0/1) that is specialized with JIT. 
+``accum`` is the branch condition (0/1) that is specialized with JIT.
 The example performs N-many matrix multiplications (1 per thread).  Each multiplication
 is [a x b] [b x a].  The result is either set or added into the output, depending
-on the boolean flag the user provides.  By forcing each thread to perform serialized 
-arithmetic with a simple branch condition, we show how JIT compilation can improve both 
+on the boolean flag the user provides.  By forcing each thread to perform serialized
+arithmetic with a simple branch condition, we show how JIT compilation can improve both
 serial loop scheduling (per-thread) and branch elimination.
 
 Specializing argument indices (advanced)

@@ -178,7 +178,7 @@ Some RAJA features are enabled by RAJA-specific CMake variables.
       RAJA_ENABLE_JIT               Enable Proteus-based JIT compilation
                                     support for RAJA kernels. Default is off.
       RAJA_ENABLE_VECTORIZATION     Enable SIMD/SIMT intrinsics support.
-                                    Default is on.
+                                    Default is off.
       ===========================   =======================================
 
 JIT compilation (Proteus)
