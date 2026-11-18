@@ -60,6 +60,26 @@ struct HipSyncCase
 };
 #endif
 
+#if defined(RAJA_ENABLE_TARGET_OPENMP)
+struct OpenMPTargetSyncCase
+{
+  using ExecPolicy = RAJA::omp_target_parallel_for_exec<8>;
+  using Resource = camp::resources::Omp;
+
+  static void synchronize(Resource& resource) { resource.wait(); }
+};
+#endif
+
+#if defined(RAJA_ENABLE_SYCL)
+struct SyclSyncCase
+{
+  using ExecPolicy = RAJA::sycl_exec<128, true>;
+  using Resource = camp::resources::Sycl;
+
+  static void synchronize(Resource& resource) { resource.wait(); }
+};
+#endif
+
 template <typename SyncCase>
 void testSynchronize()
 {

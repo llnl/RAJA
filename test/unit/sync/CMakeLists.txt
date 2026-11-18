@@ -27,6 +27,14 @@ if(RAJA_ENABLE_HIP)
   list(APPEND SYNC_BACKENDS Hip)
 endif()
 
+if(RAJA_ENABLE_TARGET_OPENMP)
+  list(APPEND SYNC_BACKENDS OpenMPTarget)
+endif()
+
+if(RAJA_ENABLE_SYCL)
+  list(APPEND SYNC_BACKENDS Sycl)
+endif()
+
 foreach(BACKEND ${SYNC_BACKENDS})
   configure_file(test-synchronize.cpp.in
                  test-synchronize-${BACKEND}.cpp)
