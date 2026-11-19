@@ -1,5 +1,6 @@
 name: Windows CUDA
 on:
+  workflow_dispatch:
   schedule:
     # Every Saturday at 2:37 a.m. Pacific time, including daylight saving time.
     - cron: '37 2 * * 6'
