@@ -37,7 +37,7 @@ class my_string
 public:
   char m_data[N];
 
-  my_string(const char* str)
+  RAJA_HOST_DEVICE my_string(const char* str)
   {
     if (str == NULL) { return; }  
     std::size_t i = 0;
