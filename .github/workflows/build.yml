@@ -1,6 +1,55 @@
 on: push
 name: Build
+
+# Cancel superseded feature branch builds when a new commit is made to same feature branch to improve CI throughput.
+# Preserve all builds on develop and main branches.
+concurrency:
+  group: ${{ github.workflow }}-${{ (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/main' }}
+  
 jobs:
+  build_docker:
+    strategy:
+      matrix:
+        target: [gcc12, gcc12_debug, gcc13, gcc13_desul, clang19_debug, clang19_style, clang19_desul, intel2024_2, intel2024_2_debug, intel2024_2_sycl, rocm6_4_3_desul]
+    runs-on: ubuntu-latest
+    steps:
+    - run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo docker image prune --all --force
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+      with:
+        submodules: recursive
+    - uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003  # v4.4.0
+    - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
+      with:
+        target: ${{ matrix.target }}
+  build_mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        with:
+          submodules: recursive
+
+## Back off version of cmake with known issue
+      - name: Install CMake 3.29
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3  # v4.4.0
+        with:
+          cmakeVersion: "~3.29.0"
+
+      - uses: threeal/cmake-action@725d1314ccf9ea922805d7e3f9d9bcbca892b406  # v2.1.0
+        with:
+          build-dir: build
+          options:
+            CMAKE_CXX_STANDARD=20
+            ENABLE_OPENMP=Off
+            CMAKE_BUILD_TYPE=Release
+          run-build: true
+          build-args: '--parallel 16'
+      - uses: threeal/ctest-action@8f90c568a3060a3cffb896e241be14bd3f53d526   # v1.1.0
   build_windows:
     strategy:
       matrix:
@@ -28,7 +77,7 @@ jobs:
 ## ====================================
 ## Config and build action
       - name: Config and build
-        uses: threeal/cmake-action@b684818e3104c3151285e9001e7652b717f11bcd # v1.3.0
+      - uses: threeal/cmake-action@725d1314ccf9ea922805d7e3f9d9bcbca892b406  # v2.1.0
         with:
           build-dir: build
           options:
