@@ -284,7 +284,7 @@ dane machine may appear in the RADIUSS Spack Configs file
 
   gcc_8_1_0:
     variables:
-      SPEC: "${PROJECT_DANE_VARIANTS} %gcc@8.1.0 ${PROJECT_DANE_DEPS}"
+      RAD_BAT_SPEC: "${PROJECT_DANE_VARIANTS} %gcc@8.1.0 ${PROJECT_DANE_DEPS}"
     extends: .job_on_dane
 
 and then may be overridden in the ``RAJA/.gitlab/jobs/dane.yml``
@@ -292,7 +292,7 @@ file as::
 
   gcc_8_1_0:
     variables:
-      SPEC: " ${PROJECT_DANE_VARIANTS} %gcc@8.1.0 ${PROJECT_DANE_DEPS}"
+      RAD_BAT_SPEC: " ${PROJECT_DANE_VARIANTS} %gcc@8.1.0 ${PROJECT_DANE_DEPS}"
       DANE_JOB_ALLOC: "--time=60 --nodes=1"
     extends: .job_on_dane
 
@@ -307,7 +307,7 @@ also defined in the ``RAJA/.gitlab/jobs/<MACHINE>.yml`` files.  For example::
 
   clang_10_0_1_gcc_8_3_1_desul_atomics:
     variables:
-      SPEC: " ~shared +openmp +tests +desul %clang@10.0.1 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1"
+      RAD_BAT_SPEC: " ~shared +openmp +tests +desul %clang@10.0.1 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1"
     extends: .job_on_dane
 
 defines a RAJA job with desul atomics enabled to be run on the dane machine.
@@ -348,11 +348,13 @@ repositories are pinned in
 `RAJA/.rad-bat.json <https://github.com/LLNL/RAJA/tree/develop/.rad-bat.json>`_.
 The same file contains a conditional spec fragment mapping a non-empty
 ``CAMP_REFERENCE`` environment variable to
-``^camp@git.{CAMP_REFERENCE}=main``. The variable is defined separately in
-``.gitlab-ci.yml``. Both declarations are required: ``rad-bat`` does not assign
-special meaning to the variable by name. If the variable is unset or empty,
-the fragment is omitted and Spack selects CAMP normally. More dependencies can
-be supported with more entries in the ``spec_fragments`` array.
+``^camp@git.{CAMP_REFERENCE}=main``. The caller supplies the reference: CI may
+temporarily enable the commented example in ``.gitlab-ci.yml``, while a local
+refresh may export the same variable in its shell. ``rad-bat`` evaluates the
+mapping in both cases; the standalone RAJA build adapter does not. If the
+variable is unset or empty, the fragment is omitted and Spack selects CAMP
+normally. More dependencies can be supported with more entries in the
+``spec_fragments`` array.
 
 Conditional fragments only describe dependencies in the Spack spec. Source
 checkout overrides used by multi-project testing belong to the project build

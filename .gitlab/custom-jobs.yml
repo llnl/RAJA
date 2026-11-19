@@ -39,10 +39,11 @@
 .reproducer_vars:
   script:
     - |
+      rad_bat_spec="${RAD_BAT_SPEC:-$SPEC}"
       echo -e "
       # Required variables \n
       export MODULE_LIST=\"${MODULE_LIST}\" \n
-      export SPEC=\"${SPEC//\"/\\\"}\" \n
+      export RAD_BAT_SPEC=\"${rad_bat_spec//\"/\\\"}\" \n
       export CMAKE_EXTRA_ARGS=\"${CMAKE_EXTRA_ARGS}\" \n
       export RAD_BAT_MODE=\"${RAD_BAT_MODE:-}\" \n
       export RAD_BAT_JOBS=\"${RAD_BAT_JOBS:-}\" \n
