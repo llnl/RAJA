@@ -77,7 +77,7 @@ jobs:
 ## ====================================
 ## Config and build action
       - name: Config and build
-      - uses: threeal/cmake-action@725d1314ccf9ea922805d7e3f9d9bcbca892b406  # v2.1.0
+        uses: threeal/cmake-action@725d1314ccf9ea922805d7e3f9d9bcbca892b406  # v2.1.0
         with:
           build-dir: build
           options:
