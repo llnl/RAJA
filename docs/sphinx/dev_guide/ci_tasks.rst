@@ -81,7 +81,7 @@ For example, an entry for a build using the clang 12.0.1 compiler with CUDA
 
   clang_12_0_1_cuda_11_5_0:
     variables:
-      SPEC: " ~shared +openmp +tests +cuda cuda_arch=70 %clang@12.0.1 ^cuda@11.5.0"
+      RAD_BAT_SPEC: " ~shared +openmp +tests +cuda cuda_arch=70 %clang@12.0.1 ^cuda@11.5.0"
     extends: .job_on_lassen
 
 Here, we enable OpenMP and CUDA, both of which must be enabled to test those
@@ -142,7 +142,7 @@ job can be adjusted in the job entry in the associated
 
   gcc_8_1_0:
   variables:
-    SPEC: " ${PROJECT_DANE_VARIANTS} %gcc@8.1.0 ${PROJECT_DANE_DEPS}"
+    RAD_BAT_SPEC: " ${PROJECT_DANE_VARIANTS} %gcc@8.1.0 ${PROJECT_DANE_DEPS}"
     DANE_BUILD_AND_TEST_JOB_ALLOC: "--time=60 --nodes=1"
   extends: .job_on_dane
 
@@ -160,7 +160,7 @@ annotate the job for this. For example:
 
   ibm_clang_9_0_0:
     variables:
-      SPEC: " ${PROJECT_LASSEN_VARIANTS} %clang@ibm.9.0.0 ${PROJECT_LASSEN_DEPS}"
+      RAD_BAT_SPEC: " ${PROJECT_LASSEN_VARIANTS} %clang@ibm.9.0.0 ${PROJECT_LASSEN_DEPS}"
     extends: .job_on_lassen
     allow_failure: true
 

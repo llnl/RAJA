@@ -16,5 +16,7 @@
 /Debug/
 *.swp
 *.orig
+.rad-bat-work/
+.rad-bat-artifacts/
 slirp.out
 .codex
