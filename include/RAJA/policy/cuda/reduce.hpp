@@ -781,7 +781,7 @@ template<typename Combiner,
          size_t atomic_stride>
 struct ReduceAtomicHostInit_Data
 {
-  using tally_mempool_type = device_pinned_mempool_type;
+  using tally_mempool_type = host_accessible_reduction_mempool_type;
 
   static constexpr size_t tally_slots = replication * atomic_stride;
 

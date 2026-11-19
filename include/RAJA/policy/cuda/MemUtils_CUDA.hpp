@@ -178,11 +178,52 @@ struct DevicePinnedAllocator
   }
 };
 
+/**
+ * Storage accessible by the CPU between asynchronous launches and by the GPU
+ * during reduction. Prefer device-resident managed memory when concurrent
+ * managed access is supported; otherwise use mapped pinned host memory.
+ */
+struct HostAccessibleReductionAllocator
+{
+  //! Allocate reduction storage according to the current device's capabilities.
+  void* malloc(size_t nbytes)
+  {
+    int device;
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetDevice, &device);
+    int concurrent_access = 0;
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceGetAttribute, &concurrent_access,
+                                   cudaDevAttrConcurrentManagedAccess, device);
+    if (concurrent_access == 0)
+    {
+      return PinnedAllocator {}.malloc(nbytes);
+    }
+    return DevicePinnedAllocator {}.malloc(nbytes);
+  }
+
+  //! Free storage using its allocation type, independent of the current device.
+  bool free(void* ptr)
+  {
+    if (ptr == nullptr)
+    {
+      return true;
+    }
+    cudaPointerAttributes attributes {};
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaPointerGetAttributes, &attributes, ptr);
+    if (attributes.type == cudaMemoryTypeHost)
+    {
+      return PinnedAllocator {}.free(ptr);
+    }
+    return DevicePinnedAllocator {}.free(ptr);
+  }
+};
+
 using device_mempool_type = basic_mempool::MemPool<DeviceAllocator>;
 using device_zeroed_mempool_type =
     basic_mempool::MemPool<DeviceZeroedAllocator>;
 using device_pinned_mempool_type =
     basic_mempool::MemPool<DevicePinnedAllocator>;
+using host_accessible_reduction_mempool_type =
+    basic_mempool::MemPool<HostAccessibleReductionAllocator>;
 using pinned_mempool_type = basic_mempool::MemPool<PinnedAllocator>;
 
 RAJA_INLINE
@@ -192,6 +233,8 @@ size_t release_unused_internal_memory()
   released += device_mempool_type::getInstance().release_unused();
   released += device_zeroed_mempool_type::getInstance().release_unused();
   released += device_pinned_mempool_type::getInstance().release_unused();
+  released +=
+      host_accessible_reduction_mempool_type::getInstance().release_unused();
   released += pinned_mempool_type::getInstance().release_unused();
   return released;
 }

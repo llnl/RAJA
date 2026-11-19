@@ -60,29 +60,26 @@ jobs:
         - args: BUILD_SHARED_LIBS=Off
 
 
-# Notes on Windows CI
-# The windows-2025 runner has converted to Visual Studio (VS) 2026.
-# cmake added VS 2026 support in cmake v4.2, we had issues with cmake 4.4 related to JSON parsing.
-# Testing is currently done on the windows-2022 runner with VS 2022 until the issue can
-# be resolved.
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
           submodules: recursive
 
-## Back off version of cmake with known issue
-      - name: Install CMake 3.29
-        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3  # v4.4.0
+## ====================================
+## Use newer version of cmake than is standard for RAJA CI due to better compatiblity
+## with VS2026 and CUDA 13
+      - name: Install CMake 4.4.4
+        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9  # v4.4.4
         with:
-          cmakeVersion: "~3.29.0"
+          cmakeVersion: "4.4.4"
 
 ## ====================================
 ## Config and build action
-      - uses: threeal/cmake-action@725d1314ccf9ea922805d7e3f9d9bcbca892b406  # v2.1.0
+      - name: Config and build
+        uses: threeal/cmake-action@725d1314ccf9ea922805d7e3f9d9bcbca892b406  # v2.1.0
         with:
           build-dir: build
-          generator: 'Visual Studio 17 2022'     # force VS generator so MSVC is used instead of NMake
           options:
             ENABLE_WARNINGS_AS_ERRORS=Off
             BLT_CXX_STD=c++20
@@ -90,13 +87,14 @@ jobs:
             CMAKE_BUILD_TYPE=Release
             ${{ matrix.shared.args }}
           run-build: true
-          build-args: '--parallel 16'
+          build-args: '--parallel 8'
 ## ====================================
 ## Print the contents of the test directory in the build space (debugging)
 ##    - run: | 
 ##        dir -r D:\a\RAJA\RAJA\build\test
 ## ====================================
 ## Run tests action
-      - uses: threeal/ctest-action@8f90c568a3060a3cffb896e241be14bd3f53d526   # v1.1.0
+      - name: Test
+        uses: threeal/ctest-action@8f90c568a3060a3cffb896e241be14bd3f53d526   # v1.1.0
         with:
           build-config: Debug
