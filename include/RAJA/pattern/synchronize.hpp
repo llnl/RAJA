@@ -27,7 +27,7 @@ namespace RAJA
  * \brief Synchronize all current RAJA executions for the specified policy.
  *
  * The type of synchronization performed depends on the execution policy. For
- * example, to syncrhonize the current CUDA device, use:
+ * example, to synchronize the current CUDA device, use:
  *
  * \code
  *
