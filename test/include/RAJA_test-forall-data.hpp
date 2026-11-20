@@ -8,12 +8,13 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 //
-// Utility routines for allocating/deallocating arrays in for forall tests. 
+// Utility routines for allocating/deallocating arrays in for forall tests.
 //
 
 #ifndef __RAJA_test_forall_data_HPP__
 #define __RAJA_test_forall_data_HPP__
 
+#include "RAJA/index/IndexValue.hpp"
 #include "camp/resource.hpp"
 
 template<typename T>
@@ -33,8 +34,8 @@ void allocateForallTestData(size_t N,
 
 // for RAJA strongly typed indices
 template<typename T,
-         typename std::enable_if<std::is_base_of<RAJA::IndexValueBase, camp::type::ptr::rem<T>>::value>::type* = nullptr>
-void allocateForallTestData(T N,
+         RAJA::concepts::IndexValued IdxType>
+void allocateForallTestData(IdxType N,
                             camp::resources::Resource work_res,
                             T** work_array,
                             T** check_array,

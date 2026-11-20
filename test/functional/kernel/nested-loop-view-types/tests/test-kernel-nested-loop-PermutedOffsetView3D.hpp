@@ -86,8 +86,8 @@ void KernelPermutedOffsetView3DTestImpl(std::array<RAJA::idx_t, 3> dim,
     for (RAJA::idx_t j = 0; j < Nint_middle; ++j) {
       for (RAJA::idx_t k = 0; k < Nint_inner; ++k) {
 
-        int A_idx = k + j * Nint_inner + i * Nint_inner * Nint_middle;
-        int B_idx =
+        RAJA::idx_t A_idx = k + j * Nint_inner + i * Nint_inner * Nint_middle;
+        RAJA::idx_t B_idx =
           (k + 1) + (j + 1) * Ntot_inner + (i + 1) * Ntot_inner * Ntot_middle;
 
         A_test_array[A_idx] =
@@ -118,9 +118,9 @@ void KernelPermutedOffsetView3DTestImpl(std::array<RAJA::idx_t, 3> dim,
   RAJA::View< IDX_TYPE, RAJA::OffsetLayout<3> > B_view(B_work_array, B_layout);
   RAJA::View< IDX_TYPE, RAJA::Layout<3> >  A_view(A_work_array, A_layout);
 
-  RAJA::TypedRangeSegment<IDX_TYPE> iseg( 0, Nint_len.at(0) );
-  RAJA::TypedRangeSegment<IDX_TYPE> jseg( 0, Nint_len.at(1) );
-  RAJA::TypedRangeSegment<IDX_TYPE> kseg( 0, Nint_len.at(2) );
+  RAJA::TypedRangeSegment<IDX_TYPE> iseg( 0, IDX_TYPE(Nint_len.at(0)) );
+  RAJA::TypedRangeSegment<IDX_TYPE> jseg( 0, IDX_TYPE(Nint_len.at(1)) );
+  RAJA::TypedRangeSegment<IDX_TYPE> kseg( 0, IDX_TYPE(Nint_len.at(2)) );
 
   RAJA::kernel<EXEC_POLICY>(
     RAJA::make_tuple( iseg, jseg, kseg ),
