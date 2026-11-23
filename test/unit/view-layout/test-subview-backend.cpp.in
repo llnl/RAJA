@@ -1,0 +1,17 @@
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+// Copyright (c) Lawrence Livermore National Security, LLC and other
+// RAJA Project Developers. See top-level LICENSE and COPYRIGHT
+// files for dates and other details. No copyright assignment is required
+// to contribute to RAJA.
+//
+// SPDX-License-Identifier: (BSD-3-Clause)
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+#include "RAJA_test-base.hpp"
+
+#include "test-subview-backend.hpp"
+
+using @SUBVIEW_BACKEND@SubViewBackendTypes = Test<@SUBVIEW_BACKEND@UnitTestPolicyList>::Types;
+
+INSTANTIATE_TYPED_TEST_SUITE_P(@SUBVIEW_BACKEND@, SubViewBackendTest,
+                               @SUBVIEW_BACKEND@SubViewBackendTypes);
