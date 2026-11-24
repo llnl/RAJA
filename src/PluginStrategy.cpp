@@ -9,7 +9,7 @@
 
 #include "RAJA/util/PluginStrategy.hpp"
 
-RAJA_INSTANTIATE_REGISTRY(PluginRegistry);
+RAJA_INSTANTIATE_REGISTRY(PluginRegistry)
 
 namespace RAJA
 {
