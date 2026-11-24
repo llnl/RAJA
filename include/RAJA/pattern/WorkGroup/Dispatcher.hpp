@@ -99,6 +99,10 @@ struct dispatcher_transform_types<::RAJA::indirect_function_call_dispatch,
  * with functions that will not be used through this class. This is useful
  * during device linking when functions with high register counts may cause
  * device linking to fail.
+ *
+ * On GPUs, prefer direct_dispatch<Ts...> when the callable types are known.
+ * Device function pointers prevent inlining and can increase register and
+ * scratch memory use. Keep this policy for workgroups that need type erasure.
  */
 template<Platform platform, typename DispatcherID, typename... CallArgs>
 struct Dispatcher<platform,
@@ -232,6 +236,10 @@ struct dispatcher_transform_types<::RAJA::indirect_virtual_function_dispatch,
  * with functions that will not be used through this class. This is useful
  * during device linking when functions with high register counts may cause
  * device linking to fail.
+ *
+ * On GPUs, prefer direct_dispatch<Ts...> when the callable types are known.
+ * Virtual device calls can carry the same register and scratch memory costs
+ * as function-pointer dispatch.
  */
 template<Platform platform, typename DispatcherID, typename... CallArgs>
 struct Dispatcher<platform,
