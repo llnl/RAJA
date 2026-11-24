@@ -39,6 +39,18 @@ namespace RAJA
 namespace util
 {
 
+void * custom_memcpy( void * dest, const void * src, size_t len )
+{
+  char * customdest = (char *) dest;
+  const char * customsrc = (const char *) src;
+
+  for ( size_t ii = 0; ii < len; ++ii )
+  {
+    customdest[ii] = customsrc[ii];
+  }
+
+  return dest;
+}
 
 // TODO: Investigate std::bit_cast in C++20.
 //       Currently breaks the ROCm 5.7.1 build.
@@ -53,7 +65,8 @@ RAJA_INLINE RAJA_HOST_DEVICE constexpr B reinterp_A_as_B(A const& a)
   // TODO: Consider requiring A and B to be trivially copyable
 
   B b;
-  memcpy(&b, &a, sizeof(A));
+  //memcpy(&b, &a, sizeof(A));
+  custom_memcpy(&b, &a, sizeof(A));
   return b;
 }
 
