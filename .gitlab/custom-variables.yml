@@ -33,7 +33,7 @@ variables:
   # Note: we repeat the reservation, helpful when jobs are manually re-triggered.
   MATRIX_JOB_ALLOC: "--partition=pci --time=30 --gpus=1"
   # Project specific variants for matrix
-  PROJECT_MATRIX_VARIANTS: "~shared +cuda cuda_arch=90 +tests"
+  PROJECT_MATRIX_VARIANTS: "~shared +cuda +tests"
   # Project specific deps for matrix
   PROJECT_MATRIX_DEPS: ""
 
