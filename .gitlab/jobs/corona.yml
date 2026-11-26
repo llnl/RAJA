@@ -28,19 +28,22 @@
 
 rocmcc_6_4_3_hip_openmp:
   variables:
-    SPEC: " ~shared +rocm +openmp +tests +vectorization amdgpu_target=gfx906 %llvm-amdgpu@=6.4.3 ^hip@6.4.3"
+    RADIUSS_SPACK_STACK: "rocm-6.4.3-gcc-13.3.1-mvapich2-2.3.7.gcc_13"
+    SPEC: " ~shared +rocm +openmp +tests +vectorization"
     MODULE_LIST: "rocm/6.4.3"
   extends: .job_on_corona
 
 rocmcc_6_4_3_hip_desul_atomics:
   variables:
-    SPEC: " ~shared +rocm ~openmp +tests +desul amdgpu_target=gfx906 %llvm-amdgpu@=6.4.3 ^hip@6.4.3"
+    RADIUSS_SPACK_STACK: "rocm-6.4.3-gcc-13.3.1-mvapich2-2.3.7.gcc_13"
+    SPEC: " ~shared +rocm ~openmp +tests +desul"
     MODULE_LIST: "rocm/6.4.3"
   extends: .job_on_corona
 
 clang_22_0_0_sycl_gcc_10_3_1_rocmcc_6_4_3:
   variables:
-    SPEC: " ~shared +sycl ~openmp +tests cxxflags==\"-w -fsycl -fsycl-unnamed-lambda -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=gfx906\" %sycl-clang-22-gcc-10"
+    RADIUSS_SPACK_STACK: "sycl-clang-22.0.0git-gcc-10.3.1-mvapich2-unavailable"
+    SPEC: " ~shared +sycl ~openmp +tests cxxflags==\"-w -fsycl -fsycl-unnamed-lambda -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=gfx906\""
     MODULE_LIST: "rocm/6.4.3"
     SYCL_PATH: "/usr/workspace/raja-dev/clang_sycl_16b7bcb09915_hip_gcc10.3.1_rocm6.4.3"
     LD_LIBRARY_PATH: "${SYCL_PATH}/lib:${SYCL_PATH}/lib64:${LD_LIBRARY_PATH}"

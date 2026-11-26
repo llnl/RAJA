@@ -34,17 +34,20 @@
 
 rocmcc_6_4_3_hip_desul_atomics:
   variables:
-    SPEC: "~shared +rocm ~openmp +desul +tests amdgpu_target=gfx90a %llvm-amdgpu@=6.4.3 ^hip@6.4.3"
+    RADIUSS_SPACK_STACK: "rocm-6.4.3-gcc-13.3.1-cray-mpich-9.0.1"
+    SPEC: "~shared +rocm ~openmp +desul +tests"
   extends: .job_on_tioga
 
 rocmcc_6_4_3_hip_openmp:
   variables:
-    SPEC: "~shared +rocm +openmp +omptask +tests amdgpu_target=gfx90a %llvm-amdgpu@=6.4.3 ^hip@6.4.3"
+    RADIUSS_SPACK_STACK: "rocm-6.4.3-gcc-13.3.1-cray-mpich-9.0.1"
+    SPEC: "~shared +rocm +openmp +omptask +tests"
   extends: .job_on_tioga
 
 rocmcc_6_4_3_hip_jit_proteus:
   variables:
-    SPEC: "${PROJECT_TIOGA_VARIANTS} +rocm amdgpu_target=gfx90a %llvm-amdgpu@=6.4.3 ^hip@6.4.3 ${PROJECT_TIOGA_DEPS}"
+    RADIUSS_SPACK_STACK: "rocm-6.4.3-gcc-13.3.1-cray-mpich-9.0.1"
+    SPEC: "${PROJECT_TIOGA_VARIANTS} +rocm ${PROJECT_TIOGA_DEPS}"
     CMAKE_EXTRA_ARGS: "-DBUILD_SHARED=ON -DRAJA_ENABLE_JIT=ON -DLLVM_INSTALL_DIR=/opt/rocm-6.4.3/llvm"
     CTEST_REGEX: "forall.*Hip|kernel.*Hip|launch.*Hip"
     CTEST_JOBS: "16"
